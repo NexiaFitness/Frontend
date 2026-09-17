@@ -306,6 +306,7 @@ export const SessionDetail: React.FC = () => {
             <SessionAlertsPanel
                 sessionId={session.id}
                 clientId={session.client_id}
+                trainingPlanId={session.training_plan_id ?? null}
                 periodBlockId={session.period_block_id ?? null}
                 embeddedCoherence={embeddedCoherence}
                 legacyInjuryNote={legacyInjuryNote}

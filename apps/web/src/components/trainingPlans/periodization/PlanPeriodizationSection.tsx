@@ -303,6 +303,29 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     navigateToClientPlanning(next);
   }, [clientId, searchParams, reset, navigateToClientPlanning]);
 
+  const handleBlockCreated = useCallback(
+    (block: PlanPeriodBlock) => {
+      if (clientId == null || clientId <= 0) {
+        return;
+      }
+      reset();
+      const next = clearBlockAuthorParams(searchParams);
+      next.set("focus", String(block.id));
+      navigateToClientPlanning(next);
+    },
+    [clientId, searchParams, reset, navigateToClientPlanning],
+  );
+
+  const focusBlockId = searchParams.get("focus");
+  useEffect(() => {
+    if (!focusBlockId || isDapAuthoring || isBlockWeeksManage) return;
+    const id = Number(focusBlockId);
+    if (!Number.isFinite(id) || id <= 0) return;
+    scrollDashboardMainToAnchorAfterPaint(() =>
+      document.querySelector(`[data-block-id="${id}"]`),
+    );
+  }, [focusBlockId, isDapAuthoring, isBlockWeeksManage, blocks.length]);
+
   const handleViewWeeks = useCallback(
     (block: PlanPeriodBlock) => {
       const next = setBlockWeeksParam(searchParams, block.id);
@@ -686,6 +709,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         planGoalForRecommendations={planGoalForRecommendations}
         onAuthoringChange={onAuthoringChange}
         onExit={handleExitBlockAuthoring}
+        onCreateSuccess={handleBlockCreated}
       />
     );
   }

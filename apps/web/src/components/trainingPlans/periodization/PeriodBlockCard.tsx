@@ -80,7 +80,11 @@ export const PeriodBlockCard: React.FC<Props> = ({
             : null;
 
     return (
-        <article className={PERIOD_BLOCK_CARD_SHELL_CLASS}>
+        <article
+            className={PERIOD_BLOCK_CARD_SHELL_CLASS}
+            data-block-id={block.id}
+            data-testid={`period-block-card-${block.id}`}
+        >
             <NexiaGlassAccentRim />
 
             <header className={PERIOD_BLOCK_CARD_HEADER_CLASS}>

@@ -14,7 +14,13 @@ import { useDispatch } from "react-redux";
 
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
-import { resolveClientTrainingFrequency } from "@nexia/shared";
+import {
+    buildStructureDriftToastMessage,
+    formatLocalDateOnly,
+    listStructureDriftPlannedSessionIds,
+    resolveClientTrainingFrequency,
+} from "@nexia/shared";
+import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { useGetMovementPatternsQuery } from "@nexia/shared/api/exercisesApi";
 import { useGetWeeklyStructureQuery, weeklyStructureApi } from "@nexia/shared/api/weeklyStructureApi";
 import type { AppDispatch } from "@nexia/shared/store";
@@ -83,6 +89,7 @@ interface Props {
     planGoalForRecommendations?: string;
     onAuthoringChange?: (active: boolean) => void;
     onExit: () => void;
+    onCreateSuccess?: (block: PlanPeriodBlock) => void;
 }
 
 export const PlanBlockAuthoringSurface: React.FC<Props> = ({
@@ -101,6 +108,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     planGoalForRecommendations,
     onAuthoringChange,
     onExit,
+    onCreateSuccess,
 }) => {
     const { showWarning, showError } = useToast();
     const dispatch = useDispatch<AppDispatch>();
@@ -259,6 +267,49 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         [form.weeklyStructure],
     );
 
+    const { data: clientTrainingSessions = [] } = useGetTrainingSessionsByClientQuery(
+        clientId,
+        { skip: clientId <= 0 },
+    );
+
+    const handleStructureSynced = useCallback(
+        (
+            syncedBlockId: number,
+            syncedWeeks: import("@nexia/shared/types/weeklyStructure").WeeklyStructureWeek[],
+        ) => {
+            const block =
+                blocks.find((b) => b.id === syncedBlockId) ??
+                (blockId === syncedBlockId && form.startDate && form.endDate
+                    ? {
+                          id: syncedBlockId,
+                          start_date: form.startDate,
+                          end_date: form.endDate,
+                      }
+                    : null);
+            if (!block) return;
+            const driftIds = listStructureDriftPlannedSessionIds(
+                clientTrainingSessions,
+                {
+                    id: block.id,
+                    start_date: block.start_date,
+                    end_date: block.end_date,
+                },
+                syncedWeeks,
+                formatLocalDateOnly(new Date()),
+            );
+            const msg = buildStructureDriftToastMessage(driftIds);
+            if (msg) showWarning(msg, 9000);
+        },
+        [
+            blocks,
+            blockId,
+            form.startDate,
+            form.endDate,
+            clientTrainingSessions,
+            showWarning,
+        ],
+    );
+
     const { save, isSaving } = useBlockAuthoringPersistence({
         planId,
         mode,
@@ -276,9 +327,13 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
             activeDays,
         ),
         markPersisted,
-        onCreateSuccess: onExit,
+        onCreateSuccess: (block) => {
+            if (onCreateSuccess) onCreateSuccess(block);
+            else onExit();
+        },
         onEditSuccess: onExit,
         refetchWeeklyStructure: confirmWeeklyStructureFromServer,
+        onStructureSynced: handleStructureSynced,
     });
 
     const planGoalResolved =

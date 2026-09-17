@@ -11,6 +11,7 @@ import { useGetSessionCoherenceQuery } from "@nexia/shared/api/trainingSessionsA
 import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 import { Alert } from "@/components/ui/feedback";
+import { SESSION_OUTSIDE_PHASE_COPY } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
 import { SessionPanelShell } from "@/components/sessionProgramming/SessionPanelShell";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
@@ -18,6 +19,7 @@ import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 export interface SessionAlertsPanelProps {
     sessionId: number;
     clientId: number;
+    trainingPlanId?: number | null;
     periodBlockId: number | null;
     embeddedCoherence: SessionCoherence | null;
     legacyInjuryNote: string | null;
@@ -63,6 +65,7 @@ function InjuryAlert({ injury }: { injury: InjuryWithDetails }) {
 export const SessionAlertsPanel: React.FC<SessionAlertsPanelProps> = ({
     sessionId,
     clientId,
+    trainingPlanId,
     periodBlockId,
     embeddedCoherence,
     legacyInjuryNote,
@@ -87,8 +90,15 @@ export const SessionAlertsPanel: React.FC<SessionAlertsPanelProps> = ({
     const showLegacyNote =
         activeInjuries.length === 0 && legacyInjuryNote && legacyInjuryNote.trim().length > 0;
 
+    const showOutsidePhase =
+        (trainingPlanId ?? 0) > 0 &&
+        (periodBlockId == null || periodBlockId <= 0);
+
     const hasAlerts =
-        injuriesToShow.length > 0 || warningsToShow.length > 0 || showLegacyNote;
+        injuriesToShow.length > 0 ||
+        warningsToShow.length > 0 ||
+        showLegacyNote ||
+        showOutsidePhase;
     const canReview = periodBlockId != null;
 
     if (!hasAlerts && !canReview) return null;
@@ -121,6 +131,9 @@ export const SessionAlertsPanel: React.FC<SessionAlertsPanelProps> = ({
         >
             {hasAlerts ? (
                 <div className="space-y-2" role="region" aria-label="Avisos de la sesión">
+                    {showOutsidePhase ? (
+                        <Alert variant="warning">{SESSION_OUTSIDE_PHASE_COPY}</Alert>
+                    ) : null}
                     {injuriesToShow.map((injury) => (
                         <InjuryAlert key={`injury-${injury.id}`} injury={injury} />
                     ))}

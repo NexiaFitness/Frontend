@@ -18,9 +18,9 @@ export const SESSION_DAY_CONTEXT_COPY = {
     noPlanTitle: "Sin plan activo",
     noPlanBody:
         "Este cliente no tiene un plan de entrenamiento activo para esta fecha. Puedes crear la sesión libremente.",
-    noBlockValuesTitle: "Sin bloque planificado",
+    noBlockValuesTitle: "Fuera de fase o sin periodización",
     noBlockValuesBody:
-        "Hay plan activo, pero no hay valores de periodización para esta fecha.",
+        "Hay plan activo, pero esta fecha no cae en ninguna fase con periodización (o no hay bloque que la cubra). Puedes crear la sesión; no se inventará una fase automáticamente.",
     patternsEmptyConfigured:
         "No hay patrones definidos para este día en la estructura semanal.",
     patternsEmptyFree:

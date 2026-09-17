@@ -11,6 +11,7 @@ import {
     getMutationErrorMessage,
     weeklyStructureDraftsEqual,
 } from "@nexia/shared";
+import type { WeeklyStructureWeek } from "@nexia/shared/types/weeklyStructure";
 import {
     useCreatePeriodBlockWithStructureMutation,
     useUpdatePeriodBlockMutation,
@@ -75,9 +76,14 @@ export interface UseBlockAuthoringPersistenceArgs {
         block: PlanPeriodBlock,
         structure: WeeklyStructureWeekCreate[],
     ) => void;
-    onCreateSuccess: () => void;
+    onCreateSuccess: (block: PlanPeriodBlock) => void;
     onEditSuccess?: () => void;
     refetchWeeklyStructure?: () => Promise<{ data?: WeeklyStructureOut }>;
+    /** G26: aviso tras sync-recurring con semanas ya persistidas en servidor. */
+    onStructureSynced?: (
+        blockId: number,
+        syncedWeeks: WeeklyStructureWeek[],
+    ) => void;
     /** false = Quick Program local draft (sin mutations). */
     enabled?: boolean;
 }
@@ -99,6 +105,7 @@ export function useBlockAuthoringPersistence({
     onCreateSuccess,
     onEditSuccess,
     refetchWeeklyStructure,
+    onStructureSynced,
     enabled = true,
 }: UseBlockAuthoringPersistenceArgs) {
     const { showSuccess, showWarning, showError } = useToast();
@@ -156,7 +163,7 @@ export function useBlockAuthoringPersistence({
             }).unwrap();
             markPersisted(result.block, form.weeklyStructure);
             showSuccess("Bloque de periodización creado correctamente.");
-            onCreateSuccess();
+            onCreateSuccess(result.block);
         } catch (err) {
             showError(getMutationErrorMessage(err));
         }
@@ -291,6 +298,7 @@ export function useBlockAuthoringPersistence({
                     updatedBlock,
                     cloneWeeklyStructureDraft(synced),
                 );
+                onStructureSynced?.(blockId, refetchResult.data.weeks);
                 showSuccess("Fase guardada correctamente.");
                 onEditSuccess?.();
                 return;
@@ -335,6 +343,7 @@ export function useBlockAuthoringPersistence({
         planId,
         markPersisted,
         refetchWeeklyStructure,
+        onStructureSynced,
         onEditSuccess,
         showSuccess,
         showWarning,
