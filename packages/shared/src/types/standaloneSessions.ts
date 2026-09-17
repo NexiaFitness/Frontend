@@ -25,6 +25,16 @@ export interface StandaloneSessionCreate {
     notes?: string | null;
 }
 
+/** StandaloneSessionUpdate — PUT /standalone-sessions/{id} (Swagger) */
+export interface StandaloneSessionUpdate {
+    session_name?: string | null;
+    session_type?: string | null;
+    planned_duration?: number | null;
+    actual_duration?: number | null;
+    status?: string | null;
+    notes?: string | null;
+}
+
 /** StandaloneSessionOut — Response de GET/POST/PUT */
 export interface StandaloneSessionOut {
     id: number;

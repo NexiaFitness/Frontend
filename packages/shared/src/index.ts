@@ -39,6 +39,8 @@ export {
     useGetStandaloneSessionExercisesQuery,
     useCreateStandaloneSessionMutation,
     useCreateStandaloneSessionExerciseMutation,
+    useUpdateStandaloneSessionMutation,
+    useDeleteStandaloneSessionMutation,
 } from "./api/standaloneSessionsApi";
 export * from "./api/exercisesApi";
 export * from "./api/fatigueApi";

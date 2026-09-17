@@ -148,3 +148,41 @@ export function suggestNextSessionDateAfter(
 
     return null;
 }
+
+/**
+ * G1 — Primer día candidato dentro de la fase desde anchorDate (p. ej. hoy):
+ * patrón en weekly structure si existe; si no, primer día libre en el bloque.
+ */
+export function suggestSessionDateForPeriodBlock(
+    anchorDate: string,
+    blockStart: string,
+    blockEnd: string,
+    weeklyStructureWeeks: WeeklyStructureWeek[],
+    sessionsInBlock: SessionDateCarrier[],
+): string | null {
+    const startISO = maxDateISO(blockStart, anchorDate);
+    const used = collectUsedSessionDates(sessionsInBlock);
+    const hasAnyPatternDay = weeklyStructureWeeks.some((w) =>
+        w.days.some((d) => d.patterns.length > 0),
+    );
+
+    const start = parseLocalDate(startISO);
+    const end = parseLocalDate(blockEnd);
+    if (!start || !end || start.getTime() > end.getTime()) {
+        return null;
+    }
+
+    const cursor = new Date(start);
+    while (cursor.getTime() <= end.getTime()) {
+        const iso = toLocalISO(cursor);
+        if (used.has(iso)) {
+            cursor.setDate(cursor.getDate() + 1);
+            continue;
+        }
+        if (!hasAnyPatternDay || hasPatternOnDate(iso, blockStart, weeklyStructureWeeks)) {
+            return iso;
+        }
+        cursor.setDate(cursor.getDate() + 1);
+    }
+    return null;
+}

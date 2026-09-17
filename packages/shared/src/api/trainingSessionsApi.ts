@@ -193,15 +193,21 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 method: 'POST',
                 body,
             }),
-            invalidatesTags: (result, _error, { training_plan_id }) => {
-                const tags: Array<{ type: 'TrainingSession' | 'TrainingPlan'; id: string | number }> = [];
-                if (training_plan_id) {
+            invalidatesTags: (result, _error, body) => {
+                const tags: Array<
+                    { type: 'TrainingSession' | 'TrainingPlan' | 'Client'; id: string | number }
+                > = [];
+                if (body.training_plan_id) {
                     tags.push(
-                        { type: 'TrainingSession', id: `PLAN_${training_plan_id}` },
-                        { type: 'TrainingPlan', id: training_plan_id }
+                        { type: 'TrainingSession', id: `PLAN_${body.training_plan_id}` },
+                        { type: 'TrainingPlan', id: body.training_plan_id },
                     );
-                } else {
-                    tags.push({ type: 'TrainingSession', id: 'LIST' });
+                }
+                if (body.client_id) {
+                    tags.push({ type: 'Client', id: `SESSIONS-${body.client_id}` });
+                }
+                if (body.trainer_id) {
+                    tags.push({ type: 'TrainingSession', id: `LIST_${body.trainer_id}` });
                 }
                 return tags;
             },

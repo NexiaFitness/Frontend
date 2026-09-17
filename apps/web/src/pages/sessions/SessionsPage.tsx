@@ -170,7 +170,7 @@ function getDetailUrl(s: SessionOut): string {
 function getEditUrl(s: SessionOut): string {
     return s.session_kind === "training"
         ? `/dashboard/session-programming/edit-session/${s.id}`
-        : `/dashboard/standalone-sessions/${s.id}`;
+        : `/dashboard/standalone-sessions/${s.id}/edit`;
 }
 
 export const SessionsPage: React.FC = () => {

@@ -10,11 +10,17 @@
  * @since P2 — Plan integración flujo planificación UX
  */
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Calendar, ChevronRight, Clock, Timer } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
+import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
+import {
+    useDeleteStandaloneSessionMutation,
+    useUpdateStandaloneSessionMutation,
+} from "@nexia/shared/api/standaloneSessionsApi";
 import { Badge } from "@/components/ui/Badge";
 import {
     useGetStandaloneSessionQuery,
@@ -82,6 +88,7 @@ function formatLongDate(dateStr: string | null | undefined): string {
 export const StandaloneSessionDetail: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { showSuccess, showError } = useToast();
     const backTarget = readSafeReturnTo(location.state) ?? null;
     const goBack = useCallback(() => {
         navigateDashboardBack(navigate, location.state, DEFAULT_STANDALONE_BACK);
@@ -104,6 +111,41 @@ export const StandaloneSessionDetail: React.FC = () => {
     const { data: client } = useGetClientQuery(session?.client_id || 0, {
         skip: !session?.client_id,
     });
+
+    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined);
+    const trainerId = trainerProfile?.id ?? 0;
+    const [updateSession, { isLoading: isCancelling }] = useUpdateStandaloneSessionMutation();
+    const [deleteSession, { isLoading: isDeleting }] = useDeleteStandaloneSessionMutation();
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    const handleCancelSession = async () => {
+        if (!session) return;
+        try {
+            await updateSession({
+                sessionId: session.id,
+                body: { status: "cancelled" },
+            }).unwrap();
+            showSuccess("Sesión cancelada.");
+        } catch {
+            showError("No se pudo cancelar la sesión.");
+        }
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!session || !trainerId) return;
+        try {
+            await deleteSession({
+                sessionId: session.id,
+                clientId: session.client_id,
+                trainerId,
+            }).unwrap();
+            setShowDeleteModal(false);
+            showSuccess("Sesión eliminada.");
+            goBack();
+        } catch {
+            showError("No se pudo eliminar la sesión.");
+        }
+    };
 
     const displayExercises: SessionExerciseDisplay[] = useMemo(
         () =>
@@ -231,10 +273,32 @@ export const StandaloneSessionDetail: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
                     <Button variant="outline" onClick={goBack}>
                         <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                         Volver
+                    </Button>
+                    <Button
+                        variant="outline-primary"
+                        onClick={() =>
+                            navigate(`/dashboard/standalone-sessions/${session.id}/edit`, {
+                                state: location.state,
+                            })
+                        }
+                    >
+                        Editar
+                    </Button>
+                    {session.status === "planned" || session.status === "in_progress" ? (
+                        <Button
+                            variant="outline"
+                            disabled={isCancelling}
+                            onClick={handleCancelSession}
+                        >
+                            Cancelar sesión
+                        </Button>
+                    ) : null}
+                    <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>
+                        Eliminar
                     </Button>
                     {session.client_id ? (
                         <Button
@@ -288,6 +352,21 @@ export const StandaloneSessionDetail: React.FC = () => {
                     </p>
                 </div>
             )}
+
+            <NexiaPremiumConfirmModal
+                isOpen={showDeleteModal}
+                onClose={() => {
+                    if (!isDeleting) setShowDeleteModal(false);
+                }}
+                onConfirm={handleConfirmDelete}
+                title="Eliminar sesión suelta"
+                description="Esta acción no se puede deshacer."
+                confirmLabel="Eliminar"
+                isLoading={isDeleting}
+                loadingConfirmLabel="Eliminando…"
+                closeOnBackdrop={!isDeleting}
+                closeOnEsc={!isDeleting}
+            />
         </div>
     );
 };

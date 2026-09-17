@@ -13,7 +13,8 @@
  * @updated v6.4.0 - Panel lateral ExercisePickerPanel (reemplaza modal)
  * @updated Fase 1 U4 - Props opcionales para contexto cliente (no salir del cliente)
  * @updated Fase 3 - Coherencia tras crear: avisos en pantalla + Entendido, luego redirigir
- * @updated P2 - StandaloneSession cuando no hay plan activo en la fecha
+ * @updated P2 - StandaloneSession (legacy inferencia; sustituida por D2 elección explícita)
+ * @updated Fase 1 D2 - Selector Programa | Sesión suelta; vigencia solo para contexto/avisos
  * @updated 2026-03-24 - Adaptado para TrainingPlanInstance[]
  *   Usa instance.source_plan_id para crear sesiones (training_plan_id)
  *   El selector muestra instances pero usa source_plan_id como value
@@ -139,6 +140,11 @@ import {
 import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
 import type { LocationStateReturnTo } from "@nexia/shared";
 import { SESSION_TYPES } from "./sessionFormConstants";
+import {
+    SessionCreateKindSelector,
+    type SessionCreateKind,
+} from "@/components/sessionProgramming/SessionCreateKindSelector";
+import { defaultSessionCreateKind, parseSessionCreateKindParam } from "@nexia/shared";
 
 export interface CreateSessionProps {
     /** Cuando se usa desde clients/:id/sessions/new; prioridad sobre query. */
@@ -158,6 +164,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const location = useLocation();
     const dispatch = useDispatch<AppDispatch>();
     const [searchParams] = useSearchParams();
+    const sessionKindFromQuery = parseSessionCreateKindParam(searchParams.get("sessionKind"));
     const { user } = useSelector((state: RootState) => state.auth);
     const { showSuccess, showError, showWarning } = useToast();
 
@@ -222,8 +229,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         notes: "",
     });
 
-    const skipPlanAssignment =
-        !effectiveClientId || effectiveClientId <= 0 || !!planId;
+    const skipPlanAssignment = !effectiveClientId || effectiveClientId <= 0;
 
     const {
         data: planAssignmentForDate,
@@ -240,8 +246,48 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             !(skipPlanAssignment ? false : isLoadingPlanAssignment),
     );
 
+    const [sessionKind, setSessionKind] = useState<SessionCreateKind>(() => {
+        if (sessionKindFromQuery) return sessionKindFromQuery;
+        if (planId) return "program";
+        return "program";
+    });
+    const sessionKindInitRef = useRef(false);
+
     useEffect(() => {
-        if (planId || skipPlanAssignment) return;
+        if (sessionKindFromQuery) {
+            setSessionKind(sessionKindFromQuery);
+            sessionKindInitRef.current = true;
+            return;
+        }
+        if (planId) {
+            setSessionKind("program");
+            sessionKindInitRef.current = true;
+            return;
+        }
+        if (sessionKindInitRef.current || skipPlanAssignment) return;
+        if (isLoadingPlanAssignment || isFetchingPlanAssignment) return;
+        setSessionKind(
+            defaultSessionCreateKind({
+                planIdFromUrl: null,
+                hasActivePlanForDate: !!planAssignmentForDate?.id,
+            }),
+        );
+        sessionKindInitRef.current = true;
+    }, [
+        sessionKindFromQuery,
+        planId,
+        skipPlanAssignment,
+        planAssignmentForDate?.id,
+        isLoadingPlanAssignment,
+        isFetchingPlanAssignment,
+    ]);
+
+    useEffect(() => {
+        if (planId) {
+            setSelectedPlanId(planId);
+            return;
+        }
+        if (skipPlanAssignment || sessionKind !== "program") return;
         if (planAssignmentForDate?.id) {
             setSelectedPlanId(planAssignmentForDate.id);
         } else if (!isLoadingPlanAssignment && !isFetchingPlanAssignment) {
@@ -249,6 +295,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         }
     }, [
         planId,
+        sessionKind,
         skipPlanAssignment,
         planAssignmentForDate?.id,
         isLoadingPlanAssignment,
@@ -334,13 +381,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
     const [formErrors, setFormErrors] = useState<CreateSessionFormErrors>({});
 
-    // P2: Standalone cuando no hay instancia que cubra la fecha (resolver BE, sin fechas de documento)
-    const useStandaloneSession =
-        !planId &&
-        !!resolvedClientId &&
-        !skipPlanAssignment &&
-        !isLoadingPlanAssignment &&
-        !planAssignmentForDate;
+    const useStandaloneSession = sessionKind === "standalone";
+    const activePlanCoversDate = !!planAssignmentForDate?.id;
+    const standaloneOverlapsProgram =
+        useStandaloneSession && activePlanCoversDate && !isLoadingPlanAssignment;
 
     const [isPersistingSubmit, setIsPersistingSubmit] = useState(false);
 
@@ -736,6 +780,28 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         <h2 className={SESSION_PROGRAMMING_SECTION_TITLE}>
                             {SESSION_PROGRAMMING_COPY.sectionSessionData}
                         </h2>
+                        {effectiveClientId != null && effectiveClientId > 0 ? (
+                            <div className="mb-4 space-y-3">
+                                <SessionCreateKindSelector
+                                    value={sessionKind}
+                                    onChange={(kind) => {
+                                        setSessionKind(kind);
+                                        setFormErrors((prev) => {
+                                            const next = { ...prev };
+                                            delete next.trainingPlanId;
+                                            return next;
+                                        });
+                                    }}
+                                />
+                                {standaloneOverlapsProgram ? (
+                                    <Alert variant="warning">
+                                        Hay un programa activo para esta fecha. La sesión suelta no
+                                        formará parte del plan; puedes tener programación y sesión
+                                        libre el mismo día.
+                                    </Alert>
+                                ) : null}
+                            </div>
+                        ) : null}
                         <div className={SESSION_PROGRAMMING_SESSION_FIELDS_GRID}>
                                 <div className={resolvedClientId ? SESSION_PROGRAMMING_FIELD_NAME : SESSION_PROGRAMMING_FIELD_NAME_SOLO}>
                                     <label className={SESSION_PROGRAMMING_FIELD_LABEL}>
@@ -791,8 +857,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         />
                                     ) : (
                                         <p className={SESSION_PROGRAMMING_FIELD_ERROR}>
-                                            No hay programa que cubra esta fecha. Se creará sesión libre
-                                            o elige otra fecha.
+                                            No hay programa que cubra esta fecha. Elige otra fecha, crea
+                                            sesión suelta o asigna un plan al cliente.
                                         </p>
                                     )}
                                 </div>
@@ -882,30 +948,41 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         <div className="mx-auto mb-3 text-muted-foreground/50 [&>svg]:h-8 [&>svg]:w-8">
                                             <ClipboardList aria-hidden />
                                         </div>
-                                        <p className={SESSION_PROGRAMMING_EMPTY_TITLE}>Sin plan asignado</p>
+                                        <p className={SESSION_PROGRAMMING_EMPTY_TITLE}>
+                                            {activePlanCoversDate ? "Sesión suelta" : "Sin plan asignado"}
+                                        </p>
                                         <p className={SESSION_PROGRAMMING_EMPTY_DESCRIPTION}>
-                                            Este cliente no tiene un plan de entrenamiento activo.
+                                            {activePlanCoversDate
+                                                ? "Esta sesión no se vinculará al programa activo del cliente."
+                                                : "Este cliente no tiene un plan de entrenamiento activo en esta fecha."}
                                         </p>
-                                        <div className={SESSION_PROGRAMMING_EMPTY_ACTION}>
-                                            <Button
-                                                type="button"
-                                                variant="outline-primary"
-                                                size="sm"
-                                                className="w-full"
-                                                onClick={() =>
-                                                    navigate(
-                                                        `/dashboard/training-plans/create?clientId=${effectiveClientId}`,
-                                                        { state: { from: location.pathname } },
-                                                    )
-                                                }
-                                            >
-                                                <ClipboardList className="mr-2 h-3.5 w-3.5" aria-hidden />
-                                                Crear plan
-                                            </Button>
-                                        </div>
-                                        <p className={cn(SESSION_PROGRAMMING_EMPTY_FOOTER, "mt-3")}>
-                                            Puedes continuar sin plan y crear la sesión libremente.
-                                        </p>
+                                        {!activePlanCoversDate ? (
+                                            <>
+                                                <div className={SESSION_PROGRAMMING_EMPTY_ACTION}>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline-primary"
+                                                        size="sm"
+                                                        className="w-full"
+                                                        onClick={() =>
+                                                            navigate(
+                                                                `/dashboard/training-plans/create?clientId=${effectiveClientId}`,
+                                                                { state: { from: location.pathname } },
+                                                            )
+                                                        }
+                                                    >
+                                                        <ClipboardList
+                                                            className="mr-2 h-3.5 w-3.5"
+                                                            aria-hidden
+                                                        />
+                                                        Crear plan
+                                                    </Button>
+                                                </div>
+                                                <p className={cn(SESSION_PROGRAMMING_EMPTY_FOOTER, "mt-3")}>
+                                                    Puedes continuar sin plan y crear la sesión libremente.
+                                                </p>
+                                            </>
+                                        ) : null}
                                     </div>
                                 </div>
                     </aside>

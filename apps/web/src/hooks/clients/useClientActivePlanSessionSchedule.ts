@@ -7,6 +7,7 @@ import { useMemo, useCallback } from "react";
 import { useGetActivePlanByClientQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetTrainingSessionsQuery } from "@nexia/shared/api/trainingSessionsApi";
+import { useGetStandaloneSessionsByClientQuery } from "@nexia/shared/api/standaloneSessionsApi";
 import { useGetDayExceptionsQuery } from "@nexia/shared/api/dayExceptionsApi";
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
@@ -42,6 +43,10 @@ export function useClientActivePlanSessionSchedule(
   const { data: planTrainingSessions = [] } = useGetTrainingSessionsQuery(planId!, {
     skip: skip || !planId,
   });
+  const { data: standaloneSessions = [] } = useGetStandaloneSessionsByClientQuery(
+    { clientId, skip: 0, limit: 1000 },
+    { skip: skip || !clientId },
+  );
   const { data: dayExceptions = [] } = useGetDayExceptionsQuery(
     { clientId },
     { skip: skip || !activePlanForClient }
@@ -52,8 +57,14 @@ export function useClientActivePlanSessionSchedule(
     for (const row of planTrainingSessions) {
       if (row.session_date) s.add(row.session_date);
     }
+    for (const row of standaloneSessions) {
+      if (row.session_date) {
+        const match = String(row.session_date).match(/^(\d{4}-\d{2}-\d{2})/);
+        s.add(match ? match[1] : String(row.session_date).slice(0, 10));
+      }
+    }
     return s;
-  }, [planTrainingSessions]);
+  }, [planTrainingSessions, standaloneSessions]);
 
   const exceptionDates = useMemo(() => {
     const s = new Set<string>();

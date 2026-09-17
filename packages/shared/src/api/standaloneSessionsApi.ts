@@ -14,9 +14,28 @@ import { baseApi } from "./baseApi";
 import type {
     StandaloneSessionCreate,
     StandaloneSessionOut,
+    StandaloneSessionUpdate,
     StandaloneSessionExerciseCreate,
     StandaloneSessionExerciseOut,
 } from "../types/standaloneSessions";
+
+function standaloneListInvalidationTags(body: {
+    client_id: number;
+    trainer_id: number;
+}) {
+    return [
+        { type: "Client" as const, id: `SESSIONS-${body.client_id}` },
+        { type: "TrainingSession" as const, id: `LIST_${body.trainer_id}` },
+    ];
+}
+
+function standaloneMutationInvalidationTags(session: StandaloneSessionOut) {
+    return [
+        { type: "StandaloneSession" as const, id: session.id },
+        { type: "Client" as const, id: `SESSIONS-${session.client_id}` },
+        { type: "TrainingSession" as const, id: `LIST_${session.trainer_id}` },
+    ];
+}
 
 export const standaloneSessionsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -72,9 +91,34 @@ export const standaloneSessionsApi = baseApi.injectEndpoints({
                 body,
             }),
             invalidatesTags: (result, error, body) =>
-                result
-                    ? [{ type: "Client", id: `SESSIONS-${body.client_id}` }]
-                    : [],
+                result ? standaloneListInvalidationTags(body) : [],
+        }),
+
+        updateStandaloneSession: builder.mutation<
+            StandaloneSessionOut,
+            { sessionId: number; body: StandaloneSessionUpdate }
+        >({
+            query: ({ sessionId, body }) => ({
+                url: `/standalone-sessions/${sessionId}`,
+                method: "PUT",
+                body,
+            }),
+            invalidatesTags: (result) => (result ? standaloneMutationInvalidationTags(result) : []),
+        }),
+
+        deleteStandaloneSession: builder.mutation<
+            { message: string },
+            { sessionId: number; clientId: number; trainerId: number }
+        >({
+            query: ({ sessionId }) => ({
+                url: `/standalone-sessions/${sessionId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (_result, _error, { sessionId, clientId, trainerId }) => [
+                { type: "StandaloneSession", id: sessionId },
+                { type: "Client", id: `SESSIONS-${clientId}` },
+                { type: "TrainingSession", id: `LIST_${trainerId}` },
+            ],
         }),
 
         /**
@@ -103,4 +147,6 @@ export const {
     useGetStandaloneSessionExercisesQuery,
     useCreateStandaloneSessionMutation,
     useCreateStandaloneSessionExerciseMutation,
+    useUpdateStandaloneSessionMutation,
+    useDeleteStandaloneSessionMutation,
 } = standaloneSessionsApi;

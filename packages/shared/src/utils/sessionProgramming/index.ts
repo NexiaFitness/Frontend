@@ -12,8 +12,16 @@ export {
     getEffortCharacterForCaracterTipo,
 } from "./effortCharacterMapping";
 export type { CaracterTipo } from "./effortCharacterMapping";
-export { suggestNextSessionDateAfter } from "./suggestSessionDate";
+export {
+    suggestNextSessionDateAfter,
+    suggestSessionDateForPeriodBlock,
+} from "./suggestSessionDate";
 export type { SessionDateCarrier } from "./suggestSessionDate";
+export {
+    defaultSessionCreateKind,
+    parseSessionCreateKindParam,
+} from "./resolveSessionCreateKind";
+export type { SessionCreateKind } from "./resolveSessionCreateKind";
 export {
     buildDefaultSessionName,
     formatSessionDateShort,

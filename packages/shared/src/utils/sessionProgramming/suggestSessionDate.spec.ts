@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import type { WeeklyStructureWeek } from "../../types/weeklyStructure";
-import { suggestNextSessionDateAfter } from "./suggestSessionDate";
+import {
+    suggestNextSessionDateAfter,
+    suggestSessionDateForPeriodBlock,
+} from "./suggestSessionDate";
 
 const LUN_MIE_VIE_WEEK: WeeklyStructureWeek[] = [
     {
@@ -81,6 +84,30 @@ describe("suggestNextSessionDateAfter", () => {
                 { session_date: "2026-06-24" },
                 { session_date: "2026-06-26" },
             ],
+        );
+        expect(date).toBeNull();
+    });
+});
+
+describe("suggestSessionDateForPeriodBlock (G1)", () => {
+    it("returns first free day from anchor within block when no structure", () => {
+        const date = suggestSessionDateForPeriodBlock(
+            "2026-09-10",
+            "2026-09-01",
+            "2026-09-30",
+            [],
+            [{ session_date: "2026-09-10" }],
+        );
+        expect(date).toBe("2026-09-11");
+    });
+
+    it("returns null when block ends before anchor", () => {
+        const date = suggestSessionDateForPeriodBlock(
+            "2026-10-01",
+            "2026-09-01",
+            "2026-09-15",
+            [],
+            [],
         );
         expect(date).toBeNull();
     });
