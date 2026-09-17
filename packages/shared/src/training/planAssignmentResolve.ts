@@ -126,6 +126,34 @@ export function findCommittedInstanceForSourcePlan(
 }
 
 /** Aplica ventana de asignación sobre fechas del documento (vigencia operativa en UI). */
+/** Sesión de plan dentro de la ventana asignada (CURRENT operativo; SPEC §3.6 post-recorte). */
+export function isTrainingSessionInCommittedAssignmentWindow(
+    sessionDate: string | null | undefined,
+    assignmentStart: string | null | undefined,
+    assignmentEnd: string | null | undefined
+): boolean {
+    const day = toDateOnlyString(sessionDate);
+    if (!day) return false;
+    return isDateInClosedInterval(day, assignmentStart ?? "", assignmentEnd ?? "");
+}
+
+export function filterTrainingSessionsInCommittedAssignmentWindow<
+    T extends { session_date?: string | null },
+>(
+    sessions: T[],
+    assignmentStart: string | null | undefined,
+    assignmentEnd: string | null | undefined
+): T[] {
+    if (!assignmentStart || !assignmentEnd) return sessions;
+    return sessions.filter((s) =>
+        isTrainingSessionInCommittedAssignmentWindow(
+            s.session_date,
+            assignmentStart,
+            assignmentEnd
+        )
+    );
+}
+
 export function applyCommittedInstanceWindowToPlan<T extends { start_date: string; end_date: string }>(
     plan: T,
     instance: TrainingPlanInstance | undefined

@@ -6,6 +6,7 @@ import {
     dayBeforeYmd,
     findCommittedInstanceForSourcePlan,
     findOverlappingCommittedInstances,
+    filterTrainingSessionsInCommittedAssignmentWindow,
     pickAssignmentCoveringDate,
     proposedTrimEndYmd,
 } from "./planAssignmentResolve";
@@ -106,6 +107,21 @@ describe("findCommittedInstanceForSourcePlan", () => {
             inst({ id: 2, source_plan_id: 580, start_date: "2026-10-01", end_date: "2026-10-31" }),
         ];
         expect(findCommittedInstanceForSourcePlan(rows, 52, 548)?.id).toBe(1);
+    });
+});
+
+describe("filterTrainingSessionsInCommittedAssignmentWindow", () => {
+    it("excluye sesiones planificadas fuera de la ventana asignada (post-recorte)", () => {
+        const sessions = [
+            { id: 1, session_date: "2026-09-20" },
+            { id: 2, session_date: "2026-10-05" },
+        ];
+        const filtered = filterTrainingSessionsInCommittedAssignmentWindow(
+            sessions,
+            "2026-09-01",
+            "2026-09-24",
+        );
+        expect(filtered.map((s) => s.id)).toEqual([1]);
     });
 });
 

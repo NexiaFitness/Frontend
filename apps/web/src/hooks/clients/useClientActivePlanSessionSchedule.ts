@@ -12,6 +12,7 @@ import { useGetDayExceptionsQuery } from "@nexia/shared/api/dayExceptionsApi";
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
+import { filterTrainingSessionsInCommittedAssignmentWindow } from "@nexia/shared/training/planAssignmentResolve";
 
 export interface UseClientActivePlanSessionScheduleResult {
   activePlanForClient: ActivePlanByClientOut | null | undefined;
@@ -52,9 +53,20 @@ export function useClientActivePlanSessionSchedule(
     { skip: skip || !activePlanForClient }
   );
 
+  const operationalPlanSessions = useMemo(() => {
+    if (!activePlanForClient?.start_date || !activePlanForClient?.end_date) {
+      return planTrainingSessions;
+    }
+    return filterTrainingSessionsInCommittedAssignmentWindow(
+      planTrainingSessions,
+      activePlanForClient.start_date,
+      activePlanForClient.end_date
+    );
+  }, [planTrainingSessions, activePlanForClient?.start_date, activePlanForClient?.end_date]);
+
   const sessionDatesInPlan = useMemo(() => {
     const s = new Set<string>();
-    for (const row of planTrainingSessions) {
+    for (const row of operationalPlanSessions) {
       if (row.session_date) s.add(row.session_date);
     }
     for (const row of standaloneSessions) {
@@ -64,7 +76,7 @@ export function useClientActivePlanSessionSchedule(
       }
     }
     return s;
-  }, [planTrainingSessions, standaloneSessions]);
+  }, [operationalPlanSessions, standaloneSessions]);
 
   const exceptionDates = useMemo(() => {
     const s = new Set<string>();
@@ -87,7 +99,7 @@ export function useClientActivePlanSessionSchedule(
     activePlanForClient,
     isLoadingActivePlan,
     periodBlocks,
-    planSessions: planTrainingSessions,
+    planSessions: operationalPlanSessions,
     sessionDatesInPlan,
     exceptionDates,
     getPeriodBlockIdForDate,
