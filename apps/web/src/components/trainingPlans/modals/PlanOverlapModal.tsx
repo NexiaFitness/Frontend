@@ -18,6 +18,7 @@ import React, { useEffect, useRef } from "react";
 import { X, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
+import type { OverlapConflictPhase } from "@nexia/shared";
 
 export type PlanOverlapModalVariant = "create" | "edit";
 
@@ -31,6 +32,8 @@ export interface PlanOverlapModalProps {
     isLoading?: boolean;
     /** Por defecto `create` (sustitución / nuevo plan). En edición usar `edit`. */
     variant?: PlanOverlapModalVariant;
+    /** Vigencia operativa del conflicto respecto a hoy (copy SPEC §9). */
+    conflictPhase?: OverlapConflictPhase;
 }
 
 export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
@@ -42,6 +45,7 @@ export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
     planEndDate,
     isLoading = false,
     variant = "create",
+    conflictPhase = "current",
 }) => {
     const modalRef = useRef<HTMLDivElement>(null);
 
@@ -131,7 +135,9 @@ export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
                     <p className="text-sm text-muted-foreground">
                         {variant === "edit"
                             ? "El rango de fechas elegido se cruza con otra planificación de este cliente:"
-                            : "Ya existe una planificación activa para este cliente:"}
+                            : conflictPhase === "future"
+                              ? "Ya existe otra planificación programada que se solapa con estas fechas:"
+                              : "Ya existe una planificación activa para este cliente:"}
                     </p>
 
                     {/* Plan info block */}
@@ -159,9 +165,13 @@ export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
                             </>
                         ) : (
                             <>
-                                Al continuar, la planificación en curso se acortará hasta el día
-                                anterior al inicio de la nueva (el contenido del plan no se borra).
-                                Las sesiones ya realizadas se conservan. ¿Desea continuar?
+                                Al continuar,{" "}
+                                {conflictPhase === "future"
+                                    ? "su vigencia se acortará"
+                                    : "la planificación en curso se acortará"}{" "}
+                                hasta el día anterior al inicio de la nueva (el contenido del plan
+                                no se borra). Las sesiones ya realizadas se conservan. ¿Desea
+                                continuar?
                             </>
                         )}
                     </p>

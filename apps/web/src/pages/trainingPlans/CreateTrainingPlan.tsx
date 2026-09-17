@@ -37,9 +37,11 @@ import {
 import type { TrainingPlanCreate, TrainingPlanInstance } from "@nexia/shared/types/training";
 import {
     findOverlappingTrainingPlanInstance,
+    overlapModalDisplayFromInstance,
     parseAssignmentOverlapApiDetail,
     formatLocalDateOnly,
     getMutationErrorMessage,
+    type OverlapModalPlanDisplay,
 } from "@nexia/shared";
 
 // ============================================================================
@@ -184,7 +186,7 @@ export const CreateTrainingPlan: React.FC = () => {
 
     const [formErrors, setFormErrors] = useState<FormErrors>({});
     const [isOverlapModalOpen, setIsOverlapModalOpen] = useState(false);
-    const [planToReplace, setPlanToReplace] = useState<{ name: string; start_date: string; end_date: string } | null>(null);
+    const [planToReplace, setPlanToReplace] = useState<OverlapModalPlanDisplay | null>(null);
     const [pendingPlanData, setPendingPlanData] = useState<TrainingPlanCreate | null>(null);
 
     // ============================================================================
@@ -287,11 +289,7 @@ export const CreateTrainingPlan: React.FC = () => {
             null
         );
         if (overlapping) {
-            setPlanToReplace({
-                name: overlapping.name,
-                start_date: formatDate(overlapping.start_date),
-                end_date: formatDate(overlapping.end_date),
-            });
+            setPlanToReplace(overlapModalDisplayFromInstance(overlapping));
             setPendingPlanData(planData);
             setIsOverlapModalOpen(true);
             return;
@@ -317,11 +315,7 @@ export const CreateTrainingPlan: React.FC = () => {
                 null
             );
         if (!overlapping) return false;
-        setPlanToReplace({
-            name: overlapping.name,
-            start_date: formatDate(overlapping.start_date),
-            end_date: formatDate(overlapping.end_date),
-        });
+        setPlanToReplace(overlapModalDisplayFromInstance(overlapping));
         setPendingPlanData(planData);
         setIsOverlapModalOpen(true);
         return true;
@@ -662,6 +656,7 @@ export const CreateTrainingPlan: React.FC = () => {
                 planStartDate={planToReplace?.start_date || ""}
                 planEndDate={planToReplace?.end_date || ""}
                 isLoading={isCreating}
+                conflictPhase={planToReplace?.conflictPhase ?? "current"}
             />
         </div>
     );

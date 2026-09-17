@@ -25,6 +25,8 @@ import {
     mapTrainingPlanToEditorDraft,
     validateTrainingPlanEditorDraft,
     findOverlappingTrainingPlanInstance,
+    overlapModalDisplayFromInstance,
+    type OverlapModalPlanDisplay,
     buildTrainingPlanCreatePayload,
     buildTrainingPlanUpdatePayload,
     mapClientProfileObjectiveToPlanGoal,
@@ -53,33 +55,13 @@ export interface UseTrainingPlanEditorResult {
     isSubmitting: boolean;
     isSubmitDisabled: boolean;
     isOverlapModalOpen: boolean;
-    overlappingPlan: { name: string; start_date: string; end_date: string } | null;
+    overlappingPlan: OverlapModalPlanDisplay | null;
     handleConfirmOverlap: () => void;
     handleCancelOverlap: () => void;
     handleCancelNavigation: () => void;
     pendingPayload: ReturnType<typeof buildTrainingPlanCreatePayload> | null;
     /** Solo modo edición: fallo al cargar el plan (RTK `isError`). */
     isPlanLoadError: boolean;
-}
-
-function overlapModalShape(inst: TrainingPlanInstanceOverlapRow): {
-    name: string;
-    start_date: string;
-    end_date: string;
-} {
-    const d = (s: string | null | undefined) =>
-        s
-            ? new Date(s).toLocaleDateString("es-ES", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-              })
-            : "—";
-    return {
-        name: inst.name,
-        start_date: d(inst.start_date),
-        end_date: d(inst.end_date),
-    };
 }
 
 export function useTrainingPlanEditor(
@@ -94,11 +76,9 @@ export function useTrainingPlanEditor(
     );
     const [formErrors, setFormErrors] = useState<TrainingPlanEditorValidationErrors>({});
     const [isOverlapModalOpen, setIsOverlapModalOpen] = useState(false);
-    const [overlappingPlan, setOverlappingPlan] = useState<{
-        name: string;
-        start_date: string;
-        end_date: string;
-    } | null>(null);
+    const [overlappingPlan, setOverlappingPlan] = useState<OverlapModalPlanDisplay | null>(
+        null
+    );
     const [pendingCreatePayload, setPendingCreatePayload] = useState<ReturnType<
         typeof buildTrainingPlanCreatePayload
     > | null>(null);
@@ -167,7 +147,7 @@ export function useTrainingPlanEditor(
 
     const openOverlapModalForInstance = useCallback(
         (inst: TrainingPlanInstanceOverlapRow, payload: TrainingPlanCreate | null) => {
-            setOverlappingPlan(overlapModalShape(inst));
+            setOverlappingPlan(overlapModalDisplayFromInstance(inst));
             if (payload) setPendingCreatePayload(payload);
             setIsOverlapModalOpen(true);
         },
@@ -252,7 +232,7 @@ export function useTrainingPlanEditor(
                 );
                 const overlapping = runOverlapCheck(draft);
                 if (overlapping) {
-                    setOverlappingPlan(overlapModalShape(overlapping));
+                    setOverlappingPlan(overlapModalDisplayFromInstance(overlapping));
                     setPendingCreatePayload(payload);
                     setIsOverlapModalOpen(true);
                     return;

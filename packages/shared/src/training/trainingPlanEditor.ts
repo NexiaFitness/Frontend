@@ -136,6 +136,55 @@ export function planDateRangesOverlap(
  * Primera instancia competidora que solapa con [rangeStart, rangeEnd].
  * Excluye filas cuyo `source_plan_id` coincide con `excludeSourcePlanId` (modo edit).
  */
+/** Si la instancia conflictiva cubre hoy vs es solo futura (inicio después de hoy). */
+export type OverlapConflictPhase = "current" | "future";
+
+export function classifyOverlapConflictPhase(
+    instanceStartDate: string,
+    _instanceEndDate: string,
+    referenceDate?: string
+): OverlapConflictPhase {
+    const today = (referenceDate ?? new Date().toISOString()).slice(0, 10);
+    const start = instanceStartDate.slice(0, 10);
+    if (today < start) return "future";
+    return "current";
+}
+
+export type OverlapModalPlanDisplay = {
+    name: string;
+    start_date: string;
+    end_date: string;
+    conflictPhase: OverlapConflictPhase;
+};
+
+export function overlapModalDisplayFromInstance(
+    inst: {
+        name: string;
+        start_date?: string | null;
+        end_date?: string | null;
+    },
+    referenceDate?: string
+): OverlapModalPlanDisplay {
+    const format = (s: string | null | undefined) =>
+        s
+            ? new Date(s).toLocaleDateString("es-ES", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+              })
+            : "—";
+    const startIso = inst.start_date?.slice(0, 10) ?? "";
+    const endIso = inst.end_date?.slice(0, 10) ?? "";
+    return {
+        name: inst.name,
+        start_date: format(inst.start_date),
+        end_date: format(inst.end_date),
+        conflictPhase: startIso
+            ? classifyOverlapConflictPhase(startIso, endIso, referenceDate)
+            : "current",
+    };
+}
+
 export function findOverlappingTrainingPlanInstance(
     instances: TrainingPlanInstanceOverlapRow[],
     rangeStart: string,

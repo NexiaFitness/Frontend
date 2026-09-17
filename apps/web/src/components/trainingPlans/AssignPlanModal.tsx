@@ -23,12 +23,17 @@ import { useAssignTemplate } from "@nexia/shared/hooks/training/useAssignTemplat
 import {
     findOverlappingTrainingPlanInstance,
     getMutationErrorMessage,
+    overlapModalDisplayFromInstance,
     parseAssignmentOverlapApiDetail,
+    type OverlapModalPlanDisplay,
 } from "@nexia/shared";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useGetTrainingPlanInstancesQuery } from "@nexia/shared/api/trainingPlansApi";
-import type { AssignPlanToClientParams } from "@nexia/shared/types/training";
+import type {
+    AssignPlanToClientParams,
+    TrainingPlanInstance,
+} from "@nexia/shared/types/training";
 import type { SelectOption } from "@/components/ui/forms";
 
 interface AssignPlanModalProps {
@@ -36,7 +41,7 @@ interface AssignPlanModalProps {
     onClose: () => void;
     planId: number | null;
     planName?: string;
-    onSuccess?: () => void;
+    onSuccess?: (instance: TrainingPlanInstance) => void;
 }
 
 export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
@@ -71,11 +76,9 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isOverlapModalOpen, setIsOverlapModalOpen] = useState(false);
-    const [overlappingPlan, setOverlappingPlan] = useState<{
-        name: string;
-        start_date: string;
-        end_date: string;
-    } | null>(null);
+    const [overlappingPlan, setOverlappingPlan] = useState<OverlapModalPlanDisplay | null>(
+        null
+    );
     const [pendingAssign, setPendingAssign] = useState<AssignPlanToClientParams | null>(null);
 
     const resolvedClientId = useMemo(() => {
@@ -119,20 +122,11 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    const formatOverlapDate = (s: string | null | undefined) =>
-        s
-            ? new Date(s).toLocaleDateString("es-ES", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-              })
-            : "—";
-
     const performAssign = useCallback(
         async (params: AssignPlanToClientParams) => {
             try {
-                await assignPlan(params);
-                if (onSuccess) onSuccess();
+                const instance = await assignPlan(params);
+                if (onSuccess) onSuccess(instance);
                 else onClose();
             } catch (err) {
                 const overlapDetail = parseAssignmentOverlapApiDetail(err);
@@ -150,11 +144,7 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
                     );
                     const row = fromList ?? fallback;
                     if (row) {
-                        setOverlappingPlan({
-                            name: row.name,
-                            start_date: formatOverlapDate(row.start_date),
-                            end_date: formatOverlapDate(row.end_date),
-                        });
+                        setOverlappingPlan(overlapModalDisplayFromInstance(row));
                         setPendingAssign(params);
                         setIsOverlapModalOpen(true);
                         return;
@@ -185,11 +175,7 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
             null,
         );
         if (overlapping) {
-            setOverlappingPlan({
-                name: overlapping.name,
-                start_date: formatOverlapDate(overlapping.start_date),
-                end_date: formatOverlapDate(overlapping.end_date),
-            });
+            setOverlappingPlan(overlapModalDisplayFromInstance(overlapping));
             setPendingAssign(params);
             setIsOverlapModalOpen(true);
             return;
@@ -361,6 +347,7 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
                 planEndDate={overlappingPlan?.end_date ?? ""}
                 isLoading={isAssigning}
                 variant="create"
+                conflictPhase={overlappingPlan?.conflictPhase ?? "current"}
             />
         </>
     );

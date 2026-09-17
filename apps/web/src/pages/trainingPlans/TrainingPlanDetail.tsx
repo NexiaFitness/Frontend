@@ -14,6 +14,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
+import type { TrainingPlanInstance } from "@nexia/shared/types/training";
+import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import { resolveTrainingPlanDetailRedirect } from "@/lib/trainingPlanNavigation";
@@ -42,10 +44,25 @@ export const TrainingPlanDetail: React.FC = () => {
         navigate(redirectTarget, { replace: true });
     }, [redirectTarget, navigate]);
 
-    const handleAssignSuccess = useCallback(() => {
-        setAssignModalOpen(false);
-        refetch();
-    }, [refetch]);
+    const handleAssignSuccess = useCallback(
+        (instance: TrainingPlanInstance) => {
+            setAssignModalOpen(false);
+            const clientId = instance.client_id;
+            const assignedPlanId = instance.source_plan_id;
+            if (clientId && assignedPlanId) {
+                navigate(
+                    buildClientTabPath(clientId, {
+                        tab: "planning",
+                        planId: assignedPlanId,
+                    }),
+                    { replace: true }
+                );
+                return;
+            }
+            refetch();
+        },
+        [navigate, refetch]
+    );
 
     if (!id || isNaN(planId)) {
         return (

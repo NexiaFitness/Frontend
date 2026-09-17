@@ -17,7 +17,9 @@ import { useAssignTemplate } from "@nexia/shared/hooks/training/useAssignTemplat
 import {
     findOverlappingTrainingPlanInstance,
     getMutationErrorMessage,
+    overlapModalDisplayFromInstance,
     parseAssignmentOverlapApiDetail,
+    type OverlapModalPlanDisplay,
 } from "@nexia/shared";
 import { useGetTrainingPlanInstancesQuery } from "@nexia/shared/api/trainingPlansApi";
 import type { AssignTemplateToClientParams } from "@nexia/shared/types/training";
@@ -87,11 +89,9 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
     const [previewError, setPreviewError] = useState<string | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isOverlapModalOpen, setIsOverlapModalOpen] = useState(false);
-    const [overlappingPlan, setOverlappingPlan] = useState<{
-        name: string;
-        start_date: string;
-        end_date: string;
-    } | null>(null);
+    const [overlappingPlan, setOverlappingPlan] = useState<OverlapModalPlanDisplay | null>(
+        null
+    );
     const [pendingAssign, setPendingAssign] =
         useState<AssignTemplateToClientParams | null>(null);
 
@@ -181,15 +181,6 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
         return Object.keys(newErrors).length === 0;
     };
 
-    const formatOverlapDate = (s: string | null | undefined) =>
-        s
-            ? new Date(s).toLocaleDateString("es-ES", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-              })
-            : "—";
-
     const performAssign = useCallback(
         async (params: AssignTemplateToClientParams) => {
             try {
@@ -220,11 +211,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                             : undefined;
                     const row = fromList ?? fallback;
                     if (row) {
-                        setOverlappingPlan({
-                            name: row.name,
-                            start_date: formatOverlapDate(row.start_date),
-                            end_date: formatOverlapDate(row.end_date),
-                        });
+                        setOverlappingPlan(overlapModalDisplayFromInstance(row));
                         setPendingAssign(params);
                         setIsOverlapModalOpen(true);
                         return;
@@ -262,11 +249,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
             null,
         );
         if (overlapping) {
-            setOverlappingPlan({
-                name: overlapping.name,
-                start_date: formatOverlapDate(overlapping.start_date),
-                end_date: formatOverlapDate(overlapping.end_date),
-            });
+            setOverlappingPlan(overlapModalDisplayFromInstance(overlapping));
             setPendingAssign(params);
             setIsOverlapModalOpen(true);
             return;
@@ -475,6 +458,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                 planEndDate={overlappingPlan?.end_date ?? ""}
                 isLoading={isAssigning}
                 variant="create"
+                conflictPhase={overlappingPlan?.conflictPhase ?? "current"}
             />
         </>
     );
