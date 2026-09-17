@@ -28,6 +28,8 @@ import {
     buildTrainingPlanCreatePayload,
     buildTrainingPlanUpdatePayload,
     mapClientProfileObjectiveToPlanGoal,
+    parseAssignmentOverlapApiDetail,
+    type TrainingPlanCreate,
     type TrainingPlanEditorDraft,
     type TrainingPlanEditorValidationErrors,
     type TrainingPlanInstanceOverlapRow,
@@ -163,8 +165,17 @@ export function useTrainingPlanEditor(
         [existingInstances, instancesClientId, excludeSourcePlanId]
     );
 
+    const openOverlapModalForInstance = useCallback(
+        (inst: TrainingPlanInstanceOverlapRow, payload: TrainingPlanCreate | null) => {
+            setOverlappingPlan(overlapModalShape(inst));
+            if (payload) setPendingCreatePayload(payload);
+            setIsOverlapModalOpen(true);
+        },
+        []
+    );
+
     const performCreate = useCallback(
-        async (payload: ReturnType<typeof buildTrainingPlanCreatePayload>) => {
+        async (payload: TrainingPlanCreate) => {
             try {
                 const result = await createPlan(payload).unwrap();
                 showSuccess("Plan creado exitosamente", 2000);
@@ -179,11 +190,34 @@ export function useTrainingPlanEditor(
                     }
                 }, 800);
             } catch (err) {
+                const overlapDetail = parseAssignmentOverlapApiDetail(err);
+                if (overlapDetail && !payload.confirm_assignment_overlap) {
+                    const firstId = overlapDetail.overlapping_instances[0]?.instance_id;
+                    const fromList =
+                        firstId != null
+                            ? existingInstances.find((i) => i.id === firstId)
+                            : undefined;
+                    const fallback = runOverlapCheck(draft);
+                    const row = fromList ?? fallback;
+                    if (row) {
+                        openOverlapModalForInstance(row, payload);
+                        return;
+                    }
+                }
                 console.error("Error creando plan:", err);
                 showError(getMutationErrorMessage(err));
             }
         },
-        [createPlan, navigate, showError, showSuccess]
+        [
+            createPlan,
+            draft,
+            existingInstances,
+            navigate,
+            openOverlapModalForInstance,
+            runOverlapCheck,
+            showError,
+            showSuccess,
+        ]
     );
 
     const performUpdate = useCallback(async () => {
@@ -227,12 +261,6 @@ export function useTrainingPlanEditor(
                 return;
             }
 
-            const overlapping = runOverlapCheck(draft);
-            if (overlapping) {
-                setOverlappingPlan(overlapModalShape(overlapping));
-                setIsOverlapModalOpen(true);
-                return;
-            }
             void performUpdate();
         },
         [
@@ -248,7 +276,10 @@ export function useTrainingPlanEditor(
     const handleConfirmOverlap = useCallback(() => {
         setIsOverlapModalOpen(false);
         if (mode.kind === "create" && pendingCreatePayload) {
-            void performCreate(pendingCreatePayload);
+            void performCreate({
+                ...pendingCreatePayload,
+                confirm_assignment_overlap: true,
+            });
             setPendingCreatePayload(null);
         } else if (mode.kind === "edit") {
             void performUpdate();

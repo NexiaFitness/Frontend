@@ -2,7 +2,7 @@
  * TrainingPlanEdit.tsx — Edición de plan (editor unificado con creación).
  *
  * Contexto: `TrainingPlanEditorForm` + `useTrainingPlanEditor` en modo edit;
- * solape de fechas con otros planes del mismo cliente y confirmación en modal.
+ * Validación de formulario; el PUT no aplica reglas de solape de instancias (solo documento).
  *
  * @author Frontend Team
  * @since v5.0.0
@@ -15,7 +15,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { Button } from "@/components/ui/buttons";
-import { PlanOverlapModal } from "@/components/trainingPlans/modals";
 import { TrainingPlanEditorForm } from "@/components/trainingPlans/editor/TrainingPlanEditorForm";
 import { useTrainingPlanEditor } from "@/hooks/trainingPlans/useTrainingPlanEditor";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
@@ -130,16 +129,6 @@ export const TrainingPlanEdit: React.FC = () => {
                 onCancel={() => navigate(detailPath)}
             />
 
-            <PlanOverlapModal
-                variant="edit"
-                isOpen={editor.isOverlapModalOpen}
-                onClose={editor.handleCancelOverlap}
-                onConfirm={editor.handleConfirmOverlap}
-                planName={editor.overlappingPlan?.name || ""}
-                planStartDate={editor.overlappingPlan?.start_date || ""}
-                planEndDate={editor.overlappingPlan?.end_date || ""}
-                isLoading={editor.isSubmitting}
-            />
         </>
     );
 };

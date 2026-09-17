@@ -503,13 +503,22 @@ export const trainingPlansApi = baseApi.injectEndpoints({
             TemplateAssignOut,
             AssignTemplateToClientParams
         >({
-            query: ({ template_id, client_id, start_date, name }) => ({
+            query: ({
+                template_id,
+                client_id,
+                start_date,
+                name,
+                confirm_assignment_overlap,
+            }) => ({
                 url: `/training-plans/templates/${template_id}/assign`,
                 method: "POST",
                 body: {
                     client_id,
                     start_date,
                     ...(name ? { name } : {}),
+                    ...(confirm_assignment_overlap
+                        ? { confirm_assignment_overlap: true }
+                        : {}),
                 },
             }),
             invalidatesTags: (result, error, args) => [
@@ -640,13 +649,24 @@ export const trainingPlansApi = baseApi.injectEndpoints({
             TrainingPlanInstance,
             AssignPlanToClientParams
         >({
-            query: ({ plan_id, client_id, trainer_id, start_date, end_date, name }) => {
+            query: ({
+                plan_id,
+                client_id,
+                trainer_id,
+                start_date,
+                end_date,
+                name,
+                confirm_assignment_overlap,
+            }) => {
                 const params = new URLSearchParams();
                 params.append("client_id", client_id.toString());
                 params.append("trainer_id", trainer_id.toString());
                 params.append("start_date", start_date);
                 params.append("end_date", end_date);
                 if (name) params.append("name", name);
+                if (confirm_assignment_overlap) {
+                    params.append("confirm_assignment_overlap", "true");
+                }
 
                 return {
                     url: `/training-plans/${plan_id}/assign?${params.toString()}`,

@@ -3,7 +3,7 @@
  *
  * Contexto:
  * - lifecycle_status viene del backend en listados por client_id.
- * - operational = único plan operativo del cliente (instancia active).
+ * - operational = CURRENT (instancia comprometida que cubre hoy).
  *
  * @author Frontend Team
  * @since v6.4.0
@@ -46,7 +46,7 @@ export const TRAINING_PLAN_STATUS_BADGE_CLASS: Record<string, string> = {
 };
 
 const LIFECYCLE_BADGES: Record<string, TrainingPlanDisplayBadge> = {
-    operational: { key: "operational", label: "Activo" },
+    operational: { key: "operational", label: "Vigente" },
     future: { key: "future", label: "Futuro" },
     past: { key: "past", label: "Completado" },
     completed: { key: "completed", label: "Completado" },

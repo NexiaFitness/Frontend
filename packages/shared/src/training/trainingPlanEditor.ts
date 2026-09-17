@@ -39,6 +39,8 @@ export interface TrainingPlanInstanceOverlapRow {
     start_date?: string | null;
     end_date?: string | null;
     source_plan_id?: number | null;
+    status?: string;
+    is_active?: boolean;
 }
 
 export function createEmptyTrainingPlanEditorDraft(
@@ -141,6 +143,8 @@ export function findOverlappingTrainingPlanInstance(
     excludeSourcePlanId: number | null
 ): TrainingPlanInstanceOverlapRow | undefined {
     return instances.find((inst) => {
+        if (inst.status != null && inst.status !== "active") return false;
+        if (inst.is_active === false) return false;
         if (
             excludeSourcePlanId != null &&
             inst.source_plan_id != null &&
@@ -155,7 +159,8 @@ export function findOverlappingTrainingPlanInstance(
 export function buildTrainingPlanCreatePayload(
     trainerId: number,
     clientId: number | null,
-    draft: TrainingPlanEditorDraft
+    draft: TrainingPlanEditorDraft,
+    options?: { confirmAssignmentOverlap?: boolean }
 ): TrainingPlanCreate {
     const desc = draft.description.trim();
     return {
@@ -168,6 +173,9 @@ export function buildTrainingPlanCreatePayload(
         status: "active",
         description: desc.length > 0 ? desc : null,
         tags: parseTagsInput(draft.tagsInput),
+        ...(options?.confirmAssignmentOverlap
+            ? { confirm_assignment_overlap: true }
+            : {}),
     };
 }
 

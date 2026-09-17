@@ -142,8 +142,8 @@ describe("pickActiveTrainingPlanInstanceForToday", () => {
         expect(pickActiveTrainingPlanInstanceForToday(instances, 52, day)).toBeUndefined();
     });
 
-    it("si no cubre hoy, elige el futuro active más cercano", () => {
-        const day = new Date(2026, 3, 15); // 2026-04-15 local
+    it("si no cubre hoy, no elige futuro (sin fallback FUTURE)", () => {
+        const day = new Date(2026, 3, 15);
         const instances = [
             instance({
                 id: 10,
@@ -152,16 +152,8 @@ describe("pickActiveTrainingPlanInstanceForToday", () => {
                 start_date: "2026-05-01",
                 end_date: "2026-05-31",
             }),
-            instance({
-                id: 11,
-                client_id: 52,
-                status: "active",
-                start_date: "2026-06-01",
-                end_date: "2026-06-30",
-            }),
         ];
-        const picked = pickActiveTrainingPlanInstanceForToday(instances, 52, day);
-        expect(picked?.id).toBe(10);
+        expect(pickActiveTrainingPlanInstanceForToday(instances, 52, day)).toBeUndefined();
     });
 
     it("usa fecha local para validación de rango", () => {

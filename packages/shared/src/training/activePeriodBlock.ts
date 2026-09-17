@@ -79,14 +79,8 @@ export function findActivePlanPeriodBlock(
 }
 
 /**
- * Elige la instancia operativa para el cliente en la fecha dada:
- * Regla (spec): solo puede existir 1 instancia status="active" por cliente; puede ser futura.
- *
- * Prioridad:
- * 1) instancia "active" cuyo rango contiene referenceDate (si existe)
- * 2) si no existe, instancia "active" futura más cercana (start_date asc)
- *
- * Nota: en el caso 1) si hay varias por data inconsistente, se elige mayor id.
+ * CURRENT operativo para bloque activo: instancia comprometida que cubre referenceDate.
+ * Sin fallback a FUTURE (alineado con active-by-client y resolver BE).
  */
 export function pickActiveTrainingPlanInstanceForToday(
     instances: TrainingPlanInstance[],
@@ -101,26 +95,17 @@ export function pickActiveTrainingPlanInstanceForToday(
         (inst) =>
             inst.client_id === clientId &&
             inst.status === "active" &&
+            inst.is_active !== false &&
             isDateInClosedInterval(day, inst.start_date, inst.end_date)
     );
 
-    if (covering.length > 0) {
-        return covering.reduce((best, cur) => (cur.id > best.id ? cur : best));
-    }
+    if (covering.length === 0) return undefined;
 
-    // No coverage today: choose nearest future active instance (start_date asc, tie id asc)
-    const future = instances
-        .filter((inst) => inst.client_id === clientId && inst.status === "active")
-        .filter((inst) => {
-            const start = toDateOnlyString(inst.start_date);
-            return start !== "" && start > day;
-        })
-        .sort((a, b) => {
-            const sa = toDateOnlyString(a.start_date);
-            const sb = toDateOnlyString(b.start_date);
-            if (sa !== sb) return sa < sb ? -1 : 1;
-            return a.id - b.id;
-        });
-
-    return future[0];
+    return covering.reduce((best, cur) => {
+        const bs = toDateOnlyString(best.start_date);
+        const cs = toDateOnlyString(cur.start_date);
+        if (cs > bs) return cur;
+        if (cs < bs) return best;
+        return cur.id > best.id ? cur : best;
+    });
 }

@@ -196,20 +196,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     // Estado para el plan seleccionado (si se elige manualmente o se autoselecciona)
     const [selectedPlanId, setSelectedPlanId] = useState<number | null>(planId);
 
-    // Autoseleccionar plan si solo hay uno activo
-    // Usar source_plan_id para crear sesiones (training_plan_id espera el Plan ID, no Instance ID)
-    useEffect(() => {
-        if (!planId && clientPlans && clientPlans.length > 0) {
-            const activePlans = clientPlans.filter((p) => p.status === "active");
-            if (activePlans.length === 1) {
-                setSelectedPlanId(activePlans[0].source_plan_id ?? activePlans[0].id);
-            } else if (activePlans.length === 0 && clientPlans.length === 1) {
-                const plan = clientPlans[0];
-                setSelectedPlanId(plan.source_plan_id ?? plan.id);
-            }
-        }
-    }, [clientPlans, planId]);
-
     // Si viene planId, obtener clientId del plan y cargar el cliente del plan
     const effectiveClientId = planId && plan ? plan.client_id : resolvedClientId;
     const { data: planClient } = useGetClientQuery(effectiveClientId || 0, { 
@@ -240,6 +226,33 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         plannedVolume: "5",
         notes: "",
     });
+
+    const instancesCoveringSessionDate = useMemo(() => {
+        if (!formData.sessionDate || !clientPlans?.length) return [];
+        return clientPlans.filter(
+            (p) =>
+                p.status === "active" &&
+                p.is_active !== false &&
+                p.start_date <= formData.sessionDate &&
+                p.end_date >= formData.sessionDate,
+        );
+    }, [clientPlans, formData.sessionDate]);
+
+    useEffect(() => {
+        if (planId || !clientPlans?.length) return;
+        const covering = instancesCoveringSessionDate;
+        if (covering.length === 1) {
+            setSelectedPlanId(covering[0].source_plan_id ?? covering[0].id);
+            return;
+        }
+        const activePlans = clientPlans.filter((p) => p.status === "active");
+        if (activePlans.length === 1) {
+            setSelectedPlanId(activePlans[0].source_plan_id ?? activePlans[0].id);
+        } else if (activePlans.length === 0 && clientPlans.length === 1) {
+            const inst = clientPlans[0];
+            setSelectedPlanId(inst.source_plan_id ?? inst.id);
+        }
+    }, [clientPlans, planId, instancesCoveringSessionDate]);
 
     const [volumeIntensityTouched, setVolumeIntensityTouched] = useState(false);
 
@@ -321,15 +334,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const [formErrors, setFormErrors] = useState<CreateSessionFormErrors>({});
 
     // P2: Plan activo para la fecha seleccionada (ventana start_date..end_date contiene sessionDate)
-    const hasActivePlanForDate = useMemo(() => {
-        if (!formData.sessionDate || !clientPlans?.length) return false;
-        return clientPlans.some(
-            (p) =>
-                p.status === "active" &&
-                p.start_date <= formData.sessionDate &&
-                p.end_date >= formData.sessionDate
-        );
-    }, [clientPlans, formData.sessionDate]);
+    const hasActivePlanForDate = instancesCoveringSessionDate.length > 0;
 
     // P2: Usar StandaloneSession cuando no hay plan activo para la fecha (solo en contexto cliente sin planId)
     const useStandaloneSession = !planId && !!resolvedClientId && !isLoadingPlans && !hasActivePlanForDate;

@@ -2,8 +2,8 @@
  * PlanOverlapModal.tsx — Confirmación ante solape de fechas entre planificaciones
  *
  * Contexto:
- * - `variant="create"`: al crear, el backend puede archivar instancias activas que solapen
- *   y aplicar la regla de una instancia activa por cliente (sustitución).
+ * - `variant="create"`: al crear/asignar, el backend recorta `end_date` de instancias
+ *   comprometidas solapadas (documento TrainingPlan intacto) tras confirmación.
  * - `variant="edit"`: guardar solo actualiza este plan vía API; no replica la sustitución
  *   del flujo de creación. El aviso informa del solape sin afirmar que se archivará otra planificación.
  *
@@ -122,7 +122,7 @@ export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
                     >
                         {variant === "edit"
                             ? "Solape de fechas con otra planificación"
-                            : "Sustituir planificación activa"}
+                            : "Ajustar vigencia por solape de fechas"}
                     </h2>
                 </div>
 
@@ -159,8 +159,9 @@ export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
                             </>
                         ) : (
                             <>
-                                Al continuar, se archivará la planificación activa actual y se creará
-                                la nueva. ¿Desea continuar?
+                                Al continuar, la planificación en curso se acortará hasta el día
+                                anterior al inicio de la nueva (el contenido del plan no se borra).
+                                Las sesiones ya realizadas se conservan. ¿Desea continuar?
                             </>
                         )}
                     </p>

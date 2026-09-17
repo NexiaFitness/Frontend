@@ -26,7 +26,6 @@ import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useClientDetail } from "@nexia/shared/hooks/clients/useClientDetail";
-import { useGetActivePlanByClientQuery } from "@nexia/shared/api/trainingPlansApi";
 import { TabsBar } from "@/components/ui/tabs";
 // Tabs components - estáticos (carga inmediata)
 import { ClientHeader } from "@/components/clients/detail/ClientHeader";
@@ -37,7 +36,6 @@ import { ClientSessionsTab } from "@/components/clients/detail/ClientSessionsTab
 import { ClientInjuriesTab } from "@/components/clients/detail/ClientInjuriesTab/ClientInjuriesTab";
 import { ClientPlanningTab } from "@/components/clients/detail/ClientPlanningTab";
 import { isBlockAuthoringActive, parseBlockAuthorParams } from "@/utils/blockAuthoringUrl";
-import { resetPlanningSubJourneyParams } from "@/utils/planningHubUrl";
 import { SelectTemplateModal } from "@/components/clients/detail/modals/SelectTemplateModal";
 import { PlanificarClientChoiceModal } from "@/components/clients/detail/modals/PlanificarClientChoiceModal";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
@@ -142,12 +140,6 @@ export const ClientDetail: React.FC = () => {
 
     const { saveQuickNote, isSavingQuickNote } = useClientQuickNote(client, clientId);
 
-    // Planificar: CTAs en Resumen / tab Planificación (hub), no en header global
-    const { data: activePlan } = useGetActivePlanByClientQuery(clientId, {
-        skip: !clientId || clientId <= 0,
-    });
-    const hasActivePlan = activePlan != null && activePlan.id != null;
-
     const location = useLocation();
 
     const [planificarChoiceOpen, setPlanificarChoiceOpen] = useState(false);
@@ -157,15 +149,8 @@ export const ClientDetail: React.FC = () => {
     const [selectedTemplateName, setSelectedTemplateName] = useState<string>("");
 
     const handlePlanificar = useCallback(() => {
-        if (hasActivePlan) {
-            setSearchParams(
-                (prev) => resetPlanningSubJourneyParams(prev),
-                { replace: true },
-            );
-        } else {
-            setPlanificarChoiceOpen(true);
-        }
-    }, [hasActivePlan, setSearchParams]);
+        setPlanificarChoiceOpen(true);
+    }, []);
 
     const handleOpenUseTemplate = useCallback(() => {
         setSelectTemplateModalOpen(true);

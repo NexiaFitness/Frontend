@@ -106,6 +106,8 @@ export interface TrainingPlanCreate {
     goal: string;
     status?: string; // Default: "active"
     tags?: string[] | null;
+    /** Confirma recorte de instancias comprometidas solapadas (409 si false y hay solape). */
+    confirm_assignment_overlap?: boolean;
 }
 
 /**
@@ -625,6 +627,7 @@ export interface TrainingPlanInstanceCreate {
     goal: string;
     status?: string;
     customizations?: Record<string, any> | null;
+    confirm_assignment_overlap?: boolean;
 }
 
 /**
@@ -653,6 +656,7 @@ export interface AssignTemplateToClientParams {
     client_id: number;
     start_date: string; // ISO date YYYY-MM-DD
     name?: string; // Optional custom name
+    confirm_assignment_overlap?: boolean;
 }
 
 /**
@@ -666,6 +670,7 @@ export interface AssignPlanToClientParams {
     start_date: string; // ISO date YYYY-MM-DD
     end_date: string; // ISO date YYYY-MM-DD
     name?: string; // Optional custom name
+    confirm_assignment_overlap?: boolean;
 }
 
 /**

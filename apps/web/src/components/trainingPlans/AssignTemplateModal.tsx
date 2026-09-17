@@ -4,16 +4,23 @@
  * PR6: end_date solo desde assign-preview (BE autoridad). Sin cálculo en TS.
  */
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormCombobox, FormField } from "@/components/ui/forms";
 import { PLATFORM_FORM_FOOTER_BTN } from "@/components/ui/forms/platformFormPresentation";
+import { PlanOverlapModal } from "@/components/trainingPlans/modals";
 
 const FORM_VARIANT = "premium" as const;
 import { Alert, useToast } from "@/components/ui/feedback";
 import { useAssignTemplate } from "@nexia/shared/hooks/training/useAssignTemplate";
-import { getMutationErrorMessage } from "@nexia/shared";
+import {
+    findOverlappingTrainingPlanInstance,
+    getMutationErrorMessage,
+    parseAssignmentOverlapApiDetail,
+} from "@nexia/shared";
+import { useGetTrainingPlanInstancesQuery } from "@nexia/shared/api/trainingPlansApi";
+import type { AssignTemplateToClientParams } from "@nexia/shared/types/training";
 import {
     formatTemplateAssignEndDate,
     TEMPLATE_ASSIGN_MODAL_COPY,
@@ -79,12 +86,27 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
     const [preview, setPreview] = useState<TemplateAssignPreviewOut | null>(null);
     const [previewError, setPreviewError] = useState<string | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [isOverlapModalOpen, setIsOverlapModalOpen] = useState(false);
+    const [overlappingPlan, setOverlappingPlan] = useState<{
+        name: string;
+        start_date: string;
+        end_date: string;
+    } | null>(null);
+    const [pendingAssign, setPendingAssign] =
+        useState<AssignTemplateToClientParams | null>(null);
 
     const resolvedClientId = useMemo(() => {
         if (fixedClientId != null) return fixedClientId;
         const parsed = Number(formData.client_id);
         return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
     }, [fixedClientId, formData.client_id]);
+
+    const { data: existingInstances = [] } = useGetTrainingPlanInstancesQuery(
+        { clientId: resolvedClientId ?? 0, trainerId: trainerId ?? 0 },
+        {
+            skip: !open || !resolvedClientId || !trainerId,
+        },
+    );
 
     useEffect(() => {
         if (open) {
@@ -159,27 +181,116 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
         return Object.keys(newErrors).length === 0;
     };
 
+    const formatOverlapDate = (s: string | null | undefined) =>
+        s
+            ? new Date(s).toLocaleDateString("es-ES", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+              })
+            : "—";
+
+    const performAssign = useCallback(
+        async (params: AssignTemplateToClientParams) => {
+            try {
+                await assignTemplate(params);
+
+                if (onSuccess) {
+                    onSuccess();
+                } else {
+                    onClose();
+                }
+            } catch (err) {
+                const overlapDetail = parseAssignmentOverlapApiDetail(err);
+                if (overlapDetail && !params.confirm_assignment_overlap) {
+                    const firstId =
+                        overlapDetail.overlapping_instances[0]?.instance_id;
+                    const fromList =
+                        firstId != null
+                            ? existingInstances.find((i) => i.id === firstId)
+                            : undefined;
+                    const fallback =
+                        preview?.end_date != null
+                            ? findOverlappingTrainingPlanInstance(
+                                  existingInstances,
+                                  params.start_date,
+                                  preview.end_date,
+                                  null,
+                              )
+                            : undefined;
+                    const row = fromList ?? fallback;
+                    if (row) {
+                        setOverlappingPlan({
+                            name: row.name,
+                            start_date: formatOverlapDate(row.start_date),
+                            end_date: formatOverlapDate(row.end_date),
+                        });
+                        setPendingAssign(params);
+                        setIsOverlapModalOpen(true);
+                        return;
+                    }
+                }
+                showError(getMutationErrorMessage(err));
+            }
+        },
+        [
+            assignTemplate,
+            existingInstances,
+            onClose,
+            onSuccess,
+            preview?.end_date,
+            showError,
+        ],
+    );
+
     const handleSubmit = async () => {
         if (!validate() || !templateId || !preview?.end_date || !resolvedClientId) {
             return;
         }
 
-        try {
-            await assignTemplate({
-                template_id: templateId,
-                client_id: resolvedClientId,
-                start_date: formData.start_date,
-                name: formData.name || undefined,
-            });
+        const params: AssignTemplateToClientParams = {
+            template_id: templateId,
+            client_id: resolvedClientId,
+            start_date: formData.start_date,
+            name: formData.name || undefined,
+        };
 
-            if (onSuccess) {
-                onSuccess();
-            } else {
-                onClose();
-            }
-        } catch (err) {
-            showError(getMutationErrorMessage(err));
+        const overlapping = findOverlappingTrainingPlanInstance(
+            existingInstances,
+            formData.start_date,
+            preview.end_date,
+            null,
+        );
+        if (overlapping) {
+            setOverlappingPlan({
+                name: overlapping.name,
+                start_date: formatOverlapDate(overlapping.start_date),
+                end_date: formatOverlapDate(overlapping.end_date),
+            });
+            setPendingAssign(params);
+            setIsOverlapModalOpen(true);
+            return;
         }
+
+        await performAssign(params);
+    };
+
+    const handleConfirmOverlap = () => {
+        setIsOverlapModalOpen(false);
+        if (pendingAssign) {
+            void performAssign({
+                ...pendingAssign,
+                confirm_assignment_overlap: true,
+            });
+            setPendingAssign(null);
+        }
+        setOverlappingPlan(null);
+    };
+
+    const handleCancelOverlap = () => {
+        setIsOverlapModalOpen(false);
+        setPendingAssign(null);
+        setOverlappingPlan(null);
     };
 
     const clientOptions: SelectOption[] = clients.map((client) => ({
@@ -190,6 +301,17 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
     const today = new Date().toISOString().split("T")[0];
 
     return (
+        <>
+        <PlanOverlapModal
+            isOpen={isOverlapModalOpen}
+            onClose={handleCancelOverlap}
+            onConfirm={handleConfirmOverlap}
+            planName={overlappingPlan?.name ?? ""}
+            planStartDate={overlappingPlan?.start_date ?? ""}
+            planEndDate={overlappingPlan?.end_date ?? ""}
+            isLoading={isAssigning}
+            variant="create"
+        />
         <NexiaPremiumModal
             isOpen={open}
             onClose={onClose}
@@ -354,5 +476,6 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                 </div>
             </div>
         </NexiaPremiumModal>
+        </>
     );
 };

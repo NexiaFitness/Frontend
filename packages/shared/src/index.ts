@@ -158,6 +158,7 @@ export * from "./types/training";
 export * from "./types/notification";
 export * from "./training/trainingPlanEditor";
 export * from "./training/activePeriodBlock";
+export * from "./training/planAssignmentResolve";
 export * from "./training/trainingPlanLifecycle";
 export * from "./training/weeklyVolumeTarget";
 export * from "./training/volumeIntensityContext";
