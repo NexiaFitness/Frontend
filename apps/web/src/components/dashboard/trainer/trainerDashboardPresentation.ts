@@ -40,6 +40,8 @@ export const TRAINER_DASHBOARD_COPY = {
     newAppointment: "Nueva cita",
     noAlerts: "No hay alertas en este momento",
     noSessionsToday: "No tienes sesiones programadas hoy.",
+    noTrainingSessionsToday: "No hay sesiones de entrenamiento hoy.",
+    viewAllSessions: "Ver todas las sesiones",
     noClients: "No tienes clientes aún",
     noActivity: "Sin actividad de clientes esta semana",
     statsError: "No se pudieron cargar las estadísticas. Intenta recargar la página.",
@@ -217,6 +219,7 @@ export const TRAINER_DASHBOARD_SEVERITY_BADGE: Record<string, string> = {
 };
 
 export const TRAINER_DASHBOARD_SESSION_STATUS_BADGE: Record<string, string> = {
+    planned: "rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary",
     scheduled: "rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary",
     confirmed: "rounded-full bg-success/10 px-2.5 py-0.5 text-[11px] font-semibold text-success",
     completed: "rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground",

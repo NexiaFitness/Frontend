@@ -1,15 +1,17 @@
 /**
- * TodaySessionsWidget — Sesiones del día (dashboard premium).
+ * TodaySessionsWidget — Sesiones de entrenamiento del día (dashboard premium).
+ * QA-10 / G7: listado unificado GET /sessions (programa + suelta), no solo citas.
  */
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
-import { useGetScheduledSessionsQuery } from "@nexia/shared/api/schedulingApi";
+import { useGetSessionsQuery } from "@nexia/shared/api/sessionsApi";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
-import type { ScheduledSession, SessionStatus } from "@nexia/shared/types/scheduling";
+import type { SessionOut } from "@nexia/shared/types/sessions";
+import { formatLocalDateOnly } from "@nexia/shared/training/activePeriodBlock";
 import { ArrowUpRight } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/buttons";
@@ -34,21 +36,31 @@ import {
     TRAINER_DASHBOARD_WIDGET_TITLE_ROW,
 } from "@/components/dashboard/trainer/trainerDashboardPresentation";
 
-const SESSION_STATUS_LABEL: Record<SessionStatus, string> = {
-    scheduled: "Planificada",
-    confirmed: "Confirmada",
+const SESSION_STATUS_LABEL: Record<string, string> = {
+    planned: "Planificada",
     completed: "Completada",
     cancelled: "Cancelada",
 };
 
-const SESSION_TYPE_LABEL: Record<string, string> = {
-    training: "Entrenamiento",
-    consultation: "Consulta",
-    assessment: "Evaluación",
+const SESSION_KIND_LABEL: Record<string, string> = {
+    training: "Programa",
+    standalone: "Sesión libre",
 };
 
-function formatTime(_isoDate: string, startTime: string): string {
-    return startTime.slice(0, 5);
+function formatSessionTime(session: SessionOut): string {
+    if (session.session_time) {
+        return session.session_time.slice(0, 5);
+    }
+    if (session.planned_duration) {
+        return `${session.planned_duration} min`;
+    }
+    return "—";
+}
+
+function getTrainingSessionDetailUrl(s: SessionOut): string {
+    return s.session_kind === "training"
+        ? `/dashboard/session-programming/sessions/${s.id}`
+        : `/dashboard/standalone-sessions/${s.id}`;
 }
 
 export const TodaySessionsWidget: React.FC = () => {
@@ -58,13 +70,15 @@ export const TodaySessionsWidget: React.FC = () => {
         skip: !isAuthenticated,
     });
 
-    const today = new Date().toISOString().slice(0, 10);
-    const { data: sessions = [], isLoading } = useGetScheduledSessionsQuery(
+    const today = formatLocalDateOnly(new Date());
+    const { data: sessionsResponse, isLoading } = useGetSessionsQuery(
         {
-            trainer_id: trainerProfile?.id ?? 0,
-            start_date: today,
-            end_date: today,
-            limit: 10,
+            trainerId: trainerProfile?.id ?? 0,
+            dateFrom: today,
+            dateTo: today,
+            limit: 20,
+            orderBy: "session_date",
+            order: "asc",
         },
         { skip: !trainerProfile?.id },
     );
@@ -82,9 +96,10 @@ export const TodaySessionsWidget: React.FC = () => {
         return map;
     }, [clientsData]);
 
-    const getClientName = (clientId: number) => {
-        const c = clientMap.get(clientId);
-        return c ? `${c.nombre} ${c.apellidos}`.trim() : `Cliente #${clientId}`;
+    const getClientName = (session: SessionOut) => {
+        if (session.client_name?.trim()) return session.client_name.trim();
+        const c = clientMap.get(session.client_id);
+        return c ? `${c.nombre} ${c.apellidos}`.trim() : `Cliente #${session.client_id}`;
     };
 
     if (isLoading) {
@@ -96,7 +111,7 @@ export const TodaySessionsWidget: React.FC = () => {
         );
     }
 
-    const validSessions = (sessions as ScheduledSession[]).filter((s) => s.status !== "cancelled");
+    const validSessions = (sessionsResponse?.items ?? []).filter((s) => s.status !== "cancelled");
 
     return (
         <section className={TRAINER_DASHBOARD_WIDGET}>
@@ -110,14 +125,14 @@ export const TodaySessionsWidget: React.FC = () => {
 
             {validSessions.length === 0 ? (
                 <div className="py-6 text-center">
-                    <p className={TRAINER_DASHBOARD_EMPTY_TITLE}>{TRAINER_DASHBOARD_COPY.noSessionsToday}</p>
+                    <p className={TRAINER_DASHBOARD_EMPTY_TITLE}>{TRAINER_DASHBOARD_COPY.noTrainingSessionsToday}</p>
                     <Button
                         variant="primary"
                         size="sm"
                         className={TRAINER_DASHBOARD_PRIMARY_CTA}
-                        onClick={() => navigate("/dashboard/scheduling/new")}
+                        onClick={() => navigate("/dashboard/sessions")}
                     >
-                        {TRAINER_DASHBOARD_COPY.newAppointment}
+                        {TRAINER_DASHBOARD_COPY.viewAllSessions}
                     </Button>
                 </div>
             ) : (
@@ -127,13 +142,13 @@ export const TodaySessionsWidget: React.FC = () => {
                             const client = clientMap.get(session.client_id);
                             return (
                                 <button
-                                    key={session.id}
+                                    key={`${session.session_kind}-${session.id}`}
                                     type="button"
                                     className={TRAINER_DASHBOARD_LIST_ITEM}
-                                    onClick={() => navigate(`/dashboard/scheduling/${session.id}/edit`)}
+                                    onClick={() => navigate(getTrainingSessionDetailUrl(session))}
                                 >
                                     <span className={TRAINER_DASHBOARD_LIST_ITEM_TIME}>
-                                        {formatTime(session.scheduled_date, session.start_time)}
+                                        {formatSessionTime(session)}
                                     </span>
                                     <ClientAvatar
                                         clientId={session.client_id}
@@ -144,19 +159,21 @@ export const TodaySessionsWidget: React.FC = () => {
                                     />
                                     <div className="min-w-0 flex-1 text-left">
                                         <p className={TRAINER_DASHBOARD_LIST_ITEM_NAME}>
-                                            {getClientName(session.client_id)}
+                                            {getClientName(session)}
                                         </p>
                                         <span className={TRAINER_DASHBOARD_TYPE_CHIP}>
-                                            {SESSION_TYPE_LABEL[session.session_type] || session.session_type}
+                                            {SESSION_KIND_LABEL[session.session_kind] ?? session.session_type}
                                         </span>
                                     </div>
                                     <span
                                         className={cn(
                                             "shrink-0",
-                                            TRAINER_DASHBOARD_SESSION_STATUS_BADGE[session.status],
+                                            TRAINER_DASHBOARD_SESSION_STATUS_BADGE[
+                                                session.status as keyof typeof TRAINER_DASHBOARD_SESSION_STATUS_BADGE
+                                            ] ?? TRAINER_DASHBOARD_SESSION_STATUS_BADGE.planned,
                                         )}
                                     >
-                                        {SESSION_STATUS_LABEL[session.status]}
+                                        {SESSION_STATUS_LABEL[session.status] ?? session.status}
                                     </span>
                                 </button>
                             );
@@ -164,10 +181,10 @@ export const TodaySessionsWidget: React.FC = () => {
                     </div>
                     <button
                         type="button"
-                        onClick={() => navigate("/dashboard/scheduling")}
+                        onClick={() => navigate("/dashboard/sessions")}
                         className={cn(TRAINER_DASHBOARD_LINK, "mt-3")}
                     >
-                        {TRAINER_DASHBOARD_COPY.viewSchedule}
+                        {TRAINER_DASHBOARD_COPY.viewAllSessions}
                         <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
                     </button>
                 </>
