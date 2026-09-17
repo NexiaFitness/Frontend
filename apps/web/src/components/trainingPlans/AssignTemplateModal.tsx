@@ -302,16 +302,6 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
 
     return (
         <>
-        <PlanOverlapModal
-            isOpen={isOverlapModalOpen}
-            onClose={handleCancelOverlap}
-            onConfirm={handleConfirmOverlap}
-            planName={overlappingPlan?.name ?? ""}
-            planStartDate={overlappingPlan?.start_date ?? ""}
-            planEndDate={overlappingPlan?.end_date ?? ""}
-            isLoading={isAssigning}
-            variant="create"
-        />
         <NexiaPremiumModal
             isOpen={open}
             onClose={onClose}
@@ -476,6 +466,16 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                 </div>
             </div>
         </NexiaPremiumModal>
+            <PlanOverlapModal
+                isOpen={isOverlapModalOpen}
+                onClose={handleCancelOverlap}
+                onConfirm={handleConfirmOverlap}
+                planName={overlappingPlan?.name ?? ""}
+                planStartDate={overlappingPlan?.start_date ?? ""}
+                planEndDate={overlappingPlan?.end_date ?? ""}
+                isLoading={isAssigning}
+                variant="create"
+            />
         </>
     );
 };
