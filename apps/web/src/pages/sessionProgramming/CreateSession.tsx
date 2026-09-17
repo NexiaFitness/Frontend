@@ -32,8 +32,12 @@ import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormCombobox, Textarea, DatePickerButton } from "@/components/ui/forms";
-import { useGetClientQuery, useGetClientTrainingPlansQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
-import { useGetTrainingPlanQuery, useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
+import { useGetClientQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
+import {
+    useGetActivePlanByClientQuery,
+    useGetTrainingPlanQuery,
+    useGetTrainingPlanRecommendationsQuery,
+} from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useCreateTrainingSessionMutation } from "@nexia/shared/api/trainingSessionsApi";
 import {
@@ -46,7 +50,6 @@ import {
     useCreateSessionBlockExerciseMutation,
     useCreateSessionTemplateMutation,
 } from "@nexia/shared/api/sessionProgrammingApi";
-import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName, useDefaultSessionName } from "@nexia/shared";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
@@ -63,7 +66,6 @@ import {
 import { useConstructorValidation } from "@/hooks/useConstructorValidation";
 import { useScrollToConstructorValidationIssue } from "@/hooks/useScrollToConstructorValidationIssue";
 import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
-import { buildExercisePayloadFromLine } from "./buildExercisePayload";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import { getPersistLinePlannedSets } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
@@ -130,7 +132,10 @@ import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type {
     TrainingSessionCreate,
 } from "@nexia/shared/types/trainingSessions";
-import type { TrainingPlanInstance } from "@nexia/shared/types/training";
+import {
+    persistStandaloneSessionExercises,
+    persistTrainingSessionConstructorContent,
+} from "./persistCreateSessionContent";
 import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
 import type { LocationStateReturnTo } from "@nexia/shared";
 import { SESSION_TYPES } from "./sessionFormConstants";
@@ -177,20 +182,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const { data: client, isLoading: isLoadingClient } = useGetClientQuery(resolvedClientId || 0, { skip: !resolvedClientId });
     const { data: plan, isLoading: isLoadingPlan } = useGetTrainingPlanQuery(planId || 0, { skip: !planId });
 
-    // Si no viene planId pero sí resolvedClientId, buscar planes activos del cliente
-    const { data: clientPlans, isLoading: isLoadingPlans } = useGetClientTrainingPlansQuery(
-        { clientId: resolvedClientId || 0, skip: 0, limit: 100 },
-        { skip: !!planId || !resolvedClientId }
-    );
-
     // Clientes del trainer (para selector — siempre cargar cuando no hay contexto de cliente/plan)
     const { data: trainerClientsData } = useGetTrainerClientsQuery(
         { trainerId, page: 1, per_page: 50 },
         { skip: !trainerId }
-    );
-
-    useScrollDashboardWhenReady(
-        !isLoadingClient && !isLoadingPlan && !isLoadingPlans,
     );
 
     // Estado para el plan seleccionado (si se elige manualmente o se autoselecciona)
@@ -227,32 +222,38 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         notes: "",
     });
 
-    const instancesCoveringSessionDate = useMemo(() => {
-        if (!formData.sessionDate || !clientPlans?.length) return [];
-        return clientPlans.filter(
-            (p) =>
-                p.status === "active" &&
-                p.is_active !== false &&
-                p.start_date <= formData.sessionDate &&
-                p.end_date >= formData.sessionDate,
-        );
-    }, [clientPlans, formData.sessionDate]);
+    const skipPlanAssignment =
+        !effectiveClientId || effectiveClientId <= 0 || !!planId;
+
+    const {
+        data: planAssignmentForDate,
+        isLoading: isLoadingPlanAssignment,
+        isFetching: isFetchingPlanAssignment,
+    } = useGetActivePlanByClientQuery(
+        { clientId: effectiveClientId ?? 0, sessionDate: formData.sessionDate },
+        { skip: skipPlanAssignment },
+    );
+
+    useScrollDashboardWhenReady(
+        !isLoadingClient &&
+            !isLoadingPlan &&
+            !(skipPlanAssignment ? false : isLoadingPlanAssignment),
+    );
 
     useEffect(() => {
-        if (planId || !clientPlans?.length) return;
-        const covering = instancesCoveringSessionDate;
-        if (covering.length === 1) {
-            setSelectedPlanId(covering[0].source_plan_id ?? covering[0].id);
-            return;
+        if (planId || skipPlanAssignment) return;
+        if (planAssignmentForDate?.id) {
+            setSelectedPlanId(planAssignmentForDate.id);
+        } else if (!isLoadingPlanAssignment && !isFetchingPlanAssignment) {
+            setSelectedPlanId(null);
         }
-        const activePlans = clientPlans.filter((p) => p.status === "active");
-        if (activePlans.length === 1) {
-            setSelectedPlanId(activePlans[0].source_plan_id ?? activePlans[0].id);
-        } else if (activePlans.length === 0 && clientPlans.length === 1) {
-            const inst = clientPlans[0];
-            setSelectedPlanId(inst.source_plan_id ?? inst.id);
-        }
-    }, [clientPlans, planId, instancesCoveringSessionDate]);
+    }, [
+        planId,
+        skipPlanAssignment,
+        planAssignmentForDate?.id,
+        isLoadingPlanAssignment,
+        isFetchingPlanAssignment,
+    ]);
 
     const [volumeIntensityTouched, setVolumeIntensityTouched] = useState(false);
 
@@ -313,9 +314,9 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     ]);
 
     // Hook de mutación para crear sesión
-    const [createTrainingSession, { isLoading: isCreatingSession }] = useCreateTrainingSessionMutation();
-    const [createStandaloneSession, { isLoading: isCreatingStandalone }] = useCreateStandaloneSessionMutation();
-    const [createStandaloneExercise, { isLoading: isSavingStandaloneExercises }] = useCreateStandaloneSessionExerciseMutation();
+    const [createTrainingSession] = useCreateTrainingSessionMutation();
+    const [createStandaloneSession] = useCreateStandaloneSessionMutation();
+    const [createStandaloneExercise] = useCreateStandaloneSessionExerciseMutation();
 
     const volumeRecComplete =
         recommendationsData?.status === "complete"
@@ -333,11 +334,15 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
     const [formErrors, setFormErrors] = useState<CreateSessionFormErrors>({});
 
-    // P2: Plan activo para la fecha seleccionada (ventana start_date..end_date contiene sessionDate)
-    const hasActivePlanForDate = instancesCoveringSessionDate.length > 0;
+    // P2: Standalone cuando no hay instancia que cubra la fecha (resolver BE, sin fechas de documento)
+    const useStandaloneSession =
+        !planId &&
+        !!resolvedClientId &&
+        !skipPlanAssignment &&
+        !isLoadingPlanAssignment &&
+        !planAssignmentForDate;
 
-    // P2: Usar StandaloneSession cuando no hay plan activo para la fecha (solo en contexto cliente sin planId)
-    const useStandaloneSession = !planId && !!resolvedClientId && !isLoadingPlans && !hasActivePlanForDate;
+    const [isPersistingSubmit, setIsPersistingSubmit] = useState(false);
 
     const nameTouchedRef = useRef(false);
     const defaultSessionName = useDefaultSessionName({
@@ -507,9 +512,12 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
         const resolvedSessionName = formData.sessionName.trim() || defaultSessionName;
 
+        if (isPersistingSubmit) {
+            return;
+        }
+        setIsPersistingSubmit(true);
         try {
             if (useStandaloneSession) {
-                // P2: Crear StandaloneSession (sesión libre) — ejercicios aplanados del Constructor
                 const standaloneData = {
                     trainer_id: trainerId,
                     client_id: effectiveClientId,
@@ -529,7 +537,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         planned_sets: getPersistLinePlannedSets(r, line),
                         planned_reps: convertPlannedReps(line.exercise.plannedReps ?? ""),
                         planned_weight: line.exercise.plannedWeight,
-                        planned_assistance_kg: line.exercise.plannedAssistanceKg ?? null,
                         planned_rest: r.rest,
                         notes: line.exercise.notes,
                     }))
@@ -541,38 +548,28 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 }));
 
                 if (flatWithOrder.length > 0) {
-                    let savedCount = 0;
-                    for (const ex of flatWithOrder) {
-                        try {
-                            await createStandaloneExercise({
-                                sessionId: created.id,
-                                data: {
-                                    exercise_id: ex.exercise_id,
-                                    order_in_session: ex.order_in_session,
-                                    planned_sets: ex.planned_sets,
-                                    planned_reps: ex.planned_reps,
-                                    planned_weight: ex.planned_weight,
-                                    planned_rest: ex.planned_rest,
-                                    notes: ex.notes,
-                                },
-                            }).unwrap();
-                            savedCount++;
-                        } catch {
-                            // continuar
-                        }
+                    const persistResult = await persistStandaloneSessionExercises({
+                        sessionId: created.id,
+                        exercises: flatWithOrder,
+                        createStandaloneExercise,
+                    });
+                    if (!persistResult.ok) {
+                        showError(
+                            `${persistResult.message} Abre la sesión para completar el contenido.`,
+                            6000,
+                        );
+                        navigate(`/dashboard/standalone-sessions/${created.id}`);
+                        return;
                     }
                     showSuccess(
-                        savedCount === flatExercises.length
-                            ? `Sesión libre creada con ${savedCount} ejercicios.`
-                            : `Sesión libre creada. ${savedCount}/${flatExercises.length} ejercicios guardados.`,
-                        2000
+                        `Sesión libre creada con ${persistResult.savedCount} ejercicios.`,
+                        2000,
                     );
                 } else {
                     showSuccess(emptySessionCreatedToast(true), 2000);
                 }
                 setTimeout(() => navigate(redirectTo), 1500);
             } else {
-                // Fase 7: TrainingSession con bloques
                 const sessionData: TrainingSessionCreate = {
                     training_plan_id: selectedPlanId!,
                     client_id: effectiveClientId,
@@ -590,61 +587,26 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 const createdSession = await createTrainingSession(sessionData).unwrap();
 
                 if (constructorRows.length > 0) {
-                    let blocksSaved = 0;
-                    let exercisesSaved = 0;
-                    for (let i = 0; i < constructorRows.length; i++) {
-                        const row = constructorRows[i];
-                        if (!row.blockTypeId) continue;
-                        try {
-                            const blockPayload = {
-                                block_type_id: row.blockTypeId,
-                                order_in_session: i + 1,
-                                set_type: row.setType,
-                                rounds: getBlockRoundsFromConstructorRow(row),
-                                time_cap: row.timeCap,
-                                interval_seconds: row.intervalSeconds,
-                                objective_text:
-                                    row.setType === "for_time"
-                                        ? "Objetivo: menor tiempo"
-                                        : row.setType === "amrap"
-                                        ? "Objetivo: máximo rendimiento"
-                                        : null,
-                            };
-                            const createdBlock = await createSessionBlock({
-                                sessionId: createdSession.id,
-                                data: blockPayload,
-                            }).unwrap();
-
-                            const persistable = getConstructorPersistLines(row);
-                            for (let j = 0; j < persistable.length; j++) {
-                                const line = persistable[j];
-                                try {
-                                    const payload = buildExercisePayloadFromLine(row, line);
-                                    await createSessionBlockExercise({
-                                        blockId: createdBlock.id,
-                                        data: payload,
-                                    }).unwrap();
-                                    exercisesSaved++;
-                                } catch {
-                                    // continuar
-                                }
-                            }
-                            blocksSaved++;
-                        } catch {
-                            // continuar
-                        }
+                    const persistResult = await persistTrainingSessionConstructorContent({
+                        sessionId: createdSession.id,
+                        constructorRows,
+                        createSessionBlock,
+                        createSessionBlockExercise,
+                    });
+                    if (!persistResult.ok) {
+                        showError(
+                            `${persistResult.message} Completa la sesión en edición (no se creará otra).`,
+                            6000,
+                        );
+                        navigate(
+                            `/dashboard/session-programming/edit-session/${createdSession.id}`,
+                        );
+                        return;
                     }
-                    const totalEx = constructorRows.reduce(
-                        (s, r) => s + getConstructorPersistLines(r).length,
-                        0
+                    showSuccess(
+                        `Sesión creada con ${persistResult.blocksSaved} bloques y ${persistResult.exercisesSaved} ejercicios.`,
+                        2000,
                     );
-                    if (blocksSaved === constructorRows.length && exercisesSaved === totalEx) {
-                        showSuccess(`Sesión creada con ${blocksSaved} bloques y ${exercisesSaved} ejercicios.`, 2000);
-                    } else if (blocksSaved > 0) {
-                        showSuccess(`Sesión creada. ${blocksSaved} bloques, ${exercisesSaved} ejercicios guardados.`, 3000);
-                    } else {
-                        showError("Sesión creada, pero hubo un error al guardar los bloques.");
-                    }
                 } else {
                     showSuccess(emptySessionCreatedToast(false), 2000);
                 }
@@ -676,6 +638,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 : null;
             const errorMessage = errorData?.detail || "Error al crear la sesión";
             showError(typeof errorMessage === 'string' ? errorMessage : "Error de validación en el servidor");
+        } finally {
+            setIsPersistingSubmit(false);
         }
     };
 
@@ -692,7 +656,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         }
     };
 
-    if (isLoadingClient || isLoadingPlan || isLoadingPlans) {
+    if (
+        isLoadingClient ||
+        isLoadingPlan ||
+        (!skipPlanAssignment && isLoadingPlanAssignment)
+    ) {
         return (
             <div className={SESSION_PROGRAMMING_LOADING_ROW}>
                 <LoadingSpinner size="lg" />
@@ -810,27 +778,22 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                             disabled
                                             className="bg-muted"
                                         />
+                                    ) : planAssignmentForDate ? (
+                                        <Input
+                                            type="text"
+                                            value={
+                                                planAssignmentForDate.display_name ||
+                                                planAssignmentForDate.name ||
+                                                "Plan activo"
+                                            }
+                                            disabled
+                                            className="bg-muted"
+                                        />
                                     ) : (
-                                        <>
-                                            <FormCombobox
-                                                value={selectedPlanId?.toString() || ""}
-                                                onChange={(v) => setSelectedPlanId(v ? Number(v) : null)}
-                                                options={[
-                                                    { value: "", label: "Selecciona un plan" },
-                                                    ...(clientPlans || []).map((p: TrainingPlanInstance) => ({
-                                                        value: (p.source_plan_id ?? p.id).toString(),
-                                                        label: `${p.name} (${p.status === "active" ? "Activo" : "Inactivo"})`,
-                                                    })),
-                                                ]}
-                                                placeholder="Selecciona un plan"
-                                                ariaLabel="Plan de entrenamiento"
-                                            />
-                                            {(clientPlans || []).length === 0 && resolvedClientId ? (
-                                                <p className={SESSION_PROGRAMMING_FIELD_ERROR}>
-                                                    Este cliente no tiene planes disponibles. Crea un plan para poder programar sesiones.
-                                                </p>
-                                            ) : null}
-                                        </>
+                                        <p className={SESSION_PROGRAMMING_FIELD_ERROR}>
+                                            No hay programa que cubra esta fecha. Se creará sesión libre
+                                            o elige otra fecha.
+                                        </p>
                                     )}
                                 </div>
                                     {!useStandaloneSession ? (
@@ -1088,18 +1051,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             variant="primary"
                             size="sm"
                             className={SESSION_PROGRAMMING_FOOTER_PRIMARY}
-                            disabled={
-                                isCreatingSession ||
-                                isCreatingStandalone ||
-                                isSavingStandaloneExercises
-                            }
-                            isLoading={
-                                isCreatingSession ||
-                                isCreatingStandalone ||
-                                isSavingStandaloneExercises
-                            }
+                            disabled={isPersistingSubmit}
+                            isLoading={isPersistingSubmit}
                             onClick={(e) => {
-                                if (isCreatingSession || isCreatingStandalone || isSavingStandaloneExercises) return;
+                                if (isPersistingSubmit) return;
                                 if (!effectiveClientId) {
                                     e.preventDefault();
                                     showWarning("Selecciona un cliente para continuar con la creación de la sesión");

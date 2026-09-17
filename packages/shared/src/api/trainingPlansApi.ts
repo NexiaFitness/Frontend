@@ -20,6 +20,7 @@ import { baseApi } from "./baseApi";
 import type {
     TrainingPlan,
     ActivePlanByClientOut,
+    GetActivePlanByClientArg,
     TrainingPlansListResponse,
     TrainingPlanCreate,
     TrainingPlanUpdate,
@@ -42,6 +43,7 @@ import type {
     MilestoneCreate,
     MilestoneUpdate,
 } from "../types/training";
+import { resolveActivePlanByClientArg } from "../types/training";
 import type { PlanAdherenceResponse } from "../types/dashboard";
 import type { TemplateAssignOut } from "../types/templateProgram";
 import type {
@@ -112,14 +114,19 @@ export const trainingPlansApi = baseApi.injectEndpoints({
         }),
 
         /**
-         * Plan activo del cliente (hoy). Resuelto por TrainingPlanInstance.
-         * Backend: GET /api/v1/training-plans/active-by-client/{client_id}
-         * 404 cuando no hay plan activo (tratado como data: null, no error).
+         * Plan operativo del cliente para hoy o sessionDate (TrainingPlanInstance).
+         * Backend: GET /api/v1/training-plans/active-by-client/{client_id}?session_date=
+         * 404 cuando no hay instancia que cubra la fecha (data: null).
          */
-        getActivePlanByClient: builder.query<ActivePlanByClientOut | null, number>({
-            queryFn: async (clientId, _queryApi, _extraOptions, baseQuery) => {
+        getActivePlanByClient: builder.query<ActivePlanByClientOut | null, GetActivePlanByClientArg>({
+            queryFn: async (arg, _queryApi, _extraOptions, baseQuery) => {
+                const { clientId, sessionDate } = resolveActivePlanByClientArg(arg);
+                const qs =
+                    sessionDate != null && sessionDate !== ""
+                        ? `?session_date=${encodeURIComponent(sessionDate)}`
+                        : "";
                 const result = await baseQuery({
-                    url: `/training-plans/active-by-client/${clientId}`,
+                    url: `/training-plans/active-by-client/${clientId}${qs}`,
                     method: "GET",
                 });
                 if (result.error && "status" in result.error && result.error.status === 404) {
@@ -130,9 +137,14 @@ export const trainingPlansApi = baseApi.injectEndpoints({
                 }
                 return { data: result.data as ActivePlanByClientOut };
             },
-            providesTags: (result, error, clientId) => [
-                { type: "TrainingPlan", id: `ACTIVE-${clientId}` },
-            ],
+            serializeQueryArgs: ({ queryArgs }) => {
+                const { clientId, sessionDate } = resolveActivePlanByClientArg(queryArgs);
+                return `${clientId}:${sessionDate ?? "today"}`;
+            },
+            providesTags: (result, error, arg) => {
+                const { clientId } = resolveActivePlanByClientArg(arg);
+                return [{ type: "TrainingPlan", id: `ACTIVE-${clientId}` }];
+            },
         }),
 
         /**

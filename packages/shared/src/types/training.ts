@@ -88,6 +88,20 @@ export interface ActivePlanByClientOut extends TrainingPlan {
     display_goal: string;
 }
 
+/** GET active-by-client — clientId alone = today; sessionDate = resolver por fecha. */
+export type GetActivePlanByClientArg =
+    | number
+    | { clientId: number; sessionDate?: string };
+
+export function resolveActivePlanByClientArg(
+    arg: GetActivePlanByClientArg,
+): { clientId: number; sessionDate?: string } {
+    if (typeof arg === "number") {
+        return { clientId: arg };
+    }
+    return arg;
+}
+
 // ========================================
 // TRAINING PLAN REQUEST TYPES
 // ========================================
