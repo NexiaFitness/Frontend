@@ -19,6 +19,7 @@ import {
     applyCommittedInstanceWindowToPlan,
     classifyFocusedPlanFetchError,
     findCommittedInstanceForSourcePlan,
+    mergeClientPlansWithCommittedInstances,
     getMutationErrorMessage,
     resolveClientPlanningView,
 } from "@nexia/shared";
@@ -201,6 +202,16 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     const [analyticsOpen, setAnalyticsOpen] = useState(false);
     const [plansHistoryOpen, setPlansHistoryOpen] = useState(false);
 
+    const trainingPlansForDisplay = useMemo(
+        () =>
+            mergeClientPlansWithCommittedInstances(
+                trainingPlans ?? [],
+                planInstances,
+                clientId,
+            ),
+        [trainingPlans, planInstances, clientId],
+    );
+
     const showClientPlansHistory = hasMultipleClientTrainingPlans(trainingPlans);
     const showExploreSections = !blockAuthorActive && !isPhaseAuthoring;
 
@@ -283,7 +294,7 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         return (
             <ClientPlanningHubShell
                 clientId={clientId}
-                trainingPlans={trainingPlans}
+                trainingPlans={trainingPlansForDisplay}
                 isLoadingPlans={isLoadingPlans}
                 onPlanificar={onPlanificar}
                 onViewPlan={handleViewPlanFromHistory}
@@ -295,7 +306,7 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         return (
             <ClientPlanningHubShell
                 clientId={clientId}
-                trainingPlans={trainingPlans}
+                trainingPlans={trainingPlansForDisplay}
                 isLoadingPlans={isLoadingPlans}
                 onPlanificar={onPlanificar}
                 onViewPlan={handleViewPlanFromHistory}
@@ -455,7 +466,7 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                         >
                             <ClientPlansSection
                                 clientId={clientId}
-                                trainingPlans={trainingPlans}
+                                trainingPlans={trainingPlansForDisplay}
                                 isLoading={isLoadingPlans}
                                 embedded
                                 onViewPlan={handleViewPlanFromHistory}

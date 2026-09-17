@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { TrainingPlanInstance } from "../types/training";
 import {
     applyCommittedInstanceWindowToPlan,
+    mergeClientPlansWithCommittedInstances,
     assignmentRangesOverlap,
     dayBeforeYmd,
     findCommittedInstanceForSourcePlan,
@@ -143,5 +144,28 @@ describe("applyCommittedInstanceWindowToPlan", () => {
         );
         expect(merged.end_date).toBe("2026-09-30");
         expect(merged.start_date).toBe("2026-09-16");
+    });
+});
+
+describe("mergeClientPlansWithCommittedInstances", () => {
+    it("aplica recorte de instancia en listado (post-solape Opción A)", () => {
+        const plans = [
+            {
+                id: 590,
+                start_date: "2026-09-01",
+                end_date: "2026-09-28",
+            },
+        ];
+        const instances = [
+            inst({
+                id: 189,
+                client_id: 344,
+                source_plan_id: 590,
+                start_date: "2026-09-01",
+                end_date: "2026-09-19",
+            }),
+        ];
+        const [merged] = mergeClientPlansWithCommittedInstances(plans, instances, 344);
+        expect(merged.end_date).toBe("2026-09-19");
     });
 });

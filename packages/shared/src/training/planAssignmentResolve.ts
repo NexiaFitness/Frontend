@@ -164,6 +164,21 @@ export function applyCommittedInstanceWindowToPlan<T extends { start_date: strin
     return { ...plan, start_date: start, end_date: end };
 }
 
+/** Listados cliente (historial): vigencia operativa por instancia activa, no documento autorado. */
+export function mergeClientPlansWithCommittedInstances<
+    T extends { id: number; start_date: string; end_date: string },
+>(plans: readonly T[], instances: TrainingPlanInstance[], clientId: number): T[] {
+    if (clientId <= 0 || plans.length === 0) {
+        return [...plans];
+    }
+    return plans.map((documentPlan) =>
+        applyCommittedInstanceWindowToPlan(
+            documentPlan,
+            findCommittedInstanceForSourcePlan(instances, clientId, documentPlan.id),
+        ),
+    );
+}
+
 export function pickAssignmentCoveringDate(
     instances: TrainingPlanInstance[],
     clientId: number,
