@@ -26,6 +26,10 @@ import { useGetClientQuery, useGetClientTrainingSessionsQuery } from "@nexia/sha
 import { useGetStandaloneSessionsByClientQuery } from "@nexia/shared/api/standaloneSessionsApi";
 import { useGetScheduledSessionsQuery } from "@nexia/shared/api/schedulingApi";
 import { isDateInRange, parseISODateLocal } from "@nexia/shared/utils/periodBlockOverlap";
+import {
+    filterSessionsOnDate,
+    mergeClientTrainingAndStandaloneSessions,
+} from "@nexia/shared/training/clientSessionsOnDate";
 import type { TrainingSession } from "@nexia/shared/types/training";
 import type { ScheduledSession } from "@nexia/shared/types/scheduling";
 import type { SessionListItem } from "@nexia/shared/types/standaloneSessions";
@@ -154,29 +158,6 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
 
     const { data: clientProfile } = useGetClientQuery(clientId);
 
-    const handlePeriodCalendarDay = useCallback(
-        (dateStr: string) => {
-            if (!activePlanForClient) return;
-            if (!isDateInRange(dateStr, activePlanForClient.start_date, activePlanForClient.end_date)) {
-                showWarning("Solo puedes abrir el constructor en fechas dentro de la vigencia del plan activo.", 4000);
-                return;
-            }
-            const existingOnDay = planSessions.find((s) => s.session_date === dateStr);
-            if (existingOnDay?.id) {
-                navigate(
-                    `/dashboard/session-programming/sessions/${existingOnDay.id}`,
-                    { state: returnToStateFromView(location) },
-                );
-                return;
-            }
-            const qs = new URLSearchParams({ clientId: String(clientId), date: dateStr, planId: String(activePlanForClient.id) });
-            navigate(
-                `/dashboard/session-programming/create-session?${qs.toString()}`,
-                { replace: false }
-            );
-        },
-        [activePlanForClient, clientId, navigate, showWarning, planSessions, location]
-    );
     const [listFilter, setListFilter] = useState<ListFilter>("all");
     const [listPage, setListPage] = useState(1);
     const [replicateSession, setReplicateSession] = useState<SessionListItem | null>(null);
@@ -291,18 +272,37 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         }
     };
 
-    // P2: Merge training + standalone en lista unificada para calendario y lista
-    const allSessions: SessionListItem[] = useMemo(() => {
-        const list: SessionListItem[] = [];
-        trainingSessions.forEach((s) => {
-            list.push({ ...s, session_kind: "training" as const });
-        });
-        standaloneSessions.forEach((s) => {
-            list.push({ ...s, session_kind: "standalone" as const });
-        });
-        list.sort((a, b) => (b.session_date ?? "").localeCompare(a.session_date ?? ""));
-        return list;
-    }, [trainingSessions, standaloneSessions]);
+    const allSessions: SessionListItem[] = useMemo(
+        () => mergeClientTrainingAndStandaloneSessions(trainingSessions, standaloneSessions),
+        [trainingSessions, standaloneSessions],
+    );
+
+    const handlePeriodCalendarDay = useCallback(
+        (dateStr: string) => {
+            if (!activePlanForClient) return;
+            if (!isDateInRange(dateStr, activePlanForClient.start_date, activePlanForClient.end_date)) {
+                showWarning("Solo puedes abrir el constructor en fechas dentro de la vigencia del plan activo.", 4000);
+                return;
+            }
+            const onDay = filterSessionsOnDate(allSessions, dateStr);
+            const trainingOnDay = onDay.find((s) => s.session_kind === "training");
+            if (trainingOnDay?.id) {
+                navigate(
+                    `/dashboard/session-programming/sessions/${trainingOnDay.id}`,
+                    { state: returnToStateFromView(location) },
+                );
+                return;
+            }
+            const qs = new URLSearchParams({
+                clientId: String(clientId),
+                date: dateStr,
+                planId: String(activePlanForClient.id),
+                sessionKind: "program",
+            });
+            navigate(`/dashboard/session-programming/create-session?${qs.toString()}`, { replace: false });
+        },
+        [activePlanForClient, allSessions, clientId, navigate, showWarning, location],
+    );
 
     const sessionDatesForCalendar = useMemo(() => {
         const set = new Set<string>();

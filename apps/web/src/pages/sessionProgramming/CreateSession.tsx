@@ -33,7 +33,12 @@ import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormCombobox, Textarea, DatePickerButton } from "@/components/ui/forms";
-import { useGetClientQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
+import {
+    useGetClientQuery,
+    useGetClientTrainingSessionsQuery,
+    useGetTrainerClientsQuery,
+} from "@nexia/shared/api/clientsApi";
+import { useGetStandaloneSessionsByClientQuery } from "@nexia/shared/api/standaloneSessionsApi";
 import {
     useGetActivePlanByClientQuery,
     useGetTrainingPlanQuery,
@@ -148,6 +153,11 @@ import {
     defaultSessionCreateKind,
     parseSessionCreateKindParam,
     resolveCreateSessionClientContext,
+    getClientSessionsOnDate,
+    buildSessionDayCoexistenceMessage,
+    resolveProgramPlanActivationForDate,
+    PROGRAM_PLAN_NOT_ACTIVE_COPY,
+    PROGRAM_PLAN_NO_ACTIVE_FOR_DATE_COPY,
 } from "@nexia/shared";
 
 export interface CreateSessionProps {
@@ -404,6 +414,52 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const standaloneOverlapsProgram =
         useStandaloneSession && activePlanCoversDate && !isLoadingPlanAssignment;
 
+    const { data: clientTrainingSessions = [] } = useGetClientTrainingSessionsQuery(
+        { clientId: effectiveClientId ?? 0, skip: 0, limit: 1000 },
+        { skip: !effectiveClientId || effectiveClientId <= 0 },
+    );
+    const { data: clientStandaloneSessions = [] } = useGetStandaloneSessionsByClientQuery(
+        { clientId: effectiveClientId ?? 0, skip: 0, limit: 1000 },
+        { skip: !effectiveClientId || effectiveClientId <= 0 },
+    );
+
+    const sessionsOnSelectedDate = useMemo(
+        () =>
+            getClientSessionsOnDate(
+                clientTrainingSessions,
+                clientStandaloneSessions,
+                formData.sessionDate,
+            ),
+        [clientTrainingSessions, clientStandaloneSessions, formData.sessionDate],
+    );
+
+    const dayCoexistenceMessage = useMemo(() => {
+        if (!effectiveClientId || effectiveClientId <= 0) return null;
+        return buildSessionDayCoexistenceMessage(
+            sessionsOnSelectedDate,
+            useStandaloneSession ? "standalone" : "program",
+        );
+    }, [effectiveClientId, sessionsOnSelectedDate, useStandaloneSession]);
+
+    const requestedProgramPlanId = planId ?? selectedPlanId;
+    const programPlanActivation = resolveProgramPlanActivationForDate({
+        isLoading: skipPlanAssignment || useStandaloneSession
+            ? false
+            : isLoadingPlanAssignment || isFetchingPlanAssignment,
+        requestedPlanId: useStandaloneSession ? null : requestedProgramPlanId,
+        activePlanId: planAssignmentForDate?.id,
+    });
+    const programPlanBlocked =
+        !useStandaloneSession &&
+        (programPlanActivation === "plan_not_active" ||
+            programPlanActivation === "no_active_plan");
+    const programPlanBlockMessage =
+        programPlanActivation === "plan_not_active"
+            ? PROGRAM_PLAN_NOT_ACTIVE_COPY
+            : programPlanActivation === "no_active_plan"
+              ? PROGRAM_PLAN_NO_ACTIVE_FOR_DATE_COPY
+              : null;
+
     const [isPersistingSubmit, setIsPersistingSubmit] = useState(false);
 
     const nameTouchedRef = useRef(false);
@@ -541,6 +597,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 "El cliente de la URL no corresponde al plan indicado. Corrige la entrada o vuelve al planificación del cliente correcto.",
                 6000,
             );
+            return;
+        }
+
+        if (programPlanBlocked && programPlanBlockMessage) {
+            showError(programPlanBlockMessage, 6000);
             return;
         }
 
@@ -840,6 +901,12 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         formará parte del plan; puedes tener programación y sesión
                                         libre el mismo día.
                                     </Alert>
+                                ) : null}
+                                {dayCoexistenceMessage ? (
+                                    <Alert variant="warning">{dayCoexistenceMessage}</Alert>
+                                ) : null}
+                                {programPlanBlockMessage ? (
+                                    <Alert variant="warning">{programPlanBlockMessage}</Alert>
                                 ) : null}
                             </div>
                         ) : null}
@@ -1169,7 +1236,9 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             variant="primary"
                             size="sm"
                             className={SESSION_PROGRAMMING_FOOTER_PRIMARY}
-                            disabled={isPersistingSubmit || clientPlanMismatch}
+                            disabled={
+                                isPersistingSubmit || clientPlanMismatch || programPlanBlocked
+                            }
                             isLoading={isPersistingSubmit}
                             onClick={(e) => {
                                 if (isPersistingSubmit || clientPlanMismatch) return;
