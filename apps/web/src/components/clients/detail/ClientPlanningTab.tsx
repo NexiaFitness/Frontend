@@ -454,6 +454,17 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
             {!isPhaseAuthoring && !blockAuthorActive && (
                 <DashboardFixedFooter>
                     <div className="flex flex-wrap items-center justify-end gap-3">
+                        {onPlanificar ? (
+                            <Button
+                                type="button"
+                                variant="primary"
+                                size="sm"
+                                onClick={onPlanificar}
+                                data-testid="client-planning-planificar"
+                            >
+                                Planificar
+                            </Button>
+                        ) : null}
                         {!plan.was_converted_to_template ? (
                             <Button
                                 type="button"

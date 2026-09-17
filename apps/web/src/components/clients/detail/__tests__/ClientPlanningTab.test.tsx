@@ -149,6 +149,28 @@ describe("ClientPlanningTab", () => {
             ).toBeInTheDocument();
         });
 
+        it("muestra CTA Planificar en footer con plan vigente y llama onPlanificar", async () => {
+            server.use(
+                getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Maraton" }),
+                ...planPeriodizationDependenciesHandlers(10),
+            );
+            const onPlanificar = vi.fn();
+            render(
+                <ClientPlanningTab
+                    clientId={1}
+                    trainingPlans={[]}
+                    isLoadingPlans={false}
+                    onPlanificar={onPlanificar}
+                />,
+            );
+
+            await waitFor(() => {
+                expect(screen.getByTestId("client-planning-planificar")).toBeInTheDocument();
+            });
+            await userEvent.click(screen.getByTestId("client-planning-planificar"));
+            expect(onPlanificar).toHaveBeenCalledTimes(1);
+        });
+
         it("muestra historial de planes cuando hay más de un plan asignado", async () => {
             server.use(
                 getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Maraton" }),

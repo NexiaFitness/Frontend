@@ -35,6 +35,12 @@ import {
     type TrainingPlanGoal,
 } from "@nexia/shared/types/training";
 import type { TrainingPlanCreate, TrainingPlanInstance } from "@nexia/shared/types/training";
+import {
+    findOverlappingTrainingPlanInstance,
+    parseAssignmentOverlapApiDetail,
+    formatLocalDateOnly,
+    getMutationErrorMessage,
+} from "@nexia/shared";
 
 // ============================================================================
 // TYPES
@@ -170,7 +176,7 @@ export const CreateTrainingPlan: React.FC = () => {
 
     const [formData, setFormData] = useState<CreatePlanFormData>({
         name: "",
-        start_date: new Date().toISOString().split("T")[0],
+        start_date: formatLocalDateOnly(new Date()),
         end_date: "",
         goal: "",
         notes: "",
@@ -274,13 +280,17 @@ export const CreateTrainingPlan: React.FC = () => {
             tags: null,
         };
 
-        // Regla negocio: solo 1 plan "active" por cliente. Crear uno nuevo sustituye el actual.
-        const activeExisting = sortedInstances.find((p) => p.status === "active");
-        if (activeExisting) {
+        const overlapping = findOverlappingTrainingPlanInstance(
+            existingInstances,
+            formData.start_date,
+            formData.end_date,
+            null
+        );
+        if (overlapping) {
             setPlanToReplace({
-                name: activeExisting.name,
-                start_date: formatDate(activeExisting.start_date),
-                end_date: formatDate(activeExisting.end_date),
+                name: overlapping.name,
+                start_date: formatDate(overlapping.start_date),
+                end_date: formatDate(overlapping.end_date),
             });
             setPendingPlanData(planData);
             setIsOverlapModalOpen(true);
@@ -288,6 +298,33 @@ export const CreateTrainingPlan: React.FC = () => {
         }
 
         await doCreatePlan(planData);
+    };
+
+    const openOverlapModalFromApi = (
+        planData: TrainingPlanCreate,
+        instanceId?: number
+    ) => {
+        const fromList =
+            instanceId != null
+                ? existingInstances.find((i) => i.id === instanceId)
+                : undefined;
+        const overlapping =
+            fromList ??
+            findOverlappingTrainingPlanInstance(
+                existingInstances,
+                planData.start_date ?? "",
+                planData.end_date ?? "",
+                null
+            );
+        if (!overlapping) return false;
+        setPlanToReplace({
+            name: overlapping.name,
+            start_date: formatDate(overlapping.start_date),
+            end_date: formatDate(overlapping.end_date),
+        });
+        setPendingPlanData(planData);
+        setIsOverlapModalOpen(true);
+        return true;
     };
 
     const doCreatePlan = async (planData: TrainingPlanCreate) => {
@@ -303,19 +340,25 @@ export const CreateTrainingPlan: React.FC = () => {
                 }
             }, 1500);
         } catch (err) {
+            const overlapDetail = parseAssignmentOverlapApiDetail(err);
+            if (overlapDetail && !planData.confirm_assignment_overlap) {
+                const firstId = overlapDetail.overlapping_instances[0]?.instance_id;
+                if (openOverlapModalFromApi(planData, firstId)) {
+                    return;
+                }
+            }
             console.error("Error creando plan:", err);
-            const errorMessage =
-                err && typeof err === "object" && "data" in err
-                    ? String((err as { data: unknown }).data || "Error al crear el plan")
-                    : "Error al crear el plan";
-            showError(errorMessage);
+            showError(getMutationErrorMessage(err));
         }
     };
 
     const handleConfirmOverlap = async () => {
         if (!pendingPlanData) return;
         setIsOverlapModalOpen(false);
-        await doCreatePlan(pendingPlanData);
+        await doCreatePlan({
+            ...pendingPlanData,
+            confirm_assignment_overlap: true,
+        });
         setPendingPlanData(null);
         setPlanToReplace(null);
     };
