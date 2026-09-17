@@ -16,13 +16,16 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { BarChart3, Plus } from "lucide-react";
 import type { TrainingPlan } from "@nexia/shared/types/training";
 import {
+    applyCommittedInstanceWindowToPlan,
     classifyFocusedPlanFetchError,
+    findCommittedInstanceForSourcePlan,
     getMutationErrorMessage,
     resolveClientPlanningView,
 } from "@nexia/shared";
 import { usePlanBlockAnalytics } from "@nexia/shared/hooks/training/usePlanBlockAnalytics";
 import {
     useGetActivePlanByClientQuery,
+    useGetTrainingPlanInstancesQuery,
     useGetTrainingPlanQuery,
     useDeleteTrainingPlanMutation,
 } from "@nexia/shared/api/trainingPlansApi";
@@ -105,6 +108,11 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         data: activePlan,
         isLoading: isLoadingActive,
     } = useGetActivePlanByClientQuery(clientId, { skip: !clientId || clientId <= 0 });
+
+    const { data: planInstances = [] } = useGetTrainingPlanInstancesQuery(
+        { clientId },
+        { skip: !clientId || clientId <= 0 },
+    );
 
     const useFocusedFetch =
         focusPlanId != null &&
@@ -295,9 +303,15 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         );
     }
 
-    const { plan, source } = detailPlan;
+    const { plan: documentPlan, source } = detailPlan;
+    const committedInstance = findCommittedInstanceForSourcePlan(
+        planInstances,
+        clientId,
+        documentPlan.id,
+    );
+    const plan = applyCommittedInstanceWindowToPlan(documentPlan, committedInstance);
     const isOperationalPlan =
-        activePlan?.id === plan.id || plan.lifecycle_status === "operational";
+        activePlan?.id === plan.id || documentPlan.lifecycle_status === "operational";
     const showNonActiveBanner =
         source === "focused" && (activePlan == null || activePlan.id !== plan.id);
 

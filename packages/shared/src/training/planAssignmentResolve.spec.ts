@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import type { TrainingPlanInstance } from "../types/training";
 import {
+    applyCommittedInstanceWindowToPlan,
     assignmentRangesOverlap,
     dayBeforeYmd,
+    findCommittedInstanceForSourcePlan,
     findOverlappingCommittedInstances,
     pickAssignmentCoveringDate,
     proposedTrimEndYmd,
@@ -94,5 +96,36 @@ describe("pickAssignmentCoveringDate", () => {
             inst({ id: 1, start_date: "2026-09-01", end_date: "2026-09-30" }),
         ];
         expect(pickAssignmentCoveringDate(rows, 52, day)?.id).toBe(1);
+    });
+});
+
+describe("findCommittedInstanceForSourcePlan", () => {
+    it("encuentra instancia active por source_plan_id", () => {
+        const rows = [
+            inst({ id: 1, source_plan_id: 548, start_date: "2026-09-16", end_date: "2026-09-30" }),
+            inst({ id: 2, source_plan_id: 580, start_date: "2026-10-01", end_date: "2026-10-31" }),
+        ];
+        expect(findCommittedInstanceForSourcePlan(rows, 52, 548)?.id).toBe(1);
+    });
+});
+
+describe("applyCommittedInstanceWindowToPlan", () => {
+    it("sobrescribe fechas del documento con ventana de instancia", () => {
+        const doc = {
+            id: 548,
+            start_date: "2026-09-16",
+            end_date: "2026-11-15",
+        };
+        const merged = applyCommittedInstanceWindowToPlan(
+            doc,
+            inst({
+                id: 1,
+                source_plan_id: 548,
+                start_date: "2026-09-16",
+                end_date: "2026-09-30",
+            }),
+        );
+        expect(merged.end_date).toBe("2026-09-30");
+        expect(merged.start_date).toBe("2026-09-16");
     });
 });

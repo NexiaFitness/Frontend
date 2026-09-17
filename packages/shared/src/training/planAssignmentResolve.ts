@@ -109,6 +109,33 @@ export function findOverlappingCommittedInstances(
 /**
  * CURRENT: única instancia comprometida cuya ventana cubre referenceDate. Sin fallback futuro.
  */
+/** Instancia comprometida ligada a un documento `TrainingPlan` (source_plan_id). */
+export function findCommittedInstanceForSourcePlan(
+    instances: TrainingPlanInstance[],
+    clientId: number,
+    sourcePlanId: number
+): TrainingPlanInstance | undefined {
+    if (clientId <= 0 || sourcePlanId <= 0) return undefined;
+    return instances.find(
+        (inst) =>
+            inst.client_id === clientId &&
+            inst.status === "active" &&
+            inst.is_active !== false &&
+            inst.source_plan_id === sourcePlanId
+    );
+}
+
+/** Aplica ventana de asignación sobre fechas del documento (vigencia operativa en UI). */
+export function applyCommittedInstanceWindowToPlan<T extends { start_date: string; end_date: string }>(
+    plan: T,
+    instance: TrainingPlanInstance | undefined
+): T {
+    if (!instance) return plan;
+    const start = toDateOnlyString(instance.start_date) ?? instance.start_date;
+    const end = toDateOnlyString(instance.end_date) ?? instance.end_date;
+    return { ...plan, start_date: start, end_date: end };
+}
+
 export function pickAssignmentCoveringDate(
     instances: TrainingPlanInstance[],
     clientId: number,
