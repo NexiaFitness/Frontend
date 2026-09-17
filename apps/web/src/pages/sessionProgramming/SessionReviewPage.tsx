@@ -517,6 +517,8 @@ export const SessionReviewPage: React.FC = () => {
             await deleteSession({
                 id: session.id,
                 trainingPlanId: session.training_plan_id ?? null,
+                clientId: session.client_id ?? null,
+                trainerId: session.trainer_id ?? null,
             }).unwrap();
             setShowDeleteModal(false);
             showSuccess("Sesión eliminada correctamente.");

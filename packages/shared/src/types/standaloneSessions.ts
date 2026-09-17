@@ -86,6 +86,25 @@ export interface StandaloneSessionExerciseOut {
     is_active: boolean;
 }
 
+/** StandaloneSessionExerciseUpdate — PUT /standalone-sessions/exercises/{id} */
+export interface StandaloneSessionExerciseUpdate {
+    order_in_session?: number | null;
+    planned_sets?: number | null;
+    planned_reps?: number | null;
+    planned_weight?: number | null;
+    planned_assistance_kg?: number | null;
+    planned_duration?: number | null;
+    planned_distance?: number | null;
+    planned_rest?: number | null;
+    actual_sets?: number | null;
+    actual_reps?: number | null;
+    actual_weight?: number | null;
+    actual_duration?: number | null;
+    actual_distance?: number | null;
+    actual_rest?: number | null;
+    notes?: string | null;
+}
+
 /** StandaloneSessionExerciseCreate — POST /standalone-sessions/{id}/exercises */
 export interface StandaloneSessionExerciseCreate {
     standalone_session_id: number;

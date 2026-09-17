@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
     persistStandaloneSessionExercises,
     persistTrainingSessionConstructorContent,
+    syncStandaloneSessionExercises,
 } from "./persistCreateSessionContent";
 import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
@@ -127,5 +128,51 @@ describe("persistCreateSessionContent (G8)", () => {
             expect(result.savedCount).toBe(1);
         }
         expect(createStandaloneExercise).toHaveBeenCalledTimes(2);
+    });
+
+    it("syncStandaloneSessionExercises deletes removed, updates and creates", async () => {
+        const deleteStandaloneExercise = vi.fn(() => ({
+            unwrap: () => Promise.resolve({ message: "ok" }),
+        }));
+        const updateStandaloneExercise = vi.fn(() => ({
+            unwrap: () => Promise.resolve({}),
+        }));
+        const createStandaloneExercise = vi.fn(() => ({
+            unwrap: () => Promise.resolve({}),
+        }));
+
+        const result = await syncStandaloneSessionExercises({
+            sessionId: 5,
+            existingServerIds: [10, 11],
+            desired: [
+                {
+                    serverExerciseId: 10,
+                    exercise_id: 1,
+                    order_in_session: 1,
+                    planned_sets: 3,
+                    planned_reps: 8,
+                    planned_weight: 40,
+                    planned_rest: 60,
+                    notes: null,
+                },
+                {
+                    exercise_id: 2,
+                    order_in_session: 2,
+                    planned_sets: 4,
+                    planned_reps: 6,
+                    planned_weight: 50,
+                    planned_rest: 90,
+                    notes: "new",
+                },
+            ],
+            deleteStandaloneExercise,
+            updateStandaloneExercise,
+            createStandaloneExercise,
+        });
+
+        expect(result.ok).toBe(true);
+        expect(deleteStandaloneExercise).toHaveBeenCalledWith(11);
+        expect(updateStandaloneExercise).toHaveBeenCalledTimes(1);
+        expect(createStandaloneExercise).toHaveBeenCalledTimes(1);
     });
 });

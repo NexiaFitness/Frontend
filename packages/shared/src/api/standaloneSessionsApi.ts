@@ -17,6 +17,7 @@ import type {
     StandaloneSessionUpdate,
     StandaloneSessionExerciseCreate,
     StandaloneSessionExerciseOut,
+    StandaloneSessionExerciseUpdate,
 } from "../types/standaloneSessions";
 
 function standaloneListInvalidationTags(body: {
@@ -126,16 +127,55 @@ export const standaloneSessionsApi = baseApi.injectEndpoints({
          * Añadir ejercicio a sesión standalone
          */
         createStandaloneSessionExercise: builder.mutation<
-            unknown,
-            { sessionId: number; data: Omit<StandaloneSessionExerciseCreate, "standalone_session_id"> }
+            StandaloneSessionExerciseOut,
+            {
+                sessionId: number;
+                clientId: number;
+                data: Omit<StandaloneSessionExerciseCreate, "standalone_session_id">;
+            }
         >({
             query: ({ sessionId, data }) => ({
                 url: `/standalone-sessions/${sessionId}/exercises`,
                 method: "POST",
                 body: { ...data, standalone_session_id: sessionId },
             }),
-            invalidatesTags: (_result, error, { sessionId }) => [
+            invalidatesTags: (_result, _error, { sessionId, clientId }) => [
                 { type: "StandaloneSession", id: sessionId },
+                { type: "Client", id: `SESSIONS-${clientId}` },
+            ],
+        }),
+
+        updateStandaloneSessionExercise: builder.mutation<
+            StandaloneSessionExerciseOut,
+            {
+                exerciseId: number;
+                sessionId: number;
+                clientId: number;
+                body: StandaloneSessionExerciseUpdate;
+            }
+        >({
+            query: ({ exerciseId, body }) => ({
+                url: `/standalone-sessions/exercises/${exerciseId}`,
+                method: "PUT",
+                body,
+            }),
+            invalidatesTags: (_result, _error, { sessionId, clientId }) => [
+                { type: "StandaloneSession", id: sessionId },
+                { type: "Client", id: `SESSIONS-${clientId}` },
+            ],
+        }),
+
+        deleteStandaloneSessionExercise: builder.mutation<
+            { message: string },
+            { exerciseId: number; sessionId: number; clientId: number }
+        >({
+            query: ({ exerciseId }) => ({
+                url: `/standalone-sessions/exercises/${exerciseId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (_result, _error, { sessionId, clientId }) => [
+                { type: "StandaloneSession", id: sessionId },
+                { type: "Client", id: `SESSIONS-${clientId}` },
             ],
         }),
     }),
@@ -147,6 +187,8 @@ export const {
     useGetStandaloneSessionExercisesQuery,
     useCreateStandaloneSessionMutation,
     useCreateStandaloneSessionExerciseMutation,
+    useUpdateStandaloneSessionExerciseMutation,
+    useDeleteStandaloneSessionExerciseMutation,
     useUpdateStandaloneSessionMutation,
     useDeleteStandaloneSessionMutation,
 } = standaloneSessionsApi;

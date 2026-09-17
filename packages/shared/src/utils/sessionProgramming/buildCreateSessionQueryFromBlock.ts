@@ -34,7 +34,6 @@ export function buildCreateSessionQueryFromBlock(
         clientId: String(input.clientId),
         planId: String(input.planId),
         date: suggested,
-        periodBlockId: String(input.block.id),
         sessionKind: "program",
     });
 }

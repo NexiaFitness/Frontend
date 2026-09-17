@@ -107,6 +107,8 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
             await deleteSession({
                 id: sessionToDelete.id,
                 trainingPlanId: sessionToDelete.training_plan_id || planId,
+                clientId: sessionToDelete.client_id ?? null,
+                trainerId: sessionToDelete.trainer_id ?? null,
             }).unwrap();
             setShowDeleteModal(false);
             setSessionToDelete(null);

@@ -38,6 +38,37 @@ export type GetTrainingSessionsQueryArg =
     | number
     | { trainingPlanId: number; skip?: number; limit?: number };
 
+export type DeleteTrainingSessionArg = {
+    id: number;
+    trainingPlanId: number | null;
+    clientId: number | null;
+    trainerId?: number | null;
+};
+
+export function getDeleteTrainingSessionInvalidationTags(
+    arg: DeleteTrainingSessionArg,
+): Array<{ type: 'TrainingSession' | 'TrainingPlan' | 'Client'; id: string | number }> {
+    const { id, trainingPlanId, clientId, trainerId } = arg;
+    const tags: Array<{ type: 'TrainingSession' | 'TrainingPlan' | 'Client'; id: string | number }> =
+        [{ type: 'TrainingSession', id }];
+    if (trainingPlanId) {
+        tags.push(
+            { type: 'TrainingSession', id: `PLAN_${trainingPlanId}` },
+            { type: 'TrainingPlan', id: trainingPlanId },
+        );
+    }
+    if (clientId != null) {
+        tags.push(
+            { type: 'Client', id: `SESSIONS-${clientId}` },
+            { type: 'TrainingSession', id: `CLIENT_${clientId}` },
+        );
+    }
+    if (trainerId != null) {
+        tags.push({ type: 'TrainingSession', id: `LIST_${trainerId}` });
+    }
+    return tags;
+}
+
 function normalizeGetTrainingSessionsArg(
     arg: GetTrainingSessionsQueryArg
 ): { trainingPlanId: number; skip: number; limit: number } {
@@ -246,26 +277,14 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
          */
         deleteTrainingSession: builder.mutation<
             { message: string },
-            { id: number; trainingPlanId: number | null }
+            DeleteTrainingSessionArg
         >({
             query: ({ id }) => ({
                 url: `/training-sessions/${id}`,
                 method: 'DELETE',
             }),
-            invalidatesTags: (_result, _error, { id, trainingPlanId }) => {
-                const tags: Array<{ type: 'TrainingSession' | 'TrainingPlan'; id: string | number }> = [
-                    { type: 'TrainingSession', id },
-                ];
-                if (trainingPlanId) {
-                    tags.push(
-                        { type: 'TrainingSession', id: `PLAN_${trainingPlanId}` },
-                        { type: 'TrainingPlan', id: trainingPlanId }
-                    );
-                } else {
-                    tags.push({ type: 'TrainingSession', id: 'LIST' });
-                }
-                return tags;
-            },
+            invalidatesTags: (_result, _error, arg) =>
+                getDeleteTrainingSessionInvalidationTags(arg),
         }),
 
         createSessionFeedback: builder.mutation<

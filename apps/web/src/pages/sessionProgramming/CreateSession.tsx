@@ -621,7 +621,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     const persistResult = await persistStandaloneSessionExercises({
                         sessionId: created.id,
                         exercises: flatWithOrder,
-                        createStandaloneExercise,
+                        createStandaloneExercise: (args) =>
+                            createStandaloneExercise({
+                                ...args,
+                                clientId: effectiveClientId,
+                            }),
                     });
                     if (!persistResult.ok) {
                         showError(

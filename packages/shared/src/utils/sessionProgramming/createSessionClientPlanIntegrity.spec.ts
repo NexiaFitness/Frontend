@@ -53,7 +53,7 @@ describe("buildCreateSessionQueryFromBlock (G1)", () => {
         });
         expect(qs.get("clientId")).toBe("10");
         expect(qs.get("planId")).toBe("20");
-        expect(qs.get("periodBlockId")).toBe("3");
+        expect(qs.get("periodBlockId")).toBeNull();
         expect(qs.get("sessionKind")).toBe("program");
         expect(qs.get("date")).toBeTruthy();
     });
