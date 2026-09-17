@@ -22,6 +22,12 @@ export {
     parseSessionCreateKindParam,
 } from "./resolveSessionCreateKind";
 export type { SessionCreateKind } from "./resolveSessionCreateKind";
+export { buildCreateSessionQueryFromBlock } from "./buildCreateSessionQueryFromBlock";
+export type { BuildCreateSessionQueryFromBlockInput } from "./buildCreateSessionQueryFromBlock";
+export {
+    resolveCreateSessionClientContext,
+} from "./resolveCreateSessionClientContext";
+export type { CreateSessionClientPlanContext } from "./resolveCreateSessionClientContext";
 export {
     buildDefaultSessionName,
     formatSessionDateShort,

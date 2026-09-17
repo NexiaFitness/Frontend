@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useStore } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import type { AppDispatch } from "@nexia/shared/store";
+import type { AppDispatch, RootState } from "@nexia/shared/store";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import {
   useGetPeriodBlocksQuery,
@@ -36,7 +36,7 @@ import { PlanningExploreShell } from "./PlanningExploreShell";
 import { buildBlockAuthorPath } from "@/lib/trainingPlanNavigation";
 import { scrollDashboardMainToAnchorAfterPaint } from "@/lib/dashboardScroll";
 import { weeklyStructureApi } from "@nexia/shared/api/weeklyStructureApi";
-import { suggestSessionDateForPeriodBlock } from "@nexia/shared";
+import { buildCreateSessionQueryFromBlock } from "@nexia/shared";
 import { formatLocalDateOnly } from "@nexia/shared/training/activePeriodBlock";
 import {
   clearBlockAuthorParams,
@@ -106,6 +106,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   onOpenOtherPlans,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const store = useStore<RootState>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const pendingCreateWhenStartRef = useRef<string | null>(null);
@@ -388,8 +389,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   );
 
   const handleCreateSessionForBlock = useCallback(
-    async (block: PlanPeriodBlock) => {
-      if (clientId == null || clientId <= 0) {
+    (block: PlanPeriodBlock) => {
+      if (clientId == null || clientId <= 0 || !planId) {
         return;
       }
       const today = formatLocalDateOnly(new Date());
@@ -400,37 +401,28 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
             s.session_date >= block.start_date &&
             s.session_date <= block.end_date),
       );
-      let weeklyWeeks: import("@nexia/shared/types/weeklyStructure").WeeklyStructureWeek[] =
-        [];
-      try {
-        const data = await dispatch(
-          weeklyStructureApi.endpoints.getWeeklyStructure.initiate({
-            planId,
-            blockId: block.id,
-          }),
-        ).unwrap();
-        weeklyWeeks = data?.weeks ?? [];
-      } catch {
-        weeklyWeeks = [];
-      }
-      const suggested =
-        suggestSessionDateForPeriodBlock(
-          today,
-          block.start_date,
-          block.end_date,
-          weeklyWeeks,
-          blockSessions,
-        ) ?? block.start_date;
-      const qs = new URLSearchParams({
-        clientId: String(clientId),
-        planId: String(planId),
-        date: suggested,
-        periodBlockId: String(block.id),
-        sessionKind: "program",
+      const weeklyWeeks =
+        weeklyStructureApi.endpoints.getWeeklyStructure.select({
+          planId,
+          blockId: block.id,
+        })(store.getState()).data?.weeks ?? [];
+      void dispatch(
+        weeklyStructureApi.endpoints.getWeeklyStructure.initiate({
+          planId,
+          blockId: block.id,
+        }),
+      );
+      const qs = buildCreateSessionQueryFromBlock({
+        clientId,
+        planId,
+        block,
+        anchorDate: today,
+        weeklyStructureWeeks: weeklyWeeks,
+        sessionsInBlock: blockSessions,
       });
       navigate(`/dashboard/session-programming/create-session?${qs.toString()}`);
     },
-    [dispatch, navigate, clientId, planId, sessions],
+    [dispatch, store, navigate, clientId, planId, sessions],
   );
 
   const handlePickRangeDayClick = useCallback(

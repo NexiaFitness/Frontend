@@ -144,7 +144,11 @@ import {
     SessionCreateKindSelector,
     type SessionCreateKind,
 } from "@/components/sessionProgramming/SessionCreateKindSelector";
-import { defaultSessionCreateKind, parseSessionCreateKindParam } from "@nexia/shared";
+import {
+    defaultSessionCreateKind,
+    parseSessionCreateKindParam,
+    resolveCreateSessionClientContext,
+} from "@nexia/shared";
 
 export interface CreateSessionProps {
     /** Cuando se usa desde clients/:id/sessions/new; prioridad sobre query. */
@@ -198,10 +202,23 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     // Estado para el plan seleccionado (si se elige manualmente o se autoselecciona)
     const [selectedPlanId, setSelectedPlanId] = useState<number | null>(planId);
 
-    // Si viene planId, obtener clientId del plan y cargar el cliente del plan
-    const effectiveClientId = planId && plan ? plan.client_id : resolvedClientId;
-    const { data: planClient } = useGetClientQuery(effectiveClientId || 0, { 
-        skip: !effectiveClientId || (!!resolvedClientId && !planId) 
+    const clientPlanContext = useMemo(
+        () =>
+            resolveCreateSessionClientContext({
+                queryClientId: resolvedClientId,
+                planId,
+                planClientId: plan?.client_id,
+                isPlanLoading: !!planId && isLoadingPlan,
+            }),
+        [resolvedClientId, planId, plan?.client_id, isLoadingPlan],
+    );
+
+    const clientPlanMismatch = clientPlanContext.status === "mismatch";
+    const effectiveClientId =
+        clientPlanContext.status === "ready" ? clientPlanContext.effectiveClientId : null;
+
+    const { data: planClient } = useGetClientQuery(effectiveClientId || 0, {
+        skip: !effectiveClientId || (!!resolvedClientId && !planId),
     });
 
     // Lesiones activas del cliente (solo cuando hay cliente seleccionado — para banner de alerta)
@@ -243,6 +260,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     useScrollDashboardWhenReady(
         !isLoadingClient &&
             !isLoadingPlan &&
+            clientPlanContext.status !== "pending" &&
             !(skipPlanAssignment ? false : isLoadingPlanAssignment),
     );
 
@@ -518,6 +536,14 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         e.preventDefault();
         setFormErrors({});
 
+        if (clientPlanMismatch) {
+            showError(
+                "El cliente de la URL no corresponde al plan indicado. Corrige la entrada o vuelve al planificación del cliente correcto.",
+                6000,
+            );
+            return;
+        }
+
         const { valid, errors } = validateForm();
         if (!valid) {
             setFormErrors(errors);
@@ -703,6 +729,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     if (
         isLoadingClient ||
         isLoadingPlan ||
+        clientPlanContext.status === "pending" ||
         (!skipPlanAssignment && isLoadingPlanAssignment)
     ) {
         return (
@@ -728,6 +755,16 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         Volver
                     </Button>
                 </header>
+
+                {clientPlanMismatch ? (
+                    <Alert variant="error">
+                        El enlace mezcla clientes distintos (cliente{" "}
+                        {clientPlanContext.queryClientId}, plan del cliente{" "}
+                        {clientPlanContext.planClientId}). No se puede crear la sesión hasta
+                        corregir el contexto. Vuelve a Planificación y usa «Crear sesión» desde
+                        la fase, o abre create-session solo con el planId correcto.
+                    </Alert>
+                ) : null}
 
                 {!resolvedClientId && !planId ? (
                     <div className={SESSION_PROGRAMMING_CLIENT_SELECTOR}>
@@ -1128,10 +1165,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             variant="primary"
                             size="sm"
                             className={SESSION_PROGRAMMING_FOOTER_PRIMARY}
-                            disabled={isPersistingSubmit}
+                            disabled={isPersistingSubmit || clientPlanMismatch}
                             isLoading={isPersistingSubmit}
                             onClick={(e) => {
-                                if (isPersistingSubmit) return;
+                                if (isPersistingSubmit || clientPlanMismatch) return;
                                 if (!effectiveClientId) {
                                     e.preventDefault();
                                     showWarning("Selecciona un cliente para continuar con la creación de la sesión");
