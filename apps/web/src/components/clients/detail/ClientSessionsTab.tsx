@@ -25,10 +25,12 @@ import { ChevronDown, Calendar } from "lucide-react";
 import { useGetClientQuery, useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetStandaloneSessionsByClientQuery } from "@nexia/shared/api/standaloneSessionsApi";
 import { useGetScheduledSessionsQuery } from "@nexia/shared/api/schedulingApi";
-import { isDateInRange, parseISODateLocal } from "@nexia/shared/utils/periodBlockOverlap";
+import { parseISODateLocal } from "@nexia/shared/utils/periodBlockOverlap";
 import {
+    buildCalendarCreateSessionSearchParams,
     filterSessionsOnDate,
     mergeClientTrainingAndStandaloneSessions,
+    resolveClientDaySessionAction,
 } from "@nexia/shared/training/clientSessionsOnDate";
 import type { TrainingSession } from "@nexia/shared/types/training";
 import type { ScheduledSession } from "@nexia/shared/types/scheduling";
@@ -37,6 +39,7 @@ import type { PlanTrainingSession } from "@nexia/shared";
 import { ClientActivePlanScheduleLayout } from "@/components/clients/session/ClientActivePlanScheduleLayout";
 import { ClientActivePlanSummaryPanel } from "@/components/clients/session/ClientActivePlanSummaryPanel";
 import { ClientSessionPickDayPanel } from "@/components/clients/session/ClientSessionPickDayPanel";
+import { ClientDaySessionsPickerSheet } from "@/components/clients/session/ClientDaySessionsPickerSheet";
 import { PlanningShellBodyLayout } from "@/components/trainingPlans/periodization/PlanningShellBodyLayout";
 import { PeriodizationCalendar } from "@/components/trainingPlans/periodization/PeriodizationCalendar";
 import { IDLE_PERIOD_BLOCK_FORM_STATE } from "@/components/trainingPlans/periodization/usePeriodBlockForm";
@@ -66,7 +69,6 @@ import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFor
 import { PaginationBar } from "@/components/ui/pagination";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
-import { useToast } from "@/components/ui/feedback";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import {
     CLIENT_SESSIONS_CALENDAR_SECTION_ID,
@@ -125,7 +127,6 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
-    const { showWarning } = useToast();
     const initialMonth = useMemo(() => {
         const monthParam = searchParams.get("month");
         if (monthParam) {
@@ -137,6 +138,10 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
     const [currentMonth, setCurrentMonth] = useState(() => initialMonth);
     const [periodCalMonth, setPeriodCalMonth] = useState(() => initialMonth);
     const [pickedSessionDate, setPickedSessionDate] = useState<string | null>(null);
+    const [dayPicker, setDayPicker] = useState<{
+        dateStr: string;
+        sessions: SessionListItem[];
+    } | null>(null);
     const calendarFocusPendingRef = useRef(isSessionsCalendarFocus(searchParams));
 
     useEffect(() => {
@@ -278,31 +283,65 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         [trainingSessions, standaloneSessions],
     );
 
+    const navigateToSessionItem = useCallback(
+        (s: SessionListItem) => {
+            const path =
+                s.session_kind === "standalone"
+                    ? `/dashboard/standalone-sessions/${s.id}`
+                    : `/dashboard/session-programming/sessions/${s.id}`;
+            navigate(path, { state: returnToStateFromView(location) });
+        },
+        [location, navigate],
+    );
+
+    const navigateToCreateFromCalendarDay = useCallback(
+        (dateStr: string) => {
+            const qs = buildCalendarCreateSessionSearchParams({
+                clientId,
+                dateStr,
+                activePlanId: activePlanForClient?.id ?? null,
+                planStartDate: activePlanForClient?.start_date,
+                planEndDate: activePlanForClient?.end_date,
+            });
+            navigate(`/dashboard/session-programming/create-session?${qs.toString()}`, {
+                replace: false,
+            });
+        },
+        [activePlanForClient, clientId, navigate],
+    );
+
+    const applyCalendarDayClick = useCallback(
+        (dateStr: string) => {
+            const onDay = filterSessionsOnDate(allSessions, dateStr);
+            const action = resolveClientDaySessionAction(onDay);
+            if (action.kind === "open_one") {
+                navigateToSessionItem(action.session);
+                return;
+            }
+            if (action.kind === "pick") {
+                setDayPicker({ dateStr, sessions: action.sessions });
+                return;
+            }
+            if (activePlanForClient) {
+                navigateToCreateFromCalendarDay(dateStr);
+                return;
+            }
+            setPickedSessionDate(dateStr);
+        },
+        [
+            activePlanForClient,
+            allSessions,
+            navigateToCreateFromCalendarDay,
+            navigateToSessionItem,
+        ],
+    );
+
     const handlePeriodCalendarDay = useCallback(
         (dateStr: string) => {
             if (!activePlanForClient) return;
-            if (!isDateInRange(dateStr, activePlanForClient.start_date, activePlanForClient.end_date)) {
-                showWarning("Solo puedes abrir el constructor en fechas dentro de la vigencia del plan activo.", 4000);
-                return;
-            }
-            const onDay = filterSessionsOnDate(allSessions, dateStr);
-            const trainingOnDay = onDay.find((s) => s.session_kind === "training");
-            if (trainingOnDay?.id) {
-                navigate(
-                    `/dashboard/session-programming/sessions/${trainingOnDay.id}`,
-                    { state: returnToStateFromView(location) },
-                );
-                return;
-            }
-            const qs = new URLSearchParams({
-                clientId: String(clientId),
-                date: dateStr,
-                planId: String(activePlanForClient.id),
-                sessionKind: "program",
-            });
-            navigate(`/dashboard/session-programming/create-session?${qs.toString()}`, { replace: false });
+            applyCalendarDayClick(dateStr);
         },
-        [activePlanForClient, allSessions, clientId, navigate, showWarning, location],
+        [activePlanForClient, applyCalendarDayClick],
     );
 
     const sessionDatesForCalendar = useMemo(() => {
@@ -316,33 +355,29 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         return set;
     }, [allSessions]);
 
-    const navigateToSessionItem = useCallback(
-        (s: SessionListItem) => {
-            const path =
-                s.session_kind === "standalone"
-                    ? `/dashboard/standalone-sessions/${s.id}`
-                    : `/dashboard/session-programming/sessions/${s.id}`;
-            navigate(path, { state: returnToStateFromView(location) });
-        },
-        [location, navigate],
-    );
-
     const handleNoPlanCalendarDay = useCallback(
         (dateStr: string) => {
-            const onDay = allSessions.filter((s) => {
-                const raw = s.session_date;
-                if (!raw) return false;
-                const match = String(raw).match(/^(\d{4}-\d{2}-\d{2})/);
-                const iso = match ? match[1] : String(raw).slice(0, 10);
-                return iso === dateStr;
-            });
-            if (onDay.length > 0 && onDay[0]?.id) {
-                navigateToSessionItem(onDay[0]);
-                return;
-            }
-            setPickedSessionDate(dateStr);
+            applyCalendarDayClick(dateStr);
         },
-        [allSessions, navigateToSessionItem],
+        [applyCalendarDayClick],
+    );
+
+    const dayPickerDateLabel = useMemo(() => {
+        if (!dayPicker?.dateStr) return "";
+        return new Date(`${dayPicker.dateStr}T12:00:00`).toLocaleDateString("es-ES", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        });
+    }, [dayPicker?.dateStr]);
+
+    const handleDayPickerSelect = useCallback(
+        (session: SessionListItem) => {
+            setDayPicker(null);
+            navigateToSessionItem(session);
+        },
+        [navigateToSessionItem],
     );
 
     // Lista unificada cronológica: sesiones + citas, ordenadas por fecha
@@ -496,9 +531,18 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                         </div>
 
                         {filteredList.length === 0 ? (
-                            <p className={CLIENT_SESSIONS_EMPTY_FILTER}>
-                                No hay sesiones ni citas que coincidan con los filtros.
-                            </p>
+                            <div className="space-y-3">
+                                <p className={CLIENT_SESSIONS_EMPTY_FILTER}>
+                                    No hay sesiones ni citas que coincidan con los filtros.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={handleAddSession}
+                                    className="text-sm font-semibold text-primary hover:underline"
+                                >
+                                    + Crear sesión para este cliente
+                                </button>
+                            </div>
                         ) : (
                             <>
                                 <ul className={CLIENT_SESSIONS_LIST}>
@@ -572,6 +616,14 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                     </div>
                 )}
             </div>
+
+            <ClientDaySessionsPickerSheet
+                isOpen={dayPicker != null}
+                dateLabel={dayPickerDateLabel}
+                sessions={dayPicker?.sessions ?? []}
+                onClose={() => setDayPicker(null)}
+                onSelect={handleDayPickerSelect}
+            />
 
             <ReplicateSessionModal
                 isOpen={replicateFlow.isOpen}

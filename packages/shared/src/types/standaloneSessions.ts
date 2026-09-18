@@ -29,6 +29,7 @@ export interface StandaloneSessionCreate {
 export interface StandaloneSessionUpdate {
     session_name?: string | null;
     session_type?: string | null;
+    session_date?: string | null;
     planned_duration?: number | null;
     actual_duration?: number | null;
     status?: string | null;

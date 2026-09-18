@@ -50,6 +50,8 @@ export const SESSION_PROGRAMMING_COPY = {
     editClientBannerPrefix: "Editando sesión para",
     nameHint: "Se genera automáticamente; puedes cambiarlo",
     planHint: "La sesión debe estar vinculada a un plan para el seguimiento de carga.",
+    createSubmitLabel: "Crear Sesión",
+    createSubmitLoading: "Creando sesión…",
 } as const;
 
 /** Shell página con clearance para footer fijo. */

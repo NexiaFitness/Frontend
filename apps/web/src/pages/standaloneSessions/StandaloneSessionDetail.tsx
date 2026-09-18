@@ -27,6 +27,8 @@ import {
     useGetStandaloneSessionExercisesQuery,
 } from "@nexia/shared/api/standaloneSessionsApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
+import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
+import { exerciseDisplayName } from "@nexia/shared";
 import type { SessionExerciseDisplay } from "@nexia/shared/hooks/sessionProgramming";
 import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
 import { StandaloneSessionLoadSummary } from "@/components/standaloneSessions/StandaloneSessionLoadSummary";
@@ -39,8 +41,10 @@ const STATUS_LABELS: Record<string, string> = {
     planned: "Planificada",
     completed: "Completada",
     cancelled: "Cancelada",
-    skipped: "Cancelada",
-    in_progress: "Planificada",
+    skipped: "Saltada",
+    in_progress: "En curso",
+    modified: "Modificada",
+    archived: "Archivada",
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -112,6 +116,15 @@ export const StandaloneSessionDetail: React.FC = () => {
         skip: !session?.client_id,
     });
 
+    const { data: exercisesCatalog } = useGetExercisesQuery({ skip: 0, limit: 1000 });
+    const exerciseNameById = useMemo(() => {
+        const map = new Map<number, string>();
+        for (const ex of exercisesCatalog?.exercises ?? []) {
+            map.set(ex.id, exerciseDisplayName(ex));
+        }
+        return map;
+    }, [exercisesCatalog?.exercises]);
+
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined);
     const trainerId = trainerProfile?.id ?? 0;
     const [updateSession, { isLoading: isCancelling }] = useUpdateStandaloneSessionMutation();
@@ -152,7 +165,9 @@ export const StandaloneSessionDetail: React.FC = () => {
             exercises.map((exercise) => ({
                 id: exercise.id,
                 exerciseId: exercise.exercise_id,
-                exerciseName: `Ejercicio #${exercise.exercise_id}`,
+                exerciseName:
+                    exerciseNameById.get(exercise.exercise_id) ??
+                    `Ejercicio #${exercise.exercise_id}`,
                 order: exercise.order_in_session,
                 plannedSets: exercise.planned_sets,
                 plannedReps:
@@ -166,7 +181,7 @@ export const StandaloneSessionDetail: React.FC = () => {
                 actualReps: exercise.actual_reps != null ? String(exercise.actual_reps) : null,
                 notes: exercise.notes,
             })),
-        [exercises]
+        [exerciseNameById, exercises]
     );
 
     if (!sessionId || Number.isNaN(sessionId)) {

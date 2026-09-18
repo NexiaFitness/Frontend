@@ -10,6 +10,14 @@ export interface SessionDayCoexistenceItem {
     session_name?: string | null;
 }
 
+export function labelSessionDayCoexistenceItem(item: SessionDayCoexistenceItem): string {
+    const name = item.session_name?.trim() || "Sesión sin nombre";
+    if (item.session_kind === "standalone") {
+        return `Sesión suelta · ${name}`;
+    }
+    return `Sesión de programa · ${name}`;
+}
+
 function labelForItem(item: SessionDayCoexistenceItem): string {
     const name = item.session_name?.trim() || "Sesión sin nombre";
     if (item.session_kind === "standalone") {

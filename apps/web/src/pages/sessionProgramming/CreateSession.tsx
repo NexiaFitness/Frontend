@@ -647,6 +647,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             return;
         }
         setIsPersistingSubmit(true);
+        let keepSubmitLoadingUntilRedirect = false;
         try {
             if (useStandaloneSession) {
                 const standaloneData = {
@@ -703,7 +704,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 } else {
                     showSuccess(emptySessionCreatedToast(true), 2000);
                 }
-                setTimeout(() => navigate(redirectTo), 1500);
+                keepSubmitLoadingUntilRedirect = true;
+                setTimeout(() => {
+                    navigate(redirectTo);
+                    setIsPersistingSubmit(false);
+                }, 1500);
             } else {
                 const sessionData: TrainingSessionCreate = {
                     training_plan_id: selectedPlanId!,
@@ -774,7 +779,9 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             const errorMessage = errorData?.detail || "Error al crear la sesión";
             showError(typeof errorMessage === 'string' ? errorMessage : "Error de validación en el servidor");
         } finally {
-            setIsPersistingSubmit(false);
+            if (!keepSubmitLoadingUntilRedirect) {
+                setIsPersistingSubmit(false);
+            }
         }
     };
 
@@ -1227,6 +1234,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             size="sm"
                             className={SESSION_PROGRAMMING_FOOTER_CANCEL}
                             onClick={handleGoBack}
+                            disabled={isPersistingSubmit}
                         >
                             Cancelar
                         </Button>
@@ -1240,6 +1248,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 isPersistingSubmit || clientPlanMismatch || programPlanBlocked
                             }
                             isLoading={isPersistingSubmit}
+                            aria-busy={isPersistingSubmit}
                             onClick={(e) => {
                                 if (isPersistingSubmit || clientPlanMismatch) return;
                                 if (!effectiveClientId) {
@@ -1255,7 +1264,9 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 }
                             }}
                         >
-                            Crear Sesión
+                            {isPersistingSubmit
+                                ? SESSION_PROGRAMMING_COPY.createSubmitLoading
+                                : SESSION_PROGRAMMING_COPY.createSubmitLabel}
                         </Button>
                     </div>
                 </div>

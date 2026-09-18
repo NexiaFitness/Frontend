@@ -46,9 +46,10 @@ const STATUS_LABELS: Record<string, string> = {
     planned: "Planificada",
     completed: "Completada",
     cancelled: "Cancelada",
-    modified: "Planificada",
-    in_progress: "Planificada",
-    skipped: "Cancelada",
+    modified: "Modificada",
+    in_progress: "En curso",
+    skipped: "Saltada",
+    archived: "Archivada",
 };
 
 const STATUS_BADGE_CLASS: Record<string, string> = {

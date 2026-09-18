@@ -18,11 +18,12 @@ const WEEKS: WeeklyStructureWeek[] = [
 
 describe("weeklyStructureSessionDrift", () => {
     it("detects planned future session on day without patterns", () => {
+        // 2026-09-08 = martes (ISO 2); WEEKS solo define lun(1) y mié(3) → martes sin patrón
         const ids = listStructureDriftPlannedSessionIds(
             [
                 {
                     id: 10,
-                    session_date: "2026-09-09",
+                    session_date: "2026-09-08",
                     status: "planned",
                     period_block_id: 59,
                 },
@@ -51,9 +52,13 @@ describe("weeklyStructureSessionDrift", () => {
         expect(ids).toEqual([]);
     });
 
-    it("hasTrainingPatternsOnDate matches Monday with patterns", () => {
+    it("hasTrainingPatternsOnDate matches weekday with patterns", () => {
+        // 2026-09-07 = lunes (ISO 1), definido en WEEKS
+        expect(
+            hasTrainingPatternsOnDate("2026-09-07", "2026-09-08", WEEKS),
+        ).toBe(true);
         expect(
             hasTrainingPatternsOnDate("2026-09-08", "2026-09-08", WEEKS),
-        ).toBe(true);
+        ).toBe(false);
     });
 });

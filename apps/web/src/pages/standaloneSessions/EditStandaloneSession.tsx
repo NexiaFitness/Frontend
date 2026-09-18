@@ -79,6 +79,7 @@ export const EditStandaloneSession: React.FC = () => {
     const [isPersistingExercises, setIsPersistingExercises] = useState(false);
 
     const [sessionName, setSessionName] = useState("");
+    const [sessionDate, setSessionDate] = useState("");
     const [sessionType, setSessionType] = useState("strength");
     const [plannedDuration, setPlannedDuration] = useState("");
     const [notes, setNotes] = useState("");
@@ -108,6 +109,7 @@ export const EditStandaloneSession: React.FC = () => {
     useEffect(() => {
         if (!session) return;
         setSessionName(session.session_name ?? "");
+        setSessionDate(session.session_date?.slice(0, 10) ?? "");
         setSessionType(session.session_type ?? "strength");
         setPlannedDuration(
             session.planned_duration != null ? String(session.planned_duration) : "",
@@ -174,6 +176,7 @@ export const EditStandaloneSession: React.FC = () => {
                 body: {
                     session_name: sessionName.trim() || session.session_name,
                     session_type: sessionType,
+                    session_date: sessionDate || session.session_date,
                     planned_duration: plannedDuration ? Number(plannedDuration) : null,
                     notes: notes.trim() || null,
                 },
@@ -294,13 +297,20 @@ export const EditStandaloneSession: React.FC = () => {
 
                 <div>
                     <h1 className="text-xl font-bold">Editar sesión suelta</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Fecha: {session.session_date} · No editable en standalone (contrato BE)
-                    </p>
                 </div>
 
                 <form onSubmit={handleSave} className="space-y-6">
                     <div className="space-y-4 rounded-xl border border-border bg-card p-5">
+                        <div>
+                            <label className="text-sm font-medium">Fecha</label>
+                            <Input
+                                type="date"
+                                value={sessionDate}
+                                onChange={(e) => setSessionDate(e.target.value)}
+                                className="mt-1 max-w-xs"
+                                disabled={isCancelled}
+                            />
+                        </div>
                         <div>
                             <label className="text-sm font-medium">Nombre</label>
                             <Input
