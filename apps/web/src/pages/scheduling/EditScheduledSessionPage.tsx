@@ -26,9 +26,10 @@ import {
     PLATFORM_SPEC_GRID,
 } from "@/components/ui/surface/platformPremiumPresentation";
 import {
+    PLATFORM_DASHBOARD_FOOTER_BTN,
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
     PLATFORM_FORM_BODY,
     PLATFORM_FORM_FOOTER_ACTIONS,
-    PLATFORM_FORM_FOOTER_BTN,
     PLATFORM_FORM_SHELL,
 } from "@/components/ui/forms/platformFormPresentation";
 import { NEXIA_PREMIUM_MODAL_PRIMARY_CTA_CLASS } from "@/components/ui/modals/nexiaPremiumModalPresentation";
@@ -44,8 +45,9 @@ const EDIT_SCHEDULE_GLOW =
     "pointer-events-none absolute inset-x-0 -top-4 h-48 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.12),transparent_70%)]";
 const EDIT_SCHEDULE_GRID = cn(PLATFORM_SPEC_GRID, "gap-4 md:grid-cols-2");
 const EDIT_SCHEDULE_FOOTER = cn(
-    "mx-auto w-full max-w-2xl lg:max-w-3xl px-4 lg:px-8",
+    "pointer-events-auto mx-auto w-full max-w-2xl lg:max-w-3xl px-4 lg:px-8",
     PLATFORM_FORM_FOOTER_ACTIONS,
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
 );
 import {
     useUpdateScheduledSession,
@@ -396,7 +398,8 @@ export const EditScheduledSessionPage: React.FC = () => {
                     <Button
                         type="button"
                         variant="outline-primary"
-                        className={PLATFORM_FORM_FOOTER_BTN}
+                        size="sm"
+                        className={PLATFORM_DASHBOARD_FOOTER_BTN}
                         onClick={goCalendar}
                         disabled={isUpdating}
                     >
@@ -406,7 +409,11 @@ export const EditScheduledSessionPage: React.FC = () => {
                         type="submit"
                         form="edit-scheduled-session"
                         variant="primary"
-                        className={cn(PLATFORM_FORM_FOOTER_BTN, NEXIA_PREMIUM_MODAL_PRIMARY_CTA_CLASS)}
+                        size="sm"
+                        className={cn(
+                            PLATFORM_DASHBOARD_FOOTER_BTN,
+                            NEXIA_PREMIUM_MODAL_PRIMARY_CTA_CLASS,
+                        )}
                         disabled={isUpdating}
                         isLoading={isUpdating}
                     >

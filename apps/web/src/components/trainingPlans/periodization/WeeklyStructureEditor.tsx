@@ -58,6 +58,7 @@ import { PatternBadge } from "./PatternBadge";
 
 import { Button } from "@/components/ui/buttons";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
+import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import { cn } from "@/lib/utils";
@@ -870,7 +871,7 @@ export const WeeklyStructureEditor = forwardRef<
 
             {isEditing && (
                 <DashboardFixedFooter>
-                    <div className="flex flex-wrap items-center justify-end gap-3">
+                    <div className={PLATFORM_DASHBOARD_FOOTER_ROW}>
                         <Button
                             type="button"
                             variant="outline-destructive"
@@ -897,7 +898,7 @@ export const WeeklyStructureEditor = forwardRef<
 
             {viewWeek && !isEditing && (
                 <DashboardFixedFooter>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
+                    <div className={PLATFORM_DASHBOARD_FOOTER_ROW}>
                         {!isTemplateScope ? (
                             <Button
                                 variant="outline-primary"

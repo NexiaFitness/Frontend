@@ -43,7 +43,6 @@ import {
     SCHEDULE_NEW_FIELD_LABEL,
     SCHEDULE_NEW_FIELD_WRAP,
     SCHEDULE_NEW_FOOTER_ACTIONS,
-    SCHEDULE_NEW_FOOTER_PRIMARY,
     SCHEDULE_NEW_FORM,
     SCHEDULE_NEW_FORM_GRID_2,
     SCHEDULE_NEW_FORM_GRID_4,
@@ -563,7 +562,6 @@ export const NewScheduledSessionPage: React.FC = () => {
                         type="button"
                         variant="outline-destructive"
                         size="sm"
-                        className={SCHEDULE_NEW_FOOTER_PRIMARY}
                         onClick={() => navigate("/dashboard/scheduling")}
                         disabled={isCreating}
                     >
@@ -574,7 +572,6 @@ export const NewScheduledSessionPage: React.FC = () => {
                         form="new-scheduled-session-form"
                         variant="primary"
                         size="sm"
-                        className={SCHEDULE_NEW_FOOTER_PRIMARY}
                         disabled={isCreating || isClientsPending}
                     >
                         {isCreating ? "Agendando..." : "Agendar sesión"}

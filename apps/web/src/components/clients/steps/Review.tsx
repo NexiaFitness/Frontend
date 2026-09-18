@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/buttons";
 import { Avatar } from "@/components/ui/avatar";
 import { FormSection } from "@/components/ui/forms";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
+import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
 import { User, Ruler, Target, StickyNote, Activity } from "lucide-react";
 import { EmptyState } from "@/components/ui/feedback";
 
@@ -295,11 +296,11 @@ export const Review: React.FC<ExtendedReviewProps> = ({
             {/* Footer fijo */}
             {(onBack || onCreateProfile) && (
                 <DashboardFixedFooter>
-                    <div className="flex items-center justify-end gap-3">
+                    <div className={PLATFORM_DASHBOARD_FOOTER_ROW}>
                         {onBack && (
                             <Button
                                 variant="outline"
-                                size="md"
+                                size="sm"
                                 onClick={onBack}
                                 disabled={isSubmitting}
                             >
@@ -309,7 +310,7 @@ export const Review: React.FC<ExtendedReviewProps> = ({
                         {onCreateProfile && (
                             <Button
                                 variant="primary"
-                                size="md"
+                                size="sm"
                                 onClick={onCreateProfile}
                                 isLoading={isSubmitting}
                                 disabled={isSubmitting}

@@ -8,7 +8,10 @@
 
 import { cn } from "@/lib/utils";
 import {
-    ATHLETE_PRIMARY_CTA,
+    PLATFORM_DASHBOARD_FOOTER_BTN,
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
+} from "@/components/ui/forms/platformFormPresentation";
+import {
     ATHLETE_SECTION_LABEL,
     NEXIA_PORTAL_CARD_DESCRIPTION,
     NEXIA_PORTAL_CARD_TITLE,
@@ -216,27 +219,20 @@ export const SESSION_PROGRAMMING_FOOTER_SHELL = cn(
 );
 
 export const SESSION_PROGRAMMING_FOOTER_ROW = cn(
-    "pointer-events-auto flex w-full min-w-0 max-w-full flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between",
+    "pointer-events-auto flex w-full min-w-0 max-w-full flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between",
 );
 
 export const SESSION_PROGRAMMING_FOOTER_ACTIONS = cn(
     "flex w-full min-w-0 flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end sm:gap-3 md:w-auto md:shrink-0",
-    "[&_button]:w-full sm:[&_button]:w-auto",
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
 );
 
-export const SESSION_PROGRAMMING_FOOTER_PRIMARY = cn(
-    ATHLETE_PRIMARY_CTA,
-    "xl:min-h-0 xl:w-auto xl:px-5 xl:text-sm xl:font-medium xl:shadow-none",
-);
+export const SESSION_PROGRAMMING_FOOTER_PRIMARY = PLATFORM_DASHBOARD_FOOTER_BTN;
 
 /** Secundaria premium (marco cyan): `Button variant="outline-primary"` — plantilla, revisar alineación. §05_ACTION_HIERARCHY §2.3.1 B */
-export const SESSION_PROGRAMMING_FOOTER_SECONDARY = cn(
-    "w-full min-h-touch xl:min-h-0 xl:w-auto",
-);
+export const SESSION_PROGRAMMING_FOOTER_SECONDARY = PLATFORM_DASHBOARD_FOOTER_BTN;
 
-export const SESSION_PROGRAMMING_FOOTER_CANCEL = cn(
-    "w-full min-h-touch xl:min-h-0 xl:w-auto",
-);
+export const SESSION_PROGRAMMING_FOOTER_CANCEL = PLATFORM_DASHBOARD_FOOTER_BTN;
 
 /** Hero «Hoy toca» — cabecera métricas. */
 export const SESSION_PROGRAMMING_DAY_HERO_HEADER = cn(

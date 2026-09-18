@@ -14,9 +14,10 @@ import {
     PLATFORM_SPEC_GRID,
 } from "@/components/ui/surface/platformPremiumPresentation";
 import {
+    PLATFORM_DASHBOARD_FOOTER_BTN,
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
     PLATFORM_FORM_BODY,
     PLATFORM_FORM_FOOTER_ACTIONS,
-    PLATFORM_FORM_FOOTER_BTN,
     PLATFORM_FORM_SECTION,
     PLATFORM_FORM_SECTION_TITLE,
     PLATFORM_FORM_SHELL,
@@ -45,11 +46,12 @@ export const EXERCISE_FORM_GRID_2 = cn(PLATFORM_SPEC_GRID, "gap-4 md:grid-cols-2
 export const EXERCISE_FORM_GRID_3 = cn(PLATFORM_SPEC_GRID, "gap-4 md:grid-cols-3");
 
 export const EXERCISE_FORM_FOOTER_ACTIONS = cn(
-    "mx-auto w-full max-w-3xl lg:max-w-4xl",
+    "pointer-events-auto mx-auto w-full max-w-3xl lg:max-w-4xl",
     PLATFORM_FORM_FOOTER_ACTIONS,
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
 );
 
-export const EXERCISE_FORM_FOOTER_BTN = PLATFORM_FORM_FOOTER_BTN;
+export const EXERCISE_FORM_FOOTER_BTN = PLATFORM_DASHBOARD_FOOTER_BTN;
 export const EXERCISE_FORM_SUBMIT_CTA = NEXIA_PREMIUM_MODAL_PRIMARY_CTA_CLASS;
 
 export const EXERCISE_FORM_BACK_LABEL = "Volver";

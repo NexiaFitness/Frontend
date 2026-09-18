@@ -15,4 +15,8 @@ export {
   DashboardFixedFooter,
   DASHBOARD_FIXED_FOOTER_SHELL_CLASS,
 } from "./DashboardFixedFooter";
+export {
+  PLATFORM_DASHBOARD_FOOTER_BTN,
+  PLATFORM_DASHBOARD_FOOTER_ROW,
+} from "@/components/ui/forms/platformFormPresentation";
 export type { DashboardFixedFooterProps } from "./DashboardFixedFooter";

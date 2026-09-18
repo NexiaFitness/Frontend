@@ -565,14 +565,16 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                 <Button
                     type="button"
                     variant="outline"
+                    size="sm"
                     onClick={handleBack}
                 >
-                    <ChevronLeft className="size-4 shrink-0" aria-hidden />
+                    <ChevronLeft className="size-3.5 shrink-0" aria-hidden />
                     Atrás
                 </Button>
                 <Button
                     type="button"
                     variant="primary"
+                    size="sm"
                     isLoading={isSummary && isSaving}
                     disabled={
                         isSaving ||

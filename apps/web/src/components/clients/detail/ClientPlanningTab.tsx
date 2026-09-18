@@ -35,6 +35,7 @@ import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import { LoadingSpinner, Alert, EmptyState, useToast } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
+import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
 import { PLATFORM_PAGE_WITH_FIXED_FOOTER } from "@/components/ui/surface/platformPremiumPresentation";
 import { cn } from "@/lib/utils";
 import {
@@ -478,7 +479,7 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
 
             {!isPhaseAuthoring && !blockAuthorActive && (
                 <DashboardFixedFooter>
-                    <div className="flex flex-wrap items-center justify-end gap-3">
+                    <div className={PLATFORM_DASHBOARD_FOOTER_ROW}>
                         {onPlanificar ? (
                             <Button
                                 type="button"

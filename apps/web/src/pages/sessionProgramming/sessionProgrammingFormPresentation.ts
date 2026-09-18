@@ -13,9 +13,10 @@ import {
     PLATFORM_SPEC_GRID,
 } from "@/components/ui/surface/platformPremiumPresentation";
 import {
+    PLATFORM_DASHBOARD_FOOTER_BTN,
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
     PLATFORM_FORM_BODY,
     PLATFORM_FORM_FOOTER_ACTIONS,
-    PLATFORM_FORM_FOOTER_BTN,
     PLATFORM_FORM_SECTION,
     PLATFORM_FORM_SECTION_TITLE,
     PLATFORM_FORM_SHELL,
@@ -43,11 +44,13 @@ export const SESSION_PROG_FORM_SECTION_TITLE = PLATFORM_FORM_SECTION_TITLE;
 export const SESSION_PROG_FORM_GRID_2 = cn(PLATFORM_SPEC_GRID, "gap-4 md:grid-cols-2");
 
 export const SESSION_PROG_FORM_FOOTER_ACTIONS = cn(
-    "mx-auto w-full max-w-2xl lg:max-w-3xl",
+    "pointer-events-auto mx-auto w-full max-w-2xl lg:max-w-3xl",
     PLATFORM_FORM_FOOTER_ACTIONS,
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
 );
 
-export const SESSION_PROG_FORM_FOOTER_BTN = PLATFORM_FORM_FOOTER_BTN;
+/** Mismo token que `DashboardFixedFooter` ancho completo; formularios estrechos conservan max-w del shell. */
+export const SESSION_PROG_FORM_FOOTER_BTN = PLATFORM_DASHBOARD_FOOTER_BTN;
 export const SESSION_PROG_FORM_SUBMIT_CTA = NEXIA_PREMIUM_MODAL_PRIMARY_CTA_CLASS;
 
 export const SESSION_PROG_FORM_BACK_LABEL = "Volver";

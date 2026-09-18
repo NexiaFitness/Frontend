@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
+import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Badge } from "@/components/ui/Badge";
 import { FormSection } from "@/components/ui/forms/FormSection";
@@ -245,15 +246,15 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
             </div>
 
             <DashboardFixedFooter>
-                <div className="flex items-center justify-end gap-3">
+                <div className={PLATFORM_DASHBOARD_FOOTER_ROW}>
                     <Button
                         variant="outline"
-                        size="md"
+                        size="sm"
                         onClick={() => navigate("/dashboard/clients")}
                     >
                         Cancelar
                     </Button>
-                    <Button variant="primary" size="md" onClick={handleShowReview}>
+                    <Button variant="primary" size="sm" onClick={handleShowReview}>
                         Siguiente
                     </Button>
                 </div>

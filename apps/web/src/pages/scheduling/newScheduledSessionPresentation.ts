@@ -5,6 +5,7 @@
  */
 
 import { cn } from "@/lib/utils";
+import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
 import {
     NEXIA_GLASS_CARD,
     NEXIA_GLASS_CARD_DESKTOP,
@@ -86,9 +87,7 @@ export const SCHEDULE_NEW_CONFLICT_TEXT_OK = "text-sm font-medium text-success";
 
 export const SCHEDULE_NEW_CONFLICT_TEXT_ERROR = "text-sm font-medium text-destructive";
 
-export const SCHEDULE_NEW_FOOTER_ACTIONS = "flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3";
-
-export const SCHEDULE_NEW_FOOTER_PRIMARY = "w-full sm:w-auto";
+export const SCHEDULE_NEW_FOOTER_ACTIONS = PLATFORM_DASHBOARD_FOOTER_ROW;
 
 export const SCHEDULE_NEW_SESSION_TYPE_OPTIONS = [
     { value: "training", label: "Entrenamiento" },

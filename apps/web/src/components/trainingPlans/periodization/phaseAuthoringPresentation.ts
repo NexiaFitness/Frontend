@@ -18,6 +18,10 @@ import {
     NEXIA_PORTAL_GREETING_NAME,
     NEXIA_PORTAL_GREETING_SUBTITLE,
 } from "@/components/athlete/account/athleteSettingsPresentation";
+import {
+    PLATFORM_DASHBOARD_FOOTER_BTN,
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
+} from "@/components/ui/forms/platformFormPresentation";
 
 export const AUTHORING_SURFACE_CLASS = cn(
     "w-full min-w-0",
@@ -108,9 +112,14 @@ export const AUTHORING_STEP_SECTION_LABEL_CLASS = PLATFORM_SECTION_LABEL;
 
 export const AUTHORING_STEP_META_CLASS = PLATFORM_SECTION_LABEL;
 
-/** Fila de botones del footer del wizard. */
-export const AUTHORING_WIZARD_FOOTER_ROW_CLASS =
-    "flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between";
+/** Fila de botones del footer del wizard (Atrás / Continuar). */
+export const AUTHORING_WIZARD_FOOTER_ROW_CLASS = cn(
+    "pointer-events-auto flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between",
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
+);
+
+/** Botón suelto en footer wizard cuando no aplica el selector de fila. */
+export const AUTHORING_WIZARD_FOOTER_BTN = PLATFORM_DASHBOARD_FOOTER_BTN;
 
 /** Stack footer: avisos + botones dentro de la columna del wizard. */
 export const AUTHORING_WIZARD_FOOTER_STACK_CLASS = cn(
@@ -118,8 +127,10 @@ export const AUTHORING_WIZARD_FOOTER_STACK_CLASS = cn(
     "space-y-3",
 );
 
-export const AUTHORING_FOOTER_INNER_CLASS =
-    "mx-auto flex w-full min-w-0 max-w-full flex-col-reverse gap-3 sm:max-w-3xl sm:flex-row sm:items-center sm:justify-between sm:gap-3";
+export const AUTHORING_FOOTER_INNER_CLASS = cn(
+    "mx-auto flex w-full min-w-0 max-w-full flex-col-reverse gap-3 sm:max-w-3xl sm:flex-row sm:items-center sm:justify-between sm:gap-3",
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
+);
 
 /** Artículo + sustantivo para copy de periodización (concordancia ES). */
 export function periodUnitPhrase(unit: "fase" | "bloque"): string {

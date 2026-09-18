@@ -553,6 +553,7 @@ export const ExerciseForm: React.FC = () => {
                     <Button
                         type="button"
                         variant="outline-primary"
+                        size="sm"
                         className={EXERCISE_FORM_FOOTER_BTN}
                         onClick={goBack}
                     >
@@ -562,6 +563,7 @@ export const ExerciseForm: React.FC = () => {
                         type="submit"
                         form="exercise-form"
                         variant="primary"
+                        size="sm"
                         className={cn(EXERCISE_FORM_FOOTER_BTN, EXERCISE_FORM_SUBMIT_CTA)}
                         disabled={isLoading}
                         isLoading={isLoading}

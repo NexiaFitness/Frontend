@@ -11,6 +11,7 @@
 import React, { useMemo } from "react";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
+import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
 import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
 import { Button } from "@/components/ui/buttons";
 import { Input, Textarea, DatePickerButton, Label, FormCombobox } from "@/components/ui/forms";
@@ -397,7 +398,7 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
             </div>
 
             <DashboardFixedFooter>
-                <div className="flex items-center justify-end gap-3">
+                <div className={PLATFORM_DASHBOARD_FOOTER_ROW}>
                     <Button
                         type="button"
                         variant="outline-destructive"

@@ -585,6 +585,7 @@ export const CreateTestEvaluation: React.FC = () => {
                             <Button
                                 type="button"
                                 variant="outline-primary"
+                                size="sm"
                                 className={CREATE_EVAL_FOOTER_BTN}
                                 onClick={() => navigate(returnPath)}
                             >
@@ -593,6 +594,7 @@ export const CreateTestEvaluation: React.FC = () => {
                             <Button
                                 type="submit"
                                 variant="primary"
+                                size="sm"
                                 className={cn(CREATE_EVAL_FOOTER_BTN, CREATE_EVAL_SUBMIT_CTA)}
                                 disabled={isRegistering || isCreatingTest || !trainerId}
                             >

@@ -334,12 +334,13 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
 
             <DashboardFixedFooter>
                 <div className={AUTHORING_FOOTER_INNER_CLASS}>
-                    <Button type="button" variant="outline" onClick={handleExit}>
+                    <Button type="button" variant="outline" size="sm" onClick={handleExit}>
                         Volver
                     </Button>
                     <Button
                         type="button"
                         variant="primary"
+                        size="sm"
                         isLoading={isSaving}
                         disabled={isSaving || !isDirty}
                         onClick={() => void handleSave()}

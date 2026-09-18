@@ -64,8 +64,30 @@ export const PLATFORM_FORM_FOOTER_ACTIONS = cn(
     "flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:gap-3",
 );
 
+/** Modales y footers con pares de botones **igual ancho** (`sm:w-[10rem]`). No usar en `DashboardFixedFooter`. */
 export const PLATFORM_FORM_FOOTER_BTN = cn(
     "w-full min-h-touch sm:min-h-0 sm:w-[10rem]",
+);
+
+/**
+ * Botones en `DashboardFixedFooter` (entrenador/admin): full-width táctil en móvil;
+ * desde `sm` ancho auto + `Button size="sm"` (h-9) — misma altura que el bloque usuario del sidebar.
+ * @see design/platform/05_ACTION_HIERARCHY.md §2.3
+ */
+export const PLATFORM_DASHBOARD_FOOTER_BTN = cn(
+    "w-full min-h-touch sm:min-h-0 sm:w-auto",
+);
+
+/** Aplica `PLATFORM_DASHBOARD_FOOTER_BTN` a todos los `<button>` hijos (filas partidas / clusters). */
+export const PLATFORM_DASHBOARD_FOOTER_BTN_CHILD =
+    "[&_button]:w-full [&_button]:min-h-touch sm:[&_button]:min-h-0 sm:[&_button]:w-auto";
+
+/**
+ * Footer simple (§2.3.1 A): acciones alineadas a la derecha; móvil stack táctil, sm+ fila `size="sm"`.
+ */
+export const PLATFORM_DASHBOARD_FOOTER_ROW = cn(
+    "pointer-events-auto flex w-full min-w-0 max-w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3",
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
 );
 
 /** Sub-panel (p. ej. crear ítem custom dentro del formulario). */

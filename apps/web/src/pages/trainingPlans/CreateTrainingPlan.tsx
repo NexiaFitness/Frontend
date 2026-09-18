@@ -21,6 +21,7 @@ import { RecommendationsCards } from "@/components/clients/detail/Recommendation
 import { Input, Textarea, DatePickerButton, Label, FormCombobox } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
+import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
 import { PlanOverlapModal } from "@/components/trainingPlans/modals";
 import {
     useCreateTrainingPlanMutation,
@@ -624,7 +625,7 @@ export const CreateTrainingPlan: React.FC = () => {
 
             {/* Footer fijo con botones de acción */}
             <DashboardFixedFooter>
-                <div className="flex items-center justify-end gap-3">
+                <div className={PLATFORM_DASHBOARD_FOOTER_ROW}>
                     <Button
                         type="button"
                         variant="outline-destructive"

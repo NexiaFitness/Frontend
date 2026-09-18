@@ -62,6 +62,7 @@ import {
 } from "@/components/clients/session/clientSessionsTabPresentation";
 import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/buttons";
+import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
 import { PaginationBar } from "@/components/ui/pagination";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
@@ -594,7 +595,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
             />
 
             <DashboardFixedFooter>
-                <div className="flex items-center justify-end gap-3">
+                <div className={PLATFORM_DASHBOARD_FOOTER_ROW}>
                     <Button
                         type="button"
                         variant="ghost-primary"

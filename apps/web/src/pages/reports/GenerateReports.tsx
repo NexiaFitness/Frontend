@@ -255,6 +255,7 @@ export const GenerateReports: React.FC = () => {
                         <Button
                             type="button"
                             variant="outline-primary"
+                            size="sm"
                             className={GENERATE_REPORTS_FOOTER_BTN}
                             onClick={() => navigate("/dashboard")}
                             disabled={isLoading}
@@ -264,6 +265,7 @@ export const GenerateReports: React.FC = () => {
                         <Button
                             type="submit"
                             variant="primary"
+                            size="sm"
                             className={cn(GENERATE_REPORTS_FOOTER_BTN, GENERATE_REPORTS_SUBMIT_CTA)}
                             disabled={isLoading}
                         >

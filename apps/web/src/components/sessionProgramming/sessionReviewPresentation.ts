@@ -6,6 +6,10 @@
 
 import { cn } from "@/lib/utils";
 import {
+    PLATFORM_DASHBOARD_FOOTER_BTN,
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
+} from "@/components/ui/forms/platformFormPresentation";
+import {
     PLATFORM_PAGE_WITH_FIXED_FOOTER,
     PLATFORM_PAGE_SHELL,
 } from "@/components/ui/surface/platformPremiumPresentation";
@@ -171,11 +175,9 @@ export const SESSION_REVIEW_FOOTER_ROW = cn(
 
 export const SESSION_REVIEW_FOOTER_MGMT = cn(
     "flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end md:w-auto",
-    "[&_button]:w-full sm:[&_button]:w-auto",
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
 );
 
-export const SESSION_REVIEW_FOOTER_VIEW_ACTION = cn(
-    "w-full min-h-touch sm:w-auto xl:min-h-0",
-);
+export const SESSION_REVIEW_FOOTER_VIEW_ACTION = PLATFORM_DASHBOARD_FOOTER_BTN;
 
 export const SESSION_REVIEW_FOOTER_SHELL = SESSION_PROGRAMMING_FOOTER_SHELL;

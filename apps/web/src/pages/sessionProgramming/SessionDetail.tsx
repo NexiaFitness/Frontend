@@ -30,6 +30,7 @@ import {
     NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS,
 } from "@/components/ui/modals";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
+import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
 import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
 import {
     useGetTrainingSessionQuery,
@@ -400,32 +401,35 @@ export const SessionDetail: React.FC = () => {
             )}
 
             <DashboardFixedFooter>
-                <div className="flex flex-wrap items-center justify-end gap-2">
+                <div className={PLATFORM_DASHBOARD_FOOTER_ROW}>
                     <Button
                         variant="primary"
+                        size="sm"
                         onClick={() =>
                             navigate(`/dashboard/session-programming/edit-session/${session.id}`, {
                                 state: returnToStateFromView(location),
                             })
                         }
                     >
-                        <Pencil className="mr-1 h-4 w-4" aria-hidden />
+                        <Pencil className="size-3.5 shrink-0" aria-hidden />
                         Editar sesión
                     </Button>
                     {session.period_block_id ? (
                         <Button
                             variant="ghost-primary"
+                            size="sm"
                             onClick={replicateFlow.openModal}
                         >
-                            <Copy className="mr-1 h-4 w-4" aria-hidden />
+                            <Copy className="size-3.5 shrink-0" aria-hidden />
                             Replicar
                         </Button>
                     ) : null}
                     <Button
                         variant="outline-destructive"
+                        size="sm"
                         onClick={() => setShowDeleteModal(true)}
                     >
-                        <Trash2 className="mr-1 h-4 w-4" aria-hidden />
+                        <Trash2 className="size-3.5 shrink-0" aria-hidden />
                         Eliminar
                     </Button>
                 </div>

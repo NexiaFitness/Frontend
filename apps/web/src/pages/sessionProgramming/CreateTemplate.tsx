@@ -286,6 +286,7 @@ export const CreateTemplate: React.FC = () => {
                     <Button
                         type="button"
                         variant="outline-primary"
+                        size="sm"
                         className={SESSION_PROG_FORM_FOOTER_BTN}
                         onClick={() => navigate(-1)}
                     >
@@ -295,6 +296,7 @@ export const CreateTemplate: React.FC = () => {
                         type="submit"
                         form="create-template-form"
                         variant="primary"
+                        size="sm"
                         className={cn(SESSION_PROG_FORM_FOOTER_BTN, SESSION_PROG_FORM_SUBMIT_CTA)}
                         disabled={isCreating}
                         isLoading={isCreating}

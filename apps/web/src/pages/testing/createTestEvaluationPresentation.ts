@@ -18,10 +18,11 @@ import {
     PLATFORM_SPEC_GRID,
 } from "@/components/ui/surface/platformPremiumPresentation";
 import {
+    PLATFORM_DASHBOARD_FOOTER_BTN,
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
     PLATFORM_FORM_BODY,
     PLATFORM_FORM_DIVIDER,
     PLATFORM_FORM_FOOTER_ACTIONS,
-    PLATFORM_FORM_FOOTER_BTN,
     PLATFORM_FORM_NESTED_PANEL,
     PLATFORM_FORM_OPTIONAL_BLOCK,
     PLATFORM_FORM_SECTION,
@@ -63,11 +64,12 @@ export const CREATE_EVAL_CREATE_TOGGLE =
     "h-auto px-0 text-sm font-medium text-primary hover:text-primary/90";
 
 export const CREATE_EVAL_FOOTER_ACTIONS = cn(
-    "mx-auto w-full max-w-2xl lg:max-w-3xl",
+    "pointer-events-auto mx-auto w-full max-w-2xl lg:max-w-3xl",
     PLATFORM_FORM_FOOTER_ACTIONS,
+    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
 );
 
-export const CREATE_EVAL_FOOTER_BTN = PLATFORM_FORM_FOOTER_BTN;
+export const CREATE_EVAL_FOOTER_BTN = PLATFORM_DASHBOARD_FOOTER_BTN;
 
 export const CREATE_EVAL_EMPTY_HINT = cn(PLATFORM_BODY_MUTED, "text-xs");
 
