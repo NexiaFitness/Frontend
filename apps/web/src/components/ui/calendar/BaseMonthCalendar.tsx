@@ -8,8 +8,7 @@
  *
  * Cada consumidor proporciona su propia renderización de celda:
  * - ScheduledSessionCalendar: mini-cards de sesiones agendadas
- * - SessionCalendar: badges de sesiones + origen de planificación
- * - PeriodizationCalendar: rangos de selección + bloques
+ * - PeriodizationCalendar: rangos de selección + bloques (+ tab Sesiones cliente)
  *
  * @author Frontend Team
  * @since v8.1.0

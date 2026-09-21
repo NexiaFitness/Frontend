@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
     buildCalendarCreateSessionSearchParams,
+    buildTrainingSessionCountByDate,
+    formatClientCalendarDaySessionCountAria,
+    formatClientWorkoutSessionCountShort,
     filterSessionsOnDate,
     getClientSessionsOnDate,
     mergeClientTrainingAndStandaloneSessions,
@@ -8,6 +11,37 @@ import {
 } from "./clientSessionsOnDate";
 
 describe("clientSessionsOnDate", () => {
+    it("formatClientWorkoutSessionCountShort — plural sesiones (no sesión+es)", () => {
+        expect(formatClientWorkoutSessionCountShort(1)).toBe("1 sesión");
+        expect(formatClientWorkoutSessionCountShort(6)).toBe("6 sesiones");
+        expect(formatClientWorkoutSessionCountShort(6)).not.toContain("sesiónes");
+        expect(formatClientWorkoutSessionCountShort(0)).toBe("");
+    });
+
+    it("formatClientCalendarDaySessionCountAria — usa conteo corto + de entrenamiento", () => {
+        expect(formatClientCalendarDaySessionCountAria(1)).toBe("1 sesión de entrenamiento");
+        expect(formatClientCalendarDaySessionCountAria(2)).toBe("2 sesiones de entrenamiento");
+        expect(formatClientCalendarDaySessionCountAria(2)).not.toContain("sesiónes");
+    });
+
+    it("buildTrainingSessionCountByDate agrupa y omite canceladas", () => {
+        const merged = [
+            ...mergeClientTrainingAndStandaloneSessions(
+                [{ id: 1, session_date: "2026-09-07", status: "planned" } as never],
+                [{ id: 2, session_date: "2026-09-07", status: "planned" } as never],
+            ),
+            {
+                id: 3,
+                session_date: "2026-09-08",
+                status: "cancelled",
+                session_kind: "standalone",
+            } as never,
+        ];
+        const counts = buildTrainingSessionCountByDate(merged);
+        expect(counts.get("2026-09-07")).toBe(2);
+        expect(counts.has("2026-09-08")).toBe(false);
+    });
+
     it("filterSessionsOnDate normaliza ISO a YYYY-MM-DD", () => {
         const rows = [
             { session_date: "2026-09-16T00:00:00" },

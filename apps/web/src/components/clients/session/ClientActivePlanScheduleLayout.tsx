@@ -22,6 +22,7 @@ export interface ClientActivePlanScheduleLayoutProps {
   sessionPickerDate?: string | null;
   onDayClick: (iso: string) => void;
   habitualTrainingDays?: readonly string[] | null;
+  clientTrainingSessionCounts?: ReadonlyMap<string, number>;
   panelContent?: React.ReactNode;
 }
 
@@ -35,6 +36,7 @@ export const ClientActivePlanScheduleLayout: React.FC<ClientActivePlanScheduleLa
   sessionPickerDate,
   onDayClick,
   habitualTrainingDays = null,
+  clientTrainingSessionCounts,
   panelContent,
 }) => (
   <PlanningShellBodyLayout
@@ -58,6 +60,7 @@ export const ClientActivePlanScheduleLayout: React.FC<ClientActivePlanScheduleLa
           onDayClick={onDayClick}
           sessionPickerDate={sessionPickerDate ?? null}
           habitualTrainingDays={habitualTrainingDays}
+          clientTrainingSessionCounts={clientTrainingSessionCounts}
         />
       </div>
     }

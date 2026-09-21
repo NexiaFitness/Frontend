@@ -19,6 +19,7 @@ import {
   isoLocalDateToTrainingDayValue,
   parseHabitualTrainingDaySet,
 } from "@nexia/shared/utils/clientTrainingDays";
+import { formatClientCalendarDaySessionCountAria } from "@nexia/shared/training/clientSessionsOnDate";
 import { BaseMonthCalendar, type CalendarDayInfo } from "@/components/ui/calendar/BaseMonthCalendar";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import type { PeriodBlockFormState } from "./usePeriodBlockForm";
@@ -46,6 +47,8 @@ interface Props {
    * Si hay valores válidos, las celdas en vigencia del plan con ese weekday muestran icono y la leyenda incluye “Día de entreno”.
    */
   habitualTrainingDays?: readonly string[] | null;
+  /** Tab Sesiones (Bloque D): conteo training+standalone por día para hint D-QA9-b. */
+  clientTrainingSessionCounts?: ReadonlyMap<string, number>;
 }
 
 function parseLocal(s: string): Date {
@@ -68,7 +71,9 @@ export const PeriodizationCalendar: React.FC<Props> = ({
   onDayRightClick,
   sessionPickerDate = null,
   habitualTrainingDays = null,
+  clientTrainingSessionCounts,
 }) => {
+  const showClientSessionHints = clientTrainingSessionCounts != null;
   const habitualDaySet = useMemo(
     () => parseHabitualTrainingDaySet(habitualTrainingDays ?? undefined),
     [habitualTrainingDays]
@@ -142,6 +147,8 @@ export const PeriodizationCalendar: React.FC<Props> = ({
       const inBlock = plannedSet.has(dateISO);
       const inPlanVigencia = planWindowSet.has(dateISO);
       const hasSession = sessionDates.has(dateISO);
+      const trainingCount =
+        clientTrainingSessionCounts?.get(dateISO) ?? (hasSession ? 1 : 0);
       const isException = exceptionDates.has(dateISO);
       const weekday = isoLocalDateToTrainingDayValue(dateISO);
       const isHabitualTrainingWeekday =
@@ -197,7 +204,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
             }
           }}
           className={`relative aspect-[4/3] flex flex-col items-center justify-center text-xs font-medium transition-all hover:bg-surface-2 ${bgClass} ${textClass} ${roundClass} ${ringTodayClass}`}
-          aria-label={`${dayOfMonth}${isException ? " (descanso)" : ""}${showHabitualInBlockIcon ? ", día habitual de entreno" : ""}`}
+          aria-label={`${dayOfMonth}${isException ? " (descanso)" : ""}${showHabitualInBlockIcon ? ", día habitual de entreno" : ""}${trainingCount >= 1 ? `, ${formatClientCalendarDaySessionCountAria(trainingCount)}` : ""}`}
           aria-pressed={inSel}
         >
           <span className="z-10">{dayOfMonth}</span>
@@ -212,6 +219,14 @@ export const PeriodizationCalendar: React.FC<Props> = ({
           )}
           {hasSession && !isException && (
             <span className="absolute bottom-1 h-1 w-1 rounded-full bg-success" />
+          )}
+          {showClientSessionHints && trainingCount >= 2 && !isException && (
+            <span
+              className="pointer-events-none absolute top-0.5 right-0.5 min-w-[14px] rounded bg-success/20 px-0.5 text-center text-[9px] font-semibold leading-tight text-success"
+              aria-hidden
+            >
+              {trainingCount}
+            </span>
           )}
           {isException && (
             <span className="absolute bottom-1 h-1 w-1 rounded-full bg-destructive" />
@@ -234,6 +249,8 @@ export const PeriodizationCalendar: React.FC<Props> = ({
       formState.phase,
       sessionPickerDate,
       habitualDaySet,
+      clientTrainingSessionCounts,
+      showClientSessionHints,
     ]
   );
 
@@ -285,6 +302,14 @@ export const PeriodizationCalendar: React.FC<Props> = ({
           <span className="h-2 w-2 rounded-full bg-success" />
           <span className="text-[10px] text-muted-foreground">Con sesión</span>
         </div>
+        {showClientSessionHints && (
+          <div className="flex items-center gap-1.5">
+            <span className="min-w-[14px] rounded bg-success/20 px-0.5 text-center text-[9px] font-semibold text-success">
+              2
+            </span>
+            <span className="text-[10px] text-muted-foreground">Varias sesiones el mismo día</span>
+          </div>
+        )}
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-primary/30" />
           <span className="text-[10px] text-muted-foreground">Selección</span>
@@ -304,7 +329,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
         )}
       </div>
     ),
-    [onDayRightClick, planStartDate, planEndDate, showHabitualLegend]
+    [onDayRightClick, planStartDate, planEndDate, showHabitualLegend, showClientSessionHints]
   );
 
   return (

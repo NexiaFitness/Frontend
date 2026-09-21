@@ -50,6 +50,40 @@ export function getClientSessionsOnDate(
     );
 }
 
+/**
+ * Conteo corto tab Sesiones (lista cronológica, badges, etc.).
+ * Plural correcto: sesiones — no concatenar «sesión» + «es» (sesiónes).
+ */
+export function formatClientWorkoutSessionCountShort(count: number): string {
+    if (count < 1) return "";
+    if (count === 1) return "1 sesión";
+    return `${count} sesiones`;
+}
+
+/**
+ * Copy accesible calendario tab Sesiones (D-QA9-b).
+ * Cuenta sesiones de workout (programa + suelta), mismo ámbito que el tab — no implica session_kind training.
+ */
+export function formatClientCalendarDaySessionCountAria(count: number): string {
+    const short = formatClientWorkoutSessionCountShort(count);
+    if (!short) return "";
+    return `${short} de entrenamiento`;
+}
+
+/** Conteo por día (training + standalone, sin canceladas) — hint calendario tab Sesiones (D-QA9-b). */
+export function buildTrainingSessionCountByDate(
+    sessions: readonly SessionListItem[],
+): Map<string, number> {
+    const counts = new Map<string, number>();
+    for (const s of sessions) {
+        if (s.status === "cancelled") continue;
+        const day = toDateOnlyString(s.session_date ?? undefined);
+        if (!day) continue;
+        counts.set(day, (counts.get(day) ?? 0) + 1);
+    }
+    return counts;
+}
+
 /** Orden estable para picker (P-A: sin prioridad program vs standalone). */
 export function sortSessionsForDayPicker(sessions: readonly SessionListItem[]): SessionListItem[] {
     return [...sessions].sort((a, b) => {

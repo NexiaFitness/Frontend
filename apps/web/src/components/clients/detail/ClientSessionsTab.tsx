@@ -28,7 +28,9 @@ import { useGetScheduledSessionsQuery } from "@nexia/shared/api/schedulingApi";
 import { parseISODateLocal } from "@nexia/shared/utils/periodBlockOverlap";
 import {
     buildCalendarCreateSessionSearchParams,
+    buildTrainingSessionCountByDate,
     filterSessionsOnDate,
+    formatClientWorkoutSessionCountShort,
     mergeClientTrainingAndStandaloneSessions,
     resolveClientDaySessionAction,
 } from "@nexia/shared/training/clientSessionsOnDate";
@@ -283,6 +285,11 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         [trainingSessions, standaloneSessions],
     );
 
+    const clientTrainingSessionCounts = useMemo(
+        () => buildTrainingSessionCountByDate(allSessions),
+        [allSessions],
+    );
+
     const navigateToSessionItem = useCallback(
         (s: SessionListItem) => {
             const path =
@@ -451,6 +458,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                     onMonthChange={setPeriodCalMonth}
                     onDayClick={handlePeriodCalendarDay}
                     habitualTrainingDays={clientProfile?.training_days ?? null}
+                    clientTrainingSessionCounts={clientTrainingSessionCounts}
                     panelContent={
                         <ClientActivePlanSummaryPanel
                             clientId={clientId}
@@ -482,6 +490,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                                 onDayClick={handleNoPlanCalendarDay}
                                 sessionPickerDate={pickedSessionDate}
                                 habitualTrainingDays={clientProfile?.training_days ?? null}
+                                clientTrainingSessionCounts={clientTrainingSessionCounts}
                             />
                         </div>
                     }
@@ -508,7 +517,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                     />
                     <h4 className={CLIENT_SESSIONS_LIST_EYEBROW}>Lista cronológica</h4>
                     <span className={CLIENT_SESSIONS_LIST_COUNT}>
-                        {sessionCount > 0 && `${sessionCount} sesión${sessionCount !== 1 ? "es" : ""}`}
+                        {sessionCount > 0 && formatClientWorkoutSessionCountShort(sessionCount)}
                         {sessionCount > 0 && appointmentCount > 0 && " · "}
                         {appointmentCount > 0 && `${appointmentCount} cita${appointmentCount !== 1 ? "s" : ""}`}
                         {sessionCount === 0 && appointmentCount === 0 && "vacía"}
