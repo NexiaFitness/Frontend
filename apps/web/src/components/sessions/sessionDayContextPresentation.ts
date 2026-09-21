@@ -15,6 +15,9 @@ export const SESSION_DAY_CONTEXT_COPY = {
     patternsLabel: "Patrones de movimiento",
     musclesLabel: "Músculos objetivo",
     qualityLabel: "Prioridad de intención",
+    mixTitle: "Prioridad relativa del bloque",
+    mixHint:
+        "Orientación de intención para esta fase. No indica un reparto automático de series, minutos ni ejercicios.",
     volumeLabel: "Volumen",
     intensityLabel: "Intensidad",
     noPlanTitle: "Sin plan activo",

@@ -578,7 +578,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const [createSessionBlockExercise] = useCreateSessionBlockExerciseMutation();
     const [createSessionTemplate, { isLoading: isSavingTemplate }] = useCreateSessionTemplateMutation();
 
-    /** Fase 4: Añadir ejercicio seleccionado a la fila del Constructor */
     const handleSelectFromPicker = (exercise: Exercise) => {
         if (!targetRowIdForPicker) return;
         setConstructorRows((prev) =>

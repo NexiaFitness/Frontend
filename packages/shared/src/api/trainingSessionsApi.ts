@@ -22,6 +22,7 @@ import type {
     WellbeingCheckIn,
     WellbeingCheckInCreate,
     PostSessionReport,
+    SessionExerciseAnalysis,
 } from '../types/trainingSessions';
 import type { ClientFeedback, ClientFeedbackCreate } from '../types/training';
 import type {
@@ -69,6 +70,10 @@ export function getDeleteTrainingSessionInvalidationTags(
     return tags;
 }
 
+export function exerciseSelectionAnalyzeTag(sessionId: number) {
+    return { type: 'ExerciseSelectionAnalyze' as const, id: sessionId };
+}
+
 function normalizeGetTrainingSessionsArg(
     arg: GetTrainingSessionsQueryArg
 ): { trainingPlanId: number; skip: number; limit: number } {
@@ -99,6 +104,14 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
             }),
             providesTags: (_result, _error, { client_id, session_date }) => [
                 { type: 'TrainingSession', id: `REC_${client_id}_${session_date}` },
+            ],
+        }),
+
+        getExerciseSelectionAnalyze: builder.query<SessionExerciseAnalysis, number>({
+            query: (sessionId) =>
+                `/training-sessions/exercise-selection/analyze/${sessionId}`,
+            providesTags: (_result, _error, sessionId) => [
+                exerciseSelectionAnalyzeTag(sessionId),
             ],
         }),
 
@@ -399,14 +412,13 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, _error, { id }) => {
                 const tags: Array<
-                    | { type: 'TrainingSession' | 'TrainingPlan' | 'SessionBlock'; id: string | number }
+                    | { type: 'TrainingSession' | 'TrainingPlan' | 'SessionBlock' | 'ExerciseSelectionAnalyze'; id: string | number }
                     | { type: 'SessionBlockExercise' }
                 > = [
                     { type: 'TrainingSession', id },
-                    // Debe coincidir con getSessionBlocks providesTags (`SESSION-${sessionId}`).
                     { type: 'SessionBlock', id: `SESSION-${id}` },
-                    // Invalida todas las queries getSessionBlockExercises (tag `BLOCK-${blockId}`).
                     { type: 'SessionBlockExercise' },
+                    exerciseSelectionAnalyzeTag(id),
                 ];
                 if (result?.training_plan_id) {
                     tags.push(
@@ -435,9 +447,10 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 body: data,
             }),
             invalidatesTags: (result, _error, { sessionId }) => {
-                const tags: Array<{ type: 'TrainingSession' | 'SessionExercise'; id: string | number }> = [
+                const tags: Array<{ type: 'TrainingSession' | 'SessionExercise' | 'ExerciseSelectionAnalyze'; id: string | number }> = [
                     { type: 'TrainingSession', id: sessionId },
                     { type: 'SessionExercise', id: 'LIST' },
+                    exerciseSelectionAnalyzeTag(sessionId),
                 ];
                 if (result?.id) {
                     tags.push({ type: 'SessionExercise', id: result.id });
@@ -461,11 +474,14 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, _error, { id, clientId }) => {
                 const tags: Array<{
-                    type: 'TrainingSession' | 'SessionExercise' | 'Client' | 'AthleteLastPerformance';
+                    type: 'TrainingSession' | 'SessionExercise' | 'Client' | 'AthleteLastPerformance' | 'ExerciseSelectionAnalyze';
                     id: string | number;
                 }> = [{ type: 'SessionExercise', id }];
                 if (result?.training_session_id) {
-                    tags.push({ type: 'TrainingSession', id: result.training_session_id });
+                    tags.push(
+                        { type: 'TrainingSession', id: result.training_session_id },
+                        exerciseSelectionAnalyzeTag(result.training_session_id),
+                    );
                 }
                 if (clientId != null) {
                     tags.push({ type: 'Client', id: `TRACKING-${clientId}` });
@@ -488,6 +504,7 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
 
 export const {
     useGetSessionRecommendationsQuery,
+    useGetExerciseSelectionAnalyzeQuery,
     useGetTrainingSessionsQuery,
     useLazyGetTrainingSessionsQuery,
     useGetTrainingSessionsByClientQuery,

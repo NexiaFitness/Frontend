@@ -37,31 +37,16 @@ export interface SessionCoherence {
     coherence_report?: CoherenceReport;
 }
 
-/** Item de sugerencia de ejercicio (GET /training-sessions/exercise-selection/suggestions) */
-export interface ExerciseSelectionSuggestionItem {
-    id: number;
-    exercise_id: number;
-    nombre: string;
-    nombre_ingles: string | null;
-    tipo: string;
-    equipo: string | null;
-    musculatura_principal: string | null;
-    nivel: string | null;
-}
-
-/** Parámetros para GET exercise-selection/suggestions */
-export interface ExerciseSelectionSuggestionsParams {
-    exercise_type: "multi_joint" | "single_joint";
-    equipment?: string | null;
-    level?: string | null;
-    limit?: number;
-}
-
-/** Respuesta de GET exercise-selection/suggestions */
-export interface ExerciseSelectionSuggestionsResponse {
-    exercise_type: string;
-    count: number;
-    suggestions: ExerciseSelectionSuggestionItem[];
+/** GET /training-sessions/exercise-selection/analyze/{session_id} */
+export interface SessionExerciseAnalysis {
+    session_id?: number | null;
+    total_exercises: number;
+    multi_joint_count: number;
+    single_joint_count: number;
+    other_count: number;
+    actual_multi_joint_percentage: number;
+    actual_single_joint_percentage: number;
+    type_breakdown?: Record<string, number> | null;
 }
 
 /**

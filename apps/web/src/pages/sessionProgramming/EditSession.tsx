@@ -30,7 +30,9 @@ import {
     useGetTrainingSessionQuery,
     useUpdateTrainingSessionFullMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
-import type { TrainingSessionUpdate } from "@nexia/shared/types/trainingSessions";
+import type {
+    TrainingSessionUpdate,
+} from "@nexia/shared/types/trainingSessions";
 import {
     useGetSessionBlocksQuery,
     useGetTrainingBlockTypesQuery,
@@ -385,6 +387,7 @@ export const EditSession: React.FC = () => {
         weeklyStructureForDrift?.weeks,
         clientProgramSessions,
     ]);
+
 
     const dispatch = useDispatch<AppDispatch>();
     const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });

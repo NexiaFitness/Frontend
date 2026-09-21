@@ -22,6 +22,8 @@ import type { SessionRecommendationsResponse } from "@nexia/shared/types/session
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Button } from "@/components/ui/buttons";
 import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
+import { QualityShareBar } from "@/components/trainingPlans/periodization/QualityShareBar";
+import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 import { cn } from "@/lib/utils";
 import {
     SESSION_DAY_CONTEXT_COPY,
@@ -30,7 +32,7 @@ import {
     buildStructureGapViewModel,
     formatSessionDateLong,
     formatVolumeIntensityScale,
-    resolveQualityLabel,
+    resolveQualityLabelsFromRecommendation,
     resolveSessionDayPhaseContext,
 } from "./sessionDayContextPresentation";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
@@ -183,7 +185,8 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
     const rec = phaseContext.response.recommendations;
     const patterns = rec.movement_patterns ?? [];
     const muscles = rec.target_muscle_groups ?? [];
-    const qualityLabel = resolveQualityLabel(rec.physical_quality, catalog);
+    const qualityLabel = resolveQualityLabelsFromRecommendation(rec, catalog);
+    const qualityMix = rec.quality_mix ?? [];
     const blockLine = buildBlockContextLine(rec);
     const dateLine = formatSessionDateLong(sessionDate);
     const volIntLine = formatVolumeIntensityScale(
@@ -223,6 +226,19 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                             {qualityLabel}
                         </span>
                     </MetricCell>
+                    {qualityMix.length > 0 ? (
+                        <div className="space-y-2">
+                            <p className={METRIC_LABEL_CLASS}>{SESSION_DAY_CONTEXT_COPY.mixTitle}</p>
+                            {qualityMix.map((item) => (
+                                <QualityShareBar
+                                    key={item.slug}
+                                    name={item.name}
+                                    percentage={item.percentage}
+                                    colorHex={getPhysicalQualityColor(item.slug).hex}
+                                />
+                            ))}
+                        </div>
+                    ) : null}
                     {patterns.length > 0 ? (
                         <MetricCell label={SESSION_DAY_CONTEXT_COPY.patternsLabel}>
                             <p className="text-xs text-foreground">{patterns.length} patrón(es)</p>
@@ -357,6 +373,27 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                         </p>
                     </MetricCell>
                 </div>
+
+                {qualityMix.length > 0 ? (
+                    <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-4">
+                        <p className={SESSION_PROGRAMMING_PANEL_TITLE}>
+                            {SESSION_DAY_CONTEXT_COPY.mixTitle}
+                        </p>
+                        <p className="text-xs leading-relaxed text-muted-foreground">
+                            {SESSION_DAY_CONTEXT_COPY.mixHint}
+                        </p>
+                        <div className="space-y-2 pt-1">
+                            {qualityMix.map((item) => (
+                                <QualityShareBar
+                                    key={item.slug}
+                                    name={item.name}
+                                    percentage={item.percentage}
+                                    colorHex={getPhysicalQualityColor(item.slug).hex}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                ) : null}
             </div>
         </div>
     );

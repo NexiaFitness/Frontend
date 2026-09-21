@@ -17,8 +17,9 @@ import {
     BLOCK_LEVEL_METER_TRACK_CLASS,
     BLOCK_LEVEL_METER_VALUE_CLASS,
     blockLevelMeterAccentFillStyle,
-    blockLevelMeterAccentRangeClass,
-    blockLevelMeterRangeClass,
+    blockLevelMeterAccentRangeEditableClass,
+    blockLevelMeterEditableTrackBackground,
+    blockLevelMeterRangeEditableClass,
     type BlockLevelMeterTone,
 } from "./blockLevelMeterPresentation";
 
@@ -75,7 +76,7 @@ export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
         : cn("text-xs", BLOCK_LEVEL_METER_VALUE_CLASS[resolvedTone]);
 
     const track = (
-        <div className={BLOCK_LEVEL_METER_TRACK_CLASS} aria-hidden={editable}>
+        <div className={BLOCK_LEVEL_METER_TRACK_CLASS}>
             <div
                 className={cn(
                     "h-full rounded-full transition-[width] duration-300 ease-out",
@@ -129,7 +130,6 @@ export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
 
             {editable ? (
                 <div className={BLOCK_LEVEL_METER_RANGE_WRAP}>
-                    {track}
                     <input
                         id={id}
                         type="range"
@@ -141,10 +141,17 @@ export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
                         onChange={(e) => onChange(Number(e.target.value))}
                         className={
                             accentHex
-                                ? blockLevelMeterAccentRangeClass()
-                                : blockLevelMeterRangeClass(resolvedTone)
+                                ? blockLevelMeterAccentRangeEditableClass()
+                                : blockLevelMeterRangeEditableClass(resolvedTone)
                         }
-                        style={rangeStyle}
+                        style={{
+                            ...rangeStyle,
+                            background: blockLevelMeterEditableTrackBackground(
+                                accentHex,
+                                resolvedTone,
+                                widthPct,
+                            ),
+                        }}
                         aria-label={`${prefix}: ${valueLabel}`}
                         aria-valuemin={min}
                         aria-valuemax={max}

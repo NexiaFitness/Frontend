@@ -23,13 +23,16 @@ import type { Milestone } from "./training";
 // ============================================================================
 
 /**
- * TrainingPlanDistributionItem - Item de distribución de cualidades físicas
- * Usado en yearly/monthly/weekly summaries para mostrar distribución porcentual
+ * TrainingPlanDistributionItem - Share of calendar days with a given primary/co-primary focus
+ * (from resolved day plan). NOT period-block quality mix (e.g. 80/20 intent).
  */
 export interface TrainingPlanDistributionItem {
     name: string;
     percentage: number;
 }
+
+/** How to interpret distribution / physical_qualities percentages in plan summaries. */
+export type TrainingPlanDistributionSemantics = "primary_training_day_share";
 
 /**
  * TrainingLoadSummary - Resumen de carga de entrenamiento (volume/intensity)
@@ -84,6 +87,8 @@ export interface ClientTrainingPlanSummary {
     has_active_plan: boolean;
     plan_name: string | null;
     plan_goal: string | null;
+    /** primary_training_day_share — not block mix % */
+    distribution_semantics?: TrainingPlanDistributionSemantics;
     distribution: TrainingPlanDistributionItem[];
     physical_qualities: TrainingPlanDistributionItem[];
     training_load: TrainingLoadSummary;
@@ -120,7 +125,10 @@ export interface PlannedVsActualComparison {
     planned_intensity: number;
     actual_intensity: number;
     intensity_status: "on_track" | "below_target";
+    /** Siempre vacío hasta existir métrica honesta planificado vs ejecutado por cualidades. */
     qualities: TrainingPlanQualityAverage[];
+    /** false: no comparar slugs planificados con session_type (métrica retirada). */
+    qualities_comparison_available?: boolean;
 }
 
 /**
@@ -155,6 +163,8 @@ export interface TrainingPlanMonthlySummary {
     has_active_plan: boolean;
     plan_name: string | null;
     plan_goal: string | null;
+    /** primary_training_day_share — not block mix % */
+    distribution_semantics?: TrainingPlanDistributionSemantics;
     distribution: TrainingPlanDistributionItem[];
     physical_qualities: TrainingPlanDistributionItem[];
     training_load: TrainingLoadSummary;
@@ -218,6 +228,8 @@ export interface TrainingPlanWeeklySummary {
     has_active_plan: boolean;
     plan_name: string | null;
     plan_goal: string | null;
+    /** primary_training_day_share — not block mix % */
+    distribution_semantics?: TrainingPlanDistributionSemantics;
     distribution: TrainingPlanDistributionItem[];
     physical_qualities: TrainingPlanDistributionItem[];
     training_load: TrainingLoadSummary;

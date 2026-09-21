@@ -51,6 +51,7 @@ import {
     NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS,
 } from "@/components/ui/modals";
 import { CoherenceConclusionsPanel } from "@/components/sessionProgramming/CoherenceConclusionsPanel";
+import { SessionPhaseIntentMixPanel } from "@/components/sessionProgramming/SessionPhaseIntentMixPanel";
 import { stripLegacyCoherenceFromNotes } from "@/components/sessionProgramming/coherenceConclusionsPresentation";
 import { SessionValidationContent } from "@/components/sessionProgramming/SessionValidationContent";
 import { ClientAvatar } from "@/components/ui/avatar";
@@ -576,6 +577,11 @@ export const SessionReviewPage: React.FC = () => {
                 <CoherenceAlertsPanel warnings={coherenceWarnings} />
 
                 <SessionPlanSummaryCard session={session} />
+
+                <SessionPhaseIntentMixPanel
+                    report={effectiveCoherence?.coherence_report}
+                    qualityCatalog={physicalQualities ?? []}
+                />
 
                 <CoherenceConclusionsPanel
                     report={effectiveCoherence?.coherence_report}

@@ -33,7 +33,22 @@ export const BLOCK_LEVEL_METER_PREFIX_CLASS =
 export const BLOCK_LEVEL_METER_QUALITATIVE_CLASS =
     "text-[11px] font-medium leading-tight";
 
-export const BLOCK_LEVEL_METER_RANGE_WRAP = "relative h-2 w-full";
+/** Altura del thumb (h-3.5); la pista sigue siendo h-2 dentro del input. */
+export const BLOCK_LEVEL_METER_RANGE_WRAP =
+    "flex h-3.5 w-full items-center";
+
+/** Range editable a ancho completo (sin pista decorativa duplicada debajo). */
+export const BLOCK_LEVEL_METER_RANGE_EDITABLE_CLASS = cn(
+    "h-2 w-full cursor-pointer appearance-none rounded-full",
+    "border border-border/45 bg-surface-2/70",
+    "[&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full",
+    "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5",
+    "[&::-webkit-slider-thumb]:mt-[calc(0.5rem/2-0.875rem/2)]",
+    "[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background/80",
+    "[&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full",
+    "[&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0",
+    "disabled:cursor-not-allowed disabled:opacity-60",
+);
 
 export const BLOCK_LEVEL_METER_RANGE_BASE_CLASS = cn(
     "absolute inset-0 z-[1] h-2 w-full cursor-pointer appearance-none bg-transparent",
@@ -44,6 +59,20 @@ export const BLOCK_LEVEL_METER_RANGE_BASE_CLASS = cn(
     "[&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0",
     "disabled:cursor-not-allowed disabled:opacity-60",
 );
+
+export function blockLevelMeterRangeEditableClass(tone: BlockLevelMeterTone): string {
+    const thumb =
+        tone === "volume"
+            ? "[&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:bg-primary"
+            : "[&::-webkit-slider-thumb]:bg-warning [&::-moz-range-thumb]:bg-warning";
+
+    const thumbGlow =
+        tone === "volume"
+            ? "[&::-webkit-slider-thumb]:shadow-[0_0_10px_-2px_hsl(var(--primary)/0.45)]"
+            : "[&::-webkit-slider-thumb]:shadow-[0_0_10px_-2px_hsl(var(--warning)/0.45)]";
+
+    return cn(BLOCK_LEVEL_METER_RANGE_EDITABLE_CLASS, thumbGlow, thumb);
+}
 
 export function blockLevelMeterRangeClass(tone: BlockLevelMeterTone): string {
     const thumb =
@@ -59,13 +88,26 @@ export function blockLevelMeterRangeClass(tone: BlockLevelMeterTone): string {
     return cn(BLOCK_LEVEL_METER_RANGE_BASE_CLASS, thumbGlow, thumb);
 }
 
-/** Range transparente sobre track glass — acento dinámico (cualidades físicas). */
-export function blockLevelMeterAccentRangeClass(): string {
+export function blockLevelMeterAccentRangeEditableClass(): string {
     return cn(
-        BLOCK_LEVEL_METER_RANGE_BASE_CLASS,
+        BLOCK_LEVEL_METER_RANGE_EDITABLE_CLASS,
         "[&::-webkit-slider-thumb]:bg-[--meter-accent] [&::-moz-range-thumb]:bg-[--meter-accent]",
         "[&::-webkit-slider-thumb]:shadow-[0_0_10px_-2px_color-mix(in_srgb,var(--meter-accent)_55%,transparent)]",
     );
+}
+
+export function blockLevelMeterEditableTrackBackground(
+    accentHex: string | undefined,
+    tone: BlockLevelMeterTone,
+    widthPct: number,
+): string | undefined {
+    if (accentHex) {
+        return `linear-gradient(to right, ${accentHex}55 0%, ${accentHex}99 ${widthPct}%, hsl(var(--surface-2) / 0.7) ${widthPct}%)`;
+    }
+    if (tone === "volume") {
+        return `linear-gradient(to right, hsl(var(--primary) / 0.45) 0%, hsl(var(--primary) / 0.6) ${widthPct}%, hsl(var(--surface-2) / 0.7) ${widthPct}%)`;
+    }
+    return `linear-gradient(to right, hsl(var(--warning) / 0.45) 0%, hsl(var(--warning) / 0.6) ${widthPct}%, hsl(var(--surface-2) / 0.7) ${widthPct}%)`;
 }
 
 export function blockLevelMeterAccentFillStyle(

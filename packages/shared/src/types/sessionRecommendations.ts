@@ -45,6 +45,13 @@ export interface SessionDayTargetMuscleGroup {
     name_es: string;
 }
 
+export interface SessionDayQualityMixItem {
+    physical_quality_id?: number | null;
+    slug: string;
+    name: string;
+    percentage: number;
+}
+
 /** Detalle de recomendaciones para el día */
 export interface SessionDayRecommendations {
     physical_quality: string;
@@ -54,6 +61,8 @@ export interface SessionDayRecommendations {
     primary_qualities?: string[];
     /** Trace: unique_max | co_primary_tie_break_display_order | empty */
     primary_resolution?: string;
+    /** Full block intent mix (priority %), sum 100 when configured */
+    quality_mix?: SessionDayQualityMixItem[];
     modality: string;
     client_experience: string;
     planned_volume_scale: number;
