@@ -20,7 +20,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormCombobox, Textarea, DatePickerButton } from "@/components/ui/forms";
-import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
+import { useGetClientQuery, useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
+import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
+import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
 import { useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -35,7 +37,17 @@ import {
 } from "@nexia/shared/api/sessionProgrammingApi";
 import { sessionProgrammingApi } from "@nexia/shared/api/sessionProgrammingApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
-import { exerciseDisplayName, normalizeSessionName, useDefaultSessionName } from "@nexia/shared";
+import {
+    exerciseDisplayName,
+    normalizeSessionName,
+    useDefaultSessionName,
+    listStructureDriftPlannedSessionIds,
+} from "@nexia/shared";
+import { formatLocalDateOnly } from "@nexia/shared/training/activePeriodBlock";
+import {
+    STRUCTURE_DRIFT_EDIT_BANNER_BODY,
+    STRUCTURE_DRIFT_EDIT_BANNER_TITLE,
+} from "@/components/trainingPlans/periodization/structureDriftPresentation";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
 import type { AppDispatch, RootState } from "@nexia/shared/store";
@@ -323,6 +335,56 @@ export const EditSession: React.FC = () => {
         draftExercises: draftExercisesForVolumePanel,
         intent: "edit_session",
     });
+
+    const { data: periodBlocks = [] } = useGetPeriodBlocksQuery(
+        session?.training_plan_id ?? 0,
+        { skip: !session?.training_plan_id },
+    );
+    const periodBlockMeta = useMemo(
+        () =>
+            periodBlocks.find((b) => b.id === session?.period_block_id) ?? null,
+        [periodBlocks, session?.period_block_id],
+    );
+    const { data: weeklyStructureForDrift } = useGetWeeklyStructureQuery(
+        {
+            planId: session?.training_plan_id ?? 0,
+            blockId: session?.period_block_id ?? 0,
+        },
+        {
+            skip: !session?.training_plan_id || !session?.period_block_id,
+        },
+    );
+    const { data: clientProgramSessions = [] } = useGetClientTrainingSessionsQuery(
+        { clientId: session?.client_id ?? 0, skip: 0, limit: 1000 },
+        { skip: !session?.client_id },
+    );
+
+    const showStructureDriftBanner = useMemo(() => {
+        if (!session?.id || !periodBlockMeta || !weeklyStructureForDrift?.weeks) {
+            return false;
+        }
+        const driftIds = listStructureDriftPlannedSessionIds(
+            clientProgramSessions.map((s) => ({
+                id: s.id,
+                session_date: s.session_date,
+                status: s.status,
+                period_block_id: s.period_block_id ?? null,
+            })),
+            {
+                id: periodBlockMeta.id,
+                start_date: periodBlockMeta.start_date,
+                end_date: periodBlockMeta.end_date,
+            },
+            weeklyStructureForDrift.weeks,
+            formatLocalDateOnly(new Date()),
+        );
+        return driftIds.includes(session.id);
+    }, [
+        session?.id,
+        periodBlockMeta,
+        weeklyStructureForDrift?.weeks,
+        clientProgramSessions,
+    ]);
 
     const dispatch = useDispatch<AppDispatch>();
     const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });
@@ -955,6 +1017,17 @@ export const EditSession: React.FC = () => {
                                     trainerId={trainerIdForDayPlan}
                                     trainingPlanId={session.training_plan_id}
                                 />
+                            ) : null}
+
+                            {showStructureDriftBanner ? (
+                                <Alert variant="warning">
+                                    <p className="font-semibold">
+                                        {STRUCTURE_DRIFT_EDIT_BANNER_TITLE}
+                                    </p>
+                                    <p className="mt-1 text-sm">
+                                        {STRUCTURE_DRIFT_EDIT_BANNER_BODY}
+                                    </p>
+                                </Alert>
                             ) : null}
 
                             {session.client_id && hasActiveInjuries && client ? (

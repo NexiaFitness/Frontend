@@ -10,11 +10,13 @@ import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import type { VolumeIntensityContext } from "@nexia/shared";
+import type { StructureDriftSessionSummary } from "@nexia/shared";
 import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
 import { PeriodizationCalendar } from "./PeriodizationCalendar";
 import { PeriodBlockCard } from "./PeriodBlockCard";
 import { PeriodBlockAddPhaseCard } from "./PeriodBlockAddPhaseCard";
 import { PeriodBlockEmptyCallout } from "./PeriodBlockEmptyCallout";
+import { PeriodBlockStructureDriftCallout } from "./PeriodBlockStructureDriftCallout";
 import {
     canAddPeriodPhase,
     resolveNextPhaseStartDate,
@@ -63,6 +65,7 @@ interface Props {
     onCreateSessionForBlock: (block: PlanPeriodBlock) => void;
     focusedBlockId?: number | null;
     onFocusBlock?: (block: PlanPeriodBlock) => void;
+    structureDriftByBlockId?: Record<number, StructureDriftSessionSummary[]>;
     buildVolumeContext: (
         volumeLevel: number | null | undefined,
         intensityLevel: number | null | undefined,
@@ -101,6 +104,7 @@ export const PlanningExploreShell: React.FC<Props> = ({
     onCreateSessionForBlock,
     focusedBlockId = null,
     onFocusBlock,
+    structureDriftByBlockId = {},
     buildVolumeContext,
     volumeIntensityPhase,
     showOtherPlansAction = false,
@@ -119,6 +123,11 @@ export const PlanningExploreShell: React.FC<Props> = ({
     );
 
     const showBlocksRow = blocks.length > 0 || showAddPhaseCard;
+
+    const focusedStructureDrift =
+        focusedBlockId != null
+            ? (structureDriftByBlockId[focusedBlockId] ?? [])
+            : [];
 
     return (
         <section
@@ -187,6 +196,9 @@ export const PlanningExploreShell: React.FC<Props> = ({
                                     block.intensity_level,
                                 )}
                                 volumeIntensityPhase={volumeIntensityPhase}
+                                structureDriftCount={
+                                    structureDriftByBlockId[block.id]?.length ?? 0
+                                }
                             />
                         </div>
                     ))}
@@ -244,6 +256,11 @@ export const PlanningExploreShell: React.FC<Props> = ({
                             canContinue={canContinueRange}
                             continueDisabledReason={continueRangeDisabledReason}
                         />
+                        {focusedStructureDrift.length > 0 ? (
+                            <PeriodBlockStructureDriftCallout
+                                sessions={focusedStructureDrift}
+                            />
+                        ) : null}
                     </div>
                 }
             />

@@ -92,3 +92,44 @@ export function buildStructureDriftToastMessage(driftSessionIds: readonly number
     }
     return `${STRUCTURE_DRIFT_WARNING_COPY} (${driftSessionIds.length} sesiones planificadas afectadas).`;
 }
+
+export interface StructureDriftSessionSummary {
+    id: number;
+    session_date: string;
+    session_name: string | null;
+}
+
+/** Sesiones planificadas futuras del bloque que ya no alinean con la estructura semanal vigente. */
+export function buildStructureDriftSessionSummaries(
+    sessions: StructureDriftSessionInput[],
+    block: { id: number; start_date: string; end_date: string },
+    weeklyStructureWeeks: WeeklyStructureWeek[],
+    todayYmd: string,
+): StructureDriftSessionSummary[] {
+    const driftIds = listStructureDriftPlannedSessionIds(
+        sessions,
+        block,
+        weeklyStructureWeeks,
+        todayYmd,
+    );
+    if (driftIds.length === 0) return [];
+    const byId = new Map(sessions.map((s) => [s.id, s]));
+    const summaries: StructureDriftSessionSummary[] = [];
+    for (const id of driftIds) {
+        const session = byId.get(id);
+        if (!session?.session_date) continue;
+        summaries.push({
+            id,
+            session_date: session.session_date,
+            session_name: null,
+        });
+    }
+    return summaries;
+}
+
+export function isSessionIdInStructureDriftList(
+    sessionId: number,
+    driftSummaries: readonly StructureDriftSessionSummary[],
+): boolean {
+    return driftSummaries.some((row) => row.id === sessionId);
+}

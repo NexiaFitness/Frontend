@@ -33,6 +33,7 @@ import { usePeriodizationVolumeRecommendations } from "@/hooks/trainingPlans/use
 import { PlanBlockAuthoringSurface } from "./PlanBlockAuthoringSurface";
 import { BlockWeeksManageSurface } from "./BlockWeeksManageSurface";
 import { PlanningExploreShell } from "./PlanningExploreShell";
+import { usePlanBlocksStructureDrift } from "./usePlanBlocksStructureDrift";
 import { buildBlockAuthorPath } from "@/lib/trainingPlanNavigation";
 import { scrollDashboardMainToAnchorAfterPaint } from "@/lib/dashboardScroll";
 import { weeklyStructureApi } from "@nexia/shared/api/weeklyStructureApi";
@@ -131,6 +132,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   const [pendingFocusBlockId, setPendingFocusBlockId] = useState<number | null>(
     null,
   );
+  const [structureDriftRefreshKey, setStructureDriftRefreshKey] = useState(0);
+  const wasDapAuthoringRef = useRef(isDapAuthoring);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; label: string } | null>(null);
   const [exceptionModal, setExceptionModal] = useState<{ date: string } | null>(null);
   const [exceptionNote, setExceptionNote] = useState("");
@@ -181,6 +184,26 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     }
     return map;
   }, [sessions]);
+
+  useEffect(() => {
+    if (wasDapAuthoringRef.current && !isDapAuthoring) {
+      setStructureDriftRefreshKey((k) => k + 1);
+    }
+    wasDapAuthoringRef.current = isDapAuthoring;
+  }, [isDapAuthoring]);
+
+  const structureDriftByBlockId = usePlanBlocksStructureDrift({
+    planId,
+    blocks,
+    sessions,
+    refreshKey: structureDriftRefreshKey,
+    enabled:
+      !isDapAuthoring &&
+      !isBlockWeeksManage &&
+      !isPickingPhaseRange &&
+      blocks.length > 0 &&
+      sessions.length > 0,
+  });
 
   const [deleteBlock, { isLoading: isDeleting }] = useDeletePeriodBlockMutation();
   const [createException, { isLoading: isCreatingException }] = useCreateDayExceptionMutation();
@@ -802,6 +825,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         onCreateSessionForBlock={handleCreateSessionForBlock}
         focusedBlockId={focusedBlockId}
         onFocusBlock={handleFocusBlock}
+        structureDriftByBlockId={structureDriftByBlockId}
         buildVolumeContext={(volumeLevel, intensityLevel) =>
           volumeNominal.buildContext(
             volumeLevel ?? 5,

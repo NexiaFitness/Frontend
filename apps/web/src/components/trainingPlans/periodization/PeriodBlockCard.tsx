@@ -29,6 +29,11 @@ import {
     PERIOD_BLOCK_CARD_SHELL_CLASS,
     PERIOD_BLOCK_CARD_SHELL_FOCUSED_CLASS,
 } from "./periodBlockCardPresentation";
+import {
+    STRUCTURE_DRIFT_BADGE_CLASS,
+    formatStructureDriftBadgeLabel,
+    structureDriftBadgeAriaLabel,
+} from "./structureDriftPresentation";
 
 interface Props {
     block: PlanPeriodBlock;
@@ -42,6 +47,7 @@ interface Props {
     volumeIntensityPhase?: PeriodizationVolumeNominalPhase;
     isFocused?: boolean;
     onSelectFocus?: (block: PlanPeriodBlock) => void;
+    structureDriftCount?: number;
 }
 
 function parseLocal(s: string): Date {
@@ -74,6 +80,7 @@ export const PeriodBlockCard: React.FC<Props> = ({
     volumeIntensityPhase,
     isFocused = false,
     onSelectFocus,
+    structureDriftCount = 0,
 }) => {
     const [showSessions, setShowSessions] = useState(false);
     const label = `${formatDateShort(block.start_date)} — ${formatDateShort(block.end_date)}`;
@@ -121,6 +128,16 @@ export const PeriodBlockCard: React.FC<Props> = ({
                         >
                             {days} día{days !== 1 ? "s" : ""}
                         </span>
+                        {structureDriftCount > 0 ? (
+                            <span
+                                className={STRUCTURE_DRIFT_BADGE_CLASS}
+                                aria-label={structureDriftBadgeAriaLabel(
+                                    structureDriftCount,
+                                )}
+                            >
+                                {formatStructureDriftBadgeLabel(structureDriftCount)}
+                            </span>
+                        ) : null}
                     </div>
                 </button>
                 <div className="flex shrink-0 items-center gap-1">
