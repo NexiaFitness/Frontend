@@ -20,18 +20,18 @@ import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import {
     useDeleteStandaloneSessionMutation,
     useUpdateStandaloneSessionMutation,
-} from "@nexia/shared/api/standaloneSessionsApi";
-import { Badge } from "@/components/ui/Badge";
-import {
+    useGetStandaloneSessionFeedbackQuery,
     useGetStandaloneSessionQuery,
     useGetStandaloneSessionExercisesQuery,
 } from "@nexia/shared/api/standaloneSessionsApi";
+import { Badge } from "@/components/ui/Badge";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
 import type { SessionExerciseDisplay } from "@nexia/shared/hooks/sessionProgramming";
 import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
 import { StandaloneSessionLoadSummary } from "@/components/standaloneSessions/StandaloneSessionLoadSummary";
+import { StandaloneSessionClientFeedbackPanel } from "@/components/standaloneSessions/StandaloneSessionClientFeedbackPanel";
 import { cn } from "@/lib/utils";
 import { navigateDashboardBack, readSafeReturnTo } from "@/lib/sessionDetailNavigation";
 
@@ -109,6 +109,14 @@ export const StandaloneSessionDetail: React.FC = () => {
         isLoading: isLoadingExercises,
         isError: isErrorExercises,
     } = useGetStandaloneSessionExercisesQuery(sessionId, {
+        skip: !sessionId || Number.isNaN(sessionId),
+    });
+
+    const {
+        data: clientFeedback,
+        isLoading: isLoadingFeedback,
+        isError: isErrorFeedback,
+    } = useGetStandaloneSessionFeedbackQuery(sessionId, {
         skip: !sessionId || Number.isNaN(sessionId),
     });
 
@@ -358,6 +366,12 @@ export const StandaloneSessionDetail: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            <StandaloneSessionClientFeedbackPanel
+                feedback={clientFeedback}
+                isLoading={isLoadingFeedback}
+                isError={isErrorFeedback}
+            />
 
             {session.notes && (
                 <div className="rounded-xl bg-card p-5">

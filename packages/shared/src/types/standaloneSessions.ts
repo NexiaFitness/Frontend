@@ -106,6 +106,26 @@ export interface StandaloneSessionExerciseUpdate {
     notes?: string | null;
 }
 
+/** StandaloneSessionFeedbackOut — GET /standalone-sessions/{id}/feedback */
+export interface StandaloneSessionFeedbackOut {
+    id: number;
+    standalone_session_id: number;
+    client_id: number;
+    perceived_effort: number | null;
+    fatigue_level: number | null;
+    sleep_quality: number | null;
+    stress_level: number | null;
+    motivation_level: number | null;
+    energy_level: number | null;
+    muscle_soreness: string | null;
+    pain_or_discomfort: string | null;
+    notes: string | null;
+    feedback_date: string;
+    created_at: string;
+    updated_at: string;
+    is_active: boolean;
+}
+
 /** StandaloneSessionExerciseCreate — POST /standalone-sessions/{id}/exercises */
 export interface StandaloneSessionExerciseCreate {
     standalone_session_id: number;

@@ -37,6 +37,7 @@ export {
     useGetStandaloneSessionsByClientQuery,
     useGetStandaloneSessionQuery,
     useGetStandaloneSessionExercisesQuery,
+    useGetStandaloneSessionFeedbackQuery,
     useCreateStandaloneSessionMutation,
     useCreateStandaloneSessionExerciseMutation,
     useUpdateStandaloneSessionMutation,

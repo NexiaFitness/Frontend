@@ -10,6 +10,7 @@
  * @since P2 — Plan integración flujo planificación UX
  */
 
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { baseApi } from "./baseApi";
 import type {
     StandaloneSessionCreate,
@@ -18,6 +19,7 @@ import type {
     StandaloneSessionExerciseCreate,
     StandaloneSessionExerciseOut,
     StandaloneSessionExerciseUpdate,
+    StandaloneSessionFeedbackOut,
 } from "../types/standaloneSessions";
 
 function standaloneListInvalidationTags(body: {
@@ -75,6 +77,37 @@ export const standaloneSessionsApi = baseApi.injectEndpoints({
             }),
             providesTags: (result, error, sessionId) => [
                 { type: "StandaloneSession", id: sessionId },
+            ],
+        }),
+
+        /**
+         * GET /standalone-sessions/{session_id}/feedback
+         * 404 cuando el cliente aún no ha enviado feedback → data null (D-H2).
+         */
+        getStandaloneSessionFeedback: builder.query<
+            StandaloneSessionFeedbackOut | null,
+            number
+        >({
+            queryFn: async (sessionId, _api, _extra, baseQuery) => {
+                const result = await baseQuery({
+                    url: `/standalone-sessions/${sessionId}/feedback`,
+                    method: "GET",
+                });
+                if (
+                    result.error &&
+                    "status" in result.error &&
+                    result.error.status === 404
+                ) {
+                    return { data: null };
+                }
+                if (result.error) {
+                    return { error: result.error as FetchBaseQueryError };
+                }
+                return { data: result.data as StandaloneSessionFeedbackOut };
+            },
+            providesTags: (result, error, sessionId) => [
+                { type: "StandaloneSession", id: sessionId },
+                { type: "StandaloneSession", id: `FEEDBACK-${sessionId}` },
             ],
         }),
 
@@ -185,6 +218,7 @@ export const {
     useGetStandaloneSessionsByClientQuery,
     useGetStandaloneSessionQuery,
     useGetStandaloneSessionExercisesQuery,
+    useGetStandaloneSessionFeedbackQuery,
     useCreateStandaloneSessionMutation,
     useCreateStandaloneSessionExerciseMutation,
     useUpdateStandaloneSessionExerciseMutation,
