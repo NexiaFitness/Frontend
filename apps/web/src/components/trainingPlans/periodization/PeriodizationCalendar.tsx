@@ -49,6 +49,8 @@ interface Props {
   habitualTrainingDays?: readonly string[] | null;
   /** Tab Sesiones (Bloque D): conteo training+standalone por día para hint D-QA9-b. */
   clientTrainingSessionCounts?: ReadonlyMap<string, number>;
+  /** G9 — resaltar días de la fase enfocada (phase idle). */
+  focusedBlockId?: number | null;
 }
 
 function parseLocal(s: string): Date {
@@ -72,6 +74,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
   sessionPickerDate = null,
   habitualTrainingDays = null,
   clientTrainingSessionCounts,
+  focusedBlockId = null,
 }) => {
   const showClientSessionHints = clientTrainingSessionCounts != null;
   const habitualDaySet = useMemo(
@@ -120,6 +123,31 @@ export const PeriodizationCalendar: React.FC<Props> = ({
     return s;
   }, [blocks, monthStart, monthEnd]);
 
+  const focusedBlock = useMemo(
+    () =>
+      focusedBlockId != null
+        ? blocks.find((block) => block.id === focusedBlockId)
+        : undefined,
+    [blocks, focusedBlockId],
+  );
+
+  const focusedDaySet = useMemo(() => {
+    if (!focusedBlock || formState.phase !== "idle") {
+      return EMPTY_SET;
+    }
+    const s = new Set<string>();
+    const bs = parseLocal(focusedBlock.start_date);
+    const be = parseLocal(focusedBlock.end_date);
+    const start = bs > monthStart ? bs : new Date(monthStart);
+    const end = be < monthEnd ? be : new Date(monthEnd);
+    const cur = new Date(start);
+    while (cur <= end) {
+      s.add(toLocalISO(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return s;
+  }, [focusedBlock, formState.phase, monthStart, monthEnd]);
+
   const isInSelection = useCallback(
     (dateStr: string): boolean => {
       if (!formState.startDate) return false;
@@ -145,6 +173,8 @@ export const PeriodizationCalendar: React.FC<Props> = ({
     (dayInfo: CalendarDayInfo) => {
       const { dateISO, dayOfMonth, isToday } = dayInfo;
       const inBlock = plannedSet.has(dateISO);
+      const inFocusedPhase =
+        focusedDaySet.has(dateISO) && formState.phase === "idle";
       const inPlanVigencia = planWindowSet.has(dateISO);
       const hasSession = sessionDates.has(dateISO);
       const trainingCount =
@@ -183,6 +213,9 @@ export const PeriodizationCalendar: React.FC<Props> = ({
         } else if (isEnd) {
           roundClass = "rounded-r-md";
         }
+      } else if (inFocusedPhase) {
+        bgClass = "bg-primary/25";
+        textClass = "text-primary font-semibold";
       } else if (inBlock) {
         bgClass = "bg-primary/15";
         textClass = "text-primary";
@@ -192,6 +225,8 @@ export const PeriodizationCalendar: React.FC<Props> = ({
       }
 
       const ringTodayClass = isToday ? "ring-1 ring-primary ring-inset" : "";
+      const ringFocusedClass =
+        inFocusedPhase && !inSel ? "ring-1 ring-primary/50 ring-inset" : "";
 
       return (
         <button
@@ -203,7 +238,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
               onDayRightClick(dateISO);
             }
           }}
-          className={`relative aspect-[4/3] flex flex-col items-center justify-center text-xs font-medium transition-all hover:bg-surface-2 ${bgClass} ${textClass} ${roundClass} ${ringTodayClass}`}
+          className={`relative aspect-[4/3] flex flex-col items-center justify-center text-xs font-medium transition-all hover:bg-surface-2 ${bgClass} ${textClass} ${roundClass} ${ringTodayClass} ${ringFocusedClass}`}
           aria-label={`${dayOfMonth}${isException ? " (descanso)" : ""}${showHabitualInBlockIcon ? ", día habitual de entreno" : ""}${trainingCount >= 1 ? `, ${formatClientCalendarDaySessionCountAria(trainingCount)}` : ""}`}
           aria-pressed={inSel}
         >
@@ -251,6 +286,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
       habitualDaySet,
       clientTrainingSessionCounts,
       showClientSessionHints,
+      focusedDaySet,
     ]
   );
 

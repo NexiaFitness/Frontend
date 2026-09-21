@@ -70,6 +70,88 @@ export function resolveCalendarMonthForDate(dateStr: string): Date {
     return new Date(y, m - 1, 1);
 }
 
+/** G9 — id de bloque enfocado desde ?focus= si existe en la lista. */
+export function parseFocusedBlockId(
+    searchParams: URLSearchParams,
+    blocks: readonly PlanPeriodBlock[],
+): number | null {
+    const raw = searchParams.get("focus");
+    if (!raw) {
+        return null;
+    }
+    const id = Number(raw);
+    if (!Number.isFinite(id) || id <= 0) {
+        return null;
+    }
+    if (!blocks.some((block) => block.id === id)) {
+        return null;
+    }
+    return id;
+}
+
+/** true si hay ?focus= pero no referencia un bloque válido (saneo URL). */
+export function hasStaleFocusParam(
+    searchParams: URLSearchParams,
+    blocks: readonly PlanPeriodBlock[],
+    pendingFocusBlockId: number | null = null,
+): boolean {
+    const raw = searchParams.get("focus");
+    if (!raw) {
+        return false;
+    }
+    const id = Number(raw);
+    if (
+        pendingFocusBlockId != null &&
+        Number.isFinite(id) &&
+        id === pendingFocusBlockId
+    ) {
+        return false;
+    }
+    return parseFocusedBlockId(searchParams, blocks) === null;
+}
+
+/**
+ * G9 — foco efectivo tras create: tolera ?focus= hasta que RTK refetch incluya el bloque.
+ */
+export function resolveFocusedBlockId(
+    searchParams: URLSearchParams,
+    blocks: readonly PlanPeriodBlock[],
+    pendingFocusBlockId: number | null = null,
+): number | null {
+    const parsed = parseFocusedBlockId(searchParams, blocks);
+    if (parsed != null) {
+        return parsed;
+    }
+    const raw = searchParams.get("focus");
+    if (!raw || pendingFocusBlockId == null) {
+        return null;
+    }
+    const id = Number(raw);
+    if (!Number.isFinite(id) || id <= 0) {
+        return null;
+    }
+    return id === pendingFocusBlockId ? id : null;
+}
+
+function parseLocalDate(dateStr: string): Date {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    return new Date(y, m - 1, d);
+}
+
+/** ¿Algún día del bloque cae en el mes visible del calendario? */
+export function isPeriodBlockVisibleInMonth(
+    block: PlanPeriodBlock,
+    month: Date,
+): boolean {
+    const year = month.getFullYear();
+    const monthIndex = month.getMonth();
+    const monthStart = new Date(year, monthIndex, 1);
+    const monthEnd = new Date(year, monthIndex + 1, 0);
+    const blockStart = parseLocalDate(block.start_date);
+    const blockEnd = parseLocalDate(block.end_date);
+    return blockStart <= monthEnd && blockEnd >= monthStart;
+}
+
 /** Forma de plan para hero / panel (display_name / display_goal). */
 export function toActivePlanDisplay(plan: TrainingPlan): ActivePlanByClientOut {
     return {

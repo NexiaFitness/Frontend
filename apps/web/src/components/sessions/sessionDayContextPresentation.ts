@@ -2,10 +2,12 @@
  * sessionDayContextPresentation.ts — View-model puro para "Hoy toca" (B1).
  */
 
+import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import type {
     SessionDayRecommendations,
     SessionRecommendationsResponse,
 } from "@nexia/shared/types/sessionRecommendations";
+import { findBlockContainingDate } from "@/components/trainingPlans/periodization/planningShellUtils";
 
 export const SESSION_DAY_CONTEXT_COPY = {
     title: "Hoy toca",
@@ -18,9 +20,12 @@ export const SESSION_DAY_CONTEXT_COPY = {
     noPlanTitle: "Sin plan activo",
     noPlanBody:
         "Este cliente no tiene un plan de entrenamiento activo para esta fecha. Puedes crear la sesión libremente.",
-    noBlockValuesTitle: "Fuera de fase o sin periodización",
-    noBlockValuesBody:
-        "Hay plan activo, pero esta fecha no cae en ninguna fase con periodización (o no hay bloque que la cubra). Puedes crear la sesión; no se inventará una fase automáticamente.",
+    planNoPhasesTitle: "Plan sin fases de periodización",
+    planNoPhasesBody:
+        "El programa está activo, pero aún no has definido ninguna fase. Puedes crear la sesión; añade fases en Planificación para periodizar el entrenamiento.",
+    outsidePhaseTitle: "Fuera de fase",
+    outsidePhaseBody:
+        "Esta fecha no cae dentro de ninguna fase del plan. Puedes crear la sesión; no se asignará un bloque de periodización automáticamente.",
     patternsEmptyConfigured:
         "No hay patrones definidos para este día en la estructura semanal.",
     patternsEmptyFree:
@@ -167,6 +172,83 @@ export function buildStructureGapViewModel(
     }
 
     return { show: false, message: "", configurePath };
+}
+
+export type SessionDayPhaseEmptyKind = "no_active_plan" | "plan_no_phases" | "outside_phase";
+
+export type SessionDayPhaseContext =
+    | { kind: "no_active_plan"; title: string; body: string }
+    | { kind: "plan_no_phases"; title: string; body: string }
+    | { kind: "outside_phase"; title: string; body: string }
+    | { kind: "in_phase"; response: Extract<
+          SessionRecommendationsResponse,
+          { has_planned_values: true }
+      > };
+
+export interface ResolveSessionDayPhaseContextInput {
+    response: SessionRecommendationsResponse | undefined;
+    sessionDate: string;
+    periodBlocks?: readonly PlanPeriodBlock[];
+}
+
+/**
+ * Ramas G22 (R8): permitir crear + aviso fuerte; sin mezclar «sin fases» y «fuera de bloque».
+ */
+export function resolveSessionDayPhaseContext(
+    input: ResolveSessionDayPhaseContextInput,
+): SessionDayPhaseContext | null {
+    const { response, sessionDate, periodBlocks = [] } = input;
+    if (!response) {
+        return null;
+    }
+
+    if (!response.has_active_plan) {
+        return {
+            kind: "no_active_plan",
+            title: SESSION_DAY_CONTEXT_COPY.noPlanTitle,
+            body: SESSION_DAY_CONTEXT_COPY.noPlanBody,
+        };
+    }
+
+    if (isSessionRecommendationsWithValues(response)) {
+        return { kind: "in_phase", response };
+    }
+
+    if (periodBlocks.length === 0) {
+        return {
+            kind: "plan_no_phases",
+            title: SESSION_DAY_CONTEXT_COPY.planNoPhasesTitle,
+            body: SESSION_DAY_CONTEXT_COPY.planNoPhasesBody,
+        };
+    }
+
+    const blockForDate = findBlockContainingDate([...periodBlocks], sessionDate);
+    const hasPlannedDay =
+        "has_planned_day" in response && response.has_planned_day === true;
+
+    if (!hasPlannedDay || !blockForDate) {
+        return {
+            kind: "outside_phase",
+            title: SESSION_DAY_CONTEXT_COPY.outsidePhaseTitle,
+            body: SESSION_DAY_CONTEXT_COPY.outsidePhaseBody,
+        };
+    }
+
+    return {
+        kind: "outside_phase",
+        title: SESSION_DAY_CONTEXT_COPY.outsidePhaseTitle,
+        body: SESSION_DAY_CONTEXT_COPY.outsidePhaseBody,
+    };
+}
+
+/** Alerta compacta en constructor (modo programa) — mismas ramas que el panel. */
+export function sessionDayPhaseContextToProgramAlert(
+    ctx: SessionDayPhaseContext | null,
+): { title: string; body: string } | null {
+    if (!ctx || ctx.kind === "no_active_plan" || ctx.kind === "in_phase") {
+        return null;
+    }
+    return { title: ctx.title, body: ctx.body };
 }
 
 export function isSessionRecommendationsWithValues(

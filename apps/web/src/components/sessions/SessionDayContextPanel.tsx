@@ -16,6 +16,7 @@ import {
     Sparkles,
 } from "lucide-react";
 import { useGetSessionRecommendationsQuery } from "@nexia/shared/api/trainingSessionsApi";
+import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -29,8 +30,8 @@ import {
     buildStructureGapViewModel,
     formatSessionDateLong,
     formatVolumeIntensityScale,
-    isSessionRecommendationsWithValues,
     resolveQualityLabel,
+    resolveSessionDayPhaseContext,
 } from "./sessionDayContextPresentation";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import {
@@ -45,6 +46,8 @@ interface SessionDayContextPanelProps {
     clientId: number | null;
     sessionDate: string;
     trainerId: number;
+    /** Plan fuente (programa) para ramas G22 con lista de fases */
+    trainingPlanId?: number | null;
     /** hero: ancho completo en constructor; sidebar: columna derecha compacta */
     layout?: "hero" | "sidebar";
     className?: string;
@@ -103,6 +106,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
     clientId,
     sessionDate,
     trainerId,
+    trainingPlanId = null,
     layout = "hero",
     className,
 }) => {
@@ -122,12 +126,28 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
 
     const { data: catalog = [] } = useGetPhysicalQualitiesQuery();
 
+    const planIdForBlocks =
+        trainingPlanId != null && trainingPlanId > 0 ? trainingPlanId : undefined;
+    const { data: periodBlocks = [] } = useGetPeriodBlocksQuery(planIdForBlocks!, {
+        skip: !planIdForBlocks,
+    });
+
     const response = data as SessionRecommendationsResponse | undefined;
 
+    const phaseContext = useMemo(
+        () =>
+            resolveSessionDayPhaseContext({
+                response,
+                sessionDate,
+                periodBlocks,
+            }),
+        [response, sessionDate, periodBlocks],
+    );
+
     const structureGap = useMemo(() => {
-        if (!isSessionRecommendationsWithValues(response)) return null;
-        return buildStructureGapViewModel(response.recommendations);
-    }, [response]);
+        if (phaseContext?.kind !== "in_phase") return null;
+        return buildStructureGapViewModel(phaseContext.response.recommendations);
+    }, [phaseContext]);
 
     if (skip) return null;
 
@@ -148,29 +168,19 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
         );
     }
 
-    if (isError || !response) return null;
+    if (isError || !response || !phaseContext) return null;
 
-    if (!response.has_active_plan) {
+    if (phaseContext.kind !== "in_phase") {
         return (
             <EmptyStatePanel
-                title={SESSION_DAY_CONTEXT_COPY.noPlanTitle}
-                body={SESSION_DAY_CONTEXT_COPY.noPlanBody}
+                title={phaseContext.title}
+                body={phaseContext.body}
                 className={className}
             />
         );
     }
 
-    if (!isSessionRecommendationsWithValues(response)) {
-        return (
-            <EmptyStatePanel
-                title={SESSION_DAY_CONTEXT_COPY.noBlockValuesTitle}
-                body={SESSION_DAY_CONTEXT_COPY.noBlockValuesBody}
-                className={className}
-            />
-        );
-    }
-
-    const rec = response.recommendations;
+    const rec = phaseContext.response.recommendations;
     const patterns = rec.movement_patterns ?? [];
     const muscles = rec.target_muscle_groups ?? [];
     const qualityLabel = resolveQualityLabel(rec.physical_quality, catalog);

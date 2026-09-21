@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ChevronRight, Layers, Pencil, Trash2 } from "lucide-react";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
+import { formatClientWorkoutSessionCountShort } from "@nexia/shared/training/clientSessionsOnDate";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 import { Button } from "@/components/ui/buttons";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
@@ -26,6 +27,7 @@ import {
     PERIOD_BLOCK_CARD_QUALITIES_COLUMN_CLASS,
     PERIOD_BLOCK_CARD_SESSIONS_CLASS,
     PERIOD_BLOCK_CARD_SHELL_CLASS,
+    PERIOD_BLOCK_CARD_SHELL_FOCUSED_CLASS,
 } from "./periodBlockCardPresentation";
 
 interface Props {
@@ -38,6 +40,8 @@ interface Props {
     onCreateSessionForBlock?: (block: PlanPeriodBlock) => void;
     volumeIntensityContext?: VolumeIntensityContext | null;
     volumeIntensityPhase?: PeriodizationVolumeNominalPhase;
+    isFocused?: boolean;
+    onSelectFocus?: (block: PlanPeriodBlock) => void;
 }
 
 function parseLocal(s: string): Date {
@@ -68,6 +72,8 @@ export const PeriodBlockCard: React.FC<Props> = ({
     onCreateSessionForBlock,
     volumeIntensityContext,
     volumeIntensityPhase,
+    isFocused = false,
+    onSelectFocus,
 }) => {
     const [showSessions, setShowSessions] = useState(false);
     const label = `${formatDateShort(block.start_date)} — ${formatDateShort(block.end_date)}`;
@@ -81,14 +87,24 @@ export const PeriodBlockCard: React.FC<Props> = ({
 
     return (
         <article
-            className={PERIOD_BLOCK_CARD_SHELL_CLASS}
+            className={cn(
+                PERIOD_BLOCK_CARD_SHELL_CLASS,
+                isFocused && PERIOD_BLOCK_CARD_SHELL_FOCUSED_CLASS,
+            )}
             data-block-id={block.id}
             data-testid={`period-block-card-${block.id}`}
+            aria-current={isFocused ? "true" : undefined}
         >
             <NexiaGlassAccentRim />
 
             <header className={PERIOD_BLOCK_CARD_HEADER_CLASS}>
-                <div className="flex min-w-0 items-start gap-2">
+                <button
+                    type="button"
+                    className="flex min-w-0 flex-1 cursor-pointer items-start gap-2 border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-md"
+                    onClick={() => onSelectFocus?.(block)}
+                    disabled={!onSelectFocus}
+                    aria-label={`Enfocar fase del ${formatDateShort(block.start_date)} al ${formatDateShort(block.end_date)}`}
+                >
                     <span
                         className={PERIOD_BLOCK_CARD_DATE_DOT_CLASS}
                         aria-hidden
@@ -106,12 +122,15 @@ export const PeriodBlockCard: React.FC<Props> = ({
                             {days} día{days !== 1 ? "s" : ""}
                         </span>
                     </div>
-                </div>
+                </button>
                 <div className="flex shrink-0 items-center gap-1">
                     {onEdit && (
                         <PeriodBlockIconButton
                             variant="edit"
-                            onClick={() => onEdit(block)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(block);
+                            }}
                             aria-label={`Editar bloque ${label}`}
                         >
                             <Pencil className="h-3.5 w-3.5" aria-hidden />
@@ -119,7 +138,10 @@ export const PeriodBlockCard: React.FC<Props> = ({
                     )}
                     <PeriodBlockIconButton
                         variant="delete"
-                        onClick={() => onDelete(block.id, label)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(block.id, label);
+                        }}
                         aria-label={`Eliminar bloque ${label}`}
                     >
                         <Trash2 className="h-3.5 w-3.5" aria-hidden />
@@ -127,6 +149,14 @@ export const PeriodBlockCard: React.FC<Props> = ({
                 </div>
             </header>
 
+            <button
+                type="button"
+                className="relative z-[1] block w-full cursor-pointer border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                onClick={() => onSelectFocus?.(block)}
+                disabled={!onSelectFocus}
+                tabIndex={-1}
+                aria-hidden={!onSelectFocus}
+            >
             <div className={PERIOD_BLOCK_CARD_DIVIDER_WRAP_CLASS} aria-hidden>
                 <div className={PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS} />
             </div>
@@ -184,6 +214,7 @@ export const PeriodBlockCard: React.FC<Props> = ({
                     />
                 </div>
             </div>
+            </button>
 
             {(onViewWeeks != null || onCreateSessionForBlock != null) && (
                 <>
@@ -240,9 +271,8 @@ export const PeriodBlockCard: React.FC<Props> = ({
                             )}
                             aria-hidden
                         />
-                        <span className="font-semibold">{sessions.length}</span>
                         <span>
-                            sesión{sessions.length !== 1 ? "es" : ""}{" "}
+                            {formatClientWorkoutSessionCountShort(sessions.length)}{" "}
                             programada{sessions.length !== 1 ? "s" : ""}
                         </span>
                     </button>

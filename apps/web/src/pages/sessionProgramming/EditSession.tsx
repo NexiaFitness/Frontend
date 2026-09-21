@@ -953,6 +953,7 @@ export const EditSession: React.FC = () => {
                                     clientId={session.client_id}
                                     sessionDate={formData.sessionDate}
                                     trainerId={trainerIdForDayPlan}
+                                    trainingPlanId={session.training_plan_id}
                                 />
                             ) : null}
 

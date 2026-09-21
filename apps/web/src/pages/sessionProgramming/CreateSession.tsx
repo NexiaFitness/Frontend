@@ -46,6 +46,8 @@ import {
 } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useCreateTrainingSessionMutation } from "@nexia/shared/api/trainingSessionsApi";
+import { useGetSessionRecommendationsQuery } from "@nexia/shared/api/trainingSessionsApi";
+import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import {
     useCreateStandaloneSessionMutation,
     useCreateStandaloneSessionExerciseMutation,
@@ -60,6 +62,10 @@ import type { Exercise } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName, useDefaultSessionName } from "@nexia/shared";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
 import { SessionDayContextPanel } from "@/components/sessions/SessionDayContextPanel";
+import {
+    resolveSessionDayPhaseContext,
+    sessionDayPhaseContextToProgramAlert,
+} from "@/components/sessions/sessionDayContextPresentation";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import {
@@ -459,6 +465,49 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             : programPlanActivation === "no_active_plan"
               ? PROGRAM_PLAN_NO_ACTIVE_FOR_DATE_COPY
               : null;
+
+    const programPlanIdForContext =
+        !useStandaloneSession && requestedProgramPlanId && requestedProgramPlanId > 0
+            ? requestedProgramPlanId
+            : undefined;
+
+    const { data: sessionRecommendations } = useGetSessionRecommendationsQuery(
+        {
+            client_id: effectiveClientId ?? 0,
+            session_date: formData.sessionDate,
+            trainer_id: trainerId,
+        },
+        {
+            skip:
+                !effectiveClientId ||
+                effectiveClientId <= 0 ||
+                !trainerId ||
+                useStandaloneSession,
+        },
+    );
+
+    const { data: programPeriodBlocks = [] } = useGetPeriodBlocksQuery(
+        programPlanIdForContext!,
+        { skip: !programPlanIdForContext },
+    );
+
+    const programPhaseAlert = useMemo(() => {
+        if (useStandaloneSession || programPlanBlocked) {
+            return null;
+        }
+        const ctx = resolveSessionDayPhaseContext({
+            response: sessionRecommendations,
+            sessionDate: formData.sessionDate,
+            periodBlocks: programPeriodBlocks,
+        });
+        return sessionDayPhaseContextToProgramAlert(ctx);
+    }, [
+        useStandaloneSession,
+        programPlanBlocked,
+        sessionRecommendations,
+        formData.sessionDate,
+        programPeriodBlocks,
+    ]);
 
     const [isPersistingSubmit, setIsPersistingSubmit] = useState(false);
 
@@ -915,6 +964,15 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 {programPlanBlockMessage ? (
                                     <Alert variant="warning">{programPlanBlockMessage}</Alert>
                                 ) : null}
+                                {programPhaseAlert ? (
+                                    <Alert variant="warning">
+                                        <span className="font-semibold">
+                                            {programPhaseAlert.title}
+                                        </span>
+                                        {" — "}
+                                        {programPhaseAlert.body}
+                                    </Alert>
+                                ) : null}
                             </div>
                         ) : null}
                         <div className={SESSION_PROGRAMMING_SESSION_FIELDS_GRID}>
@@ -1111,6 +1169,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                     clientId={effectiveClientId}
                                     sessionDate={formData.sessionDate}
                                     trainerId={trainerId}
+                                    trainingPlanId={programPlanIdForContext ?? null}
                                 />
                             ) : null}
 

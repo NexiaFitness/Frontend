@@ -11,7 +11,12 @@ import {
     formatSessionDateLong,
     formatVolumeIntensityScale,
     isSessionRecommendationsWithValues,
+    resolveSessionDayPhaseContext,
+    sessionDayPhaseContextToProgramAlert,
+    SESSION_DAY_CONTEXT_COPY,
 } from "../sessionDayContextPresentation";
+import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
+import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
 
 describe("sessionDayContextPresentation", () => {
     const baseRec: SessionDayRecommendations = {
@@ -104,5 +109,63 @@ describe("sessionDayContextPresentation", () => {
                 coherence_warnings: [],
             }),
         ).toBe(true);
+    });
+
+    const blockA = {
+        id: 10,
+        training_plan_id: 1,
+        name: "Fase A",
+        start_date: "2026-09-01",
+        end_date: "2026-09-30",
+        volume_level: 5,
+        intensity_level: 5,
+    } as PlanPeriodBlock;
+
+    it("resolveSessionDayPhaseContext — plan sin fases", () => {
+        const response: SessionRecommendationsResponse = {
+            client_id: 1,
+            session_date: "2026-09-15",
+            has_active_plan: true,
+            has_planned_day: false,
+            has_planned_values: false,
+            recommendations: null,
+            coherence_warnings: [],
+        };
+        expect(
+            resolveSessionDayPhaseContext({
+                response,
+                sessionDate: "2026-09-15",
+                periodBlocks: [],
+            })?.kind,
+        ).toBe("plan_no_phases");
+    });
+
+    it("resolveSessionDayPhaseContext — fuera de fase", () => {
+        const response: SessionRecommendationsResponse = {
+            client_id: 1,
+            session_date: "2026-10-15",
+            has_active_plan: true,
+            has_planned_day: false,
+            has_planned_values: false,
+            recommendations: null,
+            coherence_warnings: [],
+        };
+        expect(
+            resolveSessionDayPhaseContext({
+                response,
+                sessionDate: "2026-10-15",
+                periodBlocks: [blockA],
+            })?.kind,
+        ).toBe("outside_phase");
+    });
+
+    it("sessionDayPhaseContextToProgramAlert — aviso programa", () => {
+        expect(
+            sessionDayPhaseContextToProgramAlert({
+                kind: "plan_no_phases",
+                title: SESSION_DAY_CONTEXT_COPY.planNoPhasesTitle,
+                body: SESSION_DAY_CONTEXT_COPY.planNoPhasesBody,
+            })?.title,
+        ).toBe(SESSION_DAY_CONTEXT_COPY.planNoPhasesTitle);
     });
 });

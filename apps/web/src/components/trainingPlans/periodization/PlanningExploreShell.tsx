@@ -14,6 +14,7 @@ import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/useP
 import { PeriodizationCalendar } from "./PeriodizationCalendar";
 import { PeriodBlockCard } from "./PeriodBlockCard";
 import { PeriodBlockAddPhaseCard } from "./PeriodBlockAddPhaseCard";
+import { PeriodBlockEmptyCallout } from "./PeriodBlockEmptyCallout";
 import {
     canAddPeriodPhase,
     resolveNextPhaseStartDate,
@@ -24,6 +25,8 @@ import { PlanningShellBodyLayout } from "./PlanningShellBodyLayout";
 import type { PeriodBlockFormState } from "./usePeriodBlockForm";
 import {
     PLANNING_EXPLORE_BLOCKS_ROW,
+    PLANNING_NO_PHASES_CALLOUT_PRIMARY,
+    PLANNING_NO_PHASES_CALLOUT_SECONDARY,
     PLANNING_PLANS_HISTORY_TRIGGER,
     PLANNING_PLANS_HISTORY_TRIGGER_ROW,
     PLANNING_PROGRAM_SUMMARY_STACK,
@@ -36,6 +39,7 @@ interface Props {
     catalog: PhysicalQuality[];
     sessionsByBlock: Map<number, TrainingSession[]>;
     activePlan?: ActivePlanByClientOut;
+    clientId?: number;
     planStartDate?: string | null;
     planEndDate?: string | null;
     trainingFrequencyLabel: string | null;
@@ -57,6 +61,8 @@ interface Props {
     onViewWeeks: (block: PlanPeriodBlock) => void;
     onDeleteBlock: (id: number, label: string) => void;
     onCreateSessionForBlock: (block: PlanPeriodBlock) => void;
+    focusedBlockId?: number | null;
+    onFocusBlock?: (block: PlanPeriodBlock) => void;
     buildVolumeContext: (
         volumeLevel: number | null | undefined,
         intensityLevel: number | null | undefined,
@@ -71,6 +77,7 @@ export const PlanningExploreShell: React.FC<Props> = ({
     catalog,
     sessionsByBlock,
     activePlan,
+    clientId,
     planStartDate,
     planEndDate,
     trainingFrequencyLabel,
@@ -92,6 +99,8 @@ export const PlanningExploreShell: React.FC<Props> = ({
     onViewWeeks,
     onDeleteBlock,
     onCreateSessionForBlock,
+    focusedBlockId = null,
+    onFocusBlock,
     buildVolumeContext,
     volumeIntensityPhase,
     showOtherPlansAction = false,
@@ -144,6 +153,21 @@ export const PlanningExploreShell: React.FC<Props> = ({
                 </div>
             ) : null}
 
+            {activePlan && blocks.length === 0 ? (
+                <PeriodBlockEmptyCallout
+                    primaryText={PLANNING_NO_PHASES_CALLOUT_PRIMARY}
+                    secondaryText={PLANNING_NO_PHASES_CALLOUT_SECONDARY}
+                    clientId={clientId ?? activePlan?.client_id ?? undefined}
+                    action={
+                        showAddPhaseCard ? (
+                            <Button type="button" variant="outline-primary" size="sm" onClick={onAddPhase}>
+                                Añadir primera fase
+                            </Button>
+                        ) : undefined
+                    }
+                />
+            ) : null}
+
             {showBlocksRow ? (
                 <div className={PLANNING_EXPLORE_BLOCKS_ROW} data-testid="planning-explore-blocks-row">
                     {blocks.map((block) => (
@@ -156,6 +180,8 @@ export const PlanningExploreShell: React.FC<Props> = ({
                                 onViewWeeks={onViewWeeks}
                                 onDelete={onDeleteBlock}
                                 onCreateSessionForBlock={onCreateSessionForBlock}
+                                isFocused={focusedBlockId === block.id}
+                                onSelectFocus={onFocusBlock}
                                 volumeIntensityContext={buildVolumeContext(
                                     block.volume_level,
                                     block.intensity_level,
@@ -187,6 +213,7 @@ export const PlanningExploreShell: React.FC<Props> = ({
                             currentMonth={calMonth}
                             onMonthChange={onMonthChange}
                             blocks={blocks}
+                            focusedBlockId={focusedBlockId}
                             planStartDate={planStartDate}
                             planEndDate={planEndDate}
                             sessionDates={sessionDates}

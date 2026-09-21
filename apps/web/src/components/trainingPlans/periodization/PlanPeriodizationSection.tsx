@@ -53,7 +53,10 @@ import {
 } from "@/utils/planningHubUrl";
 import {
   findBlockContainingDate,
+  hasStaleFocusParam,
+  isPeriodBlockVisibleInMonth,
   resolveCalendarMonthForDate,
+  resolveFocusedBlockId,
   resolveNextPhaseStartDate,
 } from "./planningShellUtils";
 
@@ -125,6 +128,9 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
 
   const { showWarning, showSuccess, showError } = useToast();
   const [calMonth, setCalMonth] = useState(() => new Date());
+  const [pendingFocusBlockId, setPendingFocusBlockId] = useState<number | null>(
+    null,
+  );
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; label: string } | null>(null);
   const [exceptionModal, setExceptionModal] = useState<{ date: string } | null>(null);
   const [exceptionNote, setExceptionNote] = useState("");
@@ -309,11 +315,62 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         return;
       }
       reset();
+      setPendingFocusBlockId(block.id);
+      setCalMonth(resolveCalendarMonthForDate(block.start_date));
       const next = clearBlockAuthorParams(searchParams);
       next.set("focus", String(block.id));
       navigateToClientPlanning(next);
     },
     [clientId, searchParams, reset, navigateToClientPlanning],
+  );
+
+  useEffect(() => {
+    if (pendingFocusBlockId == null) {
+      return;
+    }
+    if (blocks.some((block) => block.id === pendingFocusBlockId)) {
+      setPendingFocusBlockId(null);
+    }
+  }, [blocks, pendingFocusBlockId]);
+
+  const focusedBlockId = useMemo(
+    () => resolveFocusedBlockId(searchParams, blocks, pendingFocusBlockId),
+    [searchParams, blocks, pendingFocusBlockId],
+  );
+
+  useEffect(() => {
+    if (isDapAuthoring || isBlockWeeksManage) {
+      return;
+    }
+    if (isLoading) {
+      return;
+    }
+    if (!hasStaleFocusParam(searchParams, blocks, pendingFocusBlockId)) {
+      return;
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete("focus");
+    navigateToClientPlanning(next);
+  }, [
+    blocks,
+    searchParams,
+    isDapAuthoring,
+    isBlockWeeksManage,
+    navigateToClientPlanning,
+    pendingFocusBlockId,
+    isLoading,
+  ]);
+
+  const handleFocusBlock = useCallback(
+    (block: PlanPeriodBlock) => {
+      const next = new URLSearchParams(searchParams);
+      next.set("focus", String(block.id));
+      navigateToClientPlanning(next);
+      if (!isPeriodBlockVisibleInMonth(block, calMonth)) {
+        setCalMonth(resolveCalendarMonthForDate(block.start_date));
+      }
+    },
+    [searchParams, navigateToClientPlanning, calMonth],
   );
 
   const focusBlockId = searchParams.get("focus");
@@ -721,6 +778,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         catalog={catalog}
         sessionsByBlock={sessionsByBlock}
         activePlan={activePlan}
+        clientId={clientId}
         planStartDate={planStartDate}
         planEndDate={planEndDate}
         trainingFrequencyLabel={trainingFrequencyLabel}
@@ -742,6 +800,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         onViewWeeks={handleViewWeeks}
         onDeleteBlock={(id, label) => setDeleteTarget({ id, label })}
         onCreateSessionForBlock={handleCreateSessionForBlock}
+        focusedBlockId={focusedBlockId}
+        onFocusBlock={handleFocusBlock}
         buildVolumeContext={(volumeLevel, intensityLevel) =>
           volumeNominal.buildContext(
             volumeLevel ?? 5,

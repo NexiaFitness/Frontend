@@ -18,6 +18,12 @@ export const PERIOD_BLOCK_CARD_SHELL_CLASS = cn(
     "hover:border-primary/35 hover:shadow-[0_8px_32px_-12px] hover:shadow-primary/15",
 );
 
+/** G9 — fase seleccionada con ?focus= */
+export const PERIOD_BLOCK_CARD_SHELL_FOCUSED_CLASS = cn(
+    "border-primary/55 shadow-[0_0_0_1px_hsl(var(--primary)/0.35),0_8px_32px_-12px] shadow-primary/25",
+    "ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
+);
+
 export const PERIOD_BLOCK_CARD_HEADER_CLASS = cn(
     "relative z-[1] flex items-start justify-between gap-2 px-4 py-3",
     "bg-gradient-to-b from-primary/[0.07] to-transparent",

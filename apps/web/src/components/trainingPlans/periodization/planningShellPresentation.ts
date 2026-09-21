@@ -17,6 +17,13 @@ import { PLATFORM_SECTION_LABEL } from "@/components/ui/surface/platformPremiumP
 
 export const PLANNING_SHELL_SECTION_CLASS = "space-y-6";
 
+/** G22 — callout plan activo sin fases (hub planificación). */
+export const PLANNING_NO_PHASES_CALLOUT_PRIMARY =
+    "El programa está activo, pero aún no hay fases de periodización.";
+
+export const PLANNING_NO_PHASES_CALLOUT_SECONDARY =
+    "Añade la primera fase para definir bloques, calendario y contexto de sesión.";
+
 export const PLANNING_SHELL_HEADER_CLASS =
     "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between";
 
