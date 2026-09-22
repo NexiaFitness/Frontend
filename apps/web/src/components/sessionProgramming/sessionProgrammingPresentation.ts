@@ -236,11 +236,20 @@ export const SESSION_PROGRAMMING_FOOTER_SECONDARY = PLATFORM_DASHBOARD_FOOTER_BT
 
 export const SESSION_PROGRAMMING_FOOTER_CANCEL = PLATFORM_DASHBOARD_FOOTER_BTN;
 
-/** Hero «Hoy toca» — cabecera métricas. */
+/** Hero «Hoy toca» — cabecera métricas (compacta, tablet-first). */
 export const SESSION_PROGRAMMING_DAY_HERO_HEADER = cn(
-    "border-b border-border/60 bg-surface/20 px-4 py-4 sm:px-5",
+    "border-b border-border/60 bg-surface/20 px-3 py-2.5 sm:px-4 md:py-3",
 );
 
 export const SESSION_PROGRAMMING_DAY_METRICS_BOX = cn(
-    "flex shrink-0 flex-wrap items-center gap-3 rounded-lg border border-border/70 bg-card/40 px-3 py-2 backdrop-blur-sm sm:gap-4 sm:px-4",
+    "inline-flex shrink-0 items-center gap-2.5 rounded-lg border border-border/70 bg-card/40 px-2.5 py-1.5 backdrop-blur-sm sm:gap-3 sm:px-3",
+);
+
+export const SESSION_PROGRAMMING_DAY_BODY_COMPACT = "space-y-3 p-3 sm:p-4";
+
+/** Grid contexto día: patrones + músculos | prioridad (mix). */
+export const SESSION_PROGRAMMING_DAY_CONTEXT_GRID = cn(
+    "grid grid-cols-1 gap-3 min-w-0",
+    "md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:gap-4",
+    "lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(220px,0.95fr)] lg:gap-3 xl:gap-4",
 );

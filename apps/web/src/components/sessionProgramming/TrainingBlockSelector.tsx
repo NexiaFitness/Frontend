@@ -8,11 +8,9 @@
 import React, { useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import {
-    AddPill,
-    AddPillGrid,
-    ADD_PILL_SECTION_LABEL_CLASS,
-} from "@/components/ui/chips";
+import { AddPill, AddPillGrid, ADD_PILL_SECTION_LABEL_CLASS } from "@/components/ui/chips";
+import { Button } from "@/components/ui/buttons";
+import { Plus } from "lucide-react";
 import { getTrainingBlockDisplayName } from "@nexia/shared";
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import { useGetTrainingBlockTypesQuery } from "@nexia/shared/api/sessionProgrammingApi";
@@ -101,40 +99,48 @@ export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
             <div className={cn(SESSION_PROGRAMMING_PANEL_BODY, "space-y-4 !py-4 sm:!py-5")}>
                 <h3 className={SESSION_PROGRAMMING_PANEL_TITLE}>Bloques de Entrenamiento</h3>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    {roleTypes.map((bt) => (
-                        <button
-                            key={bt.id}
-                            type="button"
-                            onClick={() => onSelect(bt.id)}
-                            className={sessionProgrammingBlockChipClass(
-                                selectedBlockTypeIds.includes(bt.id),
-                            )}
-                        >
-                            {getTrainingBlockDisplayName(bt)}
-                        </button>
-                    ))}
+                <div className="flex w-full min-w-0 items-center gap-2">
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                        {roleTypes.map((bt) => (
+                            <button
+                                key={bt.id}
+                                type="button"
+                                onClick={() => onSelect(bt.id)}
+                                className={sessionProgrammingBlockChipClass(
+                                    selectedBlockTypeIds.includes(bt.id),
+                                )}
+                            >
+                                {getTrainingBlockDisplayName(bt)}
+                            </button>
+                        ))}
 
-                    {visibleQualityTypes.map((bt) => (
-                        <button
-                            key={bt.id}
-                            type="button"
-                            onClick={() => onSelect(bt.id)}
-                            className={sessionProgrammingBlockChipClass(
-                                selectedBlockTypeIds.includes(bt.id),
-                            )}
-                        >
-                            {getTrainingBlockDisplayName(bt)}
-                        </button>
-                    ))}
+                        {visibleQualityTypes.map((bt) => (
+                            <button
+                                key={bt.id}
+                                type="button"
+                                onClick={() => onSelect(bt.id)}
+                                className={sessionProgrammingBlockChipClass(
+                                    selectedBlockTypeIds.includes(bt.id),
+                                )}
+                            >
+                                {getTrainingBlockDisplayName(bt)}
+                            </button>
+                        ))}
+                    </div>
 
-                    {addableQualities.length > 0 && (
-                        <AddPill
-                            label="Añadir cualidad"
-                            variant="compact"
+                    {addableQualities.length > 0 ? (
+                        <Button
+                            type="button"
+                            variant="ghost-primary"
+                            size="sm"
+                            className="h-8 shrink-0 px-2.5 text-xs sm:px-3"
+                            aria-expanded={showAddQualities}
                             onClick={() => setShowAddQualities((v) => !v)}
-                        />
-                    )}
+                        >
+                            <Plus className="h-3.5 w-3.5" aria-hidden />
+                            Añadir cualidad
+                        </Button>
+                    ) : null}
                 </div>
 
                 {showAddQualities && addableQualities.length > 0 && (

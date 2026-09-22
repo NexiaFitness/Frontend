@@ -22,6 +22,14 @@ export {
     parseSessionCreateKindParam,
 } from "./resolveSessionCreateKind";
 export type { SessionCreateKind } from "./resolveSessionCreateKind";
+export {
+    isProgramCreateContextLocked,
+    resolveSessionCreateKindUi,
+} from "./resolveSessionCreateKindUi";
+export type {
+    ResolveSessionCreateKindUiInput,
+    SessionCreateKindUi,
+} from "./resolveSessionCreateKindUi";
 export { buildCreateSessionQueryFromBlock } from "./buildCreateSessionQueryFromBlock";
 export type { BuildCreateSessionQueryFromBlockInput } from "./buildCreateSessionQueryFromBlock";
 export {

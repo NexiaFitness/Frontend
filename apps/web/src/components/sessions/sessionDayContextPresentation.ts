@@ -2,6 +2,8 @@
  * sessionDayContextPresentation.ts — View-model puro para "Hoy toca" (B1).
  */
 
+import { cn } from "@/lib/utils";
+import { PLATFORM_SECTION_LABEL } from "@/components/ui/surface/platformPremiumPresentation";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import type {
     SessionDayRecommendations,
@@ -46,6 +48,27 @@ const METRIC_LABEL_CLASS =
     "text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80";
 
 export { METRIC_LABEL_CLASS };
+
+/** Etiqueta de celda en panel compacto — paridad PLATFORM_SECTION_LABEL. */
+export const SESSION_DAY_CONTEXT_FIELD_LABEL = cn(PLATFORM_SECTION_LABEL, "text-[10px]");
+
+/** Icono de sección (primary / cyan premium). */
+export const SESSION_DAY_CONTEXT_FIELD_ICON_CLASS = "h-3 w-3 shrink-0 text-primary";
+
+/** Chip músculo objetivo (tinte glass, alineado con PatternBadge sm). */
+export const SESSION_DAY_CONTEXT_MUSCLE_CHIP = cn(
+    "inline-flex max-w-full items-center rounded-md border border-border/55 bg-surface/45 px-2 py-0.5",
+    "text-[11px] font-medium leading-tight text-foreground/90",
+);
+
+export const SESSION_DAY_CONTEXT_CHIP_WRAP = "flex flex-wrap gap-1";
+
+export const SESSION_DAY_CONTEXT_QUALITY_MIX_GRID = cn(
+    "grid grid-cols-1 gap-1.5 min-w-0",
+    "sm:grid-cols-2 sm:gap-x-3 lg:grid-cols-1 lg:gap-1.5",
+);
+
+export const SESSION_DAY_CONTEXT_METRIC_VALUE = "text-base font-bold tabular-nums sm:text-lg";
 
 export function formatSessionDateLong(isoDate: string): string {
     const d = new Date(isoDate + "T12:00:00");

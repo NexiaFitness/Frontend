@@ -28,19 +28,25 @@ import { cn } from "@/lib/utils";
 import {
     SESSION_DAY_CONTEXT_COPY,
     METRIC_LABEL_CLASS,
+    SESSION_DAY_CONTEXT_CHIP_WRAP,
+    SESSION_DAY_CONTEXT_FIELD_ICON_CLASS,
+    SESSION_DAY_CONTEXT_FIELD_LABEL,
+    SESSION_DAY_CONTEXT_METRIC_VALUE,
+    SESSION_DAY_CONTEXT_MUSCLE_CHIP,
+    SESSION_DAY_CONTEXT_QUALITY_MIX_GRID,
     buildBlockContextLine,
     buildStructureGapViewModel,
     formatSessionDateLong,
-    formatVolumeIntensityScale,
     resolveQualityLabelsFromRecommendation,
     resolveSessionDayPhaseContext,
 } from "./sessionDayContextPresentation";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import {
+    SESSION_PROGRAMMING_DAY_BODY_COMPACT,
+    SESSION_PROGRAMMING_DAY_CONTEXT_GRID,
     SESSION_PROGRAMMING_DAY_HERO_HEADER,
     SESSION_PROGRAMMING_DAY_METRICS_BOX,
     SESSION_PROGRAMMING_PANEL_ACCENT,
-    SESSION_PROGRAMMING_PANEL_BODY,
     SESSION_PROGRAMMING_PANEL_TITLE,
 } from "@/components/sessionProgramming/sessionProgrammingPresentation";
 
@@ -57,7 +63,7 @@ interface SessionDayContextPanelProps {
 
 const panelShell = SESSION_PROGRAMMING_PANEL_ACCENT;
 
-function MetricCell({
+function ContextField({
     label,
     icon,
     children,
@@ -69,21 +75,13 @@ function MetricCell({
     className?: string;
 }) {
     return (
-        <div className={cn("min-w-0 space-y-1.5", className)}>
-            <div className="flex items-center gap-1.5">
+        <div className={cn("min-w-0", className)}>
+            <div className="mb-1 flex items-center gap-1.5">
                 {icon}
-                <span className={METRIC_LABEL_CLASS}>{label}</span>
+                <span className={SESSION_DAY_CONTEXT_FIELD_LABEL}>{label}</span>
             </div>
             <div className="min-w-0">{children}</div>
         </div>
-    );
-}
-
-function MuscleChip({ name }: { name: string }) {
-    return (
-        <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-foreground ring-1 ring-border">
-            {name}
-        </span>
     );
 }
 
@@ -189,10 +187,6 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
     const qualityMix = rec.quality_mix ?? [];
     const blockLine = buildBlockContextLine(rec);
     const dateLine = formatSessionDateLong(sessionDate);
-    const volIntLine = formatVolumeIntensityScale(
-        rec.volume_level,
-        rec.intensity_level,
-    );
 
     if (layout === "sidebar") {
         return (
@@ -210,39 +204,52 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                         ) : null}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                        <MetricCell label={SESSION_DAY_CONTEXT_COPY.volumeLabel} icon={<Gauge className="h-3 w-3 text-primary" aria-hidden />}>
-                            <p className="text-lg font-bold tabular-nums text-primary">
+                        <ContextField
+                            label={SESSION_DAY_CONTEXT_COPY.volumeLabel}
+                            icon={<Gauge className="h-3 w-3 text-primary" aria-hidden />}
+                        >
+                            <p className={cn(SESSION_DAY_CONTEXT_METRIC_VALUE, "text-primary")}>
                                 {rec.volume_level ?? "—"}
                             </p>
-                        </MetricCell>
-                        <MetricCell label={SESSION_DAY_CONTEXT_COPY.intensityLabel} icon={<Flame className="h-3 w-3 text-warning" aria-hidden />}>
-                            <p className="text-lg font-bold tabular-nums text-warning">
+                        </ContextField>
+                        <ContextField
+                            label={SESSION_DAY_CONTEXT_COPY.intensityLabel}
+                            icon={<Flame className="h-3 w-3 text-warning" aria-hidden />}
+                        >
+                            <p className={cn(SESSION_DAY_CONTEXT_METRIC_VALUE, "text-warning")}>
                                 {rec.intensity_level ?? "—"}
                             </p>
-                        </MetricCell>
+                        </ContextField>
                     </div>
-                    <MetricCell label={SESSION_DAY_CONTEXT_COPY.qualityLabel} icon={<Sparkles className="h-3 w-3 text-primary" aria-hidden />}>
-                        <span className="inline-flex rounded border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary">
-                            {qualityLabel}
-                        </span>
-                    </MetricCell>
                     {qualityMix.length > 0 ? (
-                        <div className="space-y-2">
-                            <p className={METRIC_LABEL_CLASS}>{SESSION_DAY_CONTEXT_COPY.mixTitle}</p>
-                            {qualityMix.map((item) => (
-                                <QualityShareBar
-                                    key={item.slug}
-                                    name={item.name}
-                                    percentage={item.percentage}
-                                    colorHex={getPhysicalQualityColor(item.slug).hex}
-                                />
-                            ))}
-                        </div>
-                    ) : null}
+                        <ContextField
+                            label={SESSION_DAY_CONTEXT_COPY.mixTitle}
+                            icon={<Sparkles className="h-3 w-3 text-primary" aria-hidden />}
+                        >
+                            <div className="space-y-1.5">
+                                {qualityMix.map((item) => (
+                                    <QualityShareBar
+                                        key={item.slug}
+                                        name={item.name}
+                                        percentage={item.percentage}
+                                        colorHex={getPhysicalQualityColor(item.slug).hex}
+                                        labelDensity="comfortable"
+                                    />
+                                ))}
+                            </div>
+                        </ContextField>
+                    ) : (
+                        <ContextField
+                            label={SESSION_DAY_CONTEXT_COPY.qualityLabel}
+                            icon={<Sparkles className="h-3 w-3 text-primary" aria-hidden />}
+                        >
+                            <p className="text-[11px] font-medium text-primary">{qualityLabel}</p>
+                        </ContextField>
+                    )}
                     {patterns.length > 0 ? (
-                        <MetricCell label={SESSION_DAY_CONTEXT_COPY.patternsLabel}>
+                        <ContextField label={SESSION_DAY_CONTEXT_COPY.patternsLabel}>
                             <p className="text-xs text-foreground">{patterns.length} patrón(es)</p>
-                        </MetricCell>
+                        </ContextField>
                     ) : null}
                 </div>
             </div>
@@ -252,73 +259,89 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
     return (
         <div className={cn(panelShell, "overflow-hidden", className)}>
             <div className={SESSION_PROGRAMMING_DAY_HERO_HEADER}>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0 space-y-1">
-                        <div className="flex items-center gap-2">
-                            <CalendarDays className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                            <h2 className={SESSION_PROGRAMMING_PANEL_TITLE}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <CalendarDays
+                                className="h-3.5 w-3.5 shrink-0 text-primary"
+                                aria-hidden
+                            />
+                            <h2 className={cn(SESSION_PROGRAMMING_PANEL_TITLE, "text-base sm:text-lg")}>
                                 {SESSION_DAY_CONTEXT_COPY.title}
                             </h2>
+                            <span
+                                className="hidden h-3.5 w-px bg-border/80 sm:inline-block"
+                                aria-hidden
+                            />
+                            <p className="min-w-0 text-sm font-medium capitalize text-foreground">
+                                {dateLine}
+                            </p>
                         </div>
-                        <p className="text-sm font-medium capitalize text-foreground">{dateLine}</p>
                         {blockLine ? (
-                            <p className="text-xs text-muted-foreground">{blockLine}</p>
+                            <p className="mt-0.5 truncate text-[11px] leading-snug text-muted-foreground">
+                                {blockLine}
+                            </p>
                         ) : null}
-                        <p className="text-[11px] text-muted-foreground">
-                            {SESSION_DAY_CONTEXT_COPY.subtitle}
-                        </p>
                     </div>
                     <div className={SESSION_PROGRAMMING_DAY_METRICS_BOX}>
-                        <div className="text-center">
-                            <p className={METRIC_LABEL_CLASS}>{SESSION_DAY_CONTEXT_COPY.volumeLabel}</p>
-                            <p className="text-xl font-bold tabular-nums text-primary">
+                        <div className="flex items-baseline gap-1.5">
+                            <Gauge className="h-3 w-3 text-primary" aria-hidden />
+                            <span className={METRIC_LABEL_CLASS}>
+                                {SESSION_DAY_CONTEXT_COPY.volumeLabel}
+                            </span>
+                            <span className={cn(SESSION_DAY_CONTEXT_METRIC_VALUE, "text-primary")}>
                                 {rec.volume_level ?? "—"}
-                            </p>
+                            </span>
                         </div>
-                        <div className="h-8 w-px bg-border" aria-hidden />
-                        <div className="text-center">
-                            <p className={METRIC_LABEL_CLASS}>{SESSION_DAY_CONTEXT_COPY.intensityLabel}</p>
-                            <p className="text-xl font-bold tabular-nums text-warning">
+                        <div className="h-4 w-px bg-border/80" aria-hidden />
+                        <div className="flex items-baseline gap-1.5">
+                            <Flame className="h-3 w-3 text-warning" aria-hidden />
+                            <span className={METRIC_LABEL_CLASS}>
+                                {SESSION_DAY_CONTEXT_COPY.intensityLabel}
+                            </span>
+                            <span className={cn(SESSION_DAY_CONTEXT_METRIC_VALUE, "text-warning")}>
                                 {rec.intensity_level ?? "—"}
-                            </p>
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className={cn(SESSION_PROGRAMMING_PANEL_BODY, "space-y-4")}>
+            <div className={SESSION_PROGRAMMING_DAY_BODY_COMPACT}>
                 {structureGap?.show ? (
-                    <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
-                        <p className="text-sm text-warning">{structureGap.message}</p>
-                        <p className="mt-1 text-xs text-warning/80">
-                            {SESSION_DAY_CONTEXT_COPY.patternsEmptyFree}
+                    <div className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5 sm:px-3.5">
+                        <p className="text-xs leading-snug text-warning sm:text-sm">
+                            {structureGap.message}
                         </p>
                         {structureGap.configurePath ? (
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                className="mt-3 border-warning/40 text-warning hover:bg-warning/10"
+                                className="mt-2 h-8 border-warning/40 px-2.5 text-xs text-warning hover:bg-warning/10"
                                 onClick={() =>
                                     navigate(structureGap.configurePath!, {
                                         state: returnToStateFromView(location),
                                     })
                                 }
                             >
-                                <ExternalLink className="mr-2 h-3.5 w-3.5" aria-hidden />
+                                <ExternalLink className="mr-1.5 h-3.5 w-3.5" aria-hidden />
                                 {SESSION_DAY_CONTEXT_COPY.configureWeekCta}
                             </Button>
                         ) : null}
                     </div>
                 ) : null}
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <MetricCell
+                <div className={SESSION_PROGRAMMING_DAY_CONTEXT_GRID}>
+                    <ContextField
                         label={SESSION_DAY_CONTEXT_COPY.patternsLabel}
-                        icon={<Sparkles className="h-3 w-3 text-primary" aria-hidden />}
+                        icon={
+                            <Sparkles className={SESSION_DAY_CONTEXT_FIELD_ICON_CLASS} aria-hidden />
+                        }
+                        className="lg:col-span-1"
                     >
                         {patterns.length > 0 ? (
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className={SESSION_DAY_CONTEXT_CHIP_WRAP}>
                                 {patterns.map((p) => (
                                     <PatternBadge
                                         key={p.id}
@@ -328,72 +351,67 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                                                 : p.name_es
                                         }
                                         uiBucket={p.ui_bucket}
+                                        bucketTintedIdle
                                     />
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-xs leading-relaxed text-muted-foreground">
+                            <p className="text-[11px] leading-snug text-muted-foreground">
                                 {SESSION_DAY_CONTEXT_COPY.patternsEmptyConfigured}
                             </p>
                         )}
-                    </MetricCell>
+                    </ContextField>
 
-                    <MetricCell
+                    <ContextField
                         label={SESSION_DAY_CONTEXT_COPY.musclesLabel}
-                        icon={<Dumbbell className="h-3 w-3 text-muted-foreground" aria-hidden />}
+                        icon={
+                            <Dumbbell className={SESSION_DAY_CONTEXT_FIELD_ICON_CLASS} aria-hidden />
+                        }
                     >
                         {muscles.length > 0 ? (
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className={SESSION_DAY_CONTEXT_CHIP_WRAP}>
                                 {muscles.map((m) => (
-                                    <MuscleChip key={m.id} name={m.name_es} />
+                                    <span key={m.id} className={SESSION_DAY_CONTEXT_MUSCLE_CHIP}>
+                                        {m.name_es}
+                                    </span>
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-xs leading-relaxed text-muted-foreground">
+                            <p className="text-[11px] leading-snug text-muted-foreground">
                                 {SESSION_DAY_CONTEXT_COPY.musclesEmpty}
                             </p>
                         )}
-                    </MetricCell>
+                    </ContextField>
 
-                    <MetricCell label={SESSION_DAY_CONTEXT_COPY.qualityLabel}>
-                        <span className="inline-flex rounded border border-primary/25 bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                            {qualityLabel}
-                        </span>
-                    </MetricCell>
-
-                    <MetricCell
-                        label="Referencia bloque"
-                        icon={<Gauge className="h-3 w-3 text-muted-foreground" aria-hidden />}
+                    <ContextField
+                        label={SESSION_DAY_CONTEXT_COPY.mixTitle}
+                        icon={
+                            <Sparkles className={SESSION_DAY_CONTEXT_FIELD_ICON_CLASS} aria-hidden />
+                        }
+                        className="md:col-span-2 lg:col-span-1"
                     >
-                        <p className="text-sm font-semibold tabular-nums text-foreground">
-                            {volIntLine}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground">
-                            Escala 1–10 según periodización del bloque
-                        </p>
-                    </MetricCell>
+                        {qualityMix.length > 0 ? (
+                            <div
+                                className={SESSION_DAY_CONTEXT_QUALITY_MIX_GRID}
+                                title={SESSION_DAY_CONTEXT_COPY.mixHint}
+                            >
+                                {qualityMix.map((item) => (
+                                    <QualityShareBar
+                                        key={item.slug}
+                                        name={item.name}
+                                        percentage={item.percentage}
+                                        colorHex={getPhysicalQualityColor(item.slug).hex}
+                                        labelDensity="comfortable"
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-[11px] font-medium leading-snug text-primary">
+                                {qualityLabel}
+                            </p>
+                        )}
+                    </ContextField>
                 </div>
-
-                {qualityMix.length > 0 ? (
-                    <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-4">
-                        <p className={SESSION_PROGRAMMING_PANEL_TITLE}>
-                            {SESSION_DAY_CONTEXT_COPY.mixTitle}
-                        </p>
-                        <p className="text-xs leading-relaxed text-muted-foreground">
-                            {SESSION_DAY_CONTEXT_COPY.mixHint}
-                        </p>
-                        <div className="space-y-2 pt-1">
-                            {qualityMix.map((item) => (
-                                <QualityShareBar
-                                    key={item.slug}
-                                    name={item.name}
-                                    percentage={item.percentage}
-                                    colorHex={getPhysicalQualityColor(item.slug).hex}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                ) : null}
             </div>
         </div>
     );

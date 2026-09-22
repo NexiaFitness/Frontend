@@ -147,10 +147,9 @@ const GOVERNANCE_CRITERION_IDS = new Set([
 
 const CRITERION_TITLES: Record<string, string> = {
     modality_alignment_l1: "Modalidades e intención",
-    strength_prescription_signal_l1: "Prescripción de carga",
     strength_fm_01_structural_signal: "Patrón estructural de fuerza",
     strength_fm_06_multiset: "Series por ejercicio",
-    strength_fm_04_effort_proximity: "Esfuerzo planificado (RIR/RPE)",
+    strength_fm_04_effort_documented: "Esfuerzo planificado (RIR/RPE)",
     strength_fm_05_rest_documented: "Descanso inter-serie",
     strength_hy_01_structural_signal: "Patrón estructural de hipertrofia",
     strength_hy_04_reps_registered: "Repeticiones planificadas",
@@ -279,12 +278,8 @@ const BODY_BY_CRITERION: Record<
         UNKNOWN: (c) =>
             missingPrescription(c)
                 ? unknownNoExercises()
-                : unknownInsufficientData(
-                      "el patrón estructural de fuerza (series y carga planificadas)",
-                  ),
-        NOT_MET: () =>
-            "Ningún ejercicio cumple un patrón estructural típico de fuerza (al menos 2 series con carga identificable). " +
-            "Una sola serie o solo peso corporal no activan esta señal; no implica error si es tu decisión.",
+                : "No hay patrón estructural de fuerza evaluable (≥2 series con carga identificable). " +
+                  "Una sola serie o solo peso corporal no activan esta señal; no implica error si es tu decisión.",
         PASS: () =>
             "Al menos un ejercicio muestra un patrón estructural coherente con fuerza (series múltiples con carga identificable).",
     },
@@ -292,12 +287,8 @@ const BODY_BY_CRITERION: Record<
         UNKNOWN: (c) =>
             missingPrescription(c)
                 ? unknownNoExercises()
-                : unknownInsufficientData(
-                      "el patrón estructural de hipertrofia (series y carga planificadas)",
-                  ),
-        NOT_MET: () =>
-            "Ningún ejercicio cumple un patrón estructural típico de hipertrofia (al menos 2 series con carga identificable). " +
-            "Una sola serie no activa esta señal; no implica error si es tu decisión.",
+                : "No hay patrón estructural de hipertrofia evaluable (≥2 series con carga identificable). " +
+                  "Una sola serie no activa esta señal; no implica error si es tu decisión.",
         PASS: () =>
             "Al menos un ejercicio muestra un patrón estructural coherente con hipertrofia.",
     },
@@ -305,23 +296,18 @@ const BODY_BY_CRITERION: Record<
         UNKNOWN: (c) =>
             missingPrescription(c)
                 ? unknownNoExercises()
-                : unknownInsufficientData("las series planificadas por ejercicio"),
-        NOT_MET: () =>
-            "Todos los ejercicios evaluables tienen una sola serie planificada. " +
-            "El trabajo multi-serie suele favorecer resultados; una serie no implica incoherencia demostrada.",
+                : "No hay ejercicio multi-serie planificado evaluable. " +
+                  "El trabajo multi-serie suele favorecer resultados; una serie no implica incoherencia demostrada.",
         PASS: () =>
             "Al menos un ejercicio tiene varias series planificadas, señal habitual en programación de fuerza.",
     },
-    strength_fm_04_effort_proximity: {
+    strength_fm_04_effort_documented: {
         UNKNOWN: (c) =>
             missingPrescription(c)
                 ? unknownNoExercises()
-                : "Sin esfuerzo planificado registrado (RIR o RPE con valor) en los ejercicios evaluables.",
-        NOT_MET: () =>
-            "El esfuerzo planificado registrado queda lejos de una zona de alta proximidad al fallo (RIR bajo o RPE alto). " +
-            "Si buscas otra zona de trabajo, puedes ignorarlo.",
+                : "Sin esfuerzo planificado registrado (RIR o RPE con valor válido) en los ejercicios evaluables.",
         PASS: () =>
-            "Al menos un ejercicio tiene esfuerzo planificado en una zona de proximidad suficiente (RIR o RPE registrados).",
+            "Esfuerzo planificado registrado (RIR o RPE). No evalúa proximidad al fallo ni si el valor es adecuado al objetivo.",
     },
     strength_fm_05_rest_documented: {
         UNKNOWN: (c) =>
@@ -338,14 +324,6 @@ const BODY_BY_CRITERION: Record<
             }
             return "Hay descanso inter-serie planificado documentado en la sesión.";
         },
-    },
-    strength_prescription_signal_l1: {
-        UNKNOWN: (c) =>
-            missingPrescription(c) || numericInput(c, "exercise_count") === 0
-                ? unknownNoExercises()
-                : "La prescripción aún no incluye series con carga planificada suficiente para evaluar soporte de fuerza.",
-        PARTIAL: () =>
-            "La prescripción incluye series con carga planificada; hay señal mínima de soporte de fuerza en la sesión.",
     },
     strength_hy_04_reps_registered: {
         UNKNOWN: (c) =>

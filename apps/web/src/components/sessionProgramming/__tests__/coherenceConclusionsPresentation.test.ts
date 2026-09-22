@@ -121,11 +121,11 @@ describe("buildCoherenceConclusionsViewModel — sanitización", () => {
         const criteria: CriterionResult[] = [
             makeCriterion({
                 criterion_id: "strength_fm_01_structural_signal",
-                status: "NOT_MET",
+                status: "UNKNOWN",
             }),
             makeCriterion({
                 criterion_id: "strength_fm_06_multiset",
-                status: "NOT_MET",
+                status: "UNKNOWN",
             }),
             makeCriterion({
                 criterion_id: "strength_fm_05_rest_documented",
@@ -139,11 +139,6 @@ describe("buildCoherenceConclusionsViewModel — sanitización", () => {
             makeCriterion({
                 criterion_id: "anaerobic_prescription_signal_l1",
                 quality_slug: "resistencia_anaerobica",
-            }),
-            makeCriterion({
-                criterion_id: "strength_prescription_signal_l1",
-                missing_inputs: ["planned_sets", "planned_weight"],
-                inputs_used: { exercise_count: 3, has_load_prescription: false },
             }),
         ];
 
@@ -194,8 +189,9 @@ describe("buildCoherencePhaseChipViewModel", () => {
             coherence_warnings: [],
             coherence_report: makeReport([
                 makeCriterion({
-                    criterion_id: "strength_fm_06_multiset",
-                    status: "NOT_MET",
+                    criterion_id: "modality_alignment_l1",
+                    status: "PARTIAL",
+                    inputs_used: { mismatch_count: 1, total_with_intent: 4 },
                 }),
             ]),
         };
@@ -251,12 +247,12 @@ describe("buildCoherenceConclusionsViewModel", () => {
     it("prioriza NOT_MET sobre UNKNOWN y limita a 3 visibles", () => {
         const criteria = [
             makeCriterion({
-                criterion_id: "strength_fm_01_structural_signal",
+                criterion_id: "modality_alignment_l1",
                 status: "NOT_MET",
             }),
             makeCriterion({
                 criterion_id: "strength_fm_06_multiset",
-                status: "NOT_MET",
+                status: "UNKNOWN",
             }),
             makeCriterion({
                 criterion_id: "modality_alignment_l1",
@@ -306,6 +302,18 @@ describe("buildCoherenceConclusionsViewModel", () => {
 
         expect(vm!.phaseContext).toContain("Fuerza máxima");
         expect(vm!.phaseContext).toContain("Resistencia anaeróbica");
+    });
+
+    it("traduce esfuerzo documentado PASS sin proximidad al fallo", () => {
+        const body = formatCoherenceConclusionBody(
+            makeCriterion({
+                criterion_id: "strength_fm_04_effort_documented",
+                status: "PASS",
+            }),
+        );
+        expect(body).toContain("Esfuerzo planificado registrado");
+        expect(body).toContain("No evalúa proximidad al fallo");
+        expect(body).not.toContain("zona de proximidad");
     });
 
     it("asigna tono neutral a UNKNOWN", () => {

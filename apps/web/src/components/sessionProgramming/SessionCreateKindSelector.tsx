@@ -1,10 +1,16 @@
 /**
- * D2 — Elección explícita Programa vs Sesión suelta (no inferida solo por cobertura de fecha).
+ * D2 — Conmutador premium Programa vs Sesión suelta (TabsBar / segmented).
  */
 
 import React from "react";
+
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/buttons";
+import { TabsBar } from "@/components/ui/tabs/TabsBar";
+
+import {
+    SESSION_CREATE_KIND_COPY,
+    SESSION_CREATE_KIND_SEGMENTED,
+} from "./sessionCreateKindPresentation";
 
 export type SessionCreateKind = "program" | "standalone";
 
@@ -21,35 +27,23 @@ export const SessionCreateKindSelector: React.FC<SessionCreateKindSelectorProps>
     disabled = false,
     className,
 }) => (
-    <div
-        role="radiogroup"
-        aria-label="Tipo de sesión"
-        className={cn("flex flex-col gap-2 sm:flex-row sm:items-center", className)}
-    >
-        <span className="text-sm font-medium text-foreground">¿Qué quieres crear?</span>
-        <div className="flex flex-wrap gap-2">
-            <Button
-                type="button"
-                size="sm"
-                variant={value === "program" ? "primary" : "outline"}
-                disabled={disabled}
-                aria-checked={value === "program"}
-                role="radio"
-                onClick={() => onChange("program")}
-            >
-                Programa
-            </Button>
-            <Button
-                type="button"
-                size="sm"
-                variant={value === "standalone" ? "primary" : "outline"}
-                disabled={disabled}
-                aria-checked={value === "standalone"}
-                role="radio"
-                onClick={() => onChange("standalone")}
-            >
-                Sesión suelta
-            </Button>
-        </div>
-    </div>
+    <TabsBar
+        className={cn(SESSION_CREATE_KIND_SEGMENTED, className)}
+        ariaLabel={SESSION_CREATE_KIND_COPY.segmentedAriaLabel}
+        distribute="equal"
+        value={value}
+        onChange={(id) => onChange(id as SessionCreateKind)}
+        items={[
+            {
+                id: "program",
+                label: SESSION_CREATE_KIND_COPY.program,
+                disabled,
+            },
+            {
+                id: "standalone",
+                label: SESSION_CREATE_KIND_COPY.standalone,
+                disabled,
+            },
+        ]}
+    />
 );

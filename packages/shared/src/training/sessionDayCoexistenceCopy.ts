@@ -5,6 +5,25 @@
 
 export type SessionDayCoexistenceKind = "program" | "standalone";
 
+export const SESSION_DAY_COEXISTENCE_COPY = {
+    headlineOne: "Ya hay entreno este día",
+    headlineMany: (n: number) => `Ya hay ${n} entrenos este día`,
+    bodyProgram:
+        "Puedes abrir lo existente o crear otra sesión de programa. No sustituye la anterior.",
+    bodyStandalone:
+        "Puedes abrir lo existente o crear otra sesión suelta.",
+    openSession: "Abrir sesión",
+    pickSession: "Elegir sesión",
+    createStandalone: "Sesión suelta",
+    modalTitle: "Sesiones este día",
+} as const;
+
+export function sessionDayCoexistenceHeadline(count: number): string {
+    if (count <= 0) return "";
+    if (count === 1) return SESSION_DAY_COEXISTENCE_COPY.headlineOne;
+    return SESSION_DAY_COEXISTENCE_COPY.headlineMany(count);
+}
+
 export interface SessionDayCoexistenceItem {
     session_kind: "training" | "standalone";
     session_name?: string | null;

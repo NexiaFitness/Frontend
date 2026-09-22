@@ -13,8 +13,13 @@ export const QUALITY_SHARE_BAR_TRACK_CLASS = cn(
     "border border-border/45 bg-surface-2/70",
 );
 
+/** Etiqueta fija estrecha (paneles con muchas columnas). */
 export const QUALITY_SHARE_BAR_LABEL_CLASS =
     "w-[4.5rem] shrink-0 truncate text-[11px] text-muted-foreground leading-none";
+
+/** Etiqueta legible completa (constructor sesión, tablet). */
+export const QUALITY_SHARE_BAR_LABEL_COMFORT_CLASS =
+    "min-w-[5.5rem] shrink-0 whitespace-nowrap text-[11px] leading-none sm:min-w-0";
 
 export const QUALITY_SHARE_BAR_PERCENT_CLASS =
     "w-8 shrink-0 text-right text-[11px] font-semibold tabular-nums text-foreground/90";

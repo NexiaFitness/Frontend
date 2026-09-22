@@ -63,6 +63,7 @@ import { exerciseDisplayName, useDefaultSessionName } from "@nexia/shared";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
 import { SessionDayContextPanel } from "@/components/sessions/SessionDayContextPanel";
 import {
+    isSessionRecommendationsWithValues,
     resolveSessionDayPhaseContext,
     sessionDayPhaseContextToProgramAlert,
 } from "@/components/sessions/sessionDayContextPresentation";
@@ -151,17 +152,16 @@ import {
 import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
 import type { LocationStateReturnTo } from "@nexia/shared";
 import { SESSION_TYPES } from "./sessionFormConstants";
-import {
-    SessionCreateKindSelector,
-    type SessionCreateKind,
-} from "@/components/sessionProgramming/SessionCreateKindSelector";
+import { SessionCreateKindField } from "@/components/sessionProgramming/SessionCreateKindField";
+import { SessionDayCoexistenceNotice } from "@/components/sessionProgramming/SessionDayCoexistenceNotice";
+import type { SessionCreateKind } from "@/components/sessionProgramming/SessionCreateKindSelector";
 import {
     defaultSessionCreateKind,
     parseSessionCreateKindParam,
     resolveCreateSessionClientContext,
     getClientSessionsOnDate,
-    buildSessionDayCoexistenceMessage,
     resolveProgramPlanActivationForDate,
+    resolveSessionCreateKindUi,
     PROGRAM_PLAN_NOT_ACTIVE_COPY,
     PROGRAM_PLAN_NO_ACTIVE_FOR_DATE_COPY,
 } from "@nexia/shared";
@@ -439,14 +439,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         [clientTrainingSessions, clientStandaloneSessions, formData.sessionDate],
     );
 
-    const dayCoexistenceMessage = useMemo(() => {
-        if (!effectiveClientId || effectiveClientId <= 0) return null;
-        return buildSessionDayCoexistenceMessage(
-            sessionsOnSelectedDate,
-            useStandaloneSession ? "standalone" : "program",
-        );
-    }, [effectiveClientId, sessionsOnSelectedDate, useStandaloneSession]);
-
     const requestedProgramPlanId = planId ?? selectedPlanId;
     const programPlanActivation = resolveProgramPlanActivationForDate({
         isLoading: skipPlanAssignment || useStandaloneSession
@@ -508,6 +500,41 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         formData.sessionDate,
         programPeriodBlocks,
     ]);
+
+    const inProgramPhaseWithPlannedValues = useMemo(() => {
+        if (useStandaloneSession) return false;
+        return isSessionRecommendationsWithValues(sessionRecommendations);
+    }, [useStandaloneSession, sessionRecommendations]);
+
+    const programPlanActivationOk =
+        programPlanActivation === "ok" || programPlanActivation === "loading";
+
+    const sessionCreateKindUi = useMemo(
+        () =>
+            resolveSessionCreateKindUi({
+                sessionKind,
+                planIdFromUrl: planId,
+                activePlanCoversDate,
+                programPlanActivationOk,
+                inProgramPhaseWithPlannedValues,
+                existingSessionsOnDayCount: sessionsOnSelectedDate.length,
+            }),
+        [
+            sessionKind,
+            planId,
+            activePlanCoversDate,
+            programPlanActivationOk,
+            inProgramPhaseWithPlannedValues,
+            sessionsOnSelectedDate.length,
+        ],
+    );
+
+    const showSessionKindContextStrip =
+        sessionCreateKindUi.variant !== "none" ||
+        sessionsOnSelectedDate.length > 0 ||
+        standaloneOverlapsProgram ||
+        programPlanBlockMessage != null ||
+        programPhaseAlert != null;
 
     const [isPersistingSubmit, setIsPersistingSubmit] = useState(false);
 
@@ -937,9 +964,12 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         <h2 className={SESSION_PROGRAMMING_SECTION_TITLE}>
                             {SESSION_PROGRAMMING_COPY.sectionSessionData}
                         </h2>
-                        {effectiveClientId != null && effectiveClientId > 0 ? (
-                            <div className="mb-4 space-y-3">
-                                <SessionCreateKindSelector
+                        {effectiveClientId != null &&
+                        effectiveClientId > 0 &&
+                        showSessionKindContextStrip ? (
+                            <div className="mb-3 space-y-2.5">
+                                <SessionCreateKindField
+                                    ui={sessionCreateKindUi}
                                     value={sessionKind}
                                     onChange={(kind) => {
                                         setSessionKind(kind);
@@ -950,15 +980,19 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         });
                                     }}
                                 />
+                                <SessionDayCoexistenceNotice
+                                    sessions={sessionsOnSelectedDate}
+                                    sessionDate={formData.sessionDate}
+                                    creatingKind={
+                                        useStandaloneSession ? "standalone" : "program"
+                                    }
+                                    activePlanCoversDate={activePlanCoversDate}
+                                    onChooseStandalone={() => setSessionKind("standalone")}
+                                />
                                 {standaloneOverlapsProgram ? (
                                     <Alert variant="warning">
-                                        Hay un programa activo para esta fecha. La sesión suelta no
-                                        formará parte del plan; puedes tener programación y sesión
-                                        libre el mismo día.
+                                        Esta sesión no se vinculará al plan activo del cliente.
                                     </Alert>
-                                ) : null}
-                                {dayCoexistenceMessage ? (
-                                    <Alert variant="warning">{dayCoexistenceMessage}</Alert>
                                 ) : null}
                                 {programPlanBlockMessage ? (
                                     <Alert variant="warning">{programPlanBlockMessage}</Alert>
