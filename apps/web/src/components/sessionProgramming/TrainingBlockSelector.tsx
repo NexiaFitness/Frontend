@@ -1,54 +1,32 @@
 /**
- * TrainingBlockSelector.tsx — Selector de tipos de bloque de entrenamiento
+ * TrainingBlockSelector.tsx — Bloques de entrenamiento (G27).
  *
- * Card con cabecera y fila de chips (predefinidos + custom). Al hacer click en un bloque
- * pasa a activo; la siguiente fila del Constructor usará ese bloque.
- * Admin: "+ Bloque Personalizado" para crear tipos custom (trainers solo eligen chips).
- *
- * @spec IMPL_CREATE_EDIT_SESSION.md §15.2 — diseño Lovable con tokens agent.md
+ * Una fila: roles fijos + cualidades añadidas por el entrenador (+ AddPillGrid).
+ * Catálogo cerrado; sin tipos personalizados admin.
  */
 
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
-import type { RootState } from "@nexia/shared/store";
+import React, { useMemo, useState } from "react";
+
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/forms";
 import {
-    SESSION_PROGRAMMING_BLOCK_ADD_BTN,
+    AddPill,
+    AddPillGrid,
+    ADD_PILL_SECTION_LABEL_CLASS,
+} from "@/components/ui/chips";
+import { getTrainingBlockDisplayName } from "@nexia/shared";
+import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
+import { useGetTrainingBlockTypesQuery } from "@nexia/shared/api/sessionProgrammingApi";
+
+import {
     SESSION_PROGRAMMING_PANEL,
     SESSION_PROGRAMMING_PANEL_BODY,
     SESSION_PROGRAMMING_PANEL_TITLE,
     sessionProgrammingBlockChipClass,
 } from "./sessionProgrammingPresentation";
-import {
-    useGetTrainingBlockTypesQuery,
-    useCreateTrainingBlockTypeMutation,
-} from "@nexia/shared/api/sessionProgrammingApi";
-import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
-
-/** Traducción de nombres predefinidos (backend en inglés) */
-const BLOCK_TYPE_TRANSLATIONS: Record<string, string> = {
-    "Warm Up": "Calentamiento",
-    Core: "Core",
-    Conditioning: "Acondicionamiento",
-    "Maximum Strength": "Fuerza Máxima",
-    "Strength-Speed": "Fuerza-Velocidad",
-    "Hypertrophy Strength": "Hipertrofia",
-    Plyometrics: "Pliometría",
-    "Intensive Aerobic": "Aeróbico Intensivo",
-    "Extensive Aerobic": "Aeróbico Extensivo",
-};
-
-function getDisplayName(bt: TrainingBlockType): string {
-    return BLOCK_TYPE_TRANSLATIONS[bt.name] ?? bt.name;
-}
 
 export interface TrainingBlockSelectorProps {
-    /** IDs de bloques que tienen series en la sesión (marcados) */
     selectedBlockTypeIds: number[];
-    /** Callback al hacer clic en un bloque — añade el bloque a la sesión */
     onSelect: (blockTypeId: number) => void;
-    /** Clase CSS adicional */
     className?: string;
 }
 
@@ -57,35 +35,53 @@ export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
     onSelect,
     className,
 }) => {
-    const { user } = useSelector((state: RootState) => state.auth);
-    const isAdmin = user?.role === "admin";
-
-    const [customName, setCustomName] = useState("");
-    const [showCustomInput, setShowCustomInput] = useState(false);
+    const [expandedQualitySlugs, setExpandedQualitySlugs] = useState<string[]>([]);
+    const [showAddQualities, setShowAddQualities] = useState(false);
 
     const { data: blockTypes = [], isLoading } = useGetTrainingBlockTypesQuery({
         skip: 0,
         limit: 100,
     });
-    const [createBlockType, { isLoading: isCreating }] =
-        useCreateTrainingBlockTypeMutation();
 
-    const handleCreateCustom = async () => {
-        const name = customName.trim();
-        if (!name) return;
-        try {
-            const created = await createBlockType({ name }).unwrap();
-            setCustomName("");
-            setShowCustomInput(false);
-            onSelect(created.id);
-        } catch {
-            // Error manejado por toast en parent si se desea
+    const roleTypes = useMemo(
+        () =>
+            blockTypes
+                .filter((bt) => bt.block_role)
+                .sort((a, b) => (a.block_role ?? "").localeCompare(b.block_role ?? "")),
+        [blockTypes],
+    );
+
+    const qualityBySlug = useMemo(() => {
+        const map = new Map<string, TrainingBlockType>();
+        for (const bt of blockTypes) {
+            if (bt.physical_quality_slug) {
+                map.set(bt.physical_quality_slug, bt);
+            }
         }
-    };
+        return map;
+    }, [blockTypes]);
 
-    const handleCancelCustom = () => {
-        setCustomName("");
-        setShowCustomInput(false);
+    const visibleQualityTypes = useMemo(
+        () =>
+            expandedQualitySlugs
+                .map((slug) => qualityBySlug.get(slug))
+                .filter((bt): bt is TrainingBlockType => bt != null),
+        [expandedQualitySlugs, qualityBySlug],
+    );
+
+    const addableQualities = useMemo(
+        () =>
+            [...qualityBySlug.entries()]
+                .filter(([slug]) => !expandedQualitySlugs.includes(slug))
+                .sort(([a], [b]) => a.localeCompare(b)),
+        [qualityBySlug, expandedQualitySlugs],
+    );
+
+    const handleAddQualitySlug = (slug: string) => {
+        setExpandedQualitySlugs((prev) =>
+            prev.includes(slug) ? prev : [...prev, slug],
+        );
+        setShowAddQualities(false);
     };
 
     if (isLoading) {
@@ -95,7 +91,6 @@ export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
                 <div className="flex flex-wrap gap-2">
                     <div className="h-9 w-24 animate-pulse rounded-md bg-muted/50 sm:h-7" />
                     <div className="h-9 w-28 animate-pulse rounded-md bg-muted/50 sm:h-7" />
-                    <div className="h-9 w-32 animate-pulse rounded-md bg-muted/50 sm:h-7" />
                 </div>
             </div>
         );
@@ -104,65 +99,60 @@ export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
     return (
         <div className={cn(SESSION_PROGRAMMING_PANEL, className)}>
             <div className={cn(SESSION_PROGRAMMING_PANEL_BODY, "space-y-4 !py-4 sm:!py-5")}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 className={SESSION_PROGRAMMING_PANEL_TITLE}>
-                    Bloques de Entrenamiento
-                </h3>
-                {isAdmin && !showCustomInput && (
-                    <button
-                        type="button"
-                        onClick={() => setShowCustomInput(true)}
-                        className={SESSION_PROGRAMMING_BLOCK_ADD_BTN}
-                    >
-                        + Bloque Personalizado
-                    </button>
-                )}
-            </div>
+                <h3 className={SESSION_PROGRAMMING_PANEL_TITLE}>Bloques de Entrenamiento</h3>
 
-            <div className="flex flex-wrap gap-2">
-                {blockTypes.map((bt) => (
-                    <button
-                        key={bt.id}
-                        type="button"
-                        onClick={() => onSelect(bt.id)}
-                        className={sessionProgrammingBlockChipClass(selectedBlockTypeIds.includes(bt.id))}
-                    >
-                        {getDisplayName(bt)}
-                    </button>
-                ))}
-            </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    {roleTypes.map((bt) => (
+                        <button
+                            key={bt.id}
+                            type="button"
+                            onClick={() => onSelect(bt.id)}
+                            className={sessionProgrammingBlockChipClass(
+                                selectedBlockTypeIds.includes(bt.id),
+                            )}
+                        >
+                            {getTrainingBlockDisplayName(bt)}
+                        </button>
+                    ))}
 
-            {isAdmin && showCustomInput && (
-                <div className="flex flex-col gap-2 rounded-md border border-border/70 bg-surface/40 p-2 sm:flex-row sm:items-center">
-                    <Input
-                        type="text"
-                        value={customName}
-                        onChange={(e) => setCustomName(e.target.value)}
-                        placeholder="Nombre del bloque"
-                        className="h-9 w-full text-xs sm:h-7 sm:w-36"
-                        autoFocus
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") handleCreateCustom();
-                            if (e.key === "Escape") handleCancelCustom();
-                        }}
-                    />
-                    <button
-                        type="button"
-                        onClick={handleCreateCustom}
-                        disabled={!customName.trim() || isCreating}
-                        className="min-h-touch rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 sm:min-h-0 sm:h-7"
-                    >
-                        {isCreating ? "..." : "Crear"}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleCancelCustom}
-                        className="min-h-touch rounded-md border border-border bg-surface px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 sm:min-h-0 sm:h-7"
-                    >
-                        Cancelar
-                    </button>
+                    {visibleQualityTypes.map((bt) => (
+                        <button
+                            key={bt.id}
+                            type="button"
+                            onClick={() => onSelect(bt.id)}
+                            className={sessionProgrammingBlockChipClass(
+                                selectedBlockTypeIds.includes(bt.id),
+                            )}
+                        >
+                            {getTrainingBlockDisplayName(bt)}
+                        </button>
+                    ))}
+
+                    {addableQualities.length > 0 && (
+                        <AddPill
+                            label="Añadir cualidad"
+                            variant="compact"
+                            onClick={() => setShowAddQualities((v) => !v)}
+                        />
+                    )}
                 </div>
-            )}
+
+                {showAddQualities && addableQualities.length > 0 && (
+                    <section className="space-y-2" aria-label="Añadir cualidad">
+                        <p className={ADD_PILL_SECTION_LABEL_CLASS}>Elegir cualidad</p>
+                        <AddPillGrid variant="compact">
+                            {addableQualities.map(([slug, bt]) => (
+                                <AddPill
+                                    key={slug}
+                                    label={getTrainingBlockDisplayName(bt)}
+                                    variant="compact"
+                                    prefix=""
+                                    onClick={() => handleAddQualitySlug(slug)}
+                                />
+                            ))}
+                        </AddPillGrid>
+                    </section>
+                )}
             </div>
         </div>
     );

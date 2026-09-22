@@ -26,6 +26,7 @@ import { useGetExercisesQuery } from "../exercises";
 import type { SessionBlock, SessionBlockExercise } from "../../types/sessionProgramming";
 import type { SessionExercise } from "../../types/trainingSessions";
 import type { AppDispatch } from "../../store";
+import { getTrainingBlockDisplayName } from "../../utils/trainingBlockDisplay";
 import {
     isBlockStructureLoading,
     isLegacyStructureLoading,
@@ -106,22 +107,6 @@ function legacyExerciseToDisplay(ex: SessionExercise): SessionExerciseDisplay {
         actualReps: ex.actual_reps != null ? String(ex.actual_reps) : null,
         notes: ex.notes ?? null,
     };
-}
-
-const BLOCK_TYPE_TRANSLATIONS: Record<string, string> = {
-    "Warm Up": "Calentamiento",
-    Core: "Core",
-    Conditioning: "Acondicionamiento",
-    "Maximum Strength": "Fuerza Máxima",
-    "Strength-Speed": "Fuerza-Velocidad",
-    "Hypertrophy Strength": "Hipertrofia",
-    Plyometrics: "Pliometría",
-    "Intensive Aerobic": "Aeróbico Intensivo",
-    "Extensive Aerobic": "Aeróbico Extensivo",
-};
-
-function getBlockDisplayName(name: string): string {
-    return BLOCK_TYPE_TRANSLATIONS[name] ?? name;
 }
 
 /**
@@ -217,7 +202,9 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
             for (const block of sortedBlocks) {
                 const exs = blockExercisesByBlock[block.id] ?? [];
                 const blockType = blockTypes.find((bt) => bt.id === block.block_type_id);
-                const blockName = blockType ? getBlockDisplayName(blockType.name) : "Bloque";
+                const blockName = blockType
+                    ? getTrainingBlockDisplayName(blockType)
+                    : "Bloque";
                 for (const ex of exs) {
                     const exerciseName = nameMap[ex.exercise_id] ?? `Ejercicio #${ex.exercise_id}`;
                     flat.push(

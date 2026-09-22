@@ -57,6 +57,8 @@ export interface TrainingBlockType {
     is_predefined: boolean;
     color: string | null;
     icon: string | null;
+    physical_quality_slug: string | null;
+    block_role: string | null;
     created_by_trainer_id: number | null;
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime

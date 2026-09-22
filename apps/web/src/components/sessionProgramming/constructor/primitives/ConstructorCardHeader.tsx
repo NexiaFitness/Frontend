@@ -47,7 +47,7 @@ export const ConstructorCardHeader: React.FC<ConstructorCardHeaderProps> = ({
 }) => {
     const blockType = blockTypes.find((bt) => bt.id === blockTypeId);
     const blockLabel = blockType
-        ? getTrainingBlockDisplayName(blockType.name)
+        ? getTrainingBlockDisplayName(blockType)
         : "Bloque";
 
     return (

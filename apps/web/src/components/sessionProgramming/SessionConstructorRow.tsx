@@ -21,26 +21,11 @@ import {
 } from "@nexia/shared/utils/sessionProgramming";
 import type { TrainingBlockType, SetType } from "@nexia/shared/types/sessionProgramming";
 import { SET_TYPE_LABELS, EFFORT_CHARACTER } from "@nexia/shared/types/sessionProgramming";
+import { getTrainingBlockDisplayName } from "@nexia/shared";
 import {
     applyCaracterUpdateWithInheritance,
     hasCaracterChange,
 } from "./constructor/utils/exerciseCaracterInheritance";
-
-const BLOCK_TYPE_TRANSLATIONS: Record<string, string> = {
-    "Warm Up": "Calentamiento",
-    Core: "Core",
-    Conditioning: "Acondicionamiento",
-    "Maximum Strength": "Fuerza Máxima",
-    "Strength-Speed": "Fuerza-Velocidad",
-    "Hypertrophy Strength": "Hipertrofia",
-    Plyometrics: "Pliometría",
-    "Intensive Aerobic": "Aeróbico Intensivo",
-    "Extensive Aerobic": "Aeróbico Extensivo",
-};
-
-function getBlockDisplayName(name: string): string {
-    return BLOCK_TYPE_TRANSLATIONS[name] ?? name;
-}
 
 const SET_TYPE_OPTIONS = Object.entries(SET_TYPE_LABELS).map(([value, label]) => ({
     value,
@@ -107,7 +92,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
 
     const blockSelectOptions = blockTypes.map((bt) => ({
         value: String(bt.id),
-        label: getBlockDisplayName(bt.name),
+        label: getTrainingBlockDisplayName(bt),
     }));
 
     return (

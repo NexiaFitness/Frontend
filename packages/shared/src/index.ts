@@ -437,6 +437,7 @@ export {
     formatCalendarWeekRange,
 } from "./utils/calendarWeekForBlock";
 export { getPhysicalQualityColor, resetFallbackCache, type PhysicalQualityColor } from "./utils/physicalQualityColors";
+export { getTrainingBlockDisplayName } from "./utils/trainingBlockDisplay";
 export {
   hasOverlap,
   isDateInRange,
