@@ -18,8 +18,6 @@ import {
     axialLoadLabel,
     EXERCISE_DETAIL_EMPTY_COPY,
     lateralityLabel,
-    mechanicalLoadLabel,
-    stimulusTypeLabel,
     tipoCargaLabel,
 } from "@/utils/exercises/exerciseDetailLabels";
 
@@ -53,17 +51,13 @@ export const ExerciseDetailCatalogSections: React.FC<ExerciseDetailCatalogSectio
 }) => {
     const tipoCarga = tipoCargaLabel(exercise.tipo_carga);
     const laterality = lateralityLabel(exercise.laterality);
-    const mechanical = mechanicalLoadLabel(exercise.mechanical_load_level);
     const axial = axialLoadLabel(exercise.axial_load);
-    const stimulus = stimulusTypeLabel(exercise.stimulus_type);
 
     return (
         <div className={EXERCISE_DETAIL_SPEC_GRID}>
             <FieldCell label={EXERCISE_DETAIL_SECTION_LABELS.loadType} value={tipoCarga} />
             <FieldCell label={EXERCISE_DETAIL_SECTION_LABELS.laterality} value={laterality} />
-            <FieldCell label={EXERCISE_DETAIL_SECTION_LABELS.mechanicalLoad} value={mechanical} />
             <FieldCell label={EXERCISE_DETAIL_SECTION_LABELS.axialLoad} value={axial} />
-            <FieldCell label={EXERCISE_DETAIL_SECTION_LABELS.stimulusType} value={stimulus} />
         </div>
     );
 };

@@ -189,9 +189,8 @@ describe("buildCoherencePhaseChipViewModel", () => {
             coherence_warnings: [],
             coherence_report: makeReport([
                 makeCriterion({
-                    criterion_id: "modality_alignment_l1",
-                    status: "PARTIAL",
-                    inputs_used: { mismatch_count: 1, total_with_intent: 4 },
+                    criterion_id: "strength_fm_06_multiset",
+                    status: "NOT_MET",
                 }),
             ]),
         };
@@ -221,6 +220,14 @@ describe("buildCoherencePhaseChipViewModel", () => {
 });
 
 describe("isCoachFacingCriterion", () => {
+    it("excluye modality_alignment_l1 (retirado en M1)", () => {
+        expect(
+            isCoachFacingCriterion(
+                makeCriterion({ criterion_id: "modality_alignment_l1", status: "PARTIAL" }),
+            ),
+        ).toBe(false);
+    });
+
     it("excluye trazas de gobernanza DO_NOT_AUTOMATE", () => {
         expect(
             isCoachFacingCriterion(
@@ -247,17 +254,16 @@ describe("buildCoherenceConclusionsViewModel", () => {
     it("prioriza NOT_MET sobre UNKNOWN y limita a 3 visibles", () => {
         const criteria = [
             makeCriterion({
-                criterion_id: "modality_alignment_l1",
+                criterion_id: "strength_fm_06_multiset",
                 status: "NOT_MET",
             }),
             makeCriterion({
-                criterion_id: "strength_fm_06_multiset",
+                criterion_id: "strength_fm_04_effort_documented",
                 status: "UNKNOWN",
             }),
             makeCriterion({
-                criterion_id: "modality_alignment_l1",
+                criterion_id: "strength_fm_01_structural_signal",
                 status: "UNKNOWN",
-                missing_inputs: ["exercise.training_intent"],
             }),
             makeCriterion({
                 criterion_id: "strength_fm_05_rest_documented",
@@ -281,7 +287,7 @@ describe("buildCoherenceConclusionsViewModel", () => {
     it("hero limited_data cuando evaluability UNKNOWN sin desajustes", () => {
         const report = makeReport([
             makeCriterion({
-                criterion_id: "modality_alignment_l1",
+                criterion_id: "strength_fm_06_multiset",
                 status: "UNKNOWN",
                 missing_inputs: ["session_prescription"],
             }),
@@ -320,15 +326,15 @@ describe("buildCoherenceConclusionsViewModel", () => {
         const vm = buildCoherenceConclusionsViewModel(
             makeReport([
                 makeCriterion({
-                    criterion_id: "modality_alignment_l1",
+                    criterion_id: "strength_fm_06_multiset",
                     status: "UNKNOWN",
-                    missing_inputs: ["exercise.training_intent"],
+                    missing_inputs: ["session_prescription"],
                 }),
             ]),
         );
 
         expect(vm!.visibleConclusions[0].tone).toBe("neutral");
-        expect(vm!.visibleConclusions[0].body).toContain("intención de entrenamiento");
-        expect(vm!.visibleConclusions[0].body).not.toContain("training_intent");
+        expect(vm!.visibleConclusions[0].body).toContain("ejercicios prescritos");
+        expect(vm!.visibleConclusions[0].body).not.toContain("session_prescription");
     });
 });

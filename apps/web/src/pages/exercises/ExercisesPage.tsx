@@ -217,7 +217,6 @@ export const ExercisesPage: React.FC = () => {
                 .join(", ") || "bodyweight",
             patron_movimiento: form.movementPattern.trim() || "general",
             tipo_carga: "external",
-            categoria: "Basic",
             descripcion: form.descripcion.trim() || null,
             instrucciones: form.instrucciones.trim() || null,
             notas: form.notas.trim() || null,

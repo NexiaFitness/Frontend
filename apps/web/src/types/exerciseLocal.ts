@@ -12,7 +12,6 @@ export interface LocalExerciseView {
     equipo: string;
     patron_movimiento: string;
     tipo_carga: string;
-    categoria: string;
     descripcion: string | null;
     instrucciones: string | null;
     notas: string | null;

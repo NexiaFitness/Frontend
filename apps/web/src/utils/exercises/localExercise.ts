@@ -8,7 +8,6 @@ export function localViewToExercise(v: LocalExerciseView): Exercise {
         nombre: v.nombre,
         nombre_ingles: null,
         tipo: v.tipo,
-        categoria: v.categoria,
         nivel: v.nivel,
         equipo: v.equipo,
         patron_movimiento: v.patron_movimiento,

@@ -8,7 +8,7 @@
  *
  * CONTEXTO:
  * - Backend: Módulo /exercises/ todavía existe y funciona
- * - Endpoint: GET /exercises/ con filtros (tipo, categoria, nivel, equipo, patron_movimiento, tipo_carga, search)
+ * - Endpoint: GET /exercises/ con filtros (tipo, nivel, equipo, patron_movimiento, tipo_carga, search)
  * - Response: ExerciseListResponse con exercises[], total, skip, limit, has_more
  * - Este hook mantiene compatibilidad mientras se migra al Exercise Catalog
  *
@@ -103,15 +103,12 @@ export interface Exercise {
     /** Tablas.xlsx `exercise_name_en` — identificador EN tal cual; no traducir. */
     nombre_ingles: string | null;
     tipo: string;
-    categoria: string;
     nivel: string;
     equipo: string;
     patron_movimiento: string;
     tipo_carga: string;
     laterality?: string | null;
-    mechanical_load_level?: number | null;
     axial_load?: string | null;
-    stimulus_type?: string | null;
     musculatura_principal: string; // Comma-separated string
     musculatura_secundaria: string | null; // Comma-separated string
     descripcion: string | null;
@@ -120,8 +117,6 @@ export interface Exercise {
     created_at: string;
     updated_at: string;
     is_active: boolean;
-    /** Fase 5b: cualidades físicas asociadas (M2M). */
-    physical_qualities?: ExercisePhysicalQualityRef[] | null;
     /** Relaciones del catálogo nuevo (GET /exercises/ las incluye cuando existen mappings). */
     muscles?: ExerciseMuscleRef[] | null;
     equipment?: ExerciseEquipmentRef[] | null;
@@ -132,11 +127,10 @@ export interface Exercise {
 
 /**
  * ExerciseFilters - Filtros para búsqueda de ejercicios
- * Backend query params: skip, limit, tipo?, categoria?, nivel?, equipo?, patron_movimiento?, tipo_carga?, search?
+ * Backend query params: skip, limit, tipo?, nivel?, equipo?, patron_movimiento?, tipo_carga?, search?
  */
 export interface ExerciseFilters {
     tipo?: string;
-    categoria?: string;
     nivel?: string;
     equipo?: string;
     patron_movimiento?: string;
@@ -175,7 +169,6 @@ export interface ExerciseCreate {
     nombre: string;
     nombre_ingles?: string | null;
     tipo: string;
-    categoria: string;
     nivel: string;
     equipo: string;
     patron_movimiento: string;
@@ -183,13 +176,10 @@ export interface ExerciseCreate {
     musculatura_principal: string;
     musculatura_secundaria?: string | null;
     laterality?: string | null;
-    training_intent?: string | null;
-    cardio_type?: string | null;
+    axial_load?: string | null;
     descripcion?: string | null;
     instrucciones?: string | null;
     notas?: string | null;
-    /** Fase 5b: IDs de cualidades físicas (M2M Exercise–PhysicalQuality). */
-    physical_quality_ids?: number[] | null;
 }
 
 /**
@@ -201,7 +191,6 @@ export interface ExerciseUpdate {
     nombre?: string;
     nombre_ingles?: string | null;
     tipo?: string;
-    categoria?: string;
     nivel?: string;
     equipo?: string;
     patron_movimiento?: string;
@@ -209,13 +198,10 @@ export interface ExerciseUpdate {
     musculatura_principal?: string;
     musculatura_secundaria?: string | null;
     laterality?: string | null;
-    training_intent?: string | null;
-    cardio_type?: string | null;
+    axial_load?: string | null;
     descripcion?: string | null;
     instrucciones?: string | null;
     notas?: string | null;
-    /** Fase 5b: IDs de cualidades físicas (M2M). */
-    physical_quality_ids?: number[] | null;
 }
 
 /**
@@ -257,7 +243,6 @@ interface GetExercisesParams {
     skip?: number;
     limit?: number;
     tipo?: string;
-    categoria?: string;
     nivel?: string;
     equipo?: string;
     patron_movimiento?: string;
@@ -289,9 +274,6 @@ const exercisesListApi = baseApi.injectEndpoints({
                 
                 if (filters.tipo) {
                     params.append('tipo', filters.tipo);
-                }
-                if (filters.categoria) {
-                    params.append('categoria', filters.categoria);
                 }
                 if (filters.nivel) {
                     params.append('nivel', filters.nivel);

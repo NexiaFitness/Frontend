@@ -440,6 +440,9 @@ function criterionPriority(criterion: CriterionResult): number {
 }
 
 export function isCoachFacingCriterion(criterion: CriterionResult): boolean {
+    if (criterion.criterion_id === "modality_alignment_l1") {
+        return false;
+    }
     if (GOVERNANCE_CRITERION_IDS.has(criterion.criterion_id)) {
         return false;
     }

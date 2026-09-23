@@ -35,14 +35,12 @@ import {
     EXERCISE_LOAD_TYPE_FILTER_OPTIONS,
     normalizeExerciseLoadType,
 } from "@nexia/shared/types/exerciseLoadType";
-import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import {
     EXERCISE_FORM_BACK_BUTTON,
     EXERCISE_FORM_BACK_LABEL,
     EXERCISE_FORM_BODY,
     EXERCISE_FORM_CANCEL,
     EXERCISE_FORM_CARD,
-    EXERCISE_FORM_CATEGORY_LABEL,
     EXERCISE_FORM_COMBO_PLACEHOLDER,
     EXERCISE_FORM_DESCRIPTION_LABEL,
     EXERCISE_FORM_EQUIPMENT_LABEL,
@@ -69,9 +67,6 @@ import {
     EXERCISE_FORM_PAGE_TITLE_EDIT,
     EXERCISE_FORM_PATTERN_LABEL,
     EXERCISE_FORM_PRIMARY_MUSCLES_LABEL,
-    EXERCISE_FORM_QUALITIES_HINT,
-    EXERCISE_FORM_QUALITIES_HINT_TEXT,
-    EXERCISE_FORM_QUALITIES_LABEL,
     EXERCISE_FORM_SECONDARY_MUSCLES_LABEL,
     EXERCISE_FORM_SECTION,
     EXERCISE_FORM_SECTION_CLASSIFICATION,
@@ -94,7 +89,6 @@ const defaultForm: Partial<ExerciseCreate> = {
     nombre: "",
     nombre_ingles: "",
     tipo: "multiarticular",
-    categoria: "Basic",
     nivel: "intermediate",
     equipo: "bodyweight",
     patron_movimiento: "compound",
@@ -120,8 +114,6 @@ export const ExerciseForm: React.FC = () => {
 
     const [formData, setFormData] = useState<Partial<ExerciseCreate>>(defaultForm);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-    const [selectedPhysicalQualityIds, setSelectedPhysicalQualityIds] = useState<number[]>([]);
-
     const { data: exercise, isLoading: isLoadingExercise } = useGetExerciseByIdQuery(
         exerciseId!,
         { skip: !isEdit || !exerciseId },
@@ -130,8 +122,6 @@ export const ExerciseForm: React.FC = () => {
     const [createExercise, { isLoading: isCreating }] = useCreateExerciseMutation();
     const [updateExercise, { isLoading: isUpdating }] = useUpdateExerciseMutation();
 
-    const { data: physicalQualitiesCatalog = [] } = useGetPhysicalQualitiesQuery();
-
     useEffect(() => {
         if (exercise) {
             setFormData({
@@ -139,7 +129,6 @@ export const ExerciseForm: React.FC = () => {
                 nombre: exercise.nombre,
                 nombre_ingles: exercise.nombre_ingles ?? "",
                 tipo: exercise.tipo,
-                categoria: exercise.categoria,
                 nivel: exercise.nivel,
                 equipo: exercise.equipo,
                 patron_movimiento: exercise.patron_movimiento,
@@ -151,9 +140,6 @@ export const ExerciseForm: React.FC = () => {
                 instrucciones: exercise.instrucciones ?? "",
                 notas: exercise.notas ?? "",
             });
-            setSelectedPhysicalQualityIds(
-                (exercise.physical_qualities ?? []).map((pq) => pq.id),
-            );
         }
     }, [exercise]);
 
@@ -186,7 +172,6 @@ export const ExerciseForm: React.FC = () => {
                     nombre: formData.nombre?.trim() || undefined,
                     nombre_ingles: formData.nombre_ingles?.trim() || null,
                     tipo: formData.tipo,
-                    categoria: formData.categoria,
                     nivel: formData.nivel,
                     equipo: formData.equipo,
                     patron_movimiento: formData.patron_movimiento,
@@ -196,8 +181,6 @@ export const ExerciseForm: React.FC = () => {
                     descripcion: formData.descripcion?.trim() || null,
                     instrucciones: formData.instrucciones?.trim() || null,
                     notas: formData.notas?.trim() || null,
-                    physical_quality_ids:
-                        selectedPhysicalQualityIds.length > 0 ? selectedPhysicalQualityIds : null,
                 };
                 await updateExercise({ exerciseId, data: updatePayload }).unwrap();
                 showSuccess("Ejercicio actualizado correctamente");
@@ -208,7 +191,6 @@ export const ExerciseForm: React.FC = () => {
                     nombre: formData.nombre!.trim(),
                     nombre_ingles: formData.nombre_ingles?.trim() || null,
                     tipo: formData.tipo!,
-                    categoria: formData.categoria!,
                     nivel: formData.nivel!,
                     equipo: formData.equipo!,
                     patron_movimiento: formData.patron_movimiento!,
@@ -218,8 +200,6 @@ export const ExerciseForm: React.FC = () => {
                     descripcion: formData.descripcion?.trim() || null,
                     instrucciones: formData.instrucciones?.trim() || null,
                     notas: formData.notas?.trim() || null,
-                    physical_quality_ids:
-                        selectedPhysicalQualityIds.length > 0 ? selectedPhysicalQualityIds : null,
                 };
                 const created = await createExercise(createPayload).unwrap();
                 showSuccess("Ejercicio creado correctamente");
@@ -381,16 +361,6 @@ export const ExerciseForm: React.FC = () => {
                                         ariaLabel={EXERCISE_FORM_LEVEL_LABEL}
                                     />
                                 </FormField>
-                                <FormField label={EXERCISE_FORM_CATEGORY_LABEL} variant={FORM_VARIANT}>
-                                    <Input
-                                        variant={FORM_VARIANT}
-                                        value={formData.categoria ?? ""}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, categoria: e.target.value })
-                                        }
-                                        placeholder="Basic"
-                                    />
-                                </FormField>
                             </div>
                             <div className={EXERCISE_FORM_GRID_3}>
                                 <FormField label={EXERCISE_FORM_EQUIPMENT_LABEL} variant={FORM_VARIANT}>
@@ -470,41 +440,6 @@ export const ExerciseForm: React.FC = () => {
                                     }
                                     placeholder="gluteos, core (separados por coma)"
                                 />
-                            </FormField>
-                            <FormField label={EXERCISE_FORM_QUALITIES_LABEL} variant={FORM_VARIANT}>
-                                <p className={EXERCISE_FORM_QUALITIES_HINT}>
-                                    {EXERCISE_FORM_QUALITIES_HINT_TEXT}
-                                </p>
-                                <div
-                                    className="flex flex-wrap gap-x-6 gap-y-2 pt-1"
-                                    role="group"
-                                    aria-label={EXERCISE_FORM_QUALITIES_LABEL}
-                                >
-                                    {physicalQualitiesCatalog
-                                        .slice()
-                                        .sort((a, b) => a.display_order - b.display_order)
-                                        .map((pq) => (
-                                            <label
-                                                key={pq.id}
-                                                className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground"
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedPhysicalQualityIds.includes(pq.id)}
-                                                    onChange={() => {
-                                                        setSelectedPhysicalQualityIds((prev: number[]) =>
-                                                            prev.includes(pq.id)
-                                                                ? prev.filter((id: number) => id !== pq.id)
-                                                                : [...prev, pq.id],
-                                                        );
-                                                    }}
-                                                    className="rounded border-border"
-                                                    aria-label={pq.name}
-                                                />
-                                                {pq.name}
-                                            </label>
-                                        ))}
-                                </div>
                             </FormField>
                         </section>
 
