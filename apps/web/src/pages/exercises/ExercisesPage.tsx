@@ -253,7 +253,9 @@ export const ExercisesPage: React.FC = () => {
     );
 
     const showLoading = isLoading && !data;
-    const libraryIsEmpty = !hasServerFilters && totalFromApi === 0 && localAdditions.length === 0;
+    const libraryIsEmpty =
+        !showLoading && !hasServerFilters && totalFromApi === 0 && localAdditions.length === 0;
+    const headingCount: number | null = showLoading ? null : totalFiltered;
 
     return (
         <div className={EXERCISES_LIBRARY_PAGE}>
@@ -261,8 +263,12 @@ export const ExercisesPage: React.FC = () => {
 
             <div className={EXERCISES_LIBRARY_STACK}>
                 <div className={EXERCISES_LIBRARY_HEADER}>
-                    <div className={EXERCISES_LIBRARY_TITLE_WRAP}>
-                        <PageTitle title={exercisesLibraryHeading(totalFiltered)} />
+                    <div
+                        className={EXERCISES_LIBRARY_TITLE_WRAP}
+                        aria-busy={showLoading}
+                        aria-live="polite"
+                    >
+                        <PageTitle title={exercisesLibraryHeading(headingCount)} />
                     </div>
                     {EXERCISE_MANUAL_CREATE_ENABLED && (
                         <Button

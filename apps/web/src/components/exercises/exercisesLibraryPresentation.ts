@@ -30,9 +30,18 @@ export interface ExercisesLibraryCatalogOption {
     label: string;
 }
 
-/** Título accesible con contador (E2E: «Ejercicios · {n}»). */
-export function exercisesLibraryHeading(count: number): string {
-    return `Ejercicios · ${count}`;
+/** Título base sin contador (carga inicial — evita «· 0» engañoso). */
+export const EXERCISES_LIBRARY_TITLE_BASE = "Ejercicios";
+
+/**
+ * Título accesible con contador cuando el total es fiable.
+ * @param count — total confirmado; `null` mientras no hay respuesta de listado.
+ */
+export function exercisesLibraryHeading(count: number | null): string {
+    if (count === null) {
+        return EXERCISES_LIBRARY_TITLE_BASE;
+    }
+    return `${EXERCISES_LIBRARY_TITLE_BASE} · ${count}`;
 }
 
 /**

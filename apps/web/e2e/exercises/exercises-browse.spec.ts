@@ -2,7 +2,7 @@
  * E2E Exercises: Browse list
  *
  * Flujo: Login → Sidebar "Ejercicios" → biblioteca (spec Lovable).
- * Assertions: heading "Ejercicios · {count}", búsqueda, contenido (cards / tabla) o empty state.
+ * Assertions: heading "Ejercicios" (carga) o "Ejercicios · {count}", búsqueda, contenido o empty state.
  */
 
 import { test, expect } from "@playwright/test";
@@ -16,11 +16,15 @@ test.describe("Exercises — Browse", () => {
     await loginAsTrainer(page);
     await navigateToExercises(page);
 
-    await expect(page.getByRole("heading", { name: /ejercicios ·/i })).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(
+      page.getByRole("heading", { name: /^ejercicios( · \d+)?$/i })
+    ).toBeVisible({ timeout: 15_000 });
 
     await expect(page.getByPlaceholder(/buscar ejercicio/i)).toBeVisible();
+
+    await expect(page.getByRole("heading", { name: /ejercicios · \d+/i })).toBeVisible({
+      timeout: 25_000,
+    });
 
     await expect(
       page
@@ -33,8 +37,8 @@ test.describe("Exercises — Browse", () => {
     await loginAsTrainer(page);
     await navigateToExercises(page);
 
-    await expect(page.getByRole("heading", { name: /ejercicios ·/i })).toBeVisible({
-      timeout: 15_000,
+    await expect(page.getByRole("heading", { name: /ejercicios · \d+/i })).toBeVisible({
+      timeout: 25_000,
     });
 
     await page
