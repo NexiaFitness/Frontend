@@ -45,6 +45,9 @@ const AUDIT_ACTIONS = [
     "user_set_password",
     "catalog_review",
     "catalog_import_confirm",
+    "admin_write",
+    "intervention",
+    "supervision_read",
 ] as const;
 
 const SKELETON_ROWS = [0, 1, 2, 3];

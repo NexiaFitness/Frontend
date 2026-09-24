@@ -231,6 +231,7 @@ export function formatAdminAuditAction(action: string): string {
         catalog_import_confirm: "Importación catálogo",
         supervision_read: "Lectura de supervisión",
         intervention: "Intervención",
+        admin_write: "Escritura admin",
         reset_profile_onboarding: "Reset onboarding",
     };
     return map[action] ?? action;
