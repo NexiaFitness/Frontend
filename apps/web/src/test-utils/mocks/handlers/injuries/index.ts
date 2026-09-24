@@ -16,8 +16,8 @@ const now = new Date().toISOString().slice(0, 19).replace("T", " ");
 export const getJointsHandler = http.get("*/injuries/joints", async () => {
     return HttpResponse.json(
         [
-            { id: 1, name: "Hombro", description: null, created_at: now, updated_at: now },
-            { id: 2, name: "Rodilla", description: null, created_at: now, updated_at: now },
+            { id: 1, name: "Hombro", name_es: "Hombro", description: null, created_at: now, is_active: true },
+            { id: 2, name: "Rodilla", name_es: "Rodilla", description: null, created_at: now, is_active: true },
         ],
         { status: 200 }
     );
@@ -27,8 +27,8 @@ export const getJointsHandler = http.get("*/injuries/joints", async () => {
 export const getMusclesHandler = http.get("*/injuries/muscles", async () => {
     return HttpResponse.json(
         [
-            { id: 1, name: "Deltoides", joint_id: 1, description: null, created_at: now, updated_at: now },
-            { id: 2, name: "Cuádriceps", joint_id: 2, description: null, created_at: now, updated_at: now },
+            { id: 1, name: "Deltoides", name_es: "Deltoides", joint_id: 1, description: null, created_at: now, is_active: true },
+            { id: 2, name: "Cuádriceps", name_es: "Cuádriceps", joint_id: 2, description: null, created_at: now, is_active: true },
         ],
         { status: 200 }
     );

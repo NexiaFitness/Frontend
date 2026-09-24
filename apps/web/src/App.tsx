@@ -148,8 +148,18 @@ const ExerciseList = lazy(() =>
 const ExerciseDetail = lazy(() =>
   import("./pages/exercises").then((m) => ({ default: m.ExerciseDetail }))
 );
-const ExerciseForm = lazy(() =>
-  import("./pages/exercises").then((m) => ({ default: m.ExerciseForm }))
+const AdminCatalogListPage = lazy(() =>
+  import("./pages/dashboard/admin/catalog").then((m) => ({ default: m.AdminCatalogListPage }))
+);
+const AdminCatalogExerciseCreatePage = lazy(() =>
+  import("./pages/dashboard/admin/catalog").then((m) => ({
+    default: m.AdminCatalogExerciseCreatePage,
+  }))
+);
+const AdminCatalogExerciseEditPage = lazy(() =>
+  import("./pages/dashboard/admin/catalog").then((m) => ({
+    default: m.AdminCatalogExerciseEditPage,
+  }))
 );
 const GenerateReports = lazy(() =>
   import("./pages/reports/GenerateReports").then((m) => ({ default: m.GenerateReports }))
@@ -381,22 +391,14 @@ function App() {
             }
           />
 
-          {/* Exercises */}
+          {/* Exercises — trainer solo lectura (escritura Admin: /admin/catalog) */}
           <Route
             path="exercises/create"
-            element={
-              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-                <ExerciseForm />
-              </RoleProtectedRoute>
-            }
+            element={<Navigate to="/dashboard/exercises" replace />}
           />
           <Route
             path="exercises/:id/edit"
-            element={
-              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-                <ExerciseForm />
-              </RoleProtectedRoute>
-            }
+            element={<Navigate to="/dashboard/exercises" replace />}
           />
           <Route
             path="exercises/:id"
@@ -411,6 +413,32 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
                 <ExerciseList />
+              </RoleProtectedRoute>
+            }
+          />
+
+          {/* Admin catalog (M5) */}
+          <Route
+            path="admin/catalog/new"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminCatalogExerciseCreatePage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/catalog/:exercisePk"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminCatalogExerciseEditPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/catalog"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminCatalogListPage />
               </RoleProtectedRoute>
             }
           />

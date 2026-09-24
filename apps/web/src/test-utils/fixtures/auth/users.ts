@@ -33,3 +33,14 @@ export const validAthleteUser: User = {
     created_at: "2025-01-01T00:00:00",
 };
 
+export const validAdminUser: User = {
+    id: 3,
+    email: "admin@test.com",
+    nombre: "Admin",
+    apellidos: "Nexia",
+    role: USER_ROLES.ADMIN,
+    is_active: true,
+    is_verified: true,
+    created_at: "2025-01-01T00:00:00",
+};
+

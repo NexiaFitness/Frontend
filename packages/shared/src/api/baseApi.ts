@@ -371,5 +371,6 @@ export const baseApi = createApi({
         "Invitation",
         "InboxNotification",
         "ExerciseSelectionAnalyze",
+        "AdminCatalog",
     ],
 });

@@ -1,45 +1,35 @@
 /**
  * AdminDashboard.tsx — Inicio admin premium (experimento F3b / DESIGN_MOBILE §6.7).
+ *
+ * M5: sin KPIs inventados; aviso catálogo con Alert + enlace /dashboard/admin/catalog.
  */
 
 import React from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, Dumbbell, Settings, User, Users } from "lucide-react";
+import { Dumbbell, Settings, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AdminDashboardActivityPanel } from "@/components/admin/dashboard/AdminDashboardActivityPanel";
 import { AdminDashboardHeader } from "@/components/admin/dashboard/AdminDashboardHeader";
-import { AdminDashboardKpiCard } from "@/components/admin/dashboard/AdminDashboardKpiCard";
 import {
-    ADMIN_DASHBOARD_GLOW,
     ADMIN_DASHBOARD_ACTIONS_COL,
     ADMIN_DASHBOARD_ACTIVITY_COL,
-    ADMIN_DASHBOARD_KPI_GRID,
+    ADMIN_DASHBOARD_GLOW,
     ADMIN_DASHBOARD_LOWER_COL,
     ADMIN_DASHBOARD_LOWER_GRID,
     ADMIN_DASHBOARD_PAGE,
     ADMIN_DASHBOARD_SECTION_LABEL,
     ADMIN_DASHBOARD_STACK,
 } from "@/components/admin/dashboard/adminDashboardPresentation";
+import { ADMIN_DASHBOARD_CATALOG_ALERT } from "@/components/admin/catalog/adminCatalogPresentation";
 import { AthleteSettingsRow } from "@/components/athlete/account/AthleteSettingsRow";
 import { AthleteSettingsSection } from "@/components/athlete/account/AthleteSettingsSection";
+import { Alert } from "@/components/ui/feedback";
+import { Button } from "@/components/ui/buttons";
 import {
     getAthleteDisplayFirstName,
 } from "@nexia/shared/utils/athlete/athleteProfileDisplay";
 import { useGetCatalogHealthQuery } from "@nexia/shared/api/adminApi";
 import type { RootState } from "@nexia/shared/store";
-
-const KPIS = [
-    { value: "156", label: "Usuarios totales", hint: "Activos en la plataforma" },
-    { value: "23", label: "Entrenadores activos", hint: "Cuentas profesionales" },
-    { value: "98.2%", label: "Uptime del sistema", hint: "Últimos 30 días" },
-] as const;
-
-const ACTIVITY_METRICS = [
-    { value: "12", label: "Usuarios nuevos hoy" },
-    { value: "89", label: "Sesiones activas" },
-    { value: "245", label: "Logins diarios" },
-] as const;
 
 export const AdminDashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -59,50 +49,29 @@ export const AdminDashboard: React.FC = () => {
                 />
 
                 {mappingGaps > 0 ? (
-                    <div
-                        role="alert"
-                        className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3"
-                    >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="flex min-w-0 items-start gap-2.5">
-                                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
-                                <div className="min-w-0 space-y-1">
-                                    <p className="text-sm font-semibold text-destructive">
-                                        Catálogo: {mappingGaps}{" "}
-                                        {mappingGaps === 1
-                                            ? "ejercicio sin mapeo muscular"
-                                            : "ejercicios sin mapeo muscular"}
-                                    </p>
-                                    <p className="text-xs leading-relaxed text-destructive/90">
-                                        Los entrenadores verán avisos al programar sesiones. Revisa y corrige
-                                        el catálogo.
-                                    </p>
-                                </div>
-                            </div>
-                            <button
+                    <Alert
+                        variant="error"
+                        action={
+                            <Button
                                 type="button"
-                                onClick={() => navigate("/dashboard/exercises")}
-                                className="shrink-0 rounded-md border border-destructive/30 bg-background px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/5"
+                                variant="outline-destructive"
+                                size="sm"
+                                onClick={() => navigate("/dashboard/admin/catalog")}
                             >
-                                Ir al catálogo
-                            </button>
-                        </div>
-                    </div>
+                                {ADMIN_DASHBOARD_CATALOG_ALERT.cta}
+                            </Button>
+                        }
+                    >
+                        <span className="font-semibold">
+                            {mappingGaps === 1
+                                ? ADMIN_DASHBOARD_CATALOG_ALERT.titleSingular(mappingGaps)
+                                : ADMIN_DASHBOARD_CATALOG_ALERT.titlePlural(mappingGaps)}
+                        </span>
+                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                            {ADMIN_DASHBOARD_CATALOG_ALERT.body}
+                        </p>
+                    </Alert>
                 ) : null}
-
-                <section className="space-y-3" aria-label="Resumen">
-                    <p className={ADMIN_DASHBOARD_SECTION_LABEL}>Resumen</p>
-                    <div className={ADMIN_DASHBOARD_KPI_GRID}>
-                        {KPIS.map((kpi) => (
-                            <AdminDashboardKpiCard
-                                key={kpi.label}
-                                value={kpi.value}
-                                label={kpi.label}
-                                hint={kpi.hint}
-                            />
-                        ))}
-                    </div>
-                </section>
 
                 <div className={ADMIN_DASHBOARD_LOWER_GRID}>
                     <div className={cn(ADMIN_DASHBOARD_ACTIONS_COL, ADMIN_DASHBOARD_LOWER_COL)}>
@@ -115,13 +84,13 @@ export const AdminDashboard: React.FC = () => {
                             />
                             <AthleteSettingsRow
                                 icon={Dumbbell}
-                                label="Catálogo de ejercicios"
+                                label={ADMIN_DASHBOARD_CATALOG_ALERT.catalogLabel}
                                 hint={
                                     mappingGaps > 0
-                                        ? `${mappingGaps} ejercicio(s) sin mapeo muscular — requiere revisión`
-                                        : "Mapeos musculares al día"
+                                        ? ADMIN_DASHBOARD_CATALOG_ALERT.catalogHintGaps(mappingGaps)
+                                        : ADMIN_DASHBOARD_CATALOG_ALERT.catalogHintOk
                                 }
-                                onClick={() => navigate("/dashboard/exercises")}
+                                onClick={() => navigate("/dashboard/admin/catalog")}
                             />
                             <AthleteSettingsRow
                                 icon={Settings}
@@ -140,12 +109,15 @@ export const AdminDashboard: React.FC = () => {
                     </div>
 
                     <div className={cn(ADMIN_DASHBOARD_ACTIVITY_COL, ADMIN_DASHBOARD_LOWER_COL)}>
-                        <AdminDashboardActivityPanel
-                            title="Actividad del sistema"
-                            description="Monitoriza uso de la plataforma y métricas de rendimiento"
-                            metrics={[...ACTIVITY_METRICS]}
-                            onClick={() => navigate("/dashboard/system")}
-                        />
+                        <section className="space-y-3" aria-label="Resumen">
+                            <p className={ADMIN_DASHBOARD_SECTION_LABEL}>Resumen</p>
+                            <p className="text-sm leading-relaxed text-muted-foreground">
+                                Los indicadores globales de usuarios, entrenadores y uptime se
+                                mostrarán cuando existan endpoints de producto. El estado del
+                                catálogo usa{" "}
+                                <code className="text-xs">GET /admin/catalog-health</code>.
+                            </p>
+                        </section>
                     </div>
                 </div>
             </div>

@@ -52,6 +52,9 @@ export * from "./exerciseAlternatives";
 // Exercise types (Exercise Catalog completo)
 export * from "./exercise";
 
+// Admin catalog (M4/M5)
+export * from "./adminCatalog";
+
 // Forms types
 export * from "./forms";
 

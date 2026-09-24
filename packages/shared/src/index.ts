@@ -8,6 +8,7 @@ export * from "./api/clientsApi";
 export * from "./api/invitationsApi";
 export * from "./api/sessionLoadApi";
 export * from "./api/adminApi";
+export * from "./api/adminCatalogApi";
 export * from "./api/accountApi";
 export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
@@ -372,7 +373,11 @@ export type { IStorage } from './storage/IStorage';
 
 // Utils
 export * from "./utils/exerciseNames";
+export * from "./utils/adminCatalog/validateCatalogBundle";
+export * from "./utils/adminCatalog/catalogQueue";
+export * from "./utils/adminCatalog/parseCatalogApiError";
 export * from "./utils/charts/chartParsers";
+
 export * from "./utils/charts/chartAggregators";
 export * from "./utils/validations";
 export * from "./utils/calculations";
