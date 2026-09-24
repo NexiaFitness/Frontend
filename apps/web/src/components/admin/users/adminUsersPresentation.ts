@@ -227,7 +227,11 @@ export function formatAdminAuditAction(action: string): string {
         user_set_password: "Cambio de contraseña",
         user_delete: "Eliminación usuario",
         catalog_review: "Revisión catálogo",
+        catalog_reactivate: "Reactivación catálogo",
         catalog_import_confirm: "Importación catálogo",
+        supervision_read: "Lectura de supervisión",
+        intervention: "Intervención",
+        reset_profile_onboarding: "Reset onboarding",
     };
     return map[action] ?? action;
 }

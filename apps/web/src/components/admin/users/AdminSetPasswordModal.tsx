@@ -76,6 +76,10 @@ export const AdminSetPasswordModal: React.FC<AdminSetPasswordModalProps> = ({
         }
     };
 
+    const livePasswordError =
+        newPassword.length > 0 ? validatePassword(newPassword) : undefined;
+    const liveReasonError =
+        reason.length > 0 ? validateAdminReason(reason) : undefined;
     const canSubmit =
         validatePassword(newPassword) == null && validateAdminReason(reason) == null;
 
@@ -118,16 +122,27 @@ export const AdminSetPasswordModal: React.FC<AdminSetPasswordModalProps> = ({
                     label={ADMIN_USERS_COPY.fieldNewPassword}
                     type="password"
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    error={fieldErrors.new_password}
+                    onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        if (fieldErrors.new_password) {
+                            setFieldErrors((prev) => ({ ...prev, new_password: "" }));
+                        }
+                    }}
+                    error={fieldErrors.new_password || livePasswordError}
+                    data-testid="admin-set-password-input"
                 />
                 <Textarea
                     label={ADMIN_USERS_COPY.reasonLabel}
                     value={reason}
-                    onChange={(e) => setReason(e.target.value)}
+                    onChange={(e) => {
+                        setReason(e.target.value);
+                        if (fieldErrors.reason) {
+                            setFieldErrors((prev) => ({ ...prev, reason: "" }));
+                        }
+                    }}
                     placeholder={ADMIN_USERS_COPY.reasonPlaceholder}
                     rows={3}
-                    error={fieldErrors.reason}
+                    error={fieldErrors.reason || liveReasonError}
                     data-testid="admin-set-password-reason"
                 />
             </div>

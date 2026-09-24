@@ -43,6 +43,10 @@ export function parseAdminUsersApiError(error: unknown): AdminUsersFieldErrors {
             isRecord(data) && typeof data.detail === "string"
                 ? data.detail
                 : "Conflicto: la operación no está permitida.";
+        const lower = detail.toLowerCase();
+        if (lower.includes("email") || lower.includes("registered") || lower.includes("already")) {
+            return { email: detail };
+        }
         return { form: detail };
     }
 
