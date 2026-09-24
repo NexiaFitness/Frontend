@@ -8,7 +8,7 @@
  *
  * Notas de mantenimiento:
  * - Solo incluir rutas existentes en App.tsx.
- * - Admin: Dashboard + Catálogo + Mi cuenta (sprint A0). Usuarios/Org se añaden en U2/G1.
+ * - Admin: Dashboard, Usuarios, Catálogo, Operaciones, Mi cuenta (U2).
  *
  * @author Frontend Team
  * @since v5.0.0 - Nexia Sparkle Flow (Fase 2a)
@@ -25,6 +25,7 @@ import {
     BarChart3,
     Play,
     MessageSquare,
+    Settings2,
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -59,7 +60,9 @@ const ADMIN_NAV: RoleNavigation = {
     footerSubtitle: "System Administrator",
     menuItems: [
         { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+        { label: "Usuarios", path: "/dashboard/admin/users", icon: Users },
         { label: "Catálogo", path: "/dashboard/admin/catalog", icon: Dumbbell },
+        { label: "Operaciones", path: "/dashboard/admin/operations/audit", icon: Settings2 },
         { label: "Mi cuenta", path: "/dashboard/account", icon: User },
     ],
 };

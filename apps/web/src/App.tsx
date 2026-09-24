@@ -166,6 +166,15 @@ const AdminCatalogImportPage = lazy(() =>
     default: m.AdminCatalogImportPage,
   }))
 );
+const AdminUsersListPage = lazy(() =>
+  import("./pages/dashboard/admin/users").then((m) => ({ default: m.AdminUsersListPage }))
+);
+const AdminUserDetailPage = lazy(() =>
+  import("./pages/dashboard/admin/users").then((m) => ({ default: m.AdminUserDetailPage }))
+);
+const AdminAuditLogPage = lazy(() =>
+  import("./pages/dashboard/admin/operations").then((m) => ({ default: m.AdminAuditLogPage }))
+);
 const GenerateReports = lazy(() =>
   import("./pages/reports/GenerateReports").then((m) => ({ default: m.GenerateReports }))
 );
@@ -418,6 +427,32 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
                 <ExerciseList />
+              </RoleProtectedRoute>
+            }
+          />
+
+          {/* Admin usuarios y auditoría (U2) */}
+          <Route
+            path="admin/users/:userId"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminUserDetailPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/users"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminUsersListPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/operations/audit"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminAuditLogPage />
               </RoleProtectedRoute>
             }
           />

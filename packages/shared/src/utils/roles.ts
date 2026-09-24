@@ -18,7 +18,7 @@ export const USER_ROLES = {
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-    admin: ["dashboard", "catalog", "account"],
+    admin: ["dashboard", "users", "catalog", "operations", "account"],
     trainer: ["dashboard", "clients", "plans", "progress", "onboarding"],
     athlete: ["dashboard", "training", "feedback", "goals"],
 };

@@ -7,7 +7,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, User } from "lucide-react";
+import { Dumbbell, ScrollText, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminDashboardHeader } from "@/components/admin/dashboard/AdminDashboardHeader";
 import {
@@ -21,6 +21,7 @@ import {
     ADMIN_DASHBOARD_STACK,
 } from "@/components/admin/dashboard/adminDashboardPresentation";
 import { ADMIN_DASHBOARD_CATALOG_ALERT } from "@/components/admin/catalog/adminCatalogPresentation";
+import { ADMIN_USERS_COPY } from "@/components/admin/users/adminUsersPresentation";
 import { AthleteSettingsRow } from "@/components/athlete/account/AthleteSettingsRow";
 import { AthleteSettingsSection } from "@/components/athlete/account/AthleteSettingsSection";
 import { Alert } from "@/components/ui/feedback";
@@ -45,7 +46,7 @@ export const AdminDashboard: React.FC = () => {
             <div className={ADMIN_DASHBOARD_STACK}>
                 <AdminDashboardHeader
                     firstName={firstName}
-                    subtitle="Gobierno del catálogo de ejercicios y tu cuenta de administrador"
+                    subtitle="Usuarios, catálogo, auditoría y tu cuenta de administrador"
                 />
 
                 {mappingGaps > 0 ? (
@@ -76,6 +77,18 @@ export const AdminDashboard: React.FC = () => {
                 <div className={ADMIN_DASHBOARD_LOWER_GRID}>
                     <div className={cn(ADMIN_DASHBOARD_ACTIONS_COL, ADMIN_DASHBOARD_LOWER_COL)}>
                         <AthleteSettingsSection title="Acciones rápidas" stretch>
+                            <AthleteSettingsRow
+                                icon={Users}
+                                label={ADMIN_USERS_COPY.dashboardUsers}
+                                hint={ADMIN_USERS_COPY.dashboardUsersHint}
+                                onClick={() => navigate("/dashboard/admin/users")}
+                            />
+                            <AthleteSettingsRow
+                                icon={ScrollText}
+                                label={ADMIN_USERS_COPY.dashboardAudit}
+                                hint={ADMIN_USERS_COPY.dashboardAuditHint}
+                                onClick={() => navigate("/dashboard/admin/operations/audit")}
+                            />
                             <AthleteSettingsRow
                                 icon={Dumbbell}
                                 label={ADMIN_DASHBOARD_CATALOG_ALERT.catalogLabel}

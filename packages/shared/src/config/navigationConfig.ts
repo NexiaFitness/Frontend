@@ -102,10 +102,22 @@ const adminNavigation: NavigationItem[] = [
         description: 'Vista general del sistema'
     },
     {
+        path: '/dashboard/admin/users',
+        label: 'Usuarios',
+        icon: 'Users',
+        description: 'Listado, ficha y soporte de cuentas'
+    },
+    {
         path: '/dashboard/admin/catalog',
         label: 'Catálogo',
         icon: 'Dumbbell',
         description: 'Ejercicios, importación y exportación'
+    },
+    {
+        path: '/dashboard/admin/operations/audit',
+        label: 'Operaciones',
+        icon: 'Settings',
+        description: 'Auditoría de intervenciones admin'
     },
     {
         path: ROUTES.PROFILE,

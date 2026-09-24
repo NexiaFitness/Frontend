@@ -9,6 +9,16 @@ export * from "./api/invitationsApi";
 export * from "./api/sessionLoadApi";
 export * from "./api/adminApi";
 export * from "./api/adminCatalogApi";
+export * from "./api/adminUsersApi";
+export * from "./types/adminUsers";
+export {
+    ADMIN_REASON_MIN_LENGTH,
+    canSuspendLastAdmin,
+    canSuspendSelf,
+    suspendDisabledReason,
+    validateAdminReason,
+} from "./utils/adminUsers/adminUserPermissions";
+export { parseAdminUsersApiError } from "./utils/adminUsers/parseAdminUsersApiError";
 export * from "./api/accountApi";
 export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";

@@ -372,5 +372,7 @@ export const baseApi = createApi({
         "InboxNotification",
         "ExerciseSelectionAnalyze",
         "AdminCatalog",
+        "AdminUsers",
+        "AdminAuditLog",
     ],
 });

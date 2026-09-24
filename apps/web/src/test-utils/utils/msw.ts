@@ -18,6 +18,7 @@ import { injuriesHandlers } from "../mocks/handlers/injuries";
 import { trainersHandlers } from "../mocks/handlers/trainers";
 import { fatigueHandlers } from "../mocks/handlers/fatigue";
 import { adminCatalogHandlers } from "../mocks/handlers/adminCatalog";
+import { adminUsersHandlers } from "../mocks/handlers/adminUsers";
 
 // Servidor MSW con handlers centralizados
 export const server = setupServer(
@@ -29,7 +30,8 @@ export const server = setupServer(
     ...injuriesHandlers,
     ...trainersHandlers,
     ...fatigueHandlers,
-    ...adminCatalogHandlers
+    ...adminCatalogHandlers,
+    ...adminUsersHandlers
 );
 
 // Setup global para tests
