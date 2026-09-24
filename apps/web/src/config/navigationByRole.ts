@@ -8,8 +8,7 @@
  *
  * Notas de mantenimiento:
  * - Solo incluir rutas existentes en App.tsx.
- * - Admin/Athlete: rutas /dashboard/users, /dashboard/my-plan, etc. se añaden
- *   cuando existan en el router.
+ * - Admin: Dashboard + Catálogo + Mi cuenta (sprint A0). Usuarios/Org se añaden en U2/G1.
  *
  * @author Frontend Team
  * @since v5.0.0 - Nexia Sparkle Flow (Fase 2a)
@@ -60,6 +59,7 @@ const ADMIN_NAV: RoleNavigation = {
     footerSubtitle: "System Administrator",
     menuItems: [
         { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+        { label: "Catálogo", path: "/dashboard/admin/catalog", icon: Dumbbell },
         { label: "Mi cuenta", path: "/dashboard/account", icon: User },
     ],
 };

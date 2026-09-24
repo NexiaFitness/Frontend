@@ -6,5 +6,6 @@
  */
 
 export { AdminCatalogListPage } from "./AdminCatalogListPage";
+export { AdminCatalogImportPage } from "./AdminCatalogImportPage";
 export { AdminCatalogExerciseCreatePage } from "./AdminCatalogExerciseCreatePage";
 export { AdminCatalogExerciseEditPage } from "./AdminCatalogExerciseEditPage";

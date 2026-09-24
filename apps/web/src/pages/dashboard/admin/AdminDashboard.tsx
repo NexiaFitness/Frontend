@@ -7,7 +7,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, Settings, User, Users } from "lucide-react";
+import { Dumbbell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminDashboardHeader } from "@/components/admin/dashboard/AdminDashboardHeader";
 import {
@@ -45,7 +45,7 @@ export const AdminDashboard: React.FC = () => {
             <div className={ADMIN_DASHBOARD_STACK}>
                 <AdminDashboardHeader
                     firstName={firstName}
-                    subtitle="Gestiona usuarios, entrenadores y el sistema desde tu panel de control"
+                    subtitle="Gobierno del catálogo de ejercicios y tu cuenta de administrador"
                 />
 
                 {mappingGaps > 0 ? (
@@ -77,12 +77,6 @@ export const AdminDashboard: React.FC = () => {
                     <div className={cn(ADMIN_DASHBOARD_ACTIONS_COL, ADMIN_DASHBOARD_LOWER_COL)}>
                         <AthleteSettingsSection title="Acciones rápidas" stretch>
                             <AthleteSettingsRow
-                                icon={Users}
-                                label="Gestionar usuarios"
-                                hint="Altas, roles y acceso a la plataforma"
-                                onClick={() => navigate("/dashboard/users")}
-                            />
-                            <AthleteSettingsRow
                                 icon={Dumbbell}
                                 label={ADMIN_DASHBOARD_CATALOG_ALERT.catalogLabel}
                                 hint={
@@ -91,12 +85,6 @@ export const AdminDashboard: React.FC = () => {
                                         : ADMIN_DASHBOARD_CATALOG_ALERT.catalogHintOk
                                 }
                                 onClick={() => navigate("/dashboard/admin/catalog")}
-                            />
-                            <AthleteSettingsRow
-                                icon={Settings}
-                                label="Configuración del sistema"
-                                hint="Parámetros globales y monitorización"
-                                onClick={() => navigate("/dashboard/system")}
                             />
                             <AthleteSettingsRow
                                 icon={User}

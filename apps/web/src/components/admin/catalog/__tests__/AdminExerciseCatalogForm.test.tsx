@@ -5,7 +5,7 @@
  * @since v1.0.0
  */
 
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { render } from "@/test-utils/render";
@@ -20,6 +20,7 @@ import {
     mockCatalogExercise,
     updateExerciseCatalogConflictHandler,
     getCatalogHistoryEmptyHandler,
+    getExerciseCatalogInactiveHandler,
 } from "@/test-utils/mocks/handlers/adminCatalog";
 import { AdminExerciseCatalogForm } from "../AdminExerciseCatalogForm";
 import { ADMIN_CATALOG_COPY } from "../adminCatalogPresentation";
@@ -107,6 +108,46 @@ describe("AdminExerciseCatalogForm", () => {
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith("/dashboard/admin/catalog");
         });
+    });
+
+    it("desactiva el ejercicio tras confirmar y pasa a ofrecer Reactivar", async () => {
+        const user = userEvent.setup();
+        render(<AdminExerciseCatalogForm mode="edit" exercisePk={11} />);
+
+        await screen.findByRole("textbox", { name: /^nombre$/i });
+        await user.click(
+            screen.getByRole("button", { name: ADMIN_CATALOG_COPY.deactivate })
+        );
+
+        const modal = await screen.findByTestId("admin-catalog-deactivate-modal");
+        await user.click(
+            within(modal).getByRole("button", { name: ADMIN_CATALOG_COPY.deactivateConfirm })
+        );
+
+        expect(
+            await screen.findByRole("button", { name: ADMIN_CATALOG_COPY.reactivate })
+        ).toBeInTheDocument();
+        expect(screen.getByText(ADMIN_CATALOG_COPY.inactiveBadge)).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: ADMIN_CATALOG_COPY.deactivate })
+        ).not.toBeInTheDocument();
+    });
+
+    it("ficha inactiva ofrece Reactivar con confirmación", async () => {
+        server.use(getExerciseCatalogInactiveHandler);
+        const user = userEvent.setup();
+        render(<AdminExerciseCatalogForm mode="edit" exercisePk={11} />);
+
+        await screen.findByRole("textbox", { name: /^nombre$/i });
+        expect(screen.getByText(ADMIN_CATALOG_COPY.inactiveBadge)).toBeInTheDocument();
+
+        await user.click(
+            screen.getByRole("button", { name: ADMIN_CATALOG_COPY.reactivate })
+        );
+        expect(await screen.findByTestId("admin-catalog-reactivate-modal")).toBeInTheDocument();
+        expect(
+            screen.getByText(ADMIN_CATALOG_COPY.reactivateBody)
+        ).toBeInTheDocument();
     });
 });
 

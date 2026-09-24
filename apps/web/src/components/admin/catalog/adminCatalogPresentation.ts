@@ -24,6 +24,7 @@ import {
     PLATFORM_PAGE_WITH_FIXED_FOOTER,
     PLATFORM_LOADING_ROW,
     PLATFORM_ALERT_SPACING,
+    nexiaSegmentedItemClass,
 } from "@/components/ui/surface/platformPremiumPresentation";
 import { NEXIA_GLASS_CARD, NEXIA_GLASS_CARD_DESKTOP } from "@/components/ui/surface/glassSurfacePresentation";
 
@@ -161,20 +162,152 @@ export const ADMIN_CATALOG_HISTORY_ITEM = cn(
 
 export const ADMIN_CATALOG_HISTORY_META = "text-xs text-muted-foreground";
 
-export const ADMIN_CATALOG_LIST_STUB_CARD = cn(
+/* ---------------------------------------------------------------------------
+ * Listado (§3.1) — toolbar, tabla desktop, cards móvil, progreso.
+ * ------------------------------------------------------------------------- */
+
+export const ADMIN_CATALOG_TOOLBAR = cn(
     NEXIA_GLASS_CARD,
-    NEXIA_GLASS_CARD_DESKTOP,
-    "relative space-y-4 p-5 sm:p-6"
+    "relative flex flex-col gap-3 p-3 sm:p-4",
+    "lg:flex-row lg:items-center lg:justify-between"
 );
 
-/** Copy UI — textos fijos de la ficha / listado stub. */
+export const ADMIN_CATALOG_TOOLBAR_SEARCH = "w-full lg:max-w-sm";
+
+export const ADMIN_CATALOG_FILTER_ROW = "flex flex-wrap gap-2";
+
+/** Toggle de filtro (aria-pressed) sobre la barra segmentada premium. */
+export function adminCatalogFilterClass(isActive: boolean): string {
+    return nexiaSegmentedItemClass(isActive);
+}
+
+export const ADMIN_CATALOG_PROGRESS_ROW =
+    "mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground";
+
+export const ADMIN_CATALOG_PROGRESS_VALUE = "font-semibold text-foreground";
+
+export const ADMIN_CATALOG_TABLE_CARD = cn(
+    NEXIA_GLASS_CARD,
+    NEXIA_GLASS_CARD_DESKTOP,
+    "relative overflow-hidden"
+);
+
+export const ADMIN_CATALOG_TABLE_SCROLL = "hidden overflow-x-auto md:block";
+
+export const ADMIN_CATALOG_TABLE = "w-full min-w-[46rem] border-collapse text-sm";
+
+export const ADMIN_CATALOG_TH =
+    "px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
+
+export const ADMIN_CATALOG_TR = cn(
+    "cursor-pointer border-t border-border/60 transition-colors hover:bg-primary/5",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40"
+);
+
+export const ADMIN_CATALOG_TR_INACTIVE = "opacity-60";
+
+export const ADMIN_CATALOG_TD = "px-4 py-3 align-middle text-foreground";
+
+export const ADMIN_CATALOG_TD_MUTED = cn(ADMIN_CATALOG_TD, "text-muted-foreground");
+
+export const ADMIN_CATALOG_TD_NAME = cn(ADMIN_CATALOG_TD, "font-medium");
+
+export const ADMIN_CATALOG_CARD_LIST = "space-y-3 p-3 md:hidden";
+
+export const ADMIN_CATALOG_CARD_ITEM = cn(
+    "flex w-full min-h-[3rem] flex-col gap-2 rounded-lg border border-border/70",
+    "bg-surface-2/30 p-3 text-left transition-colors hover:border-primary/30",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+);
+
+export const ADMIN_CATALOG_CARD_TITLE_ROW =
+    "flex items-start justify-between gap-2 text-sm font-medium text-foreground";
+
+export const ADMIN_CATALOG_CARD_META = "text-xs text-muted-foreground";
+
+export const ADMIN_CATALOG_SKELETON_LIST = "space-y-2 p-4";
+
+export const ADMIN_CATALOG_SKELETON_ROW =
+    "h-11 animate-pulse rounded-md bg-surface-2/50";
+
+export const ADMIN_CATALOG_PAGINATION = "mt-4";
+
+/* ---------------------------------------------------------------------------
+ * Import / export (§3.4).
+ * ------------------------------------------------------------------------- */
+
+export const ADMIN_CATALOG_IMPORT_GRID = "grid grid-cols-1 gap-4 lg:grid-cols-2";
+
+export const ADMIN_CATALOG_IMPORT_CARD = cn(
+    NEXIA_GLASS_CARD,
+    NEXIA_GLASS_CARD_DESKTOP,
+    "relative space-y-4 p-4 sm:p-5"
+);
+
+export const ADMIN_CATALOG_IMPORT_STEP_LABEL =
+    "text-[11px] font-semibold uppercase tracking-wide text-primary";
+
+export const ADMIN_CATALOG_IMPORT_CARD_TITLE = "text-base font-semibold text-foreground";
+
+export const ADMIN_CATALOG_IMPORT_FILE_INPUT = cn(
+    "block w-full cursor-pointer rounded-lg border border-border/70 bg-surface-2/30",
+    "px-3 py-2.5 text-sm text-foreground",
+    "file:mr-3 file:rounded-md file:border-0 file:bg-primary/15 file:px-3 file:py-1.5",
+    "file:text-sm file:font-medium file:text-primary hover:file:bg-primary/25",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+);
+
+export const ADMIN_CATALOG_IMPORT_ACTIONS = "flex flex-wrap items-center gap-2";
+
+export const ADMIN_CATALOG_SUMMARY_GRID = "grid grid-cols-1 gap-3 sm:grid-cols-3";
+
+export const ADMIN_CATALOG_SUMMARY_TILE = cn(
+    "rounded-lg border border-border/70 bg-surface-2/30 p-3"
+);
+
+export const ADMIN_CATALOG_SUMMARY_TILE_VALUE = "text-xl font-semibold text-foreground";
+
+export const ADMIN_CATALOG_SUMMARY_TILE_LABEL = "text-xs text-muted-foreground";
+
+export const ADMIN_CATALOG_SUMMARY_LIST =
+    "max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border/70 bg-surface-2/20 p-3";
+
+export const ADMIN_CATALOG_SUMMARY_ITEM = "text-sm text-foreground";
+
+export const ADMIN_CATALOG_SUMMARY_ITEM_FIELDS = "text-xs text-muted-foreground";
+
+export const ADMIN_CATALOG_VIOLATION_LIST =
+    "max-h-64 space-y-2 overflow-y-auto rounded-lg border border-destructive/30 bg-destructive/5 p-3";
+
+export const ADMIN_CATALOG_VIOLATION_ITEM = "text-sm text-foreground";
+
+export const ADMIN_CATALOG_VIOLATION_META = "text-xs text-muted-foreground";
+
+/** Copy UI — textos fijos de listado, ficha e import/export. */
 export const ADMIN_CATALOG_COPY = {
     listTitle: "Catálogo de ejercicios",
-    listStubTitle: "Listado admin en el siguiente bloque",
-    listStubBody:
-        "Cuando M4 cierre listado, desactivar/reactivar e import/export, esta pantalla tendrá cola de revisión, filtros y progreso. Mientras tanto puedes crear o abrir una ficha por URL.",
-    listStubNew: "Nuevo ejercicio",
-    listStubBack: "Volver al panel",
+    listNew: "Nuevo ejercicio",
+    listImport: "Importar",
+    searchLabel: "Buscar por nombre o slug EN",
+    searchPlaceholderList: "Buscar nombre / slug EN…",
+    filterPending: "Pendientes de revisión",
+    filterIncludeInactive: "Incluir inactivos",
+    filterQualityIssues: "Solo incidencias calidad",
+    progressLabel: (reviewed: number, active: number) =>
+        `Progreso revisión: ${reviewed}/${active} activos`,
+    issuesLabel: (count: number) =>
+        count === 1 ? "1 incidencia" : `${count} incidencias`,
+    colCode: "ID",
+    colName: "Nombre ES",
+    colReview: "Revisión",
+    colQuality: "Calidad",
+    colOpen: "Abrir ficha",
+    inactiveBadge: "Inactivo",
+    listEmptyTitle: "Sin ejercicios para estos filtros",
+    listEmptyBody: "Ajusta la búsqueda o limpia los filtros activos.",
+    listClearFilters: "Limpiar filtros",
+    listError: "No se pudo cargar el catálogo",
+    retry: "Reintentar",
     createTitle: "Nuevo ejercicio",
     editTitle: "Editar ejercicio",
     backToList: "Volver al catálogo",
@@ -225,7 +358,68 @@ export const ADMIN_CATALOG_COPY = {
     savedToast: "Ejercicio guardado",
     reviewedToast: "Marcado como revisado",
     createdToast: "Ejercicio creado",
+    deactivate: "Desactivar",
+    reactivate: "Reactivar",
+    deactivateTitle: "Desactivar ejercicio",
+    deactivateBody:
+        "Dejará de aparecer en los selectores de nuevas sesiones. Las sesiones y plantillas existentes mantienen la referencia.",
+    deactivateConfirm: "Desactivar",
+    deactivatedToast: "Ejercicio desactivado",
+    deactivateError: "No se pudo desactivar el ejercicio",
+    reactivateTitle: "Reactivar ejercicio",
+    reactivateBody: "El ejercicio volverá a estar disponible en los selectores de sesión.",
+    reactivateConfirm: "Reactivar",
+    reactivatedToast: "Ejercicio reactivado",
+    reactivateError: "No se pudo reactivar el ejercicio",
+    saveBeforeToggleActive: "Guarda los cambios antes de cambiar el estado del ejercicio",
+    importTitle: "Importar y exportar catálogo",
+    importBackToList: "Volver al catálogo",
+    importStep1: "Paso 1 — Origen",
+    importStep2: "Paso 2 — Validar",
+    importStep3: "Paso 3 — Confirmar",
+    importExportCardTitle: "Exportar catálogo actual",
+    importExportCardBody:
+        "Descarga el catálogo en formato Excel v2 para editarlo y volver a importarlo.",
+    importExportAction: "Exportar Excel v2",
+    importExportIncludeInactive: "Incluir inactivos",
+    importExportError: "No se pudo exportar el catálogo",
+    importExportedToast: "Exportación descargada",
+    importFileLabel: "Archivo Excel v2 (.xlsx)",
+    importValidateAction: "Validar archivo",
+    importValidateError: "No se pudo validar el archivo",
+    importNoFile: "Selecciona un archivo .xlsx",
+    importViolationsTitle: "Errores que bloquean la importación",
+    importOkTitle: "Archivo válido",
+    importOkBody: "Revisa el resumen de cambios antes de confirmar. La importación es todo o nada.",
+    importSummaryTitle: "Resumen de cambios",
+    importSummaryNew: "Nuevos",
+    importSummaryUpdated: "Actualizados",
+    importSummaryUnchanged: "Sin cambios",
+    importSummaryNoDetail: "Sin detalle de campos",
+    importConfirmAction: "Confirmar import",
+    importConfirmError: "No se pudo confirmar la importación",
+    importConfirmedTitle: "Importación completada",
+    importConfirmedBody: (count: number) =>
+        `${count} ejercicio(s) importados. Los que cambiaron vuelven a pendiente de revisión.`,
+    importConfirmedToast: "Importación completada",
+    importGoToList: "Ir al listado",
+    importPendingValidation: "Valida el archivo antes de confirmar",
 } as const;
+
+/** Etiquetas §3.1 para los códigos `quality_flags` del backend. */
+export const ADMIN_CATALOG_QUALITY_FLAG_LABELS: Record<string, string> = {
+    OK: "OK",
+    NO_PM: "Sin PM",
+    PM_PRIORITY: "Prioridades PM",
+    NO_PRIMARY_PATTERN: "Patrón",
+    NO_EQUIPMENT: "Material",
+    INCOMPLETE_JOINT_ACTIONS: "Articulaciones",
+    VOLUME_MAPPING: "Mapeo volumen",
+};
+
+export function adminCatalogQualityFlagLabel(flag: string): string {
+    return ADMIN_CATALOG_QUALITY_FLAG_LABELS[flag] ?? flag;
+}
 
 export const ADMIN_CATALOG_SECTIONS = [
     { id: "datos" as const, label: ADMIN_CATALOG_COPY.sectionDatos },

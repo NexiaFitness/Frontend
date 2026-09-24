@@ -93,7 +93,7 @@ const trainerNavigation: NavigationItem[] = [
     }
 ];
 
-// Sidebar para administradores
+// Sidebar para administradores — solo rutas reales (A0 / portal-admin)
 const adminNavigation: NavigationItem[] = [
     {
         path: ROUTES.DASHBOARD,
@@ -102,28 +102,10 @@ const adminNavigation: NavigationItem[] = [
         description: 'Vista general del sistema'
     },
     {
-        path: '/dashboard/users',
-        label: 'Gestión de Usuarios',
-        icon: 'Users',
-        description: 'Administrar todos los usuarios'
-    },
-    {
-        path: '/dashboard/trainers',
-        label: 'Entrenadores',
-        icon: 'UserCheck',
-        description: 'Supervisar entrenadores'
-    },
-    {
-        path: '/dashboard/analytics',
-        label: 'Analytics Globales',
-        icon: 'BarChart',
-        description: 'Métricas de la plataforma'
-    },
-    {
-        path: '/dashboard/system',
-        label: 'Configuración',
-        icon: 'Settings',
-        description: 'Configuración del sistema'
+        path: '/dashboard/admin/catalog',
+        label: 'Catálogo',
+        icon: 'Dumbbell',
+        description: 'Ejercicios, importación y exportación'
     },
     {
         path: ROUTES.PROFILE,

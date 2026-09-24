@@ -101,3 +101,76 @@ export interface CatalogValidationErrorBody {
     detail: string;
     errors: string[];
 }
+
+/** GET `/admin/catalog/exercises` — item de listado (F8). */
+export interface AdminCatalogExerciseListItemOut {
+    exercise_pk: number;
+    exercise_code: string;
+    nombre: string;
+    nombre_ingles?: string | null;
+    is_active: boolean;
+    review_status: CatalogReviewStatus;
+    catalog_reviewed_at?: string | null;
+    /** Códigos backend: OK, NO_PM, PM_PRIORITY, NO_PRIMARY_PATTERN, NO_EQUIPMENT, INCOMPLETE_JOINT_ACTIONS, VOLUME_MAPPING. */
+    quality_flags: string[];
+}
+
+/** Progreso de revisión F9 — alcance activos. */
+export interface CatalogReviewProgressOut {
+    reviewed_count: number;
+    active_count: number;
+}
+
+export interface AdminCatalogExerciseListOut {
+    items: AdminCatalogExerciseListItemOut[];
+    total: number;
+    skip: number;
+    limit: number;
+    review_progress: CatalogReviewProgressOut;
+}
+
+/** Query params del listado admin (todos opcionales en backend). */
+export interface AdminCatalogListParams {
+    skip?: number;
+    limit?: number;
+    search?: string;
+    review_status?: CatalogReviewStatus;
+    include_inactive?: boolean;
+    quality_issues_only?: boolean;
+}
+
+export interface CatalogImportViolationOut {
+    exercise_id?: string | null;
+    sheet: string;
+    row: number;
+    rule: string;
+    message: string;
+}
+
+/** Entrada de `change_summary.updated` — la produce `catalog_import_bundle._diff_fields`. */
+export interface CatalogImportUpdatedEntryOut {
+    exercise_id: string | null;
+    fields: string[];
+}
+
+export interface CatalogImportChangeSummaryOut {
+    new: string[];
+    updated: CatalogImportUpdatedEntryOut[];
+    unchanged_count: number;
+}
+
+export interface CatalogImportValidateOut {
+    ok_for_import: boolean;
+    violations: CatalogImportViolationOut[];
+    change_summary: CatalogImportChangeSummaryOut;
+}
+
+export interface CatalogImportConfirmOut {
+    imported_count: number;
+    exercise_ids: string[];
+    change_summary: CatalogImportChangeSummaryOut;
+}
+
+export interface AdminCatalogExportParams {
+    include_inactive?: boolean;
+}

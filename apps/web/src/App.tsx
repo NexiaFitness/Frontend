@@ -161,6 +161,11 @@ const AdminCatalogExerciseEditPage = lazy(() =>
     default: m.AdminCatalogExerciseEditPage,
   }))
 );
+const AdminCatalogImportPage = lazy(() =>
+  import("./pages/dashboard/admin/catalog").then((m) => ({
+    default: m.AdminCatalogImportPage,
+  }))
+);
 const GenerateReports = lazy(() =>
   import("./pages/reports/GenerateReports").then((m) => ({ default: m.GenerateReports }))
 );
@@ -423,6 +428,14 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
                 <AdminCatalogExerciseCreatePage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/catalog/import"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminCatalogImportPage />
               </RoleProtectedRoute>
             }
           />

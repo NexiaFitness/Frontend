@@ -6,6 +6,9 @@
  */
 
 export { AdminExerciseCatalogForm } from "./AdminExerciseCatalogForm";
+export { AdminCatalogQualityFlags } from "./AdminCatalogQualityFlags";
 export { useAdminExerciseCatalogForm } from "./useAdminExerciseCatalogForm";
 export { useAdminCatalogQueue } from "./useAdminCatalogQueue";
+export { useAdminCatalogList } from "./useAdminCatalogList";
+export { useAdminCatalogImport } from "./useAdminCatalogImport";
 export * from "./adminCatalogPresentation";

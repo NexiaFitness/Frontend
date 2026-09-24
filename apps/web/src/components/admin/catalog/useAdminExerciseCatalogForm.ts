@@ -11,8 +11,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     useCreateExerciseCatalogMutation,
+    useDeactivateCatalogExerciseMutation,
     useGetExerciseCatalogQuery,
     useMarkCatalogExerciseReviewedMutation,
+    useReactivateCatalogExerciseMutation,
     useUpdateExerciseCatalogMutation,
 } from "@nexia/shared/api/adminCatalogApi";
 import {
@@ -103,6 +105,8 @@ export function useAdminExerciseCatalogForm({
     const [historyOpen, setHistoryOpen] = useState(false);
     const [mobileSection, setMobileSection] = useState<AdminCatalogSectionId>("datos");
     const [hydratedPk, setHydratedPk] = useState<number | null>(null);
+    const [deactivateOpen, setDeactivateOpen] = useState(false);
+    const [reactivateOpen, setReactivateOpen] = useState(false);
 
     const {
         data: catalog,
@@ -116,8 +120,13 @@ export function useAdminExerciseCatalogForm({
     const [createCatalog, { isLoading: isCreating }] = useCreateExerciseCatalogMutation();
     const [updateCatalog, { isLoading: isUpdating }] = useUpdateExerciseCatalogMutation();
     const [markReviewed, { isLoading: isMarking }] = useMarkCatalogExerciseReviewedMutation();
+    const [deactivateCatalog, { isLoading: isDeactivating }] =
+        useDeactivateCatalogExerciseMutation();
+    const [reactivateCatalog, { isLoading: isReactivating }] =
+        useReactivateCatalogExerciseMutation();
 
-    const isSaving = isCreating || isUpdating || isMarking;
+    const isTogglingActive = isDeactivating || isReactivating;
+    const isSaving = isCreating || isUpdating || isMarking || isTogglingActive;
 
     useEffect(() => {
         if (mode === "create") {
@@ -314,6 +323,59 @@ export function useAdminExerciseCatalogForm({
         navigate("/dashboard/admin/catalog");
     }, [isDirty, navigate]);
 
+    /** Rehidrata draft + token de concurrencia tras una acción que toca updated_at. */
+    const hydrateFromServer = useCallback(async () => {
+        if (mode !== "edit" || exercisePk == null) return;
+        const result = await refetch();
+        if (result.data) {
+            const next = draftFromCatalog(result.data);
+            setDraft(next);
+            setBaselineJson(JSON.stringify(next));
+            setHydratedPk(result.data.id);
+        }
+    }, [exercisePk, mode, refetch]);
+
+    const handleDeactivate = useCallback(async () => {
+        if (exercisePk == null) return;
+        if (isDirty) {
+            showError(ADMIN_CATALOG_COPY.saveBeforeToggleActive);
+            setDeactivateOpen(false);
+            return;
+        }
+        try {
+            // DELETE /exercises/{pk} devuelve la ficha completa ya inactiva
+            // (incluye updated_at): hidratar desde ahí mantiene el lock óptimista.
+            const deactivated = await deactivateCatalog(exercisePk).unwrap();
+            const next = draftFromCatalog(deactivated);
+            setDraft(next);
+            setBaselineJson(JSON.stringify(next));
+            setHydratedPk(deactivated.id);
+            setDeactivateOpen(false);
+            showSuccess(ADMIN_CATALOG_COPY.deactivatedToast);
+        } catch {
+            setDeactivateOpen(false);
+            showError(ADMIN_CATALOG_COPY.deactivateError);
+        }
+    }, [deactivateCatalog, exercisePk, isDirty, showError, showSuccess]);
+
+    const handleReactivate = useCallback(async () => {
+        if (exercisePk == null) return;
+        if (isDirty) {
+            showError(ADMIN_CATALOG_COPY.saveBeforeToggleActive);
+            setReactivateOpen(false);
+            return;
+        }
+        try {
+            await reactivateCatalog(exercisePk).unwrap();
+            setReactivateOpen(false);
+            await hydrateFromServer();
+            showSuccess(ADMIN_CATALOG_COPY.reactivatedToast);
+        } catch {
+            setReactivateOpen(false);
+            showError(ADMIN_CATALOG_COPY.reactivateError);
+        }
+    }, [exercisePk, hydrateFromServer, isDirty, reactivateCatalog, showError, showSuccess]);
+
     const handleReloadConflict = useCallback(async () => {
         setConflict(null);
         if (mode === "edit" && exercisePk != null) {
@@ -345,6 +407,14 @@ export function useAdminExerciseCatalogForm({
         setMobileSection,
         catalog,
         refetch,
+        isInactive: draft.core.is_active === false,
+        isTogglingActive,
+        deactivateOpen,
+        setDeactivateOpen,
+        reactivateOpen,
+        setReactivateOpen,
+        handleDeactivate,
+        handleReactivate,
         handleSave,
         handleMarkReviewed,
         handleReviewedAndNext,

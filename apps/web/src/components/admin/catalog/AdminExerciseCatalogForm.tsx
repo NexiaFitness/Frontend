@@ -21,6 +21,7 @@ import {
     Textarea,
 } from "@/components/ui/forms";
 import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
+import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
     useGetActionsQuery,
@@ -145,6 +146,14 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
         handleReloadConflict,
         currentPk,
         refetch,
+        isInactive,
+        isTogglingActive,
+        deactivateOpen,
+        setDeactivateOpen,
+        reactivateOpen,
+        setReactivateOpen,
+        handleDeactivate,
+        handleReactivate,
     } = form;
 
     const { data: muscles = [] } = useGetMusclesQuery();
@@ -325,6 +334,11 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                     {ADMIN_CATALOG_COPY.reviewPending}
                                 </Badge>
                             ) : null}
+                            {mode === "edit" && isInactive ? (
+                                <Badge variant="subtle-secondary">
+                                    {ADMIN_CATALOG_COPY.inactiveBadge}
+                                </Badge>
+                            ) : null}
                         </div>
                     </div>
                     <div className={ADMIN_CATALOG_HEADER_ACTIONS}>
@@ -337,6 +351,28 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                 onClick={() => void handleMarkReviewed()}
                             >
                                 {ADMIN_CATALOG_COPY.markReviewed}
+                            </Button>
+                        ) : null}
+                        {mode === "edit" && isInactive ? (
+                            <Button
+                                type="button"
+                                variant="outline-primary"
+                                size="sm"
+                                disabled={isSaving}
+                                onClick={() => setReactivateOpen(true)}
+                            >
+                                {ADMIN_CATALOG_COPY.reactivate}
+                            </Button>
+                        ) : null}
+                        {mode === "edit" && !isInactive ? (
+                            <Button
+                                type="button"
+                                variant="outline-destructive"
+                                size="sm"
+                                disabled={isSaving}
+                                onClick={() => setDeactivateOpen(true)}
+                            >
+                                {ADMIN_CATALOG_COPY.deactivate}
                             </Button>
                         ) : null}
                         <Button
@@ -1086,6 +1122,28 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                 onClose={() => setConflict(null)}
                 onReload={() => void handleReloadConflict()}
                 conflict={conflict}
+            />
+            <NexiaPremiumConfirmModal
+                isOpen={deactivateOpen}
+                onClose={() => setDeactivateOpen(false)}
+                onConfirm={() => void handleDeactivate()}
+                title={ADMIN_CATALOG_COPY.deactivateTitle}
+                description={ADMIN_CATALOG_COPY.deactivateBody}
+                confirmLabel={ADMIN_CATALOG_COPY.deactivateConfirm}
+                confirmVariant="destructive"
+                isLoading={isTogglingActive}
+                data-testid="admin-catalog-deactivate-modal"
+            />
+            <NexiaPremiumConfirmModal
+                isOpen={reactivateOpen}
+                onClose={() => setReactivateOpen(false)}
+                onConfirm={() => void handleReactivate()}
+                title={ADMIN_CATALOG_COPY.reactivateTitle}
+                description={ADMIN_CATALOG_COPY.reactivateBody}
+                confirmLabel={ADMIN_CATALOG_COPY.reactivateConfirm}
+                confirmVariant="primary"
+                isLoading={isTogglingActive}
+                data-testid="admin-catalog-reactivate-modal"
             />
         </div>
     );
