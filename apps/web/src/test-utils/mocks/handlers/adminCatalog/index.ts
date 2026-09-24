@@ -379,6 +379,58 @@ export const validateCatalogImportBlockedHandler = http.post(
         )
 );
 
+/** Validate OK sin actualizaciones — no debe mostrar aviso de sobrescritura. */
+export const validateCatalogImportNoUpdatesHandler = http.post(
+    "*/admin/catalog/import/validate",
+    async () =>
+        HttpResponse.json(
+            {
+                ok_for_import: true,
+                violations: [],
+                change_summary: {
+                    new: ["brand_new"],
+                    updated: [],
+                    unchanged_count: 50,
+                },
+            },
+            { status: 200 }
+        )
+);
+
+/** Rechazo 413 FILE_TOO_LARGE (cuerpo upload guard). */
+export const validateCatalogImportTooLargeHandler = http.post(
+    "*/admin/catalog/import/validate",
+    async () =>
+        HttpResponse.json(
+            {
+                detail: {
+                    detail: "FILE_TOO_LARGE",
+                    errors: [
+                        "El fichero supera el máximo permitido (25 MB).",
+                    ],
+                },
+            },
+            { status: 413 }
+        )
+);
+
+/** Rechazo 415 UNSUPPORTED_FILE_TYPE. */
+export const validateCatalogImportUnsupportedTypeHandler = http.post(
+    "*/admin/catalog/import/validate",
+    async () =>
+        HttpResponse.json(
+            {
+                detail: {
+                    detail: "UNSUPPORTED_FILE_TYPE",
+                    errors: [
+                        "El fichero debe ser un Excel .xlsx (exportación de catálogo v2).",
+                    ],
+                },
+            },
+            { status: 415 }
+        )
+);
+
 export const confirmCatalogImportHandler = http.post(
     "*/admin/catalog/import/confirm",
     async () =>

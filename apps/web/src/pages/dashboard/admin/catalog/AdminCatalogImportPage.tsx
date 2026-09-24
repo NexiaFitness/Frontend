@@ -146,6 +146,9 @@ export const AdminCatalogImportPage: React.FC = () => {
                                 }
                             />
                         </FormField>
+                        <p className={ADMIN_CATALOG_SECTION_HINT}>
+                            {ADMIN_CATALOG_COPY.importFileHint}
+                        </p>
                         <div className={ADMIN_CATALOG_IMPORT_ACTIONS}>
                             <Button
                                 type="button"
@@ -271,6 +274,23 @@ export const AdminCatalogImportPage: React.FC = () => {
                                     </li>
                                 ))}
                             </ul>
+                        ) : null}
+
+                        {!confirmation && summary.updated.length > 0 ? (
+                            <Alert
+                                variant="warning"
+                                className={ADMIN_CATALOG_ALERT_SPACING}
+                            >
+                                <div data-testid="admin-catalog-import-overwrite-warning">
+                                    <p>{ADMIN_CATALOG_COPY.importOverwriteWarning}</p>
+                                    <p className={ADMIN_CATALOG_SECTION_HINT}>
+                                        {ADMIN_CATALOG_COPY.importOverwriteCodesLabel}:{" "}
+                                        {summary.updated
+                                            .map((entry) => entry.exercise_id ?? "—")
+                                            .join(", ")}
+                                    </p>
+                                </div>
+                            </Alert>
                         ) : null}
 
                         {!confirmation ? (

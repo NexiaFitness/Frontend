@@ -17,6 +17,7 @@ import {
     useLazyExportAdminCatalogQuery,
     useValidateCatalogImportMutation,
 } from "@nexia/shared/api/adminCatalogApi";
+import { catalogImportUploadErrorMessage } from "@nexia/shared";
 import type {
     CatalogImportConfirmOut,
     CatalogImportValidateOut,
@@ -78,9 +79,11 @@ export function useAdminCatalogImport() {
         try {
             const result = await validateImport(file).unwrap();
             setValidation(result);
-        } catch {
+        } catch (err: unknown) {
             setValidation(null);
-            showError(ADMIN_CATALOG_COPY.importValidateError);
+            showError(
+                catalogImportUploadErrorMessage(err, ADMIN_CATALOG_COPY.importValidateError)
+            );
         }
     }, [file, showError, validateImport]);
 
@@ -97,8 +100,10 @@ export function useAdminCatalogImport() {
             const result = await confirmImport(file).unwrap();
             setConfirmation(result);
             showSuccess(ADMIN_CATALOG_COPY.importConfirmedToast);
-        } catch {
-            showError(ADMIN_CATALOG_COPY.importConfirmError);
+        } catch (err: unknown) {
+            showError(
+                catalogImportUploadErrorMessage(err, ADMIN_CATALOG_COPY.importConfirmError)
+            );
         }
     }, [confirmImport, file, showError, showSuccess, validation]);
 
