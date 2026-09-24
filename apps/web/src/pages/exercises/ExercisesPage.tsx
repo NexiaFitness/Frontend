@@ -253,9 +253,13 @@ export const ExercisesPage: React.FC = () => {
     );
 
     const showLoading = isLoading && !data;
+    const hasListTotal = data != null;
     const libraryIsEmpty =
-        !showLoading && !hasServerFilters && totalFromApi === 0 && localAdditions.length === 0;
-    const headingCount: number | null = showLoading ? null : totalFiltered;
+        hasListTotal &&
+        !hasServerFilters &&
+        totalFromApi === 0 &&
+        localAdditions.length === 0;
+    const headingCount: number | null = hasListTotal ? totalFiltered : null;
 
     return (
         <div className={EXERCISES_LIBRARY_PAGE}>
