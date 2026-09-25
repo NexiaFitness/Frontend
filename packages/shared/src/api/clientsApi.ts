@@ -18,12 +18,15 @@ import type {
     ClientFilters,
     ClientListWithMetricsResponse,
     GetClientsWithMetricsParams,
+    GetClientQueryArg,
+    ClientTrainersListResponse,
     RecentActivityResponse,
     ClientPreviewResponse,
     ClientRatingCreate,
     ClientRatingUpdate,
     ClientRatingOut,
 } from "../types/client";
+import { resolveGetClientQueryArg } from "../types/client";
 import type {
     ClientEquipment,
     ClientEquipmentCreate,
@@ -210,14 +213,55 @@ export const clientsApi = baseApi.injectEndpoints({
         }),
 
         /**
-         * Obtener cliente específico por ID
+         * Obtener cliente específico por ID.
+         * Admin SUP: pass `{ clientId, trainerId }` so BE asserts membership (403 if not linked).
          */
-        getClient: builder.query<Client, number>({
-            query: (id) => ({
-                url: `/clients/${id}`,
-                method: "GET",
-            }),
-            providesTags: (result, error, id) => [{ type: "Client", id }],
+        getClient: builder.query<Client, GetClientQueryArg>({
+            query: (arg) => {
+                const { clientId, trainerId } = resolveGetClientQueryArg(arg);
+                const params = new URLSearchParams();
+                if (trainerId != null) {
+                    params.set("trainer_id", String(trainerId));
+                }
+                const qs = params.toString() ? `?${params.toString()}` : "";
+                return {
+                    url: `/clients/${clientId}${qs}`,
+                    method: "GET",
+                };
+            },
+            serializeQueryArgs: ({ queryArgs }) => {
+                const { clientId, trainerId } = resolveGetClientQueryArg(queryArgs);
+                return `${clientId}:${trainerId ?? "any"}`;
+            },
+            providesTags: (_result, _error, arg) => {
+                const { clientId } = resolveGetClientQueryArg(arg);
+                return [{ type: "Client", id: clientId }];
+            },
+        }),
+
+        /**
+         * Trainers linked to a client (admin SUP F3).
+         * Backend: GET /subdcrud/clients/{client_id}/trainers
+         */
+        getClientTrainers: builder.query<
+            ClientTrainersListResponse,
+            { clientId: number; skip?: number; limit?: number; search?: string }
+        >({
+            query: ({ clientId, skip = 0, limit = 20, search }) => {
+                const params = new URLSearchParams();
+                params.set("skip", String(skip));
+                params.set("limit", String(limit));
+                if (search != null && search.trim() !== "") {
+                    params.set("search", search.trim());
+                }
+                return {
+                    url: `/subdcrud/clients/${clientId}/trainers?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (_result, _error, { clientId }) => [
+                { type: "Client", id: `TRAINERS-${clientId}` },
+            ],
         }),
 
         /**
@@ -1236,6 +1280,9 @@ export const {
     useGetCurrentClientProfileQuery,
     useCompleteAthleteOnboardingMutation,
     useGetClientQuery,
+    useLazyGetClientQuery,
+    useGetClientTrainersQuery,
+    useLazyGetClientTrainersQuery,
     useCreateClientMutation,
     usePreviewClientCalculationsMutation,
     useUpdateClientMutation,

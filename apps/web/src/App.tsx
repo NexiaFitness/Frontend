@@ -172,8 +172,23 @@ const AdminUsersListPage = lazy(() =>
 const AdminUserDetailPage = lazy(() =>
   import("./pages/dashboard/admin/users").then((m) => ({ default: m.AdminUserDetailPage }))
 );
+const AdminSupervisedClientPage = lazy(() =>
+  import("./pages/dashboard/admin/users").then((m) => ({
+    default: m.AdminSupervisedClientPage,
+  }))
+);
 const AdminAuditLogPage = lazy(() =>
   import("./pages/dashboard/admin/operations").then((m) => ({ default: m.AdminAuditLogPage }))
+);
+const AdminOrganizationsListPage = lazy(() =>
+  import("./pages/dashboard/admin/organizations").then((m) => ({
+    default: m.AdminOrganizationsListPage,
+  }))
+);
+const AdminOrganizationsDetailPage = lazy(() =>
+  import("./pages/dashboard/admin/organizations").then((m) => ({
+    default: m.AdminOrganizationsDetailPage,
+  }))
 );
 const AdminTaxonomiesPage = lazy(() =>
   import("./pages/dashboard/admin/taxonomies").then((m) => ({ default: m.AdminTaxonomiesPage }))
@@ -444,7 +459,15 @@ function App() {
             }
           />
 
-          {/* Admin usuarios y auditoría (U2) */}
+          {/* Admin usuarios y auditoría (U2 + SUP) */}
+          <Route
+            path="admin/users/:userId/clients/:clientId"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminSupervisedClientPage />
+              </RoleProtectedRoute>
+            }
+          />
           <Route
             path="admin/users/:userId"
             element={
@@ -466,6 +489,24 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
                 <AdminAuditLogPage />
+              </RoleProtectedRoute>
+            }
+          />
+
+          {/* Admin organizaciones (G1, solo lectura) */}
+          <Route
+            path="admin/organizations/:orgId"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminOrganizationsDetailPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/organizations"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminOrganizationsListPage />
               </RoleProtectedRoute>
             }
           />

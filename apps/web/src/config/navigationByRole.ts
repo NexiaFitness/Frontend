@@ -8,7 +8,7 @@
  *
  * Notas de mantenimiento:
  * - Solo incluir rutas existentes en App.tsx.
- * - Admin: Dashboard, Usuarios, Ejercicios, Taxonomías, Tests físicos, Operaciones, Mi cuenta (T).
+ * - Admin: Dashboard, Usuarios, Ejercicios, Taxonomías, Tests físicos, Operaciones, Organización, Mi cuenta (G1).
  *
  * @author Frontend Team
  * @since v5.0.0 - Nexia Sparkle Flow (Fase 2a)
@@ -28,6 +28,7 @@ import {
     Settings2,
     Tags,
     Activity,
+    Building2,
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -67,6 +68,7 @@ const ADMIN_NAV: RoleNavigation = {
         { label: "Taxonomías", path: "/dashboard/admin/taxonomies", icon: Tags },
         { label: "Tests físicos", path: "/dashboard/admin/physical-tests", icon: Activity },
         { label: "Operaciones", path: "/dashboard/admin/operations/audit", icon: Settings2 },
+        { label: "Organización", path: "/dashboard/admin/organizations", icon: Building2 },
         { label: "Mi cuenta", path: "/dashboard/account", icon: User },
     ],
 };

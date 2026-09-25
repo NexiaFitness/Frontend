@@ -34,6 +34,7 @@ import {
     formatAdminAuditAction,
     formatAdminDateTime,
 } from "@/components/admin/users/adminUsersPresentation";
+import { ADMIN_SUP_COPY } from "@/components/admin/supervision/adminSupervisionPresentation";
 
 const PAGE_SIZE = 20;
 const AUDIT_ACTIONS = [
@@ -62,6 +63,7 @@ export const AdminAuditLogPage: React.FC = () => {
     const targetRaw = searchParams.get("target") ?? searchParams.get("target_user_id") ?? "";
     const desde = searchParams.get("desde") ?? "";
     const hasta = searchParams.get("hasta") ?? "";
+    const includeSupervision = searchParams.get("include_supervision") === "1";
 
     const queryParams = useMemo(() => {
         const params: {
@@ -72,6 +74,7 @@ export const AdminAuditLogPage: React.FC = () => {
             target_user_id?: number;
             desde?: string;
             hasta?: string;
+            include_supervision?: boolean;
         } = { page, page_size: PAGE_SIZE };
         if (action) params.action = action;
         const actorId = Number(actorRaw);
@@ -80,8 +83,9 @@ export const AdminAuditLogPage: React.FC = () => {
         if (targetRaw && Number.isFinite(targetId)) params.target_user_id = targetId;
         if (desde) params.desde = desde;
         if (hasta) params.hasta = hasta;
+        if (includeSupervision) params.include_supervision = true;
         return params;
-    }, [action, actorRaw, targetRaw, desde, hasta, page]);
+    }, [action, actorRaw, targetRaw, desde, hasta, page, includeSupervision]);
 
     const { data, isLoading, isError, refetch } = useListAdminAuditLogQuery(queryParams);
 
@@ -189,6 +193,22 @@ export const AdminAuditLogPage: React.FC = () => {
                             />
                         </label>
                     </div>
+                    <label className="flex items-center gap-2 text-sm text-foreground">
+                        <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-border"
+                            checked={includeSupervision}
+                            onChange={(e) =>
+                                patch(
+                                    {
+                                        include_supervision: e.target.checked ? "1" : null,
+                                    },
+                                    true
+                                )
+                            }
+                        />
+                        {ADMIN_SUP_COPY.auditIncludeSupervision}
+                    </label>
                 </div>
 
                 {isError ? (

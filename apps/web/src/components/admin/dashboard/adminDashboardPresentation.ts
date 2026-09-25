@@ -85,3 +85,55 @@ export const ADMIN_DASHBOARD_ACTIVITY_METRICS_GRID = cn(
 export const ADMIN_DASHBOARD_SECTION_LABEL = ATHLETE_SECTION_LABEL;
 
 export const ADMIN_DASHBOARD_PRIMARY_CTA = ATHLETE_PRIMARY_CTA;
+
+export const ADMIN_DASHBOARD_WIDGET_GRID = cn(
+    "grid grid-cols-1 gap-4",
+    "md:grid-cols-2 md:gap-5",
+    "xl:grid-cols-3 xl:gap-6"
+);
+
+export const ADMIN_DASHBOARD_WIDGET = cn(
+    ATHLETE_SETTINGS_CARD,
+    NEXIA_GLASS_CARD_DESKTOP,
+    "relative flex min-h-[10rem] flex-col overflow-hidden p-5 lg:p-6"
+);
+
+export const ADMIN_DASHBOARD_WIDGET_TITLE = cn(
+    NEXIA_PORTAL_CARD_TITLE,
+    "mb-3"
+);
+
+export const ADMIN_DASHBOARD_WIDGET_SKELETON = cn(
+    "h-20 animate-pulse rounded-xl bg-muted/40"
+);
+
+export const ADMIN_DASHBOARD_KPI_BUTTON = cn(
+    "group relative w-full text-left transition-colors",
+    "hover:bg-surface-2/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+    "rounded-2xl"
+);
+
+export const ADMIN_DASHBOARD_COPY = {
+    subtitle: "Indicadores reales de usuarios, entrenamiento, catálogo y organizaciones",
+    usersTitle: "Usuarios por rol",
+    usersHint: "Activos = is_active; suspendidos = !is_active",
+    signupsTitle: "Altas recientes",
+    signupsHint: "Altas por created_at en los últimos 7 y 30 días",
+    trainersClientsTitle: "Entrenadores y clientes",
+    trainersWithClients: "Entrenadores con ≥1 cliente",
+    activeClients: "Clientes activos",
+    sessionsTitle: "Actividad de entrenamiento",
+    sessionsHint: "Sesiones con status completed en los últimos 7 días",
+    orgsTitle: "Organizaciones por plan",
+    orgsHint: "Organizaciones activas agrupadas por subscription_tier",
+    catalogTitle: "Salud del catálogo",
+    catalogOk: "Sin gaps de mapeo muscular",
+    auditTitle: "Actividad admin reciente",
+    auditEmpty: "Sin escrituras recientes en auditoría.",
+    retry: "Reintentar",
+    loadError: "No se pudo cargar este bloque.",
+    openUsers: "Ver usuarios",
+    openOrgs: "Ver organizaciones",
+    openCatalog: "Ir a la cola de revisión",
+    openAudit: "Ver auditoría",
+} as const;

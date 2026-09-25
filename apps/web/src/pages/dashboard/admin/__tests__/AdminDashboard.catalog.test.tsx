@@ -23,6 +23,23 @@ describe("AdminDashboard catalog M5", () => {
     beforeEach(() => {
         clearRouterMocks();
         setAuthenticatedUser(validAdminUser);
+        server.use(
+            http.get("*/admin/dashboard/summary", () =>
+                HttpResponse.json({
+                    users_by_role: {
+                        admin: { active: 1, suspended: 0 },
+                        trainer: { active: 2, suspended: 0 },
+                        athlete: { active: 3, suspended: 1 },
+                    },
+                    trainers_with_clients: 1,
+                    active_clients: 3,
+                    signups_7d: { admin: 0, trainer: 1, athlete: 0 },
+                    signups_30d: { admin: 0, trainer: 1, athlete: 2 },
+                    sessions_completed_7d: 0,
+                    orgs_by_tier: { free: 2 },
+                })
+            )
+        );
     });
 
     it("no muestra KPIs inventados", () => {

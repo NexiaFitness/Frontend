@@ -1,9 +1,9 @@
 /**
- * AdminUserDetailPage.tsx — Ficha de soporte de usuario Admin (U2).
+ * AdminUserDetailPage.tsx — Ficha de soporte de usuario Admin (U2 + SUP).
  */
 
 import React, { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
@@ -22,6 +22,13 @@ import { useToast } from "@/components/ui/feedback";
 import { AdminUserReasonModal } from "@/components/admin/users/AdminUserReasonModal";
 import { AdminSetPasswordModal } from "@/components/admin/users/AdminSetPasswordModal";
 import { useAdminUserActions } from "@/components/admin/users/useAdminUserActions";
+import { AdminUserSupervisionSection } from "@/components/admin/supervision/AdminUserSupervisionSection";
+import { AdminSuperviseAsTrainerModal } from "@/components/admin/supervision/AdminSuperviseAsTrainerModal";
+import { useAdminAthleteSuperviseLink } from "@/components/admin/supervision/useAdminAthleteSuperviseLink";
+import {
+    ADMIN_SUP_COPY,
+    groupAuditItemsByDay,
+} from "@/components/admin/supervision/adminSupervisionPresentation";
 import {
     ADMIN_USERS_ALERT_SPACING,
     ADMIN_USERS_AUDIT_LIST,
@@ -40,7 +47,6 @@ import {
     ADMIN_USERS_STACK,
     ADMIN_USERS_TABLE_CARD,
     ADMIN_USERS_TITLE_WRAP,
-    formatAdminAuditAction,
     formatAdminDateTime,
     formatAdminUserRole,
 } from "@/components/admin/users/adminUsersPresentation";
@@ -63,9 +69,21 @@ export const AdminUserDetailPage: React.FC = () => {
     );
 
     const { data: auditPage } = useListAdminAuditLogQuery(
-        { page: 1, page_size: 10, target_user_id: userId },
+        {
+            page: 1,
+            page_size: 50,
+            target_user_id: userId,
+            include_supervision: true,
+        },
         { skip }
     );
+
+    const auditByDay = useMemo(
+        () => groupAuditItemsByDay(auditPage?.items ?? []),
+        [auditPage?.items]
+    );
+
+    const athleteLink = useAdminAthleteSuperviseLink(user?.client_profile_id);
 
     const actions = useAdminUserActions({
         userId,
@@ -76,7 +94,10 @@ export const AdminUserDetailPage: React.FC = () => {
         onError: () => showError("No se pudo completar la acción."),
     });
 
-    const title = useMemo(() => user?.full_name ?? user?.email ?? ADMIN_USERS_COPY.detailTitle, [user]);
+    const title = useMemo(
+        () => user?.full_name ?? user?.email ?? ADMIN_USERS_COPY.detailTitle,
+        [user]
+    );
 
     if (skip) {
         return (
@@ -100,6 +121,17 @@ export const AdminUserDetailPage: React.FC = () => {
                         ) : null}
                     </div>
                     <div className={ADMIN_USERS_HEADER_ACTIONS}>
+                        {user?.role === "athlete" && user.client_profile_id ? (
+                            <Button
+                                type="button"
+                                variant="outline-primary"
+                                size="sm"
+                                disabled={athleteLink.isResolving}
+                                onClick={() => void athleteLink.openSupervise()}
+                            >
+                                {ADMIN_SUP_COPY.viewAsSupervisor}
+                            </Button>
+                        ) : null}
                         <Button
                             type="button"
                             variant="ghost-primary"
@@ -113,6 +145,25 @@ export const AdminUserDetailPage: React.FC = () => {
                     </div>
                 </div>
 
+                {athleteLink.errorMessage ? (
+                    <Alert
+                        variant="error"
+                        className={ADMIN_USERS_ALERT_SPACING}
+                        action={
+                            <Button
+                                type="button"
+                                variant="ghost-primary"
+                                size="sm"
+                                onClick={() => athleteLink.clearError()}
+                            >
+                                Cerrar
+                            </Button>
+                        }
+                    >
+                        {athleteLink.errorMessage}
+                    </Alert>
+                ) : null}
+
                 {isLoading ? <p className={ADMIN_USERS_LOADING_ROW}>Cargando…</p> : null}
 
                 {isError ? (
@@ -120,7 +171,12 @@ export const AdminUserDetailPage: React.FC = () => {
                         variant="error"
                         className={ADMIN_USERS_ALERT_SPACING}
                         action={
-                            <Button type="button" variant="outline-destructive" size="sm" onClick={() => refetch()}>
+                            <Button
+                                type="button"
+                                variant="outline-destructive"
+                                size="sm"
+                                onClick={() => refetch()}
+                            >
                                 {ADMIN_USERS_COPY.retry}
                             </Button>
                         }
@@ -133,39 +189,59 @@ export const AdminUserDetailPage: React.FC = () => {
                     <>
                         <div className="flex flex-wrap gap-2">
                             {user.is_active ? (
-                                <Badge variant="subtle-success">{ADMIN_USERS_COPY.statusActive}</Badge>
+                                <Badge variant="subtle-success">
+                                    {ADMIN_USERS_COPY.statusActive}
+                                </Badge>
                             ) : (
-                                <Badge variant="subtle-destructive">{ADMIN_USERS_COPY.statusSuspended}</Badge>
+                                <Badge variant="subtle-destructive">
+                                    {ADMIN_USERS_COPY.statusSuspended}
+                                </Badge>
                             )}
                             {user.locked ? (
-                                <Badge variant="subtle-warning">{ADMIN_USERS_COPY.statusLocked}</Badge>
+                                <Badge variant="subtle-warning">
+                                    {ADMIN_USERS_COPY.statusLocked}
+                                </Badge>
                             ) : null}
                             {user.is_verified ? (
-                                <Badge variant="subtle-success">{ADMIN_USERS_COPY.verifiedYes}</Badge>
+                                <Badge variant="subtle-success">
+                                    {ADMIN_USERS_COPY.verifiedYes}
+                                </Badge>
                             ) : (
-                                <Badge variant="subtle-warning">{ADMIN_USERS_COPY.verifiedNo}</Badge>
+                                <Badge variant="subtle-warning">
+                                    {ADMIN_USERS_COPY.verifiedNo}
+                                </Badge>
                             )}
                         </div>
 
                         <div className={ADMIN_USERS_DETAIL_GRID}>
                             <section className={ADMIN_USERS_DETAIL_CARD}>
                                 <NexiaGlassAccentRim />
-                                <h2 className={ADMIN_USERS_DETAIL_CARD_TITLE}>{ADMIN_USERS_COPY.sectionAccount}</h2>
+                                <h2 className={ADMIN_USERS_DETAIL_CARD_TITLE}>
+                                    {ADMIN_USERS_COPY.sectionAccount}
+                                </h2>
                                 <dl className="space-y-2 text-sm">
                                     <div>
-                                        <dt className="text-muted-foreground">{ADMIN_USERS_COPY.labelEmail}</dt>
+                                        <dt className="text-muted-foreground">
+                                            {ADMIN_USERS_COPY.labelEmail}
+                                        </dt>
                                         <dd>{user.email ?? "—"}</dd>
                                     </div>
                                     <div>
-                                        <dt className="text-muted-foreground">{ADMIN_USERS_COPY.labelSessions}</dt>
+                                        <dt className="text-muted-foreground">
+                                            {ADMIN_USERS_COPY.labelSessions}
+                                        </dt>
                                         <dd>{user.active_refresh_sessions}</dd>
                                     </div>
                                     <div>
-                                        <dt className="text-muted-foreground">{ADMIN_USERS_COPY.labelFailedLogins}</dt>
+                                        <dt className="text-muted-foreground">
+                                            {ADMIN_USERS_COPY.labelFailedLogins}
+                                        </dt>
                                         <dd>{user.failed_login_attempts}</dd>
                                     </div>
                                     <div>
-                                        <dt className="text-muted-foreground">{ADMIN_USERS_COPY.labelLockout}</dt>
+                                        <dt className="text-muted-foreground">
+                                            {ADMIN_USERS_COPY.labelLockout}
+                                        </dt>
                                         <dd>{formatAdminDateTime(user.lockout_until)}</dd>
                                     </div>
                                 </dl>
@@ -173,27 +249,71 @@ export const AdminUserDetailPage: React.FC = () => {
 
                             <section className={ADMIN_USERS_DETAIL_CARD}>
                                 <NexiaGlassAccentRim />
-                                <h2 className={ADMIN_USERS_DETAIL_CARD_TITLE}>{ADMIN_USERS_COPY.sectionRelation}</h2>
+                                <h2 className={ADMIN_USERS_DETAIL_CARD_TITLE}>
+                                    {ADMIN_USERS_COPY.sectionRelation}
+                                </h2>
                                 <dl className="space-y-2 text-sm">
                                     <div>
-                                        <dt className="text-muted-foreground">{ADMIN_USERS_COPY.labelClients}</dt>
+                                        <dt className="text-muted-foreground">
+                                            {ADMIN_USERS_COPY.labelClients}
+                                        </dt>
                                         <dd>{user.clients_count ?? "—"}</dd>
                                     </div>
                                     <div>
-                                        <dt className="text-muted-foreground">{ADMIN_USERS_COPY.labelTrainers}</dt>
+                                        <dt className="text-muted-foreground">
+                                            {ADMIN_USERS_COPY.labelTrainers}
+                                        </dt>
                                         <dd>{user.trainers_count ?? "—"}</dd>
                                     </div>
+                                    {user.organization ? (
+                                        <div>
+                                            <dt className="text-muted-foreground">
+                                                Organización
+                                            </dt>
+                                            <dd>
+                                                <button
+                                                    type="button"
+                                                    className="text-primary underline-offset-2 hover:underline"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/dashboard/admin/organizations/${user.organization!.id}`
+                                                        )
+                                                    }
+                                                >
+                                                    {user.organization.name}
+                                                </button>
+                                            </dd>
+                                        </div>
+                                    ) : null}
                                     <div>
-                                        <dt className="text-muted-foreground">{ADMIN_USERS_COPY.labelMemberships}</dt>
+                                        <dt className="text-muted-foreground">
+                                            {ADMIN_USERS_COPY.labelMemberships}
+                                        </dt>
                                         <dd>
-                                            {user.memberships.length === 0
-                                                ? "—"
-                                                : user.memberships
-                                                      .map(
-                                                          (m) =>
-                                                              `${m.organization_name} (${m.role}${m.is_active ? "" : ", inactivo"})`
-                                                      )
-                                                      .join("; ")}
+                                            {user.memberships.length === 0 ? (
+                                                "—"
+                                            ) : (
+                                                <ul className="space-y-1">
+                                                    {user.memberships.map((m) => (
+                                                        <li key={`${m.organization_id}-${m.role}`}>
+                                                            <button
+                                                                type="button"
+                                                                className="text-primary underline-offset-2 hover:underline"
+                                                                onClick={() =>
+                                                                    navigate(
+                                                                        `/dashboard/admin/organizations/${m.organization_id}`
+                                                                    )
+                                                                }
+                                                            >
+                                                                {m.organization_name}
+                                                            </button>
+                                                            <span className="text-muted-foreground">
+                                                                {` (${m.role}${m.is_active ? "" : ", inactivo"})`}
+                                                            </span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
                                         </dd>
                                     </div>
                                 </dl>
@@ -201,9 +321,13 @@ export const AdminUserDetailPage: React.FC = () => {
 
                             <section className={ADMIN_USERS_DETAIL_CARD}>
                                 <NexiaGlassAccentRim />
-                                <h2 className={ADMIN_USERS_DETAIL_CARD_TITLE}>{ADMIN_USERS_COPY.sectionSupport}</h2>
+                                <h2 className={ADMIN_USERS_DETAIL_CARD_TITLE}>
+                                    {ADMIN_USERS_COPY.sectionSupport}
+                                </h2>
                                 {actions.suspendBlockReason ? (
-                                    <p className={ADMIN_USERS_DETAIL_HINT}>{actions.suspendBlockReason}</p>
+                                    <p className={ADMIN_USERS_DETAIL_HINT}>
+                                        {actions.suspendBlockReason}
+                                    </p>
                                 ) : null}
                                 <div className={ADMIN_USERS_DETAIL_ACTIONS}>
                                     <Button
@@ -246,35 +370,40 @@ export const AdminUserDetailPage: React.FC = () => {
                             </section>
                         </div>
 
+                        {user.role === "trainer" && user.trainer_id ? (
+                            <AdminUserSupervisionSection
+                                userId={userId}
+                                trainerId={user.trainer_id}
+                            />
+                        ) : null}
+
                         <section className={ADMIN_USERS_TABLE_CARD}>
                             <NexiaGlassAccentRim />
                             <h2 className="border-b border-border/60 px-4 py-3 text-sm font-semibold">
                                 {ADMIN_USERS_COPY.sectionAudit}
                             </h2>
-                            {auditPage && auditPage.items.length > 0 ? (
+                            {auditByDay.length > 0 ? (
                                 <div className={ADMIN_USERS_AUDIT_LIST}>
-                                    {auditPage.items.map((entry) => (
-                                        <div key={entry.id} className={ADMIN_USERS_AUDIT_ROW}>
-                                            <div>
-                                                <p className="font-medium">{formatAdminAuditAction(entry.action)}</p>
+                                    {auditByDay.map((group) => (
+                                        <div key={group.dayKey} className={ADMIN_USERS_AUDIT_ROW}>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-medium">{group.dayLabel}</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {formatAdminDateTime(entry.created_at)}
-                                                    {entry.reason ? ` · ${entry.reason}` : ""}
+                                                    {ADMIN_SUP_COPY.auditDayGroup(group.count)}
                                                 </p>
+                                                {group.paths.length > 0 ? (
+                                                    <p className="mt-1 text-xs text-muted-foreground">
+                                                        {group.paths.join(" · ")}
+                                                    </p>
+                                                ) : null}
                                             </div>
-                                            {entry.actor_user_id ? (
-                                                <Link
-                                                    className="text-xs text-primary hover:underline"
-                                                    to={`/dashboard/admin/users/${entry.actor_user_id}`}
-                                                >
-                                                    Actor #{entry.actor_user_id}
-                                                </Link>
-                                            ) : null}
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <p className="px-4 py-6 text-sm text-muted-foreground">{ADMIN_USERS_COPY.auditEmpty}</p>
+                                <p className="px-4 py-6 text-sm text-muted-foreground">
+                                    {ADMIN_SUP_COPY.auditActivityEmpty}
+                                </p>
                             )}
                             <div className="border-t border-border/60 px-4 py-3">
                                 <Button
@@ -282,7 +411,9 @@ export const AdminUserDetailPage: React.FC = () => {
                                     variant="ghost-primary"
                                     size="sm"
                                     onClick={() =>
-                                        navigate(`/dashboard/admin/operations/audit?target=${userId}`)
+                                        navigate(
+                                            `/dashboard/admin/operations/audit?target=${userId}`
+                                        )
                                     }
                                 >
                                     Ver auditoría completa
@@ -314,6 +445,14 @@ export const AdminUserDetailPage: React.FC = () => {
                     showSuccess(ADMIN_USERS_COPY.actionSuccess);
                 }}
             />
+
+            {user?.client_profile_id ? (
+                <AdminSuperviseAsTrainerModal
+                    isOpen={athleteLink.modalOpen}
+                    clientProfileId={user.client_profile_id}
+                    onClose={() => athleteLink.setModalOpen(false)}
+                />
+            ) : null}
         </div>
     );
 };

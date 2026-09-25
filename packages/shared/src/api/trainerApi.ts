@@ -75,5 +75,6 @@ export const {
     useGetCurrentTrainerProfileQuery,
     useUpdateTrainerProfileMutation,
     useGetTrainerQuery,
+    useLazyGetTrainerQuery,
     useUnlinkClientMutation,
 } = trainerApi;

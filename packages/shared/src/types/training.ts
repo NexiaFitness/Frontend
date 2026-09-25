@@ -91,11 +91,11 @@ export interface ActivePlanByClientOut extends TrainingPlan {
 /** GET active-by-client — clientId alone = today; sessionDate = resolver por fecha. */
 export type GetActivePlanByClientArg =
     | number
-    | { clientId: number; sessionDate?: string };
+    | { clientId: number; sessionDate?: string; trainerId?: number };
 
 export function resolveActivePlanByClientArg(
     arg: GetActivePlanByClientArg,
-): { clientId: number; sessionDate?: string } {
+): { clientId: number; sessionDate?: string; trainerId?: number } {
     if (typeof arg === "number") {
         return { clientId: arg };
     }

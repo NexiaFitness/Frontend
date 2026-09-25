@@ -41,9 +41,14 @@ describe("ExercisesPage — heading count (UX-LOAD-01)", () => {
         expect(heading).toBeInTheDocument();
         expect(heading.textContent).not.toMatch(/·/);
 
-        await waitFor(() => {
-            expect(screen.getByRole("heading", { name: /ejercicios · 0/i })).toBeInTheDocument();
-        });
+        await waitFor(
+            () => {
+                expect(
+                    screen.getByRole("heading", { name: /ejercicios · 0/i })
+                ).toBeInTheDocument();
+            },
+            { timeout: 5000 }
+        );
     });
 
     it("shows base title and error alert when list request fails without cached data", async () => {

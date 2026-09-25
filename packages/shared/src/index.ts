@@ -15,6 +15,10 @@ export * from "./api/adminTaxonomiesApi";
 export * from "./types/adminTaxonomies";
 export * from "./api/adminPhysicalTestsApi";
 export * from "./types/adminPhysicalTests";
+export * from "./api/adminOrganizationsApi";
+export * from "./types/adminOrganizations";
+export * from "./api/adminDashboardApi";
+export * from "./types/adminDashboard";
 export {
     ADMIN_REASON_MIN_LENGTH,
     canSuspendLastAdmin,
@@ -35,19 +39,21 @@ export {
     useGetSessionsQuery,
 } from "./api/sessionsApi";
 // Training Sessions API - exported separately to avoid conflicts
+export type { GetTrainingSessionsQueryArg, GetTrainingSessionsByClientArg } from "./api/trainingSessionsApi";
 export {
     useGetTrainingSessionsQuery,
     useLazyGetTrainingSessionsQuery,
+    useGetTrainingSessionsByClientQuery,
     useGetTrainingSessionQuery,
     useGetSessionCoherenceQuery,
     useGetSessionExercisesQuery,
+    useGetSessionFeedbackQuery,
     useCreateTrainingSessionMutation,
     useUpdateTrainingSessionMutation,
     useDeleteTrainingSessionMutation,
     useCreateSessionExerciseMutation,
     useReplicateTrainingSessionMutation,
 } from "./api/trainingSessionsApi";
-export type { GetTrainingSessionsQueryArg } from "./api/trainingSessionsApi";
 export {
     useGetDayExceptionsQuery,
     useCreateDayExceptionMutation,
