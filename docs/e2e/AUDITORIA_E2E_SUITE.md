@@ -324,7 +324,7 @@ apps/web/e2e/
 import { Page } from "@playwright/test";
 
 const demoUser = "nexiafitness.demo@gmail.com";
-const demoPassword = "Nexia.1234";
+const demoPassword = "$NEXIA_DEMO_PASSWORD";
 
 /** Login as trainer and wait for dashboard. Assumes starting from / or /auth/login. */
 export async function loginAsTrainer(page: Page): Promise<void> {
@@ -367,7 +367,7 @@ export async function navigateToExercises(page: Page): Promise<void> {
 ```typescript
 // fixtures/test-data.ts
 export const demoUser = "nexiafitness.demo@gmail.com";
-export const demoPassword = "Nexia.1234";
+export const demoPassword = "$NEXIA_DEMO_PASSWORD";
 
 export const clientFactory = {
   minimal: () => ({
