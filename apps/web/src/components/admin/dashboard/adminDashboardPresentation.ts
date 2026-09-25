@@ -134,6 +134,6 @@ export const ADMIN_DASHBOARD_COPY = {
     loadError: "No se pudo cargar este bloque.",
     openUsers: "Ver usuarios",
     openOrgs: "Ver organizaciones",
-    openCatalog: "Ir al catálogo",
+    openCatalog: "Ir a la cola de revisión",
     openAudit: "Ver auditoría",
 } as const;
