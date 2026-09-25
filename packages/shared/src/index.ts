@@ -11,6 +11,10 @@ export * from "./api/adminApi";
 export * from "./api/adminCatalogApi";
 export * from "./api/adminUsersApi";
 export * from "./types/adminUsers";
+export * from "./api/adminTaxonomiesApi";
+export * from "./types/adminTaxonomies";
+export * from "./api/adminPhysicalTestsApi";
+export * from "./types/adminPhysicalTests";
 export {
     ADMIN_REASON_MIN_LENGTH,
     canSuspendLastAdmin,
@@ -19,6 +23,11 @@ export {
     validateAdminReason,
 } from "./utils/adminUsers/adminUserPermissions";
 export { parseAdminUsersApiError } from "./utils/adminUsers/parseAdminUsersApiError";
+export {
+    parseAdminTaxonomiesApiError,
+    parseTaxonomyDeactivateConflict,
+} from "./utils/adminTaxonomies/parseAdminTaxonomiesApiError";
+export { parseAdminPhysicalTestsApiError } from "./utils/adminPhysicalTests/parseAdminPhysicalTestsApiError";
 export * from "./api/accountApi";
 export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";

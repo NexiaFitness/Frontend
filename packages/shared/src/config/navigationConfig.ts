@@ -109,9 +109,21 @@ const adminNavigation: NavigationItem[] = [
     },
     {
         path: '/dashboard/admin/catalog',
-        label: 'Catálogo',
+        label: 'Ejercicios',
         icon: 'Dumbbell',
-        description: 'Ejercicios, importación y exportación'
+        description: 'Catálogo de ejercicios, importación y exportación'
+    },
+    {
+        path: '/dashboard/admin/taxonomies',
+        label: 'Taxonomías',
+        icon: 'Tags',
+        description: 'Patrones, músculos, equipamiento y tags'
+    },
+    {
+        path: '/dashboard/admin/physical-tests',
+        label: 'Tests físicos',
+        icon: 'Activity',
+        description: 'Tests estándar y supervisión de tests de entrenadores'
     },
     {
         path: '/dashboard/admin/operations/audit',

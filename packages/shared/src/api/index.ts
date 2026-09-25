@@ -16,3 +16,5 @@ export * from "./sessionValidationApi";
 export * from "./standaloneSessionsApi";
 export * from "./athleteApi";
 export * from "./invitationsApi";
+export * from "./adminTaxonomiesApi";
+export * from "./adminPhysicalTestsApi";

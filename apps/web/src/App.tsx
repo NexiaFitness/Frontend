@@ -175,6 +175,19 @@ const AdminUserDetailPage = lazy(() =>
 const AdminAuditLogPage = lazy(() =>
   import("./pages/dashboard/admin/operations").then((m) => ({ default: m.AdminAuditLogPage }))
 );
+const AdminTaxonomiesPage = lazy(() =>
+  import("./pages/dashboard/admin/taxonomies").then((m) => ({ default: m.AdminTaxonomiesPage }))
+);
+const AdminTaxonomiesRedirect = lazy(() =>
+  import("./pages/dashboard/admin/taxonomies").then((m) => ({
+    default: m.AdminTaxonomiesRedirect,
+  }))
+);
+const AdminPhysicalTestsPage = lazy(() =>
+  import("./pages/dashboard/admin/physical-tests").then((m) => ({
+    default: m.AdminPhysicalTestsPage,
+  }))
+);
 const GenerateReports = lazy(() =>
   import("./pages/reports/GenerateReports").then((m) => ({ default: m.GenerateReports }))
 );
@@ -453,6 +466,40 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
                 <AdminAuditLogPage />
+              </RoleProtectedRoute>
+            }
+          />
+
+          {/* Admin taxonomías + tests físicos (T2) */}
+          <Route
+            path="admin/taxonomies"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminTaxonomiesRedirect />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/taxonomies/:kind"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminTaxonomiesPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/physical-tests"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminPhysicalTestsPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/physical-tests/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminPhysicalTestsPage />
               </RoleProtectedRoute>
             }
           />

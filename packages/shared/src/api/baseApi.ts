@@ -374,5 +374,7 @@ export const baseApi = createApi({
         "AdminCatalog",
         "AdminUsers",
         "AdminAuditLog",
+        "AdminTaxonomies",
+        "AdminPhysicalTests",
     ],
 });

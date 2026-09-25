@@ -1,0 +1,1 @@
+export { AdminPhysicalTestsPage } from "./AdminPhysicalTestsPage";
