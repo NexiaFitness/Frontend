@@ -120,11 +120,15 @@ export const trainingPlansApi = baseApi.injectEndpoints({
          */
         getActivePlanByClient: builder.query<ActivePlanByClientOut | null, GetActivePlanByClientArg>({
             queryFn: async (arg, _queryApi, _extraOptions, baseQuery) => {
-                const { clientId, sessionDate } = resolveActivePlanByClientArg(arg);
-                const qs =
-                    sessionDate != null && sessionDate !== ""
-                        ? `?session_date=${encodeURIComponent(sessionDate)}`
-                        : "";
+                const { clientId, sessionDate, trainerId } = resolveActivePlanByClientArg(arg);
+                const params = new URLSearchParams();
+                if (sessionDate != null && sessionDate !== "") {
+                    params.set("session_date", sessionDate);
+                }
+                if (trainerId != null) {
+                    params.set("trainer_id", String(trainerId));
+                }
+                const qs = params.toString() ? `?${params.toString()}` : "";
                 const result = await baseQuery({
                     url: `/training-plans/active-by-client/${clientId}${qs}`,
                     method: "GET",
@@ -138,8 +142,8 @@ export const trainingPlansApi = baseApi.injectEndpoints({
                 return { data: result.data as ActivePlanByClientOut };
             },
             serializeQueryArgs: ({ queryArgs }) => {
-                const { clientId, sessionDate } = resolveActivePlanByClientArg(queryArgs);
-                return `${clientId}:${sessionDate ?? "today"}`;
+                const { clientId, sessionDate, trainerId } = resolveActivePlanByClientArg(queryArgs);
+                return `${clientId}:${sessionDate ?? "today"}:${trainerId ?? "any"}`;
             },
             providesTags: (result, error, arg) => {
                 const { clientId } = resolveActivePlanByClientArg(arg);

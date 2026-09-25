@@ -39,6 +39,20 @@ export type GetTrainingSessionsQueryArg =
     | number
     | { trainingPlanId: number; skip?: number; limit?: number };
 
+/** GET /training-sessions/?client_id= — optional trainer_id for admin SUP. */
+export type GetTrainingSessionsByClientArg =
+    | number
+    | { clientId: number; trainerId?: number; skip?: number; limit?: number };
+
+export function resolveGetTrainingSessionsByClientArg(
+    arg: GetTrainingSessionsByClientArg
+): { clientId: number; trainerId?: number; skip?: number; limit?: number } {
+    if (typeof arg === "number") {
+        return { clientId: arg };
+    }
+    return arg;
+}
+
 export type DeleteTrainingSessionArg = {
     id: number;
     trainingPlanId: number | null;
@@ -147,16 +161,33 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
         }),
 
         /**
-         * GET /training-sessions/?client_id={id}
-         * Obtener todas las sesiones de un cliente (filtro client-side por plan y fechas).
-         * Usado por Vista semana L-D.
+         * GET /training-sessions/?client_id={id}&trainer_id=
+         * Obtener sesiones de un cliente. Admin SUP requiere trainer_id.
+         * Usado por Vista semana L-D y Portal Admin supervisión.
          */
-        getTrainingSessionsByClient: builder.query<TrainingSession[], number>({
-            query: (clientId) => ({
-                url: '/training-sessions/',
-                params: { client_id: clientId },
-            }),
-            providesTags: (result, _error, clientId) => {
+        getTrainingSessionsByClient: builder.query<
+            TrainingSession[],
+            GetTrainingSessionsByClientArg
+        >({
+            query: (arg) => {
+                const { clientId, trainerId, skip, limit } =
+                    resolveGetTrainingSessionsByClientArg(arg);
+                const params: Record<string, number> = { client_id: clientId };
+                if (trainerId != null) params.trainer_id = trainerId;
+                if (skip != null) params.skip = skip;
+                if (limit != null) params.limit = limit;
+                return {
+                    url: '/training-sessions/',
+                    params,
+                };
+            },
+            serializeQueryArgs: ({ queryArgs }) => {
+                const { clientId, trainerId, skip, limit } =
+                    resolveGetTrainingSessionsByClientArg(queryArgs);
+                return `${clientId}:${trainerId ?? "any"}:${skip ?? 0}:${limit ?? "all"}`;
+            },
+            providesTags: (result, _error, arg) => {
+                const { clientId } = resolveGetTrainingSessionsByClientArg(arg);
                 const tags: Array<{ type: 'TrainingSession' | 'TrainingPlan'; id: string | number }> = [];
                 if (result) {
                     tags.push(
@@ -298,6 +329,18 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (_result, _error, arg) =>
                 getDeleteTrainingSessionInvalidationTags(arg),
+        }),
+
+        /**
+         * GET /training-sessions/{session_id}/feedback
+         * Feedback del atleta (RO). 404 = sin feedback.
+         */
+        getSessionFeedback: builder.query<ClientFeedback, number>({
+            query: (sessionId) => `/training-sessions/${sessionId}/feedback`,
+            providesTags: (_result, _error, sessionId) => [
+                { type: 'TrainingSession', id: sessionId },
+                { type: 'Client', id: 'FEEDBACK' },
+            ],
         }),
 
         createSessionFeedback: builder.mutation<
@@ -512,6 +555,7 @@ export const {
     useGetSessionExecutionSummaryQuery,
     useGetSessionCoherenceQuery,
     useGetSessionExercisesQuery,
+    useGetSessionFeedbackQuery,
     useCreateTrainingSessionMutation,
     useUpdateTrainingSessionMutation,
     useCreateSessionFeedbackMutation,

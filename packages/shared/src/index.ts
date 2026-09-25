@@ -35,19 +35,21 @@ export {
     useGetSessionsQuery,
 } from "./api/sessionsApi";
 // Training Sessions API - exported separately to avoid conflicts
+export type { GetTrainingSessionsQueryArg, GetTrainingSessionsByClientArg } from "./api/trainingSessionsApi";
 export {
     useGetTrainingSessionsQuery,
     useLazyGetTrainingSessionsQuery,
+    useGetTrainingSessionsByClientQuery,
     useGetTrainingSessionQuery,
     useGetSessionCoherenceQuery,
     useGetSessionExercisesQuery,
+    useGetSessionFeedbackQuery,
     useCreateTrainingSessionMutation,
     useUpdateTrainingSessionMutation,
     useDeleteTrainingSessionMutation,
     useCreateSessionExerciseMutation,
     useReplicateTrainingSessionMutation,
 } from "./api/trainingSessionsApi";
-export type { GetTrainingSessionsQueryArg } from "./api/trainingSessionsApi";
 export {
     useGetDayExceptionsQuery,
     useCreateDayExceptionMutation,

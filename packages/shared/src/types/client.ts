@@ -375,6 +375,38 @@ export interface GetClientsWithMetricsParams {
     status?: ClientStatus | null;
 }
 
+/** GET /clients/{id} — optional trainer_id scopes admin SUP membership check. */
+export type GetClientQueryArg = number | { clientId: number; trainerId?: number };
+
+export function resolveGetClientQueryArg(
+    arg: GetClientQueryArg
+): { clientId: number; trainerId?: number } {
+    if (typeof arg === "number") {
+        return { clientId: arg };
+    }
+    return arg;
+}
+
+/**
+ * GET /subdcrud/clients/{client_id}/trainers — trainers linked to a client.
+ * Used by Portal Admin SUP (F3: Ver como supervisor).
+ */
+export interface ClientTrainerListItem {
+    id: number;
+    nombre: string;
+    apellidos: string;
+    mail: string;
+    is_active: boolean;
+}
+
+export interface ClientTrainersListResponse {
+    items: ClientTrainerListItem[];
+    total: number;
+    skip: number;
+    limit: number;
+    has_more: boolean;
+}
+
 // ========================================
 // RECENT ACTIVITY
 // ========================================

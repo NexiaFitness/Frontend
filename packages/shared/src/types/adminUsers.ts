@@ -110,6 +110,11 @@ export interface AdminAuditLogListParams {
     actor_user_id?: number;
     target_user_id?: number;
     action?: string;
+    /**
+     * When true, include supervision_read rows.
+     * Backend default is false (omit or false → exclude).
+     */
+    include_supervision?: boolean;
     /** Query alias `desde` en backend */
     desde?: string;
     /** Query alias `hasta` en backend */

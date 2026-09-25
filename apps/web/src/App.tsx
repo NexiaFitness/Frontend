@@ -172,6 +172,11 @@ const AdminUsersListPage = lazy(() =>
 const AdminUserDetailPage = lazy(() =>
   import("./pages/dashboard/admin/users").then((m) => ({ default: m.AdminUserDetailPage }))
 );
+const AdminSupervisedClientPage = lazy(() =>
+  import("./pages/dashboard/admin/users").then((m) => ({
+    default: m.AdminSupervisedClientPage,
+  }))
+);
 const AdminAuditLogPage = lazy(() =>
   import("./pages/dashboard/admin/operations").then((m) => ({ default: m.AdminAuditLogPage }))
 );
@@ -444,7 +449,15 @@ function App() {
             }
           />
 
-          {/* Admin usuarios y auditoría (U2) */}
+          {/* Admin usuarios y auditoría (U2 + SUP) */}
+          <Route
+            path="admin/users/:userId/clients/:clientId"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminSupervisedClientPage />
+              </RoleProtectedRoute>
+            }
+          />
           <Route
             path="admin/users/:userId"
             element={
