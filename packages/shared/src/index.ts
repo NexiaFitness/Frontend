@@ -15,6 +15,10 @@ export * from "./api/adminTaxonomiesApi";
 export * from "./types/adminTaxonomies";
 export * from "./api/adminPhysicalTestsApi";
 export * from "./types/adminPhysicalTests";
+export * from "./api/adminOrganizationsApi";
+export * from "./types/adminOrganizations";
+export * from "./api/adminDashboardApi";
+export * from "./types/adminDashboard";
 export {
     ADMIN_REASON_MIN_LENGTH,
     canSuspendLastAdmin,

@@ -25,6 +25,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
         "taxonomies",
         "physical-tests",
         "operations",
+        "organizations",
         "account",
     ],
     trainer: ["dashboard", "clients", "plans", "progress", "onboarding"],

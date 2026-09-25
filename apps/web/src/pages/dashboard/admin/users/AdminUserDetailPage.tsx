@@ -265,19 +265,55 @@ export const AdminUserDetailPage: React.FC = () => {
                                         </dt>
                                         <dd>{user.trainers_count ?? "—"}</dd>
                                     </div>
+                                    {user.organization ? (
+                                        <div>
+                                            <dt className="text-muted-foreground">
+                                                Organización
+                                            </dt>
+                                            <dd>
+                                                <button
+                                                    type="button"
+                                                    className="text-primary underline-offset-2 hover:underline"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/dashboard/admin/organizations/${user.organization!.id}`
+                                                        )
+                                                    }
+                                                >
+                                                    {user.organization.name}
+                                                </button>
+                                            </dd>
+                                        </div>
+                                    ) : null}
                                     <div>
                                         <dt className="text-muted-foreground">
                                             {ADMIN_USERS_COPY.labelMemberships}
                                         </dt>
                                         <dd>
-                                            {user.memberships.length === 0
-                                                ? "—"
-                                                : user.memberships
-                                                      .map(
-                                                          (m) =>
-                                                              `${m.organization_name} (${m.role}${m.is_active ? "" : ", inactivo"})`
-                                                      )
-                                                      .join("; ")}
+                                            {user.memberships.length === 0 ? (
+                                                "—"
+                                            ) : (
+                                                <ul className="space-y-1">
+                                                    {user.memberships.map((m) => (
+                                                        <li key={`${m.organization_id}-${m.role}`}>
+                                                            <button
+                                                                type="button"
+                                                                className="text-primary underline-offset-2 hover:underline"
+                                                                onClick={() =>
+                                                                    navigate(
+                                                                        `/dashboard/admin/organizations/${m.organization_id}`
+                                                                    )
+                                                                }
+                                                            >
+                                                                {m.organization_name}
+                                                            </button>
+                                                            <span className="text-muted-foreground">
+                                                                {` (${m.role}${m.is_active ? "" : ", inactivo"})`}
+                                                            </span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
                                         </dd>
                                     </div>
                                 </dl>

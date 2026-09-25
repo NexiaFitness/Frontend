@@ -180,6 +180,16 @@ const AdminSupervisedClientPage = lazy(() =>
 const AdminAuditLogPage = lazy(() =>
   import("./pages/dashboard/admin/operations").then((m) => ({ default: m.AdminAuditLogPage }))
 );
+const AdminOrganizationsListPage = lazy(() =>
+  import("./pages/dashboard/admin/organizations").then((m) => ({
+    default: m.AdminOrganizationsListPage,
+  }))
+);
+const AdminOrganizationsDetailPage = lazy(() =>
+  import("./pages/dashboard/admin/organizations").then((m) => ({
+    default: m.AdminOrganizationsDetailPage,
+  }))
+);
 const AdminTaxonomiesPage = lazy(() =>
   import("./pages/dashboard/admin/taxonomies").then((m) => ({ default: m.AdminTaxonomiesPage }))
 );
@@ -479,6 +489,24 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
                 <AdminAuditLogPage />
+              </RoleProtectedRoute>
+            }
+          />
+
+          {/* Admin organizaciones (G1, solo lectura) */}
+          <Route
+            path="admin/organizations/:orgId"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminOrganizationsDetailPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="admin/organizations"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminOrganizationsListPage />
               </RoleProtectedRoute>
             }
           />
