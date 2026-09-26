@@ -13,6 +13,7 @@ export {
 } from "./effortCharacterMapping";
 export type { CaracterTipo } from "./effortCharacterMapping";
 export {
+    collectStructureTrainingDates,
     suggestNextSessionDateAfter,
     suggestSessionDateForPeriodBlock,
 } from "./suggestSessionDate";

@@ -49,6 +49,7 @@ interface Props {
     onMonthChange: (date: Date) => void;
     sessionDates: Set<string>;
     exceptionDates: Set<string>;
+    structurePendingDates?: Set<string>;
     calendarFormState: PeriodBlockFormState;
     isPickingPhaseRange: boolean;
     weekCount: number | null;
@@ -88,6 +89,7 @@ export const PlanningExploreShell: React.FC<Props> = ({
     onMonthChange,
     sessionDates,
     exceptionDates,
+    structurePendingDates,
     calendarFormState,
     isPickingPhaseRange,
     weekCount,
@@ -219,7 +221,9 @@ export const PlanningExploreShell: React.FC<Props> = ({
                     <div
                         id="planning-calendar-section"
                         data-testid="planning-calendar-section"
-                        className="min-w-0 scroll-mt-24"
+                        className="min-w-0 scroll-mt-24 outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        tabIndex={-1}
+                        aria-label="Calendario de periodización"
                     >
                         <PeriodizationCalendar
                             currentMonth={calMonth}
@@ -230,6 +234,7 @@ export const PlanningExploreShell: React.FC<Props> = ({
                             planEndDate={planEndDate}
                             sessionDates={sessionDates}
                             exceptionDates={exceptionDates}
+                            structurePendingDates={structurePendingDates}
                             formState={calendarFormState}
                             onDayClick={onDayClick}
                             onDayRightClick={onDayRightClick}

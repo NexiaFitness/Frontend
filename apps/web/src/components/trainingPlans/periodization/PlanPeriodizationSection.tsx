@@ -1,7 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { useDispatch, useStore } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import type { AppDispatch, RootState } from "@nexia/shared/store";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import {
   useGetPeriodBlocksQuery,
@@ -36,9 +34,8 @@ import { PlanningExploreShell } from "./PlanningExploreShell";
 import { usePlanBlocksStructureDrift } from "./usePlanBlocksStructureDrift";
 import { buildBlockAuthorPath } from "@/lib/trainingPlanNavigation";
 import { scrollDashboardMainToAnchorAfterPaint } from "@/lib/dashboardScroll";
-import { weeklyStructureApi } from "@nexia/shared/api/weeklyStructureApi";
-import { buildCreateSessionQueryFromBlock } from "@nexia/shared";
-import { formatLocalDateOnly } from "@nexia/shared/training/activePeriodBlock";
+import { usePeriodBlockCreateSessionAction } from "@/hooks/trainingPlans/usePeriodBlockCreateSessionAction";
+import { usePeriodBlocksStructurePendingDates } from "@/hooks/trainingPlans/usePeriodBlocksStructurePendingDates";
 import {
   clearBlockAuthorParams,
   clearBlockWeeksParam,
@@ -109,8 +106,6 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   showOtherPlansAction = false,
   onOpenOtherPlans,
 }) => {
-  const dispatch = useDispatch<AppDispatch>();
-  const store = useStore<RootState>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const pendingCreateWhenStartRef = useRef<string | null>(null);
@@ -157,6 +152,12 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     }
     return set;
   }, [sessions]);
+
+  const structurePendingDates = usePeriodBlocksStructurePendingDates({
+    planId,
+    blocks,
+    enabled: !isDapAuthoring && !isBlockWeeksManage,
+  });
 
   const { data: dayExceptions = [] } = useGetDayExceptionsQuery(
     { clientId: clientId! },
@@ -491,42 +492,12 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     trainingFrequency,
   );
 
-  const handleCreateSessionForBlock = useCallback(
-    (block: PlanPeriodBlock) => {
-      if (clientId == null || clientId <= 0 || !planId) {
-        return;
-      }
-      const today = formatLocalDateOnly(new Date());
-      const blockSessions = sessions.filter(
-        (s) =>
-          s.period_block_id === block.id ||
-          (s.session_date != null &&
-            s.session_date >= block.start_date &&
-            s.session_date <= block.end_date),
-      );
-      const weeklyWeeks =
-        weeklyStructureApi.endpoints.getWeeklyStructure.select({
-          planId,
-          blockId: block.id,
-        })(store.getState()).data?.weeks ?? [];
-      void dispatch(
-        weeklyStructureApi.endpoints.getWeeklyStructure.initiate({
-          planId,
-          blockId: block.id,
-        }),
-      );
-      const qs = buildCreateSessionQueryFromBlock({
-        clientId,
-        planId,
-        block,
-        anchorDate: today,
-        weeklyStructureWeeks: weeklyWeeks,
-        sessionsInBlock: blockSessions,
-      });
-      navigate(`/dashboard/session-programming/create-session?${qs.toString()}`);
-    },
-    [dispatch, store, navigate, clientId, planId, sessions],
-  );
+  const handleCreateSessionForBlock = usePeriodBlockCreateSessionAction({
+    clientId,
+    planId,
+    sessions,
+    onCalendarMonthChange: setCalMonth,
+  });
 
   const handlePickRangeDayClick = useCallback(
     (dateStr: string) => {
@@ -573,7 +544,23 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         return;
       }
 
-      if (findBlockContainingDate(blocks, dateStr)) {
+      const containingBlock = findBlockContainingDate(blocks, dateStr);
+      if (containingBlock) {
+        if (clientId == null || clientId <= 0) {
+          return;
+        }
+        const sessionOnDay = sessions.find((s) => s.session_date === dateStr);
+        if (sessionOnDay) {
+          navigate(`/dashboard/session-programming/sessions/${sessionOnDay.id}`);
+          return;
+        }
+        const qs = new URLSearchParams({
+          clientId: String(clientId),
+          planId: String(planId),
+          date: dateStr,
+          sessionKind: "program",
+        });
+        navigate(`/dashboard/session-programming/create-session?${qs.toString()}`);
         return;
       }
       if (
@@ -593,6 +580,10 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
       isPickingPhaseRange,
       handlePickRangeDayClick,
       blocks,
+      sessions,
+      clientId,
+      planId,
+      navigate,
       planStartDate,
       planEndDate,
       searchParams,
@@ -809,6 +800,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         onMonthChange={setCalMonth}
         sessionDates={sessionDates}
         exceptionDates={exceptionDates}
+        structurePendingDates={structurePendingDates}
         calendarFormState={calendarFormState}
         isPickingPhaseRange={isPickingPhaseRange}
         weekCount={pickRangeWeekCount}

@@ -17,6 +17,7 @@ export interface ClientActivePlanScheduleLayoutProps {
   periodBlocks: PlanPeriodBlock[];
   sessionDates: Set<string>;
   exceptionDates: Set<string>;
+  structurePendingDates?: Set<string>;
   currentMonth: Date;
   onMonthChange: (d: Date) => void;
   sessionPickerDate?: string | null;
@@ -31,6 +32,7 @@ export const ClientActivePlanScheduleLayout: React.FC<ClientActivePlanScheduleLa
   periodBlocks,
   sessionDates,
   exceptionDates,
+  structurePendingDates,
   currentMonth,
   onMonthChange,
   sessionPickerDate,
@@ -56,6 +58,7 @@ export const ClientActivePlanScheduleLayout: React.FC<ClientActivePlanScheduleLa
           planEndDate={activePlan.end_date}
           sessionDates={sessionDates}
           exceptionDates={exceptionDates}
+          structurePendingDates={structurePendingDates}
           formState={IDLE_PERIOD_BLOCK_FORM_STATE}
           onDayClick={onDayClick}
           sessionPickerDate={sessionPickerDate ?? null}
