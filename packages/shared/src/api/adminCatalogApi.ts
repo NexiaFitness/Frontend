@@ -22,6 +22,7 @@ import type {
     AdminCatalogExportParams,
     AdminCatalogListParams,
     CatalogExerciseOut,
+    CatalogExerciseUsageOut,
     CatalogImportConfirmOut,
     CatalogImportValidateOut,
     CatalogReviewStatusOut,
@@ -143,6 +144,23 @@ export const adminCatalogApi = baseApi.injectEndpoints({
             keepUnusedDataFor: 0,
         }),
 
+        /** Plantilla vacía Excel v2 (M8). */
+        downloadCatalogImportTemplate: builder.query<Blob, void>({
+            query: () => ({
+                url: "/admin/catalog/import/template",
+                method: "GET",
+                responseHandler: (response: Response) => response.blob(),
+            }),
+            keepUnusedDataFor: 0,
+        }),
+
+        getCatalogExerciseUsage: builder.query<CatalogExerciseUsageOut, number>({
+            query: (exercisePk) => ({
+                url: `/admin/catalog/exercises/${exercisePk}/usage`,
+                method: "GET",
+            }),
+        }),
+
         validateCatalogImport: builder.mutation<CatalogImportValidateOut, File>({
             query: (file) => ({
                 url: "/admin/catalog/import/validate",
@@ -204,6 +222,8 @@ export const {
     useListAdminCatalogExercisesQuery,
     useLazyListAdminCatalogExercisesQuery,
     useLazyExportAdminCatalogQuery,
+    useLazyDownloadCatalogImportTemplateQuery,
+    useGetCatalogExerciseUsageQuery,
     useValidateCatalogImportMutation,
     useConfirmCatalogImportMutation,
     useReactivateCatalogExerciseMutation,

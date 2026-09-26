@@ -72,9 +72,11 @@ import {
 } from "./adminCatalogPresentation";
 import { AdminCatalogConflictModal } from "./AdminCatalogConflictModal";
 import { AdminCatalogHistoryModal } from "./AdminCatalogHistoryModal";
+import { AdminCatalogRelationsSection } from "./AdminCatalogRelationsSection";
 import { AdminCatalogSearchPicker } from "./AdminCatalogSearchPicker";
 import { nextRowKey, type AdminCatalogSectionId } from "./adminCatalogFormTypes";
 import { useAdminExerciseCatalogForm } from "./useAdminExerciseCatalogForm";
+import { useGetCatalogExerciseUsageQuery } from "@nexia/shared/api/adminCatalogApi";
 
 const TIPO_OPTIONS = [
     { value: "monoarticular", label: "Monoarticular" },
@@ -162,6 +164,10 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
     const { data: tags = [] } = useGetTagsQuery({ limit: 200, is_active: true });
     const { data: joints = [] } = useGetJointsQuery();
     const { data: actions = [] } = useGetActionsQuery({ limit: 200, is_active: true });
+    const { data: usage, isFetching: usageLoading } = useGetCatalogExerciseUsageQuery(
+        exercisePk ?? 0,
+        { skip: exercisePk == null || !deactivateOpen }
+    );
 
     const muscleOptions = useMemo(
         () =>
@@ -1051,6 +1057,8 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                     }
                                 />
                             </section>
+
+                            <AdminCatalogRelationsSection exercisePk={currentPk} />
                         </div>
                     </div>
                 </div>
@@ -1128,10 +1136,16 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                 onClose={() => setDeactivateOpen(false)}
                 onConfirm={() => void handleDeactivate()}
                 title={ADMIN_CATALOG_COPY.deactivateTitle}
-                description={ADMIN_CATALOG_COPY.deactivateBody}
+                description={
+                    usageLoading
+                        ? ADMIN_CATALOG_COPY.deactivateUsageLoading
+                        : usage
+                          ? `${ADMIN_CATALOG_COPY.deactivateUsageBody(usage.sessions, usage.templates)} ${ADMIN_CATALOG_COPY.deactivateBody}`
+                          : ADMIN_CATALOG_COPY.deactivateBody
+                }
                 confirmLabel={ADMIN_CATALOG_COPY.deactivateConfirm}
                 confirmVariant="destructive"
-                isLoading={isTogglingActive}
+                isLoading={isTogglingActive || usageLoading}
                 data-testid="admin-catalog-deactivate-modal"
             />
             <NexiaPremiumConfirmModal
