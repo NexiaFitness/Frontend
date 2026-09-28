@@ -20,21 +20,32 @@ export const useReturnToOrigin = (options: UseReturnToOriginOptions = {}) => {
 
     const goBack = useCallback(
         (overrideOptions: UseReturnToOriginOptions = {}) => {
-            const target =
-                originPath ??
+            const fallback =
                 overrideOptions.fallbackPath ??
                 options.fallbackPath ??
                 "/dashboard";
 
-            const destinationState =
-                originState.tab !== undefined ? { tab: originState.tab } : undefined;
+            const replace = overrideOptions.replace ?? options.replace ?? false;
 
-            navigate(target, {
-                replace: overrideOptions.replace ?? options.replace ?? false,
-                state: destinationState,
-            });
+            if (originPath) {
+                const destinationState =
+                    originState.tab !== undefined ? { tab: originState.tab } : undefined;
+
+                navigate(originPath, {
+                    replace,
+                    state: destinationState,
+                });
+                return;
+            }
+
+            if (location.key !== "default") {
+                navigate(-1);
+                return;
+            }
+
+            navigate(fallback, { replace });
         },
-        [originPath, originState.tab, navigate, options.fallbackPath, options.replace]
+        [originPath, originState.tab, location.key, navigate, options.fallbackPath, options.replace]
     );
 
     return {
@@ -43,5 +54,3 @@ export const useReturnToOrigin = (options: UseReturnToOriginOptions = {}) => {
         goBack,
     };
 };
-
-

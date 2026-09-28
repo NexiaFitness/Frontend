@@ -459,6 +459,16 @@ function App() {
             }
           />
 
+          {/* Admin dashboard — URL canónica /dashboard/admin (botones «volver» y bookmarks) */}
+          <Route
+            path="admin"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <AdminDashboard />
+              </RoleProtectedRoute>
+            }
+          />
+
           {/* Admin usuarios y auditoría (U2 + SUP) */}
           <Route
             path="admin/users/:userId/clients/:clientId"
