@@ -26,14 +26,11 @@ import { useAdminUserActions } from "@/components/admin/users/useAdminUserAction
 import { AdminUserSupervisionSection } from "@/components/admin/supervision/AdminUserSupervisionSection";
 import { AdminSuperviseAsTrainerModal } from "@/components/admin/supervision/AdminSuperviseAsTrainerModal";
 import { useAdminAthleteSuperviseLink } from "@/components/admin/supervision/useAdminAthleteSuperviseLink";
-import {
-    ADMIN_SUP_COPY,
-    groupAuditItemsByDay,
-} from "@/components/admin/supervision/adminSupervisionPresentation";
+import { ADMIN_SUP_COPY } from "@/components/admin/supervision/adminSupervisionPresentation";
+import { AdminAuditLogRow } from "@/components/admin/audit/AdminAuditLogRow";
 import {
     ADMIN_USERS_ALERT_SPACING,
     ADMIN_USERS_AUDIT_LIST,
-    ADMIN_USERS_AUDIT_ROW,
     ADMIN_USERS_BACK_BUTTON,
     ADMIN_USERS_COPY,
     ADMIN_USERS_DETAIL_ACTIONS,
@@ -73,15 +70,15 @@ export const AdminUserDetailPage: React.FC = () => {
     const { data: auditPage } = useListAdminAuditLogQuery(
         {
             page: 1,
-            page_size: 50,
+            page_size: 20,
             target_user_id: userId,
-            include_supervision: true,
+            visibility: "with_reads",
         },
         { skip }
     );
 
-    const auditByDay = useMemo(
-        () => groupAuditItemsByDay(auditPage?.items ?? []),
+    const recentAuditItems = useMemo(
+        () => (auditPage?.items ?? []).slice(0, 8),
         [auditPage?.items]
     );
 
@@ -384,22 +381,15 @@ export const AdminUserDetailPage: React.FC = () => {
                             <h2 className="border-b border-border/60 px-4 py-3 text-sm font-semibold">
                                 {ADMIN_USERS_COPY.sectionAudit}
                             </h2>
-                            {auditByDay.length > 0 ? (
+                            {recentAuditItems.length > 0 ? (
                                 <div className={ADMIN_USERS_AUDIT_LIST}>
-                                    {auditByDay.map((group) => (
-                                        <div key={group.dayKey} className={ADMIN_USERS_AUDIT_ROW}>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="font-medium">{group.dayLabel}</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {ADMIN_SUP_COPY.auditDayGroup(group.count)}
-                                                </p>
-                                                {group.paths.length > 0 ? (
-                                                    <p className="mt-1 text-xs text-muted-foreground">
-                                                        {group.paths.join(" · ")}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                        </div>
+                                    {recentAuditItems.map((entry) => (
+                                        <AdminAuditLogRow
+                                            key={entry.id}
+                                            entry={entry}
+                                            variant="row"
+                                            compact
+                                        />
                                     ))}
                                 </div>
                             ) : (

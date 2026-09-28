@@ -26,7 +26,10 @@ import {
 } from "@/components/admin/dashboard/adminDashboardPresentation";
 import { ADMIN_DASHBOARD_CATALOG_ALERT } from "@/components/admin/catalog/adminCatalogPresentation";
 import { ADMIN_USERS_COPY } from "@/components/admin/users/adminUsersPresentation";
-import { formatAdminDateTime } from "@/components/admin/users/adminUsersPresentation";
+import {
+    formatAdminAuditRelativeTime,
+    formatAdminAuditSentence,
+} from "@/components/admin/audit/adminAuditPresentation";
 import { AthleteSettingsRow } from "@/components/athlete/account/AthleteSettingsRow";
 import { AthleteSettingsSection } from "@/components/athlete/account/AthleteSettingsSection";
 import { Alert } from "@/components/ui/feedback";
@@ -316,12 +319,9 @@ export const AdminDashboard: React.FC = () => {
                                         key={item.id}
                                         className="rounded-xl border border-border/40 px-3 py-2"
                                     >
-                                        <p className="font-medium">{item.action}</p>
+                                        <p className="text-sm font-medium">{formatAdminAuditSentence(item)}</p>
                                         <p className="text-xs text-muted-foreground">
-                                            {formatAdminDateTime(item.created_at)}
-                                            {item.target_user_id
-                                                ? ` · user #${item.target_user_id}`
-                                                : ""}
+                                            {formatAdminAuditRelativeTime(item.created_at)}
                                         </p>
                                     </li>
                                 ))}

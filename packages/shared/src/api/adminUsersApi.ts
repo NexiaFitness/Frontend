@@ -46,6 +46,7 @@ function buildAuditQuery(params: AdminAuditLogListParams): string {
         search.set("target_user_id", String(params.target_user_id));
     }
     if (params.action) search.set("action", params.action);
+    if (params.visibility) search.set("visibility", params.visibility);
     if (params.include_supervision === true) {
         search.set("include_supervision", "true");
     }

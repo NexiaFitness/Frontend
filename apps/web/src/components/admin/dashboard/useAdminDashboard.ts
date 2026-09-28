@@ -9,11 +9,6 @@ import { useGetCatalogHealthQuery } from "@nexia/shared/api/adminApi";
 import { useListAdminAuditLogQuery } from "@nexia/shared/api/adminUsersApi";
 import type { AdminDashboardSummaryOut } from "@nexia/shared/types/adminDashboard";
 import type { CatalogHealthOut } from "@nexia/shared/api/adminApi";
-import type { AdminAuditLogItemOut } from "@nexia/shared/types/adminUsers";
-
-/** Lecturas excluidas del widget «escrituras recientes» (UX D1). */
-const AUDIT_READ_ACTIONS = new Set(["user_view", "supervision_read"]);
-
 export interface AdminDashboardLinks {
     usersRole: (role: "admin" | "trainer" | "athlete") => string;
     usersStatus: (status: "active" | "suspended") => string;
@@ -32,11 +27,10 @@ export function useAdminDashboard() {
 
     const summary = useGetAdminDashboardSummaryQuery();
     const catalog = useGetCatalogHealthQuery();
-    /** Pedimos margen y filtramos lecturas en cliente (reuso de /admin/audit-log). */
     const audit = useListAdminAuditLogQuery({
         page: 1,
-        page_size: 50,
-        include_supervision: false,
+        page_size: 10,
+        visibility: "actions",
     });
 
     const links: AdminDashboardLinks = useMemo(
@@ -54,12 +48,7 @@ export function useAdminDashboard() {
         []
     );
 
-    const auditWrites = useMemo(() => {
-        const items = (audit.data?.items ?? []) as AdminAuditLogItemOut[];
-        return items
-            .filter((item) => !AUDIT_READ_ACTIONS.has(item.action))
-            .slice(0, 10);
-    }, [audit.data?.items]);
+    const auditWrites = useMemo(() => audit.data?.items ?? [], [audit.data?.items]);
 
     return useMemo(
         () => ({

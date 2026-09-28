@@ -81,6 +81,14 @@ export interface AdminActionResultOut {
     user_id: number;
 }
 
+export interface AdminAuditUserBriefOut {
+    id: number;
+    full_name: string | null;
+    email: string | null;
+    role: string | null;
+    organization: AdminOrgBriefOut | null;
+}
+
 export interface AdminAuditLogItemOut {
     id: number;
     created_at: string;
@@ -95,7 +103,11 @@ export interface AdminAuditLogItemOut {
     request_path: string | null;
     status_code: number | null;
     ip: string | null;
+    actor: AdminAuditUserBriefOut | null;
+    target_user: AdminAuditUserBriefOut | null;
 }
+
+export type AdminAuditVisibility = "actions" | "with_reads" | "all";
 
 export interface AdminAuditLogPageOut {
     items: AdminAuditLogItemOut[];
@@ -110,9 +122,11 @@ export interface AdminAuditLogListParams {
     actor_user_id?: number;
     target_user_id?: number;
     action?: string;
+    /** Prefer over include_supervision: actions | with_reads | all */
+    visibility?: AdminAuditVisibility;
     /**
-     * When true, include supervision_read rows.
-     * Backend default is false (omit or false → exclude).
+     * Legacy: when true, include supervision_read rows.
+     * Prefer visibility=with_reads.
      */
     include_supervision?: boolean;
     /** Query alias `desde` en backend */
