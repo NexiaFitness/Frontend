@@ -25,6 +25,9 @@ import { getPhysicalQualitiesHandler } from "@/test-utils/mocks/handlers/catalog
 import { setMockSearchParams } from "@/test-utils/mocks/reactRouterMocks";
 import { createMockTrainingPlanRecommendationsIncomplete } from "@/test-utils/fixtures/trainingRecommendations";
 import { OVERVIEW_ZONE_TITLES } from "../clientOverviewPresentation";
+import {
+    PLANNING_NO_PHASES_CALLOUT_PRIMARY,
+} from "@/components/trainingPlans/periodization/planningShellPresentation";
 
 /**
  * PlanPeriodizationSection (montada cuando hay plan activo) dispara además
@@ -147,6 +150,37 @@ describe("ClientPlanningTab", () => {
             expect(
                 screen.getByTestId("planning-program-summary-card"),
             ).toBeInTheDocument();
+        });
+
+        it("sin fases: CTA única en empty state (sin card Añadir fase duplicada)", async () => {
+            server.use(
+                getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Maraton" }),
+                ...planPeriodizationDependenciesHandlers(10),
+            );
+
+            render(
+                <ClientPlanningTab
+                    clientId={1}
+                    trainingPlans={[]}
+                    isLoadingPlans={false}
+                />,
+            );
+
+            await waitFor(() => {
+                expect(
+                    screen.getByText(PLANNING_NO_PHASES_CALLOUT_PRIMARY),
+                ).toBeInTheDocument();
+            });
+
+            expect(
+                screen.getByTestId("planning-add-first-phase"),
+            ).toBeInTheDocument();
+            expect(
+                screen.queryByTestId("planning-add-phase-card"),
+            ).not.toBeInTheDocument();
+            expect(
+                screen.queryByTestId("planning-explore-blocks-row"),
+            ).not.toBeInTheDocument();
         });
 
         it("muestra CTA Planificar en footer con plan vigente y llama onPlanificar", async () => {

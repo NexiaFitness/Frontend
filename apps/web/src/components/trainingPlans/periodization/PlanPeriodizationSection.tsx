@@ -78,9 +78,18 @@ function getPlanningProgramAnchorElement(): HTMLElement | null {
   );
 }
 
+function getPlanningCalendarAnchorElement(): HTMLElement | null {
+  return document.getElementById("planning-calendar-section");
+}
+
 /** Tras salir de wizard/semanas: ancla en card del programa (no tabs ni observaciones). */
 function scrollToPlanningProgramAnchor(): () => void {
   return scrollDashboardMainToAnchorAfterPaint(getPlanningProgramAnchorElement);
+}
+
+/** Modo createWhen: llevar el calendario a vista para elegir rango de la fase. */
+function scrollToPlanningCalendarAnchor(): () => void {
+  return scrollDashboardMainToAnchorAfterPaint(getPlanningCalendarAnchorElement);
 }
 
 interface Props {
@@ -240,7 +249,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     if (!isPickingPhaseRange) {
       return;
     }
-    return scrollToPlanningProgramAnchor();
+    return scrollToPlanningCalendarAnchor();
   }, [isPickingPhaseRange]);
 
   useEffect(() => {

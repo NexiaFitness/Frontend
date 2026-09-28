@@ -42,6 +42,7 @@ import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
 import {
     exerciseDisplayName,
     normalizeSessionName,
+    resolveSessionBlockQualitySlugs,
     useDefaultSessionName,
     listStructureDriftPlannedSessionIds,
 } from "@nexia/shared";
@@ -346,6 +347,16 @@ export const EditSession: React.FC = () => {
         () =>
             periodBlocks.find((b) => b.id === session?.period_block_id) ?? null,
         [periodBlocks, session?.period_block_id],
+    );
+
+    const blockQualitySlugs = useMemo(
+        () =>
+            resolveSessionBlockQualitySlugs({
+                sessionDate: formData.sessionDate,
+                periodBlocks,
+                periodBlock: periodBlockMeta,
+            }),
+        [formData.sessionDate, periodBlocks, periodBlockMeta],
     );
     const { data: weeklyStructureForDrift } = useGetWeeklyStructureQuery(
         {
@@ -1067,6 +1078,7 @@ export const EditSession: React.FC = () => {
 
                             <div className="space-y-5">
                                 <TrainingBlockSelector
+                                    blockQualitySlugs={blockQualitySlugs}
                                     selectedBlockTypeIds={[
                                         ...new Set(
                                             constructorRows.map((r) => r.blockTypeId).filter(Boolean),

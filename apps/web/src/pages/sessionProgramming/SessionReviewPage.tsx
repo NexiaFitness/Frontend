@@ -35,7 +35,7 @@ import {
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
-import { suggestNextSessionDateAfter } from "@nexia/shared";
+import { getMutationErrorMessage, suggestNextSessionDateAfter } from "@nexia/shared";
 import { useValidateSessionMutation } from "@nexia/shared/api/sessionValidationApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import {
@@ -449,11 +449,7 @@ export const SessionReviewPage: React.FC = () => {
             navigate(explicitTarget);
             return;
         }
-        const fallback =
-            sessionId > 0
-                ? `/dashboard/session-programming/sessions/${sessionId}`
-                : "/dashboard/sessions";
-        navigateDashboardBack(navigate, location.state, fallback);
+        navigateDashboardBack(navigate, location.state, "/dashboard/sessions");
     }, [navigate, location.state, sessionId]);
 
     const handleViewSession = useCallback(() => {
@@ -523,18 +519,24 @@ export const SessionReviewPage: React.FC = () => {
             }).unwrap();
             setShowDeleteModal(false);
             showSuccess("Sesión eliminada correctamente.");
-            handleBack();
+            const backTarget = readReviewBackTarget(location.state);
+            const safeTarget =
+                backTarget &&
+                !backTarget.includes(`/session-programming/sessions/${session.id}`)
+                    ? backTarget
+                    : "/dashboard/sessions";
+            navigate(safeTarget, { replace: true });
         } catch (err) {
-            const errorMessage =
-                err && typeof err === "object" && "data" in err
-                    ? String(
-                          (err as { data?: { detail?: string } }).data?.detail ||
-                              "No se pudo eliminar la sesión."
-                      )
-                    : "No se pudo eliminar la sesión.";
-            showError(errorMessage);
+            showError(getMutationErrorMessage(err));
         }
-    }, [session, deleteSession, showSuccess, showError, handleBack]);
+    }, [
+        session,
+        deleteSession,
+        showSuccess,
+        showError,
+        location.state,
+        navigate,
+    ]);
 
     if (!sessionId || isNaN(sessionId)) {
         return (

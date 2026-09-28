@@ -39,6 +39,7 @@ import {
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
+import { getMutationErrorMessage } from "@nexia/shared";
 import { cn } from "@/lib/utils";
 import {
     SessionBlockDetail,
@@ -176,11 +177,7 @@ export const SessionDetail: React.FC = () => {
             goBack();
         } catch (err) {
             console.error("Error eliminando sesión:", err);
-            const errorMessage =
-                err && typeof err === "object" && "data" in err
-                    ? String((err as { data?: { detail?: string } }).data?.detail || "No se pudo eliminar la sesión.")
-                    : "No se pudo eliminar la sesión.";
-            showError(errorMessage);
+            showError(getMutationErrorMessage(err));
         }
     };
 
@@ -201,16 +198,25 @@ export const SessionDetail: React.FC = () => {
     }
 
     if (isError || !session) {
-        const errorMessage =
-            error && typeof error === "object" && "data" in error
-                ? String((error as { data: unknown }).data)
-                : "Sesión no encontrada";
+        const httpStatus =
+            error != null &&
+            typeof error === "object" &&
+            "status" in error &&
+            typeof (error as { status?: unknown }).status === "number"
+                ? (error as { status: number }).status
+                : undefined;
+        const isNotFound = httpStatus === 404;
 
         return (
-            <div className="space-y-6">
-                <Alert variant="error">{errorMessage}</Alert>
+            <div className="space-y-6 px-4 lg:px-8 py-8">
+                {!isNotFound && isError ? (
+                    <Alert variant="error">{getMutationErrorMessage(error)}</Alert>
+                ) : null}
                 <div className="py-20 text-center">
                     <p className="text-lg font-semibold">Sesión no encontrada</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        La sesión no existe o ya no está disponible.
+                    </p>
                     <Button
                         variant="outline"
                         className="mt-4"
