@@ -19,15 +19,17 @@ export const VOLUME_REVIEW_KPI_SERIES_LABEL = "Series programadas hoy";
 
 export const VOLUME_REVIEW_KPI_SERIES_HINT = "Programadas frente al objetivo del día";
 
+export const VOLUME_CONSTRUCTOR_DRAFT_TITLE = "Series de hoy vs objetivo del día";
+
 export const VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE =
-    "Borrador programado vs reparto orientativo de esta sesión (plan semanal)";
+    "Series programadas en el borrador frente al objetivo de este día según la estructura semanal del plan";
 
 export const VOLUME_WEEKLY_SAVED_SUBTITLE =
     "Acumulado semanal programado según sesiones guardadas y objetivos del plan";
 
 /** Nota de método de conteo — copy para entrenador (sin jerga interna D1/D1b). */
 export const VOLUME_COUNTING_METHOD_NOTE =
-    "Series programadas por grupo muscular según el catálogo. Las series directas cuentan enteras; las de apoyo, la mitad. Solo refleja lo prescrito en esta sesión, no lo ejecutado por el atleta.";
+    "Series programadas por grupo muscular según el catálogo. Las series directas cuentan enteras; las de apoyo, la mitad. Solo muestra grupos previstos para este día en el plan y lo prescrito en esta sesión, no lo ejecutado por el atleta.";
 
 export const VOLUME_COVERAGE_EMPTY_WEEK =
     "Semana vacía: no hay sesiones programadas guardadas en este rango.";

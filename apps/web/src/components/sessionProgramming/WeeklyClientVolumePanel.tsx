@@ -16,6 +16,7 @@ import type {
 import { formatHalfSetVolume } from "@nexia/shared/training/volumeDisplay";
 import {
     VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE,
+    VOLUME_CONSTRUCTOR_DRAFT_TITLE,
     VOLUME_COUNTING_METHOD_NOTE,
     VOLUME_COVERAGE_EMPTY_WEEK,
     VOLUME_COVERAGE_NO_EVALUABLE,
@@ -114,7 +115,7 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
         if (intent === "create_session" || usesDraftProjection) {
             return noBlockMode
                 ? "Volumen semanal de referencia"
-                : "Series recomendadas para esta sesión";
+                : VOLUME_CONSTRUCTOR_DRAFT_TITLE;
         }
         return "Volumen semanal del cliente";
     }, [intent, usesDraftProjection, noBlockMode]);
@@ -133,10 +134,10 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
 
     const emptyMessage = useMemo(() => {
         if (intent === "create_session") {
-            return "Añade ejercicios al constructor para ver el reparto de series de esta sesión.";
+            return "Añade ejercicios al constructor para ver las series de hoy frente al objetivo del día.";
         }
         if (usesDraftProjection) {
-            return "Aún no hay grupos musculares con reparto para esta sesión. Añade ejercicios al constructor o comprueba que el plan defina objetivos por grupo para la semana.";
+            return "Aún no hay grupos musculares previstos para este día. Añade ejercicios al constructor o configura la estructura semanal del bloque.";
         }
         if (coverageStatus === "empty_week") {
             return VOLUME_COVERAGE_EMPTY_WEEK;
