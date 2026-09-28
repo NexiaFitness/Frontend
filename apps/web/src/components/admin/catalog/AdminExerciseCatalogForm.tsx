@@ -9,7 +9,6 @@
 
 import React, { useCallback, useEffect, useMemo } from "react";
 import { ArrowLeft, GripVertical, Plus, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
@@ -123,7 +122,6 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
     mode,
     exercisePk,
 }) => {
-    const navigate = useNavigate();
     const { showError } = useToast();
     const form = useAdminExerciseCatalogForm({ mode, exercisePk });
     const {
@@ -145,6 +143,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
         handleMarkReviewed,
         handleReviewedAndNext,
         handleCancel,
+        goBack,
         handleReloadConflict,
         currentPk,
         refetch,
@@ -302,7 +301,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                     type="button"
                     variant="ghost-primary"
                     size="sm"
-                    onClick={() => navigate("/dashboard/admin/catalog")}
+                    onClick={() => goBack()}
                 >
                     {ADMIN_CATALOG_COPY.backToList}
                 </Button>

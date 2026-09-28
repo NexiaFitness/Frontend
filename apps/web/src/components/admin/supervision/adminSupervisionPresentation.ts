@@ -118,7 +118,7 @@ export const ADMIN_SUP_COPY = {
     planUnavailable: "—",
     lastSessionUnavailable: "—",
     adherenceUnavailable: "—",
-    backToTrainer: "Volver a la ficha",
+    backToTrainer: "Volver",
     supervisedTitle: "Cliente supervisado",
     scopeError:
         "Este cliente no está vinculado a este entrenador, o no tienes acceso.",

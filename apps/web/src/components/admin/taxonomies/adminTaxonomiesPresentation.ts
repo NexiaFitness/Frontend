@@ -99,7 +99,7 @@ export const ADMIN_TAX_COPY = {
     title: "Taxonomías",
     pageSubtitle: (kindLabel: string, total: number) =>
         `${kindLabel} · ${total} término${total === 1 ? "" : "s"}`,
-    backToAdmin: "Volver al inicio",
+    backToAdmin: "Volver",
     newItem: "Nuevo",
     searchPlaceholder: "Buscar por nombre…",
     searchLabel: "Buscar taxonomía",

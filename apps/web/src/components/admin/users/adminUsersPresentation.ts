@@ -117,8 +117,8 @@ export const ADMIN_USERS_MODAL_FIELD = "space-y-4";
 export const ADMIN_USERS_COPY = {
     listTitle: "Usuarios",
     listSubtitle: (total: number) => `${total} cuenta${total === 1 ? "" : "s"} en el listado`,
-    backToAdmin: "Volver al inicio",
-    backToUsers: "Volver al listado",
+    backToAdmin: "Volver",
+    backToUsers: "Volver",
     listNewAdmin: "Nuevo admin",
     searchPlaceholder: "Buscar por nombre o email…",
     searchLabel: "Buscar usuarios",

@@ -4,6 +4,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 import { useSelector } from "react-redux";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
@@ -55,6 +56,7 @@ export const AdminUserDetailPage: React.FC = () => {
     const { userId: userIdParam } = useParams<{ userId: string }>();
     const userId = Number(userIdParam);
     const navigate = useNavigate();
+    const { goBack } = useReturnToOrigin({ fallbackPath: "/dashboard/admin/users" });
     const { showSuccess, showError } = useToast();
     const currentUser = useSelector((state: RootState) => state.auth.user);
     const [passwordOpen, setPasswordOpen] = useState(false);
@@ -137,7 +139,7 @@ export const AdminUserDetailPage: React.FC = () => {
                             variant="ghost-primary"
                             size="sm"
                             className={ADMIN_USERS_BACK_BUTTON}
-                            onClick={() => navigate("/dashboard/admin/users")}
+                            onClick={() => goBack()}
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
                             {ADMIN_USERS_COPY.backToUsers}

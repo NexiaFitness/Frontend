@@ -4,10 +4,12 @@
 
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 import { useGetAdminOrganizationQuery } from "@nexia/shared/api/adminOrganizationsApi";
 
 export function useAdminOrganizationDetail() {
     const navigate = useNavigate();
+    const { goBack } = useReturnToOrigin({ fallbackPath: "/dashboard/admin/organizations" });
     const { orgId: orgIdParam } = useParams<{ orgId: string }>();
     const orgId = Number(orgIdParam);
     const skip = !Number.isFinite(orgId) || orgId <= 0;
@@ -26,9 +28,9 @@ export function useAdminOrganizationDetail() {
             refetch: () => {
                 void refetch();
             },
-            backToList: () => navigate("/dashboard/admin/organizations"),
+            backToList: goBack,
             openUser: (userId: number) => navigate(`/dashboard/admin/users/${userId}`),
         }),
-        [orgId, skip, data, isLoading, isError, refetch, navigate]
+        [orgId, skip, data, isLoading, isError, refetch, navigate, goBack]
     );
 }

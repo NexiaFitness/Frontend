@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 import {
     useCreateExerciseCatalogMutation,
     useDeactivateCatalogExerciseMutation,
@@ -94,6 +95,7 @@ export function useAdminExerciseCatalogForm({
     exercisePk,
 }: UseAdminExerciseCatalogFormArgs) {
     const navigate = useNavigate();
+    const { goBack } = useReturnToOrigin({ fallbackPath: "/dashboard/admin/catalog" });
     const { showSuccess, showError } = useToast();
     const [draft, setDraft] = useState<AdminCatalogFormDraft>(emptyDraft);
     const [baselineJson, setBaselineJson] = useState<string>("");
@@ -320,8 +322,8 @@ export function useAdminExerciseCatalogForm({
         if (isDirty && !window.confirm(ADMIN_CATALOG_COPY.discardConfirm)) {
             return;
         }
-        navigate("/dashboard/admin/catalog");
-    }, [isDirty, navigate]);
+        goBack();
+    }, [isDirty, goBack]);
 
     /** Rehidrata draft + token de concurrencia tras una acción que toca updated_at. */
     const hydrateFromServer = useCallback(async () => {
@@ -419,6 +421,7 @@ export function useAdminExerciseCatalogForm({
         handleMarkReviewed,
         handleReviewedAndNext,
         handleCancel,
+        goBack,
         handleReloadConflict,
         currentPk: mode === "edit" ? exercisePk : hydratedPk,
     };

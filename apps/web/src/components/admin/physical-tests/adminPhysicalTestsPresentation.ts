@@ -125,7 +125,7 @@ export const ADMIN_PT_COPY = {
         `${scope} · ${total} test${total === 1 ? "" : "s"}`,
     scopeStandard: "Estándar",
     scopeTrainer: "De entrenadores",
-    backToAdmin: "Volver al inicio",
+    backToAdmin: "Volver",
     newStandard: "Nuevo estándar",
     newItem: "Nuevo estándar",
     searchPlaceholder: "Buscar por nombre…",

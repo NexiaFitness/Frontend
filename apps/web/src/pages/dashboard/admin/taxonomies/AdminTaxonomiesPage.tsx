@@ -4,6 +4,7 @@
 
 import React, { useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 import { ArrowLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
@@ -84,6 +85,7 @@ function extraDetail(kind: TaxonomyKind, item: TaxonomyItemOut): string {
 
 export const AdminTaxonomiesPage: React.FC = () => {
     const navigate = useNavigate();
+    const { goBack } = useReturnToOrigin({ fallbackPath: "/dashboard/admin" });
     const { kind: kindParam } = useParams<{ kind: string }>();
     const kindValid = kindParam != null && isTaxonomyKind(kindParam);
     const kind: TaxonomyKind = kindValid ? kindParam : FALLBACK_KIND;
@@ -149,7 +151,7 @@ export const AdminTaxonomiesPage: React.FC = () => {
                             variant="ghost-primary"
                             size="sm"
                             className={ADMIN_TAX_BACK_BUTTON}
-                            onClick={() => navigate("/dashboard/admin")}
+                            onClick={() => goBack()}
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
                             {ADMIN_TAX_COPY.backToAdmin}

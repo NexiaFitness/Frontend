@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
@@ -49,7 +49,7 @@ import { adminUsersFilterClass } from "@/components/admin/users/adminUsersPresen
 const SKELETON = [0, 1, 2, 3, 4];
 
 export const AdminOrganizationsListPage: React.FC = () => {
-    const navigate = useNavigate();
+    const { goBack } = useReturnToOrigin({ fallbackPath: "/dashboard/admin" });
     const list = useAdminOrganizationsList();
 
     return (
@@ -70,7 +70,7 @@ export const AdminOrganizationsListPage: React.FC = () => {
                             variant="ghost-primary"
                             size="sm"
                             className={ADMIN_ORGS_BACK_BUTTON}
-                            onClick={() => navigate("/dashboard/admin")}
+                            onClick={() => goBack()}
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
                             {ADMIN_ORGS_COPY.backToAdmin}
