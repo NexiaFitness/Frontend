@@ -324,6 +324,26 @@ export const ADMIN_CATALOG_COPY = {
     sectionArticulaciones: "Articulaciones",
     sectionMaterial: "Material",
     sectionEtiquetas: "Etiquetas",
+    sectionAlternativas: "Alternativas",
+    sectionVariantes: "Variantes",
+    altHint:
+        "Sustitutos que el entrenador verá en sugerencias. Añade desde el buscador del catálogo.",
+    altEmpty: "Sin alternativas configuradas.",
+    altSaveFirstHint: "Guarda el ejercicio para poder añadir alternativas y ver variantes.",
+    altSearchPlaceholder: "Buscar ejercicio para añadir como alternativa…",
+    altRemove: "Quitar",
+    altRemoveTitle: "Quitar alternativa",
+    altRemoveBody: "Dejará de sugerirse como sustituto. Puedes volver a añadirla después.",
+    altAddedToast: "Alternativa añadida",
+    altAddError: "No se pudo añadir la alternativa",
+    altRemovedToast: "Alternativa quitada",
+    altRemoveError: "No se pudo quitar la alternativa",
+    variantsHint:
+        "Variantes de ejecución ligadas a este ejercicio base (equipo, agarre, etc.). Solo lectura aquí.",
+    variantsEmpty: "Sin variantes activas para este ejercicio.",
+    deactivateUsageLoading: "Consultando uso…",
+    deactivateUsageBody: (sessions: number, templates: number) =>
+        `Se usa en ${sessions} sesión(es) y ${templates} plantilla(s); seguirán funcionando, pero no se podrá elegir en nuevas.`,
     jointsHint:
         "Registra articulación y acción de movimiento tal como usa el motor de lesiones. Una acción incorrecta o genérica impide avisar al entrenador cuando un ejercicio coincide con la lesión activa del cliente.",
     jointsBridgeHint:
@@ -379,8 +399,13 @@ export const ADMIN_CATALOG_COPY = {
     importStep3: "Paso 3 — Confirmar",
     importExportCardTitle: "Exportar catálogo actual",
     importExportCardBody:
-        "Descarga el catálogo en formato Excel v2 para editarlo y volver a importarlo.",
+        "Flujo: exportar → editar en Excel → validar → revisar el resumen → confirmar. También puedes descargar una plantilla vacía para alta masiva.",
     importExportAction: "Exportar Excel v2",
+    importTemplateAction: "Descargar plantilla vacía",
+    importTemplateError: "No se pudo descargar la plantilla",
+    importTemplateToast: "Plantilla descargada",
+    importFlowHelp:
+        "1) Exporta o descarga la plantilla. 2) Edita en Excel (priority en prime movers). 3) Valida. 4) Revisa el resumen. 5) Confirma (todo o nada).",
     importExportIncludeInactive: "Incluir inactivos",
     importExportError: "No se pudo exportar el catálogo",
     importExportedToast: "Exportación descargada",
@@ -432,6 +457,8 @@ export const ADMIN_CATALOG_SECTIONS = [
     { id: "articulaciones" as const, label: ADMIN_CATALOG_COPY.sectionArticulaciones },
     { id: "material" as const, label: ADMIN_CATALOG_COPY.sectionMaterial },
     { id: "etiquetas" as const, label: ADMIN_CATALOG_COPY.sectionEtiquetas },
+    { id: "alternativas" as const, label: ADMIN_CATALOG_COPY.sectionAlternativas },
+    { id: "variantes" as const, label: ADMIN_CATALOG_COPY.sectionVariantes },
 ];
 
 /** Copy dashboard admin — aviso catálogo (§6.1). */

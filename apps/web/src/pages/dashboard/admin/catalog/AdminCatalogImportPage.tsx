@@ -60,10 +60,12 @@ export const AdminCatalogImportPage: React.FC = () => {
         validation,
         confirmation,
         isExporting,
+        isDownloadingTemplate,
         isValidating,
         isConfirming,
         canConfirm,
         handleExport,
+        handleDownloadTemplate,
         handleValidate,
         handleConfirm,
     } = useAdminCatalogImport();
@@ -104,6 +106,9 @@ export const AdminCatalogImportPage: React.FC = () => {
                         <p className={ADMIN_CATALOG_SECTION_HINT}>
                             {ADMIN_CATALOG_COPY.importExportCardBody}
                         </p>
+                        <p className={ADMIN_CATALOG_SECTION_HINT}>
+                            {ADMIN_CATALOG_COPY.importFlowHelp}
+                        </p>
                         <div className={ADMIN_CATALOG_IMPORT_ACTIONS}>
                             <button
                                 type="button"
@@ -122,6 +127,17 @@ export const AdminCatalogImportPage: React.FC = () => {
                             >
                                 <Download className="mr-2 h-4 w-4" aria-hidden />
                                 {ADMIN_CATALOG_COPY.importExportAction}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="ghost-primary"
+                                size="sm"
+                                isLoading={isDownloadingTemplate}
+                                onClick={() => void handleDownloadTemplate()}
+                                data-testid="admin-catalog-download-template"
+                            >
+                                <Download className="mr-2 h-4 w-4" aria-hidden />
+                                {ADMIN_CATALOG_COPY.importTemplateAction}
                             </Button>
                         </div>
                     </section>

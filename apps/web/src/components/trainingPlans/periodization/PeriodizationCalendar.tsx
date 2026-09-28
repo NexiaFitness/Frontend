@@ -37,6 +37,11 @@ interface Props {
   planEndDate?: string | null;
   sessionDates?: Set<string>;
   exceptionDates?: Set<string>;
+  /**
+   * Días con patrón en la estructura semanal (previstos). El punto primary solo
+   * se pinta aquí — no en todos los días del rango del bloque (O2: sin materializar).
+   */
+  structurePendingDates?: Set<string>;
   formState: PeriodBlockFormState;
   onDayClick: (dateStr: string) => void;
   onDayRightClick?: (dateStr: string) => void;
@@ -68,6 +73,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
   planEndDate,
   sessionDates = EMPTY_SET,
   exceptionDates = EMPTY_SET,
+  structurePendingDates = EMPTY_SET,
   formState,
   onDayClick,
   onDayRightClick,
@@ -177,9 +183,11 @@ export const PeriodizationCalendar: React.FC<Props> = ({
         focusedDaySet.has(dateISO) && formState.phase === "idle";
       const inPlanVigencia = planWindowSet.has(dateISO);
       const hasSession = sessionDates.has(dateISO);
+      const isException = exceptionDates.has(dateISO);
+      const isStructurePending =
+        structurePendingDates.has(dateISO) && !hasSession && !isException;
       const trainingCount =
         clientTrainingSessionCounts?.get(dateISO) ?? (hasSession ? 1 : 0);
-      const isException = exceptionDates.has(dateISO);
       const weekday = isoLocalDateToTrainingDayValue(dateISO);
       const isHabitualTrainingWeekday =
         weekday !== null && habitualDaySet.has(weekday);
@@ -249,7 +257,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
               aria-hidden
             />
           )}
-          {inBlock && !inSel && !hasSession && !isException && (
+          {isStructurePending && !inSel && (
             <span className="absolute bottom-1 h-1 w-1 rounded-full bg-primary" />
           )}
           {hasSession && !isException && (
@@ -276,6 +284,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
       planEndDate,
       sessionDates,
       exceptionDates,
+      structurePendingDates,
       isInSelection,
       isSelectionStart,
       isSelectionEnd,
@@ -335,6 +344,10 @@ export const PeriodizationCalendar: React.FC<Props> = ({
           <span className="text-[10px] text-muted-foreground">Bloque de periodización</span>
         </div>
         <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-primary" />
+          <span className="text-[10px] text-muted-foreground">Día previsto (estructura)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-success" />
           <span className="text-[10px] text-muted-foreground">Con sesión</span>
         </div>
@@ -369,7 +382,11 @@ export const PeriodizationCalendar: React.FC<Props> = ({
   );
 
   return (
-    <div className={PLANNING_CALENDAR_WRAP_CLASS}>
+    <div
+      className={PLANNING_CALENDAR_WRAP_CLASS}
+      tabIndex={-1}
+      data-testid="periodization-calendar-focus-root"
+    >
       <NexiaGlassAccentRim />
       <BaseMonthCalendar
         currentMonth={currentMonth}

@@ -781,7 +781,7 @@ Requisitos para ejecutar E2E contra backend y frontend reales:
 
 - **Backend**: Levantado en `http://127.0.0.1:8000` (o la URL que use `VITE_API_BASE_URL` en el frontend).
 - **Frontend**: Por defecto Playwright usa `http://localhost:5173`; puede arrancar el dev server automáticamente si no está corriendo (ver `playwright.config.ts`).
-- **Cuenta de prueba**: El test usa la cuenta de demo (ver `frontend/.env.example`): `nexiafitness.demo@gmail.com` / `$NEXIA_DEMO_PASSWORD`. No hace falta ningún .env ni variables de entorno para E2E.
+- **Cuenta de prueba**: `nexiafitness.demo@gmail.com` — contraseña vía `NEXIA_DEMO_PASSWORD` (ver variables de entorno locales: `backend/.env.qa`, no versionado; también `frontend/.env.example`). Obligatorio en el entorno al lanzar E2E.
 - **Opcional**: Al menos un plan de entrenamiento asignado al trainer para cubrir el flujo completo hasta el tab Planificación.
 
 Comandos:

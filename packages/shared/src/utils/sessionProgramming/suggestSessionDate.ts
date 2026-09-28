@@ -186,3 +186,37 @@ export function suggestSessionDateForPeriodBlock(
     }
     return null;
 }
+
+/**
+ * Días del bloque con al menos un patrón en la estructura semanal (días previstos).
+ * No inventa TrainingSession: solo fechas de calendario derivadas de la structure.
+ */
+export function collectStructureTrainingDates(
+    blockStart: string,
+    blockEnd: string,
+    weeklyStructureWeeks: WeeklyStructureWeek[],
+): string[] {
+    const hasAnyPatternDay = weeklyStructureWeeks.some((w) =>
+        w.days.some((d) => d.patterns.length > 0),
+    );
+    if (!hasAnyPatternDay) {
+        return [];
+    }
+
+    const start = parseLocalDate(blockStart);
+    const end = parseLocalDate(blockEnd);
+    if (!start || !end || start.getTime() > end.getTime()) {
+        return [];
+    }
+
+    const out: string[] = [];
+    const cursor = new Date(start);
+    while (cursor.getTime() <= end.getTime()) {
+        const iso = toLocalISO(cursor);
+        if (hasPatternOnDate(iso, blockStart, weeklyStructureWeeks)) {
+            out.push(iso);
+        }
+        cursor.setDate(cursor.getDate() + 1);
+    }
+    return out;
+}

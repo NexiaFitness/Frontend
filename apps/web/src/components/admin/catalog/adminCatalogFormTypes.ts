@@ -11,14 +11,9 @@ import type {
     CatalogExerciseOut,
     ExerciseCatalogCoreIn,
 } from "@nexia/shared/types/adminCatalog";
+import type { AdminCatalogSectionId } from "@nexia/shared";
 
-export type AdminCatalogSectionId =
-    | "datos"
-    | "musculos"
-    | "patrones"
-    | "articulaciones"
-    | "material"
-    | "etiquetas";
+export type { AdminCatalogSectionId };
 
 export interface MuscleRowDraft {
     key: string;

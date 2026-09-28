@@ -174,3 +174,12 @@ export interface CatalogImportConfirmOut {
 export interface AdminCatalogExportParams {
     include_inactive?: boolean;
 }
+
+/** GET /admin/catalog/exercises/{pk}/usage */
+export interface CatalogExerciseUsageOut {
+    exercise_pk: number;
+    sessions: number;
+    templates: number;
+    alternatives: number;
+    performance_records: number;
+}

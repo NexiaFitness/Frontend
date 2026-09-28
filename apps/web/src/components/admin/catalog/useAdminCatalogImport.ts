@@ -14,6 +14,7 @@
 import { useCallback, useState } from "react";
 import {
     useConfirmCatalogImportMutation,
+    useLazyDownloadCatalogImportTemplateQuery,
     useLazyExportAdminCatalogQuery,
     useValidateCatalogImportMutation,
 } from "@nexia/shared/api/adminCatalogApi";
@@ -26,6 +27,7 @@ import { useToast } from "@/components/ui/feedback";
 import { ADMIN_CATALOG_COPY } from "./adminCatalogPresentation";
 
 const EXPORT_FILENAME = "nexia_catalog_export.xlsx";
+const TEMPLATE_FILENAME = "nexia_catalog_template_v2.xlsx";
 
 function downloadBlob(blob: Blob, filename: string): void {
     const url = window.URL.createObjectURL(blob);
@@ -47,6 +49,8 @@ export function useAdminCatalogImport() {
     const [confirmation, setConfirmation] = useState<CatalogImportConfirmOut | null>(null);
 
     const [triggerExport, { isFetching: isExporting }] = useLazyExportAdminCatalogQuery();
+    const [triggerTemplate, { isFetching: isDownloadingTemplate }] =
+        useLazyDownloadCatalogImportTemplateQuery();
     const [validateImport, { isLoading: isValidating }] =
         useValidateCatalogImportMutation();
     const [confirmImport, { isLoading: isConfirming }] =
@@ -69,6 +73,16 @@ export function useAdminCatalogImport() {
             showError(ADMIN_CATALOG_COPY.importExportError);
         }
     }, [includeInactive, showError, showSuccess, triggerExport]);
+
+    const handleDownloadTemplate = useCallback(async () => {
+        try {
+            const blob = await triggerTemplate().unwrap();
+            downloadBlob(blob, TEMPLATE_FILENAME);
+            showSuccess(ADMIN_CATALOG_COPY.importTemplateToast);
+        } catch {
+            showError(ADMIN_CATALOG_COPY.importTemplateError);
+        }
+    }, [showError, showSuccess, triggerTemplate]);
 
     const handleValidate = useCallback(async () => {
         if (!file) {
@@ -115,10 +129,12 @@ export function useAdminCatalogImport() {
         validation,
         confirmation,
         isExporting,
+        isDownloadingTemplate,
         isValidating,
         isConfirming,
         canConfirm: Boolean(file) && validation?.ok_for_import === true,
         handleExport,
+        handleDownloadTemplate,
         handleValidate,
         handleConfirm,
     };

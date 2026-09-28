@@ -47,6 +47,7 @@ import { PeriodizationCalendar } from "@/components/trainingPlans/periodization/
 import { IDLE_PERIOD_BLOCK_FORM_STATE } from "@/components/trainingPlans/periodization/usePeriodBlockForm";
 import { PLANNING_SHELL_PANEL_STACK } from "@/components/trainingPlans/periodization/planningShellPresentation";
 import { useClientActivePlanSessionSchedule } from "@/hooks/clients/useClientActivePlanSessionSchedule";
+import { usePeriodBlocksStructurePendingDates } from "@/hooks/trainingPlans/usePeriodBlocksStructurePendingDates";
 import { SessionCard } from "@/components/trainingSessions";
 import { SESSION_CARD_LIST_ITEM_CLASS } from "@/components/trainingSessions/sessionCardPresentation";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
@@ -163,6 +164,12 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         sessionDatesInPlan,
         exceptionDates,
     } = useClientActivePlanSessionSchedule(clientId);
+
+    const structurePendingDates = usePeriodBlocksStructurePendingDates({
+        planId: activePlanForClient?.id,
+        blocks: periodBlocks,
+        enabled: Boolean(activePlanForClient?.id),
+    });
 
     const { data: clientProfile } = useGetClientQuery(clientId);
 
@@ -454,6 +461,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                     periodBlocks={periodBlocks}
                     sessionDates={sessionDatesInPlan}
                     exceptionDates={exceptionDates}
+                    structurePendingDates={structurePendingDates}
                     currentMonth={periodCalMonth}
                     onMonthChange={setPeriodCalMonth}
                     onDayClick={handlePeriodCalendarDay}

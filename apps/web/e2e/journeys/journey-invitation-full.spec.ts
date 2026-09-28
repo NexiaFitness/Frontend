@@ -8,7 +8,8 @@ import { loginAsTrainer } from "../fixtures/auth";
 import { inviteClientViaUiAndGetToken } from "../fixtures/client-invite";
 import { createMinimalClientData } from "../fixtures/test-data";
 
-const ATHLETE_PASSWORD = "AthletePass123!";
+/** Ephemeral password for the invited athlete in this run only. */
+const ATHLETE_PASSWORD = `TmpAth${Date.now()}Aa1!`;
 
 async function completeAthleteOnboarding(page: import("@playwright/test").Page) {
   await expect(page.getByRole("heading", { name: /completa tu perfil/i })).toBeVisible({

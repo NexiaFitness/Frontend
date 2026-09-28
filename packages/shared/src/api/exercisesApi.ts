@@ -223,6 +223,29 @@ export const exercisesApi = baseApi.injectEndpoints({
             }),
             providesTags: (result, error, id) => [{ type: "Action", id }],
         }),
+
+        /**
+         * Variantes de un ejercicio base.
+         * Backend: GET /exercise-catalog/variants/?base_exercise_id=
+         */
+        getExerciseVariants: builder.query<
+            import("../types/exercise").Variant[],
+            { base_exercise_id: number; is_active?: boolean; limit?: number }
+        >({
+            query: ({ base_exercise_id, is_active, limit = 100 }) => {
+                const params = new URLSearchParams();
+                params.set("base_exercise_id", String(base_exercise_id));
+                if (is_active != null) params.set("is_active", String(is_active));
+                params.set("limit", String(limit));
+                return {
+                    url: `/exercise-catalog/variants/?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, arg) => [
+                { type: "Exercise", id: arg.base_exercise_id },
+            ],
+        }),
     }),
     overrideExisting: false,
 });
@@ -241,4 +264,5 @@ export const {
     useGetTagQuery,
     useGetActionsQuery,
     useGetActionQuery,
+    useGetExerciseVariantsQuery,
 } = exercisesApi;
