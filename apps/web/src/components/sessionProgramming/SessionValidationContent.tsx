@@ -14,12 +14,16 @@
  * @since v6.5.0 — Fase A review page
  */
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Info } from "lucide-react";
 import { NexiaSemanticIcon } from "@/components/ui/feedback";
 import type { NexiaSemanticTone } from "@/components/ui/feedback/nexiaSemanticIconPresentation";
 
-import { getNotApplicableCopy } from "./sessionValidationPresentation";
+import {
+    buildPatternReviewSummary,
+    getNotApplicableCopy,
+    VOLUME_UNCOVERED_REVIEW_COPY,
+} from "./sessionValidationPresentation";
 
 import type {
     SessionValidationOut,
@@ -194,8 +198,12 @@ const PatternsSection: React.FC<{
     if (!data) return <p className="text-sm text-muted-foreground">Sin datos de patrones.</p>;
 
     if (variant === "review") {
+        const summary = buildPatternReviewSummary(data);
         return (
             <div className="space-y-3">
+                {summary ? (
+                    <p className="text-sm leading-relaxed text-muted-foreground">{summary}</p>
+                ) : null}
                 {(data.missing.length > 0 || data.extra.length > 0) && (
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         {data.missing.length > 0 ? (
@@ -315,9 +323,12 @@ function UncoveredMuscleVolumeColumns({
     );
 }
 
+const MAX_UNCOVERED_PREVIEW = 4;
+
 const VolumeSectionReview: React.FC<{ data: NonNullable<SessionValidationOut["volume"]> }> = ({
     data,
 }) => {
+    const [uncoveredExpanded, setUncoveredExpanded] = useState(false);
     const { coveredRows, uncoveredRows, statusSummary } = useMemo(() => {
         const coveredList = data.muscle_groups
             .filter((g) => g.actual_sets > 0)
@@ -336,6 +347,11 @@ const VolumeSectionReview: React.FC<{ data: NonNullable<SessionValidationOut["vo
 
     const totalProgrammed = coveredRows.reduce((s, r) => s + r.draftSets, 0);
     const totalExpectedCovered = coveredRows.reduce((s, r) => s + (r.targetToday ?? 0), 0);
+    const showUncoveredExpand = uncoveredRows.length > MAX_UNCOVERED_PREVIEW;
+    const visibleUncoveredRows =
+        showUncoveredExpand && !uncoveredExpanded
+            ? uncoveredRows.slice(0, MAX_UNCOVERED_PREVIEW)
+            : uncoveredRows;
 
     return (
         <div className="space-y-5">
@@ -374,17 +390,27 @@ const VolumeSectionReview: React.FC<{ data: NonNullable<SessionValidationOut["vo
                 <div className={SESSION_VALIDATION_UNCOVERED_SHELL}>
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                         <h5 className={SESSION_VALIDATION_SECTION_EYEBROW}>
-                            Grupos previstos sin cobertura hoy
+                            {VOLUME_UNCOVERED_REVIEW_COPY.heading}
                         </h5>
                         <span className="text-[10px] tabular-nums text-muted-foreground">
                             {uncoveredRows.length} grupos
                         </span>
                     </div>
                     <p className="text-[11px] leading-snug text-muted-foreground/90">
-                        El plan del día esperaba volumen en estos grupos, pero esta sesión no incluye
-                        ejercicios que los carguen.
+                        {VOLUME_UNCOVERED_REVIEW_COPY.body}
                     </p>
-                    <UncoveredMuscleVolumeColumns rows={uncoveredRows} />
+                    <UncoveredMuscleVolumeColumns rows={visibleUncoveredRows} />
+                    {showUncoveredExpand ? (
+                        <button
+                            type="button"
+                            onClick={() => setUncoveredExpanded((v) => !v)}
+                            className="mt-3 text-xs font-medium text-primary hover:underline"
+                        >
+                            {uncoveredExpanded
+                                ? "Ver menos"
+                                : `Ver ${uncoveredRows.length - MAX_UNCOVERED_PREVIEW} más`}
+                        </button>
+                    ) : null}
                 </div>
             ) : null}
         </div>

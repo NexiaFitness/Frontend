@@ -40,3 +40,34 @@ export function getNotApplicableCopy(
         body: "No hay datos suficientes para comparar esta sesión con un bloque de fase.",
     };
 }
+
+/** Resumen legible para patrones de movimiento en review. */
+export function buildPatternReviewSummary(input: {
+    status: string;
+    expected: string[];
+    missing: string[];
+    extra: string[];
+}): string | null {
+    if (input.expected.length === 0) {
+        return "No hay patrones definidos para este día en la estructura semanal.";
+    }
+    if (input.status === "aligned") {
+        return "Los patrones de la sesión coinciden con la estructura semanal de hoy.";
+    }
+    const parts: string[] = [];
+    if (input.missing.length > 0) {
+        parts.push(`Faltan: ${input.missing.join(", ")}.`);
+    }
+    if (input.extra.length > 0) {
+        parts.push(`Hay patrones no previstos hoy: ${input.extra.join(", ")}.`);
+    }
+    return parts.join(" ") || null;
+}
+
+export const VOLUME_UNCOVERED_REVIEW_COPY = {
+    heading: "Grupos del plan de hoy sin series en esta sesión",
+    body:
+        "Según los patrones de movimiento programados para este día en la estructura semanal, " +
+        "estos grupos musculares no reciben series en la sesión actual. " +
+        "Puede ser normal si repartes el volumen en otra sesión de la semana.",
+} as const;

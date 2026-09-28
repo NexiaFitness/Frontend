@@ -138,11 +138,11 @@ export const CoherenceConclusionsPanel: React.FC<CoherenceConclusionsPanelProps>
                                 <ConclusionRow key={item.id} item={item} />
                             ))}
                         </ul>
-                    ) : (
+                    ) : !viewModel.showAllClearMessage ? (
                         <p className="text-sm text-muted-foreground">
-                            No hay conclusiones accionables en este momento.
+                            No hay señales concretas que revisar en este momento.
                         </p>
-                    )}
+                    ) : null}
 
                     {viewModel.hiddenCount > 0 ? (
                         <div className={COHERENCE_EXPAND_ROW}>
@@ -183,9 +183,11 @@ export const CoherenceConclusionsPanel: React.FC<CoherenceConclusionsPanelProps>
                         </div>
                     ) : null}
 
-                    <p className="text-[11px] leading-snug text-muted-foreground">
-                        {viewModel.disclaimer}
-                    </p>
+                    {!viewModel.showAllClearMessage ? (
+                        <p className="text-[11px] leading-snug text-muted-foreground">
+                            {viewModel.disclaimer}
+                        </p>
+                    ) : null}
                 </div>
             ) : null}
         </SessionPanelShell>
