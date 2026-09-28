@@ -20,7 +20,9 @@ export type AdminCatalogSectionId =
     | "patrones"
     | "articulaciones"
     | "material"
-    | "etiquetas";
+    | "etiquetas"
+    | "alternativas"
+    | "variantes";
 
 export interface CatalogBundleDraft {
     core: ExerciseCatalogCoreIn;
