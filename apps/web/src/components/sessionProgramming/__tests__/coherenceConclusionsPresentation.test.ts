@@ -14,6 +14,7 @@ import {
     buildCoherencePhaseChipViewModel,
     containsBannedCoachTerm,
     formatCoherenceConclusionBody,
+    isActionableCoachCriterion,
     isCoachFacingCriterion,
     stripLegacyCoherenceFromNotes,
 } from "../coherenceConclusionsPresentation";
@@ -219,6 +220,47 @@ describe("buildCoherencePhaseChipViewModel", () => {
     });
 });
 
+describe("isActionableCoachCriterion", () => {
+    it("oculta PASS informativos y UNKNOWN sin señal", () => {
+        expect(
+            isActionableCoachCriterion(
+                makeCriterion({
+                    criterion_id: "strength_hy_04_reps_registered",
+                    status: "PASS",
+                }),
+            ),
+        ).toBe(false);
+        expect(
+            isActionableCoachCriterion(
+                makeCriterion({
+                    criterion_id: "strength_hy_01_structural_signal",
+                    status: "UNKNOWN",
+                }),
+            ),
+        ).toBe(false);
+    });
+
+    it("muestra NOT_MET y sesión vacía", () => {
+        expect(
+            isActionableCoachCriterion(
+                makeCriterion({
+                    criterion_id: "strength_fm_06_multiset",
+                    status: "NOT_MET",
+                }),
+            ),
+        ).toBe(true);
+        expect(
+            isActionableCoachCriterion(
+                makeCriterion({
+                    criterion_id: "phase_intent_resolution",
+                    status: "UNKNOWN",
+                    missing_inputs: ["session_prescription"],
+                }),
+            ),
+        ).toBe(true);
+    });
+});
+
 describe("isCoachFacingCriterion", () => {
     it("excluye modality_alignment_l1 (retirado en M1)", () => {
         expect(
@@ -251,7 +293,7 @@ describe("isCoachFacingCriterion", () => {
 });
 
 describe("buildCoherenceConclusionsViewModel", () => {
-    it("prioriza NOT_MET sobre UNKNOWN y limita a 3 visibles", () => {
+    it("prioriza NOT_MET y oculta ruido informativo (PASS/UNKNOWN silenciosos)", () => {
         const criteria = [
             makeCriterion({
                 criterion_id: "strength_fm_06_multiset",
@@ -279,9 +321,42 @@ describe("buildCoherenceConclusionsViewModel", () => {
         const vm = buildCoherenceConclusionsViewModel(makeReport(criteria));
         expect(vm).not.toBeNull();
         expect(vm!.heroStatus).toBe("review");
-        expect(vm!.visibleConclusions).toHaveLength(3);
-        expect(vm!.hiddenCount).toBe(1);
+        expect(vm!.visibleConclusions).toHaveLength(1);
+        expect(vm!.hiddenCount).toBe(0);
         expect(vm!.visibleConclusions[0].status).toBe("NOT_MET");
+    });
+
+    it("hero ok sin filas cuando solo hay señales informativas o no evaluables", () => {
+        const vm = buildCoherenceConclusionsViewModel(
+            makeReport([
+                makeCriterion({
+                    criterion_id: "strength_hy_01_structural_signal",
+                    status: "UNKNOWN",
+                }),
+                makeCriterion({
+                    criterion_id: "strength_hy_04_reps_registered",
+                    status: "PASS",
+                    inputs_used: { registered_exercises: 12 },
+                }),
+                makeCriterion({
+                    criterion_id: "strength_fm_05_rest_documented",
+                    status: "PASS",
+                    inputs_used: { documented_count: 3 },
+                }),
+                makeCriterion({
+                    criterion_id: "strength_hy_02_weekly_volume_mg",
+                    status: "UNKNOWN",
+                }),
+            ]),
+            [
+                { slug: "hipertrofia", name: "Hipertrofia" },
+                { slug: "potencia", name: "Potencia" },
+            ],
+        );
+
+        expect(vm!.heroStatus).toBe("ok");
+        expect(vm!.visibleConclusions).toHaveLength(0);
+        expect(vm!.showAllClearMessage).toBe(true);
     });
 
     it("hero limited_data cuando evaluability UNKNOWN sin desajustes", () => {
@@ -308,6 +383,7 @@ describe("buildCoherenceConclusionsViewModel", () => {
 
         expect(vm!.phaseContext).toContain("Fuerza máxima");
         expect(vm!.phaseContext).toContain("Resistencia anaeróbica");
+        expect(vm!.phaseContext).toContain("prioridad compartida");
     });
 
     it("traduce esfuerzo documentado PASS sin proximidad al fallo", () => {
@@ -322,11 +398,11 @@ describe("buildCoherenceConclusionsViewModel", () => {
         expect(body).not.toContain("zona de proximidad");
     });
 
-    it("asigna tono neutral a UNKNOWN", () => {
+    it("asigna tono neutral a sesión vacía (UNKNOWN con session_prescription)", () => {
         const vm = buildCoherenceConclusionsViewModel(
             makeReport([
                 makeCriterion({
-                    criterion_id: "strength_fm_06_multiset",
+                    criterion_id: "strength_fm_04_effort_documented",
                     status: "UNKNOWN",
                     missing_inputs: ["session_prescription"],
                 }),

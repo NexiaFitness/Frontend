@@ -53,6 +53,8 @@ export interface CoherenceConclusionsViewModel {
     hiddenConclusions: CoherenceConclusionViewModel[];
     hiddenCount: number;
     disclaimer: string;
+    /** Sin filas accionables — solo mensaje resumido (evita listas vacías o de ruido). */
+    showAllClearMessage: boolean;
 }
 
 /** Prefijos legacy en `session.notes` — no usar como fuente de inteligencia (doc 23 §9.3 L3). */
@@ -105,16 +107,36 @@ export interface CoherencePhaseChipViewModel {
 export const COHERENCE_CONCLUSIONS_COPY = {
     panelTitle: "Alineación con la fase",
     panelSubtitle:
-        "Señales sobre la prescripción frente a la intención del bloque activo. No bloquea el flujo ni sustituye tu criterio profesional.",
+        "Comprueba si la sesión encaja con la intención del bloque activo. Orientativo — no bloquea el guardado.",
     expandLabel: "Ver detalle",
     collapseLabel: "Ocultar detalle",
     emptyTitle: "Sin evaluación de fase",
     emptyBody:
         "No hay informe de alineación con la fase para esta sesión. Comprueba que la sesión pertenece a un plan con bloque activo.",
     loadingHint: "Analizando alineación con la fase…",
+    allClearBody:
+        "La prescripción encaja con la intención del bloque. No hay señales que requieran revisión.",
     disclaimer:
-        "Estimación de soporte adaptativo; no predice ganancias ni adaptación garantizada.",
+        "Orientación adaptativa; no predice resultados ni sustituye tu criterio.",
 } as const;
+
+/** PASS que solo confirma dato registrado — no aporta en review si no hay incidencia. */
+const INFORMATIONAL_PASS_CRITERIA = new Set([
+    "strength_fm_05_rest_documented",
+    "strength_hy_04_reps_registered",
+    "strength_fm_04_effort_documented",
+]);
+
+/** UNKNOWN = motor sin señal evaluable; ocultar salvo sesión vacía. */
+const SILENT_WHEN_UNKNOWN_CRITERIA = new Set([
+    "strength_fm_01_structural_signal",
+    "strength_hy_01_structural_signal",
+    "strength_fm_06_multiset",
+    "strength_hy_02_weekly_volume_mg",
+    "anaerobic_prescription_signal_l1",
+    "aerobic_prescription_signal_l1",
+    "mobility_prescription_signal_l1",
+]);
 
 /** Términos de motor interno — nunca deben aparecer en body coach-facing (tests + guard). */
 export const BANNED_COACH_TERMS = [
@@ -167,11 +189,11 @@ const HERO_LABELS: Record<CoherenceHeroStatus, string> = {
 };
 
 const HERO_DESCRIPTIONS: Record<CoherenceHeroStatus, string> = {
-    ok: "No detectamos desajustes relevantes entre la prescripción y la intención del bloque.",
+    ok: "La prescripción encaja con la intención del bloque.",
     review:
-        "Hay señales que pueden merecer una segunda mirada. Si es deliberado, puedes continuar.",
+        "Hay señales que conviene revisar. Si es deliberado, puedes continuar.",
     limited_data:
-        "Aún no hay datos suficientes para evaluar algunos criterios de la fase.",
+        "Faltan datos para evaluar del todo la alineación con la fase.",
 };
 
 type BodyContext = {
@@ -464,7 +486,44 @@ function buildPhaseContext(
     if (qualities.length < 2) return null;
 
     const labels = qualities.map((slug) => resolveQualityLabel(slug, catalog) ?? slug);
-    return `En esta fase compartes prioridad entre ${labels.join(" y ")}. Las señales se evalúan en ese contexto.`;
+    return `Bloque con prioridad compartida: ${labels.join(" y ")}.`;
+}
+
+/**
+ * Solo criterios que el entrenador debe ver en review post-guardado.
+ * Oculta PASS informativos y UNKNOWN sin incidencia (ruido L1 / sin señal).
+ */
+export function isActionableCoachCriterion(criterion: CriterionResult): boolean {
+    if (!isCoachFacingCriterion(criterion)) {
+        return false;
+    }
+
+    if (
+        criterion.status === "NOT_MET" ||
+        criterion.status === "FAIL" ||
+        criterion.status === "PARTIAL"
+    ) {
+        return true;
+    }
+
+    if (criterion.status === "PASS") {
+        if (INFORMATIONAL_PASS_CRITERIA.has(criterion.criterion_id)) {
+            return false;
+        }
+        return criterion.criterion_id.includes("structural_signal");
+    }
+
+    if (criterion.status === "UNKNOWN") {
+        if (missingPrescription(criterion)) {
+            return true;
+        }
+        if (SILENT_WHEN_UNKNOWN_CRITERIA.has(criterion.criterion_id)) {
+            return false;
+        }
+        return false;
+    }
+
+    return false;
 }
 
 function deriveHeroStatus(
@@ -534,26 +593,31 @@ export function buildCoherenceConclusionsViewModel(
 ): CoherenceConclusionsViewModel | null {
     if (!report) return null;
 
-    const coachFacing = report.criterion_results
-        .filter(isCoachFacingCriterion)
+    const actionable = report.criterion_results
+        .filter(isActionableCoachCriterion)
         .slice()
         .sort((a, b) => criterionPriority(b) - criterionPriority(a))
         .map((c) => toConclusionViewModel(c, catalog));
 
     const heroStatus = deriveHeroStatus(report.asp_profile.evaluability, report.criterion_results);
 
-    const visibleConclusions = coachFacing.slice(0, MAX_VISIBLE_CONCLUSIONS);
-    const hiddenConclusions = coachFacing.slice(MAX_VISIBLE_CONCLUSIONS);
+    const visibleConclusions = actionable.slice(0, MAX_VISIBLE_CONCLUSIONS);
+    const hiddenConclusions = actionable.slice(MAX_VISIBLE_CONCLUSIONS);
+    const showAllClearMessage =
+        actionable.length === 0 && heroStatus === "ok";
 
     return {
         heroStatus,
         heroLabel: HERO_LABELS[heroStatus],
-        heroDescription: HERO_DESCRIPTIONS[heroStatus],
+        heroDescription: showAllClearMessage
+            ? COHERENCE_CONCLUSIONS_COPY.allClearBody
+            : HERO_DESCRIPTIONS[heroStatus],
         phaseContext: buildPhaseContext(report, catalog),
         visibleConclusions,
         hiddenConclusions,
         hiddenCount: hiddenConclusions.length,
         disclaimer: COHERENCE_CONCLUSIONS_COPY.disclaimer,
+        showAllClearMessage,
     };
 }
 
