@@ -164,7 +164,7 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                     <div
                         ref={popoverRef}
                         role="listbox"
-                        className="fixed z-[200] w-max rounded-md border border-border bg-popover p-1 shadow-lg"
+                        className="fixed z-[300] w-max rounded-md border border-border bg-popover p-1 shadow-lg"
                         style={{
                             top: coords.top,
                             left: coords.left,

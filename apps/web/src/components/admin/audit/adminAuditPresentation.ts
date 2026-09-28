@@ -30,7 +30,7 @@ export const ADMIN_AUDIT_HEADER_ACTIONS = "flex flex-wrap items-center gap-2";
 
 export const ADMIN_AUDIT_TOOLBAR = cn(
     NEXIA_GLASS_CARD,
-    "relative flex flex-col gap-4 p-3 sm:p-4"
+    "relative flex flex-col gap-4 overflow-visible p-3 sm:p-4"
 );
 
 export const ADMIN_AUDIT_TOOLBAR_ROW = "flex flex-col gap-3";
