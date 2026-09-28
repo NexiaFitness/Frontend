@@ -16,6 +16,7 @@ export interface SearchBarProps {
     ariaLabel?: string;
     className?: string;
     onFocus?: () => void;
+    onClick?: () => void;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({
@@ -25,14 +26,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     ariaLabel = "Buscar",
     className = "",
     onFocus,
+    onClick,
 }) => (
-    <div className={cn(NEXIA_FORM_CONTROL_SEARCH_WRAP, className)}>
+    <div className={cn(NEXIA_FORM_CONTROL_SEARCH_WRAP, className)} onClick={onClick}>
         <Search className={NEXIA_FORM_CONTROL_SEARCH_ICON} aria-hidden />
         <input
             type="search"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onFocus={onFocus}
+            onClick={onClick}
             placeholder={placeholder}
             className={NEXIA_FORM_CONTROL_SEARCH}
             aria-label={ariaLabel}
