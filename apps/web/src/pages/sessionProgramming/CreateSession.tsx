@@ -59,7 +59,11 @@ import {
     useCreateSessionTemplateMutation,
 } from "@nexia/shared/api/sessionProgrammingApi";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
-import { exerciseDisplayName, useDefaultSessionName } from "@nexia/shared";
+import {
+    exerciseDisplayName,
+    resolveSessionBlockQualitySlugs,
+    useDefaultSessionName,
+} from "@nexia/shared";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
 import { SessionDayContextPanel } from "@/components/sessions/SessionDayContextPanel";
 import {
@@ -505,6 +509,23 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         if (useStandaloneSession) return false;
         return isSessionRecommendationsWithValues(sessionRecommendations);
     }, [useStandaloneSession, sessionRecommendations]);
+
+    const blockQualitySlugs = useMemo(
+        () =>
+            useStandaloneSession
+                ? []
+                : resolveSessionBlockQualitySlugs({
+                      sessionRecommendations,
+                      sessionDate: formData.sessionDate,
+                      periodBlocks: programPeriodBlocks,
+                  }),
+        [
+            useStandaloneSession,
+            sessionRecommendations,
+            formData.sessionDate,
+            programPeriodBlocks,
+        ],
+    );
 
     const programPlanActivationOk =
         programPlanActivation === "ok" || programPlanActivation === "loading";
@@ -1234,6 +1255,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
                             <div className="space-y-5">
                                 <TrainingBlockSelector
+                                    blockQualitySlugs={blockQualitySlugs}
                                     selectedBlockTypeIds={[...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean))]}
                                     onSelect={(blockTypeId) => {
                                         if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId)) return;

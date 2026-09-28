@@ -5,7 +5,7 @@
  * Catálogo cerrado; sin tipos personalizados admin.
  */
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { AddPill, AddPillGrid, ADD_PILL_SECTION_LABEL_CLASS } from "@/components/ui/chips";
@@ -25,16 +25,26 @@ import {
 export interface TrainingBlockSelectorProps {
     selectedBlockTypeIds: number[];
     onSelect: (blockTypeId: number) => void;
+    /** Cualidades declaradas en la fase activa (G27 §2.2) — visibles sin «+ Añadir cualidad». */
+    blockQualitySlugs?: readonly string[];
     className?: string;
 }
 
 export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
     selectedBlockTypeIds,
     onSelect,
+    blockQualitySlugs = [],
     className,
 }) => {
-    const [expandedQualitySlugs, setExpandedQualitySlugs] = useState<string[]>([]);
+    const [extraQualitySlugs, setExtraQualitySlugs] = useState<string[]>([]);
     const [showAddQualities, setShowAddQualities] = useState(false);
+
+    const pinnedQualityKey = blockQualitySlugs.join("\0");
+
+    useEffect(() => {
+        setExtraQualitySlugs([]);
+        setShowAddQualities(false);
+    }, [pinnedQualityKey]);
 
     const { data: blockTypes = [], isLoading } = useGetTrainingBlockTypesQuery({
         skip: 0,
@@ -59,24 +69,40 @@ export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
         return map;
     }, [blockTypes]);
 
+    const visibleQualitySlugs = useMemo(() => {
+        const seen = new Set<string>();
+        const ordered: string[] = [];
+        for (const slug of blockQualitySlugs) {
+            if (!slug || seen.has(slug)) continue;
+            seen.add(slug);
+            ordered.push(slug);
+        }
+        for (const slug of extraQualitySlugs) {
+            if (!slug || seen.has(slug)) continue;
+            seen.add(slug);
+            ordered.push(slug);
+        }
+        return ordered;
+    }, [blockQualitySlugs, extraQualitySlugs]);
+
     const visibleQualityTypes = useMemo(
         () =>
-            expandedQualitySlugs
+            visibleQualitySlugs
                 .map((slug) => qualityBySlug.get(slug))
                 .filter((bt): bt is TrainingBlockType => bt != null),
-        [expandedQualitySlugs, qualityBySlug],
+        [visibleQualitySlugs, qualityBySlug],
     );
 
     const addableQualities = useMemo(
         () =>
             [...qualityBySlug.entries()]
-                .filter(([slug]) => !expandedQualitySlugs.includes(slug))
+                .filter(([slug]) => !visibleQualitySlugs.includes(slug))
                 .sort(([a], [b]) => a.localeCompare(b)),
-        [qualityBySlug, expandedQualitySlugs],
+        [qualityBySlug, visibleQualitySlugs],
     );
 
     const handleAddQualitySlug = (slug: string) => {
-        setExpandedQualitySlugs((prev) =>
+        setExtraQualitySlugs((prev) =>
             prev.includes(slug) ? prev : [...prev, slug],
         );
         setShowAddQualities(false);

@@ -59,6 +59,11 @@ export {
     suggestDefaultSessionDateForPlan,
     validateSessionDateWithinPlan,
 } from "./sessionPlanDateBounds";
+export {
+    extractQualitySlugsFromPeriodBlock,
+    resolveSessionBlockQualitySlugs,
+} from "./resolveSessionBlockQualitySlugs";
+export type { ResolveSessionBlockQualitySlugsInput } from "./resolveSessionBlockQualitySlugs";
 export type {
     SessionDateBounds,
     TrainingPlanDateRange,

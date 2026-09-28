@@ -124,7 +124,8 @@ export const PlanningExploreShell: React.FC<Props> = ({
         [blocks, planStartDate],
     );
 
-    const showBlocksRow = blocks.length > 0 || showAddPhaseCard;
+    /** Fila horizontal de fases: solo cuando ya hay al menos una (la primera va en el empty callout). */
+    const showBlocksRow = blocks.length > 0;
 
     const focusedStructureDrift =
         focusedBlockId != null
@@ -171,7 +172,13 @@ export const PlanningExploreShell: React.FC<Props> = ({
                     clientId={clientId ?? activePlan?.client_id ?? undefined}
                     action={
                         showAddPhaseCard ? (
-                            <Button type="button" variant="outline-primary" size="sm" onClick={onAddPhase}>
+                            <Button
+                                type="button"
+                                variant="outline-primary"
+                                size="sm"
+                                data-testid="planning-add-first-phase"
+                                onClick={onAddPhase}
+                            >
                                 Añadir primera fase
                             </Button>
                         ) : undefined
