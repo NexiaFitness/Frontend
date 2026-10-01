@@ -32,6 +32,8 @@ export interface StaleChunkReloadOptions {
   now?: number;
   /** Acci?n de recarga. Por defecto window.location.reload(). Solo se inyecta en tests. */
   reload?: () => void;
+  /** Cuando no se puede recargar (anti-bucle o sin storage). */
+  onFallback?: (event: Event) => void;
 }
 
 /** Indica si el error corresponde a un fallo al descargar un chunk o m?dulo din?mico. */
@@ -77,7 +79,9 @@ export function registerPreloadErrorRecovery(options: StaleChunkReloadOptions = 
   const handler = (event: Event): void => {
     if (reloadOnceForStaleChunk(options)) {
       event.preventDefault();
+      return;
     }
+    options.onFallback?.(event);
   };
   window.addEventListener("vite:preloadError", handler);
   return (): void => window.removeEventListener("vite:preloadError", handler);

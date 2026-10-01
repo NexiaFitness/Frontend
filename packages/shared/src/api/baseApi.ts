@@ -17,6 +17,12 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { API_CONFIG, AUTH_CONFIG } from "@nexia/shared/config/constants";
+import {
+    CLIENT_VERSION_HEADER,
+    getApiClientVersion,
+    noteResponseRequestId,
+    notifyApiError,
+} from "../config/apiTelemetry";
 import type { RootState } from "../store";
 
 /**
@@ -88,6 +94,8 @@ const REFRESH_FETCH_TIMEOUT_MS = 20_000;
  * Mutaciones donde 401 significa credenciales/token inválidos en esa petición, no "access caducado".
  * No deben disparar refresh+retry (riesgo de bloqueo si /auth/refresh no responde).
  */
+const ENDPOINTS_SKIP_5XX_TELEMETRY = new Set<string>(["reportClientError"]);
+
 const ENDPOINTS_401_SKIP_REFRESH = new Set<string>([
     "login",
     "register",
@@ -180,6 +188,8 @@ const baseQuery = fetchBaseQuery({
                 headers.set("Authorization", `Bearer ${token}`);
             }
         }
+
+        headers.set(CLIENT_VERSION_HEADER, getApiClientVersion());
         
         // NO sobreescribir Content-Type si ya está establecido por el endpoint
         // Esto permite que authApi.ts establezca application/x-www-form-urlencoded
@@ -246,6 +256,29 @@ const suppressExpectedConsoleErrors = (): (() => void) => {
  * - 404 (Not Found): Silencioso en endpoints donde es resultado válido (ej: active-by-client)
  * - Otros errores: Se propagan normalmente
  */
+const captureResponseMeta = (meta: unknown): void => {
+    if (!meta || typeof meta !== "object" || !("response" in meta)) {
+        return;
+    }
+    const response = (meta as { response?: Response }).response;
+    if (response?.headers) {
+        noteResponseRequestId(response.headers);
+    }
+};
+
+const maybeReportHttp5xx = (
+    endpointName: string,
+    error: FetchBaseQueryError
+): void => {
+    if (ENDPOINTS_SKIP_5XX_TELEMETRY.has(endpointName)) {
+        return;
+    }
+    const status = error.status;
+    if (typeof status === "number" && status >= 500) {
+        notifyApiError({ type: "http_5xx", status, endpoint: endpointName });
+    }
+};
+
 const baseQueryWithReauth: BaseQueryFn<
     string | FetchArgs,
     unknown,
@@ -256,6 +289,11 @@ const baseQueryWithReauth: BaseQueryFn<
     
     try {
         const result = await baseQuery(args, api, extraOptions);
+        captureResponseMeta(result.meta);
+
+        if (result.error) {
+            maybeReportHttp5xx(String(api.endpoint ?? ""), result.error);
+        }
         
         // Manejo de errores 401 (Unauthorized) - TICK-D04: intentar refresh y reintentar una vez
         if (result.error && result.error.status === 401) {
@@ -282,6 +320,7 @@ const baseQueryWithReauth: BaseQueryFn<
 
             const refreshToken = getTokenSafely(AUTH_CONFIG.REFRESH_KEY);
             if (!refreshToken) {
+                notifyApiError({ type: "session_expired" });
                 api.dispatch({ type: "auth/sessionExpired" });
                 restoreConsole();
                 return result;
@@ -292,12 +331,17 @@ const baseQueryWithReauth: BaseQueryFn<
                 const refreshed = await refreshPromise;
 
                 if (!refreshed) {
+                    notifyApiError({ type: "session_expired" });
                     api.dispatch({ type: "auth/sessionExpired" });
                     restoreConsole();
                     return result;
                 }
 
                 const retryResult = await baseQuery(args, api, extraOptions);
+                captureResponseMeta(retryResult.meta);
+                if (retryResult.error) {
+                    maybeReportHttp5xx(String(api.endpoint ?? ""), retryResult.error);
+                }
                 restoreConsole();
                 return retryResult;
             } finally {

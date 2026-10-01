@@ -17,11 +17,23 @@ import "./index.css";
 import { initStorage } from '@nexia/shared/storage/IStorage';
 import { webStorage } from './storage/webStorage';
 import { registerPreloadErrorRecovery } from "./lib/lazyWithRetry";
+import {
+  registerClientErrorReporting,
+  reportClientError,
+} from "./lib/clientErrorReporter";
 
 initStorage(webStorage);
 
+registerClientErrorReporting();
 // Recarga única si un chunk lazy ya no existe tras un despliegue (ver lib/lazyWithRetry.ts)
-registerPreloadErrorRecovery();
+registerPreloadErrorRecovery({
+  onFallback: () => {
+    reportClientError({
+      kind: "chunk_load",
+      message: "vite:preloadError without reload recovery",
+    });
+  },
+});
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

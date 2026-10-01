@@ -15,6 +15,7 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 import { Button } from "@/components/ui/buttons";
 import { isChunkLoadError } from "@/lib/lazyWithRetry";
+import { reportReactBoundaryError } from "@/lib/clientErrorReporter";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -38,6 +39,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error("[ErrorBoundary] Caught error:", error, errorInfo);
+    reportReactBoundaryError(error, errorInfo.componentStack ?? "");
   }
 
   render(): ReactNode {
