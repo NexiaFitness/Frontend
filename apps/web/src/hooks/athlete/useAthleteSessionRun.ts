@@ -804,9 +804,8 @@ export function useAthleteSessionRun({
                     );
                 }
 
-                // Post-session /summary completion % uses actual_sets vs planned_sets on block
-                // exercises (compute_session_completion_percentage). FOR TIME must persist sets
-                // via the execution payloads below — timed_block_results alone does not move %.
+                // Post-session %: bloques AMRAP/EMOM/FOR TIME cuentan por TimedBlockResult;
+                // además persistimos sets vía payloads de ejecución abajo.
 
                 for (const payload of payloads) {
                     const round = currentRunStep.forTimeRounds.find(
