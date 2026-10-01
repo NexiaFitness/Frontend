@@ -6,6 +6,20 @@
  */
 
 import { useMemo, useState, useCallback } from "react";
+
+function formatIsoDate(d: Date): string {
+    return d.toISOString().slice(0, 10);
+}
+
+/** B5: ventana atleta −60 / +60 días respecto a hoy (UTC calendar). */
+function athleteSessionsDateWindow(): { dateFrom: string; dateTo: string } {
+    const today = new Date();
+    const from = new Date(today);
+    from.setDate(from.getDate() - 60);
+    const to = new Date(today);
+    to.setDate(to.getDate() + 60);
+    return { dateFrom: formatIsoDate(from), dateTo: formatIsoDate(to) };
+}
 import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
@@ -27,14 +41,26 @@ export function useAthleteSessionsList(): UseAthleteSessionsListResult {
     const { clientId } = useAthleteContext();
     const [filter, setFilter] = useState<AthleteSessionFilter>("all");
 
+    const dateWindow = useMemo(() => athleteSessionsDateWindow(), []);
+
     const {
         data: allSessions = [],
         isLoading,
         isError,
         refetch,
-    } = useGetTrainingSessionsByClientQuery(clientId ?? 0, {
-        skip: !clientId,
-    });
+    } = useGetTrainingSessionsByClientQuery(
+        clientId
+            ? {
+                  clientId,
+                  limit: 200,
+                  dateFrom: dateWindow.dateFrom,
+                  dateTo: dateWindow.dateTo,
+              }
+            : 0,
+        {
+            skip: !clientId,
+        }
+    );
 
     const refreshSessions = useCallback(async () => {
         await refetch();

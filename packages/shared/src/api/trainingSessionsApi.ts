@@ -42,11 +42,25 @@ export type GetTrainingSessionsQueryArg =
 /** GET /training-sessions/?client_id= — optional trainer_id for admin SUP. */
 export type GetTrainingSessionsByClientArg =
     | number
-    | { clientId: number; trainerId?: number; skip?: number; limit?: number };
+    | {
+          clientId: number;
+          trainerId?: number;
+          skip?: number;
+          limit?: number;
+          dateFrom?: string;
+          dateTo?: string;
+      };
 
 export function resolveGetTrainingSessionsByClientArg(
     arg: GetTrainingSessionsByClientArg
-): { clientId: number; trainerId?: number; skip?: number; limit?: number } {
+): {
+    clientId: number;
+    trainerId?: number;
+    skip?: number;
+    limit?: number;
+    dateFrom?: string;
+    dateTo?: string;
+} {
     if (typeof arg === "number") {
         return { clientId: arg };
     }
@@ -170,21 +184,23 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
             GetTrainingSessionsByClientArg
         >({
             query: (arg) => {
-                const { clientId, trainerId, skip, limit } =
+                const { clientId, trainerId, skip, limit, dateFrom, dateTo } =
                     resolveGetTrainingSessionsByClientArg(arg);
-                const params: Record<string, number> = { client_id: clientId };
+                const params: Record<string, number | string> = { client_id: clientId };
                 if (trainerId != null) params.trainer_id = trainerId;
                 if (skip != null) params.skip = skip;
                 if (limit != null) params.limit = limit;
+                if (dateFrom) params.date_from = dateFrom;
+                if (dateTo) params.date_to = dateTo;
                 return {
                     url: '/training-sessions/',
                     params,
                 };
             },
             serializeQueryArgs: ({ queryArgs }) => {
-                const { clientId, trainerId, skip, limit } =
+                const { clientId, trainerId, skip, limit, dateFrom, dateTo } =
                     resolveGetTrainingSessionsByClientArg(queryArgs);
-                return `${clientId}:${trainerId ?? "any"}:${skip ?? 0}:${limit ?? "all"}`;
+                return `${clientId}:${trainerId ?? "any"}:${skip ?? 0}:${limit ?? "all"}:${dateFrom ?? ""}:${dateTo ?? ""}`;
             },
             providesTags: (result, _error, arg) => {
                 const { clientId } = resolveGetTrainingSessionsByClientArg(arg);
