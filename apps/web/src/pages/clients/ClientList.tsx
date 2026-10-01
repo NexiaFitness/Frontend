@@ -74,16 +74,21 @@ export const ClientList: React.FC = () => {
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
         skip: user?.role !== "trainer",
     });
-    const trainerId = trainerProfile?.id ?? null;
     const isTrainerOrAdmin = user?.role === "trainer" || user?.role === "admin";
+    /** Admin must pass trainer_id; trainers rely on JWT scope (avoid stale/wrong profile id). */
+    const trainerId =
+        user?.role === "admin" ? (trainerProfile?.id ?? null) : null;
 
     const statusParam: ClientStatus | undefined =
         statusFilter === "all" ? undefined : statusFilter;
+
+    const authReady = user?.role === "trainer" || user?.role === "admin";
 
     const {
         items,
         total,
         isLoading,
+        isFetching,
         isError,
         error,
         totalPages,
@@ -94,7 +99,7 @@ export const ClientList: React.FC = () => {
         pageSize: PAGE_SIZE,
         search: searchDebounced.trim() || null,
         status: statusParam ?? null,
-        skip: !isTrainerOrAdmin,
+        skip: !authReady,
     });
 
     const rosterEmails = useMemo(
@@ -137,7 +142,11 @@ export const ClientList: React.FC = () => {
         navigate("/dashboard/clients/invite");
     }, [shouldBlock, navigate]);
 
-    const listLoading = isLoading || (showInvitations && invitationsLoading);
+    const listLoading =
+        !authReady ||
+        isLoading ||
+        isFetching ||
+        (showInvitations && invitationsLoading);
     const listError = isError || (showInvitations && invitationsError);
     const isEmpty =
         !listLoading &&
