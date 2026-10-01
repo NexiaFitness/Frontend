@@ -1,6 +1,9 @@
 /**
- * WellbeingCheckInSheet.tsx — Check-in pre-sesión atleta premium (V04).
+ * WellbeingCheckInSheet.tsx — Check-in pre-sesión atleta premium (V04 / B7).
  * BottomSheet + glass cards; sustituye BaseModal centrado.
+ *
+ * @author Frontend Team
+ * @since 2026-10-01
  */
 
 import React, { useState } from "react";
