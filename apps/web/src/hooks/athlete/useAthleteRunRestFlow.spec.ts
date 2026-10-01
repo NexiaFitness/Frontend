@@ -47,4 +47,68 @@ describe("useAthleteRunRestFlow (B6 wall clock)", () => {
 
         expect(result.current.remainingSeconds).toBe(55);
     });
+
+    it("al confirmar durante logging_rest continúa el resto sin reiniciar el total", async () => {
+        const onConfirm = vi.fn(async () => true);
+        const onRestComplete = vi.fn();
+
+        const { result } = renderHook(() =>
+            useAthleteRunRestFlow({
+                restAfterSeconds: 90,
+                confirmLabel: "Bloque completado",
+                stepKey: "for-time",
+                onConfirm,
+                onRestComplete,
+            })
+        );
+
+        act(() => {
+            result.current.startRest();
+        });
+        expect(result.current.remainingSeconds).toBe(90);
+
+        act(() => {
+            vi.advanceTimersByTime(35_000);
+        });
+        expect(result.current.remainingSeconds).toBe(55);
+
+        await act(async () => {
+            await result.current.stickyPrimaryAction?.();
+        });
+
+        expect(onConfirm).toHaveBeenCalledTimes(1);
+        expect(result.current.phase).toBe("rest_overlay");
+        expect(result.current.remainingSeconds).toBe(55);
+        expect(onRestComplete).not.toHaveBeenCalled();
+    });
+
+    it("skipRest durante logging_rest avanza sin overlay", () => {
+        const onConfirm = vi.fn(async () => true);
+        const onRestComplete = vi.fn();
+
+        const { result } = renderHook(() =>
+            useAthleteRunRestFlow({
+                restAfterSeconds: 90,
+                confirmLabel: "OK",
+                stepKey: "step-1",
+                onConfirm,
+                onRestComplete,
+            })
+        );
+
+        act(() => {
+            result.current.startRest();
+        });
+        act(() => {
+            vi.advanceTimersByTime(10_000);
+        });
+
+        act(() => {
+            result.current.skipRest();
+        });
+
+        expect(result.current.phase).toBe("doing");
+        expect(result.current.remainingSeconds).toBe(0);
+        expect(onRestComplete).toHaveBeenCalledTimes(1);
+    });
 });

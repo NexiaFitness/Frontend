@@ -13,6 +13,7 @@ export interface AthleteRunStepShellProps {
     children: React.ReactNode;
     showRestChip?: boolean;
     remainingSeconds?: number;
+    onSkipRest?: () => void;
     stickyPrimaryLabel?: string;
     stickyPrimaryDisabled?: boolean;
     stickyPrimaryLoading?: boolean;
@@ -28,6 +29,7 @@ export const AthleteRunStepShell: React.FC<AthleteRunStepShellProps> = ({
     children,
     showRestChip = false,
     remainingSeconds = 0,
+    onSkipRest,
     stickyPrimaryLabel,
     stickyPrimaryDisabled,
     stickyPrimaryLoading,
@@ -45,7 +47,10 @@ export const AthleteRunStepShell: React.FC<AthleteRunStepShellProps> = ({
             <AthleteStickyActionBar
                 footerAccessory={
                     showRestChip ? (
-                        <AthleteRestTimerChip remainingSeconds={remainingSeconds} />
+                        <AthleteRestTimerChip
+                            remainingSeconds={remainingSeconds}
+                            onSkip={onSkipRest}
+                        />
                     ) : undefined
                 }
                 primaryLabel={stickyPrimaryLabel}

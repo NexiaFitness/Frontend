@@ -15,11 +15,13 @@ import {
 export interface AthleteRestTimerChipProps {
     remainingSeconds: number;
     className?: string;
+    onSkip?: () => void;
 }
 
 export const AthleteRestTimerChip: React.FC<AthleteRestTimerChipProps> = ({
     remainingSeconds,
     className,
+    onSkip,
 }) => {
     const urgent = remainingSeconds > 0 && remainingSeconds <= 10;
     const pulse = remainingSeconds > 0 && remainingSeconds <= 3;
@@ -39,6 +41,15 @@ export const AthleteRestTimerChip: React.FC<AthleteRestTimerChipProps> = ({
             <Timer className="size-4 shrink-0 opacity-80" aria-hidden />
             <span className="text-xs font-medium text-muted-foreground">Descanso</span>
             <span className="tabular-nums">{formatAthleteRestCountdown(remainingSeconds)}</span>
+            {onSkip ? (
+                <button
+                    type="button"
+                    className="ml-auto text-xs font-medium text-primary underline-offset-2 hover:underline"
+                    onClick={onSkip}
+                >
+                    Saltar
+                </button>
+            ) : null}
         </div>
     );
 };

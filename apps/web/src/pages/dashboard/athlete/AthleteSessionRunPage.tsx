@@ -298,6 +298,7 @@ export const AthleteSessionRunPage: React.FC = () => {
             <AthleteRunStepShell
                 showRestChip={restFlow.showRestChip}
                 remainingSeconds={restFlow.remainingSeconds}
+                onSkipRest={restFlow.showRestChip ? restFlow.skipRest : undefined}
                 stickyPrimaryLabel={
                     showStepActions ? restFlow.stickyPrimaryLabel : undefined
                 }
