@@ -1,10 +1,14 @@
 /**
  * useAthleteBlockTimer.ts — Cronómetro de bloque V05 Fase C (AMRAP / EMOM / for_time).
- * Distinto del chip de descanso §5a — solo fase doing.
+ * B6: tiempo real con startedAt + Date.now(); recálculo en visibilitychange.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AthleteRunStep } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
+import {
+    elapsedSecondsSince,
+    useAthleteWallClockTick,
+} from "@/hooks/athlete/athleteWallClock";
 
 export interface UseAthleteBlockTimerResult {
     displaySeconds: number;
@@ -19,18 +23,28 @@ export function useAthleteBlockTimer(
     active: boolean
 ): UseAthleteBlockTimerResult {
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const startedAtRef = useRef<number | null>(null);
 
     useEffect(() => {
+        startedAtRef.current = null;
         setElapsedSeconds(0);
     }, [runStep?.stepKey]);
 
     useEffect(() => {
-        if (!active || !runStep?.timedMode) return undefined;
-        const timer = window.setInterval(() => {
-            setElapsedSeconds((value) => value + 1);
-        }, 1000);
-        return () => window.clearInterval(timer);
-    }, [active, runStep?.stepKey, runStep?.timedMode]);
+        if (!active) {
+            startedAtRef.current = null;
+        } else if (startedAtRef.current === null && runStep?.timedMode) {
+            startedAtRef.current = Date.now();
+        }
+    }, [active, runStep?.timedMode]);
+
+    const tick = useCallback(() => {
+        const startedAt = startedAtRef.current;
+        if (startedAt == null) return;
+        setElapsedSeconds(elapsedSecondsSince(startedAt));
+    }, []);
+
+    useAthleteWallClockTick(Boolean(active && runStep?.timedMode), tick);
 
     const totalSeconds = useMemo(() => {
         if (!runStep?.timedMode) return null;

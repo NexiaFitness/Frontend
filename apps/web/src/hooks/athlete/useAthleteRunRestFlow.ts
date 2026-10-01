@@ -1,9 +1,13 @@
 /**
  * useAthleteRunRestFlow.ts — Máquina de descanso V05 (§5a spec).
- * Un hook compartido: doing → logging_rest → rest_overlay.
+ * B6: countdown por deadline Date.now(); recálculo en visibilitychange.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+    remainingSecondsUntil,
+    useAthleteWallClockTick,
+} from "@/hooks/athlete/athleteWallClock";
 
 export type AthleteRunRestPhase = "doing" | "logging_rest" | "rest_overlay";
 
@@ -45,6 +49,7 @@ export function useAthleteRunRestFlow({
     const [phase, setPhase] = useState<AthleteRunRestPhase>("doing");
     const [remainingSeconds, setRemainingSeconds] = useState(0);
     const [confirmLoading, setConfirmLoading] = useState(false);
+    const restDeadlineMsRef = useRef<number | null>(null);
 
     const onRestCompleteRef = useRef(onRestComplete);
     onRestCompleteRef.current = onRestComplete;
@@ -56,22 +61,27 @@ export function useAthleteRunRestFlow({
         setPhase("doing");
         setRemainingSeconds(0);
         setConfirmLoading(false);
+        restDeadlineMsRef.current = null;
     }, [stepKey]);
 
-    useEffect(() => {
-        if (phase !== "logging_rest" && phase !== "rest_overlay") return undefined;
-        if (remainingSeconds <= 0) return undefined;
+    const restCountdownActive =
+        hasRestTimer &&
+        (phase === "logging_rest" || phase === "rest_overlay") &&
+        restDeadlineMsRef.current != null;
 
-        const timer = window.setTimeout(() => {
-            setRemainingSeconds((value) => value - 1);
-        }, 1000);
+    const tickRest = useCallback(() => {
+        const deadline = restDeadlineMsRef.current;
+        if (deadline == null) return;
+        setRemainingSeconds(remainingSecondsUntil(deadline));
+    }, []);
 
-        return () => window.clearTimeout(timer);
-    }, [phase, remainingSeconds]);
+    useAthleteWallClockTick(restCountdownActive, tickRest);
 
     useEffect(() => {
         if (phase !== "rest_overlay" || remainingSeconds > 0) return;
+        if (restDeadlineMsRef.current == null) return;
         restFlowHaptic(200);
+        restDeadlineMsRef.current = null;
         setPhase("doing");
         onRestCompleteRef.current();
     }, [phase, remainingSeconds]);
@@ -79,6 +89,7 @@ export function useAthleteRunRestFlow({
     const startRest = useCallback(() => {
         restFlowHaptic(20);
         if (hasRestTimer) {
+            restDeadlineMsRef.current = Date.now() + restAfterSeconds! * 1000;
             setRemainingSeconds(restAfterSeconds!);
             setPhase("logging_rest");
             return;
@@ -102,12 +113,14 @@ export function useAthleteRunRestFlow({
         if (hasRestTimer && remainingSeconds > 0) {
             setPhase("rest_overlay");
         } else {
+            restDeadlineMsRef.current = null;
             setPhase("doing");
             onRestCompleteRef.current();
         }
     }, [confirmLoading, hasRestTimer, isConfirmValid, onConfirm, remainingSeconds]);
 
     const skipRest = useCallback(() => {
+        restDeadlineMsRef.current = null;
         setRemainingSeconds(0);
         setPhase("doing");
         onRestCompleteRef.current();

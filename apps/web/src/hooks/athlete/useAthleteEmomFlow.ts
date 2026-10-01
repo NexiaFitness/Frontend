@@ -1,10 +1,15 @@
 /**
  * useAthleteEmomFlow.ts — Flujo continuo EMOM: auto-avance entre intervalos (V05).
+ * B6: wall clock por intervalo; recálculo en visibilitychange.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { AthleteEmomInterval } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
 import { formatEmomIntervalLabel } from "@nexia/shared/utils/athlete/emomResult";
+import {
+    elapsedSecondsSince,
+    useAthleteWallClockTick,
+} from "@/hooks/athlete/athleteWallClock";
 
 function emomFlowHaptic(ms: number) {
     if (typeof navigator === "undefined") return;
@@ -31,31 +36,44 @@ export function useAthleteEmomFlow(
     const [intervalIndex, setIntervalIndex] = useState(0);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [allIntervalsComplete, setAllIntervalsComplete] = useState(false);
+    const intervalStartedAtRef = useRef<number | null>(null);
     const handledExpiryKeyRef = useRef<string | null>(null);
 
     useEffect(() => {
         setIntervalIndex(0);
         setElapsedSeconds(0);
         setAllIntervalsComplete(false);
+        intervalStartedAtRef.current = null;
         handledExpiryKeyRef.current = null;
     }, [stepKey]);
 
     const totalSeconds = Math.max(1, intervalSeconds);
+    const running = active && !allIntervalsComplete && intervals.length > 0;
+
+    useEffect(() => {
+        if (!running) {
+            intervalStartedAtRef.current = null;
+            return;
+        }
+        if (intervalStartedAtRef.current === null) {
+            intervalStartedAtRef.current = Date.now();
+            setElapsedSeconds(0);
+        }
+    }, [running, stepKey]);
+
+    const tick = useCallback(() => {
+        const startedAt = intervalStartedAtRef.current;
+        if (!running || startedAt == null) return;
+        setElapsedSeconds(Math.min(totalSeconds, elapsedSecondsSince(startedAt)));
+    }, [running, totalSeconds]);
+
+    useAthleteWallClockTick(running, tick);
+
     const displaySeconds = Math.max(0, totalSeconds - elapsedSeconds);
 
     useEffect(() => {
-        if (!active || allIntervalsComplete || intervals.length === 0) return undefined;
-
-        const timer = window.setInterval(() => {
-            setElapsedSeconds((value) => Math.min(value + 1, totalSeconds));
-        }, 1000);
-
-        return () => window.clearInterval(timer);
-    }, [active, allIntervalsComplete, intervals.length, stepKey, totalSeconds]);
-
-    useEffect(() => {
-        if (!active || allIntervalsComplete || intervals.length === 0) return;
-        if (elapsedSeconds !== totalSeconds) return;
+        if (!running || intervals.length === 0) return;
+        if (elapsedSeconds < totalSeconds) return;
 
         const expiryKey = `${intervalIndex}:${totalSeconds}`;
         if (handledExpiryKeyRef.current === expiryKey) return;
@@ -63,17 +81,18 @@ export function useAthleteEmomFlow(
 
         emomFlowHaptic(200);
         if (intervalIndex < intervals.length - 1) {
-            setIntervalIndex((current) => current + 1);
+            intervalStartedAtRef.current = Date.now();
             setElapsedSeconds(0);
+            handledExpiryKeyRef.current = null;
+            setIntervalIndex((current) => current + 1);
             return;
         }
         setAllIntervalsComplete(true);
     }, [
-        active,
-        allIntervalsComplete,
         elapsedSeconds,
         intervalIndex,
         intervals.length,
+        running,
         totalSeconds,
     ]);
 
