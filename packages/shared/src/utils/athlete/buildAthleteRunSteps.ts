@@ -718,12 +718,20 @@ export function resolveRestAfterCompletingRunStep(
     current: AthleteRunStep,
     next: AthleteRunStep | undefined
 ): number | null {
-    if (!next) return null;
-
     if (current.kind === "group_round" || current.kind === "timed_block") {
         const rest = current.restAfterSeconds;
-        return rest != null && rest > 0 ? rest : null;
+        const prescribed = rest != null && rest > 0 ? rest : null;
+        if (!next) {
+            // FOR TIME: descanso post-bloque durante revisión aunque sea el último paso de la sesión (B4).
+            if (current.kind === "timed_block" && current.groupKind === "for_time") {
+                return prescribed;
+            }
+            return null;
+        }
+        return prescribed;
     }
+
+    if (!next) return null;
 
     const flatCurrent = runStepToFlatExercise(current);
     const flatNext = runStepToFlatExercise(next);

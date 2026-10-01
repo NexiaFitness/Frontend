@@ -429,6 +429,12 @@ function buildSequentialGroups(
         }));
     }
 
+    const restBetweenSeconds =
+        options.kind === "for_time"
+            ? (sorted.find((line) => line.planned_rest != null && line.planned_rest > 0)
+                  ?.planned_rest ?? sorted[0]?.planned_rest ?? null)
+            : null;
+
     return [
         {
             groupId: `block-${options.blockId}-${options.kind}`,
@@ -440,7 +446,7 @@ function buildSequentialGroups(
                     ? timeCapSecondsToMinutes(options.block.time_cap)
                     : null,
             intervalSeconds: null,
-            restBetweenSeconds: null,
+            restBetweenSeconds,
             slots,
         },
     ];

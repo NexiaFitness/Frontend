@@ -168,7 +168,12 @@ function timedLine(
     exerciseId: number,
     order: number,
     setType: typeof SET_TYPE.AMRAP | typeof SET_TYPE.FOR_TIME | typeof SET_TYPE.EMOM,
-    options?: { plannedSets?: number | null; supersetGroupId?: number | null; reps?: string }
+    options?: {
+        plannedSets?: number | null;
+        supersetGroupId?: number | null;
+        reps?: string;
+        rest?: number | null;
+    }
 ): SessionBlockExercise {
     return {
         id,
@@ -183,7 +188,7 @@ function timedLine(
         planned_weight: null,
         planned_duration: null,
         planned_distance: null,
-        planned_rest: null,
+        planned_rest: options?.rest ?? null,
         effort_character: null,
         effort_value: null,
         actual_sets: null,
@@ -471,6 +476,20 @@ describe("buildAthleteRunSteps timed blocks", () => {
             "1",
             "2",
         ]);
+    });
+
+    it("resolveRestAfterCompletingRunStep: for_time último paso conserva descanso prescrito (B4)", () => {
+        const lines = [
+            timedLine(510, 20, 1, SET_TYPE.FOR_TIME, { plannedSets: 2, rest: 60 }),
+            timedLine(511, 30, 2, SET_TYPE.FOR_TIME, { plannedSets: 2, rest: 60 }),
+        ];
+        const view = viewFromBlock(block(81, SET_TYPE.FOR_TIME, 2), lines, {
+            20: "Thruster",
+            30: "Pull-up",
+        });
+        const steps = buildAthleteRunSteps(view);
+        expect(steps[0]?.restAfterSeconds).toBe(60);
+        expect(resolveRestAfterCompletingRunStep(steps[0]!, undefined)).toBe(60);
     });
 
     it("emom genera un unico timed_block con intervalos embebidos", () => {
