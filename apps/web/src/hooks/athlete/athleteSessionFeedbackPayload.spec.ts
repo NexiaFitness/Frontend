@@ -45,4 +45,26 @@ describe("buildAthleteSessionFeedbackCreateBody (B8)", () => {
         expect(body.fatigue_level).toBe(8);
         expect(body.pain_or_discomfort).toBe("rodilla");
     });
+
+    it("envío sin tocar escalas → POST solo con nulls en escalas", () => {
+        const body = buildAthleteSessionFeedbackCreateBody(346, {
+            effort: null,
+            fatigue: null,
+            sleep: null,
+            motivation: null,
+            pain: "",
+            notes: "",
+            touched: { ...EMPTY_ATHLETE_SESSION_FEEDBACK_TOUCHED },
+        });
+
+        expect(body).toEqual({
+            client_id: 346,
+            perceived_effort: null,
+            fatigue_level: null,
+            sleep_quality: null,
+            motivation_level: null,
+            pain_or_discomfort: null,
+            notes: null,
+        });
+    });
 });
