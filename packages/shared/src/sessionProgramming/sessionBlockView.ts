@@ -245,6 +245,11 @@ interface ParallelGroupOptions {
 
 const SUPERSET_MIN_SLOTS = 2;
 const GIANT_SET_MIN_SLOTS = 2;
+/** For Time mono-ejercicio: secuencia lineal (QA-0C-D1); multi-ejercicio usa GIANT_SET_MIN_SLOTS. */
+function forTimeMinSlots(lines: SessionBlockExercise[]): number {
+    const distinctExercises = new Set(lines.map((line) => line.exercise_id)).size;
+    return distinctExercises === 1 ? 1 : GIANT_SET_MIN_SLOTS;
+}
 
 function buildParallelSlotView(
     slotLines: SessionBlockExercise[],
@@ -403,7 +408,7 @@ function buildSequentialGroups(
         const layout = inferRoundSlotLayout(
             sorted,
             getEffectiveBlockRounds(options.block.rounds, sorted),
-            GIANT_SET_MIN_SLOTS
+            forTimeMinSlots(sorted)
         );
         rounds = layout.rounds;
         slots = layout.slotLines.map((slotLines, slotIdx) =>

@@ -2,13 +2,16 @@
  * parallelRoundCollapse.ts — Colapsa líneas API expandidas (1 fila/ronda/slot)
  * al layout round-centric de superset, giant_set y for_time.
  *
- * Contrato persistencia (constructor):
- * - Orden: [slot1 × R rondas, slot2 × R rondas, …]
- * - Cada fila expandida: planned_sets = 1
- * - block.rounds (o row.sets en superset/giant) = R
+ * Contexto:
+ * - Contrato persistencia (constructor): [slot1 × R rondas, slot2 × R rondas, …]; cada fila
+ *   expandida con planned_sets = 1; block.rounds (o row.sets en superset/giant) = R.
+ * - Contrato colapsado legacy: 1 fila por slot, planned_sets = R.
+ * - For Time: sessionBlockView pasa minSlots=1 solo si un único exercise_id; si no, minSlots=2.
  *
- * Contrato colapsado legacy:
- * - 1 fila por slot, planned_sets = R
+ * Notas de mantenimiento: no añadir atajos por exercise_id aquí sin tests superset/giant.
+ *
+ * @author Frontend Team
+ * @since 2026-10-01
  */
 
 import type { SessionBlockExercise } from "../types/sessionProgramming";
@@ -80,19 +83,6 @@ export function inferRoundSlotLayout<T extends ParallelRoundLineLike>(
 
     if (lineCount === 0) {
         return { rounds: 1, slotLines: [] };
-    }
-
-    const effectiveBlockRounds =
-        blockRounds != null && blockRounds > 0 ? blockRounds : null;
-    const maxPerExercise = maxLinesPerExerciseId(sorted);
-
-    // Constructor: N filas (1/ronda) del mismo ejercicio — no forzar 2 slots (QA-0C-D1).
-    if (
-        effectiveBlockRounds != null &&
-        lineCount === effectiveBlockRounds &&
-        maxPerExercise === effectiveBlockRounds
-    ) {
-        return { rounds: effectiveBlockRounds, slotLines: [sorted] };
     }
 
     // Colapsado canónico: 1 fila por slot.

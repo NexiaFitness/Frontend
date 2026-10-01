@@ -1,5 +1,12 @@
 /**
  * buildAthleteRunSteps.spec.ts — Orden de ejecución V05 Fase A.
+ *
+ * Contexto: Expande SessionStructureView en pasos atleta; incluye descanso for_time (B4/D2).
+ *
+ * Notas de mantenimiento: cambios en sessionBlockView deben reflejarse en fixtures for_time.
+ *
+ * @author Frontend Team
+ * @since 2026-10-01
  */
 
 import { describe, expect, it } from "vitest";

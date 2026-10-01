@@ -1,3 +1,14 @@
+/**
+ * athleteSessionFeedbackPayload.spec.ts — POST feedback atleta (B8).
+ *
+ * Contexto: Garantiza null en escalas no tocadas antes del POST a training-sessions feedback.
+ *
+ * Notas de mantenimiento: alinear con AthleteSessionFeedbackPage y schema BE ClientFeedbackCreate.
+ *
+ * @author Frontend Team
+ * @since 2026-10-01
+ */
+
 import { describe, expect, it } from "vitest";
 import {
     buildAthleteSessionFeedbackCreateBody,
