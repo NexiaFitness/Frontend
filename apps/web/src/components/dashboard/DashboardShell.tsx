@@ -13,6 +13,7 @@
 
 import React, { useCallback, useState } from "react";
 import { Outlet } from "react-router-dom";
+import { DashboardRouteErrorBoundary } from "@/components/errors/DashboardRouteErrorBoundary";
 import { useDashboardScrollOnNavigation } from "@/hooks/useDashboardScrollOnNavigation";
 import {
   DASHBOARD_MAIN_SCROLL_ID,
@@ -110,7 +111,9 @@ export const DashboardShell: React.FC = () => {
                     user?.role === USER_ROLES.ATHLETE && "lg:px-8"
                 )}
             >
-                <Outlet />
+                <DashboardRouteErrorBoundary>
+                    <Outlet />
+                </DashboardRouteErrorBoundary>
             </main>
         </div>
     );

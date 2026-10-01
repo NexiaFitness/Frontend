@@ -9,6 +9,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Outlet } from "react-router-dom";
+import { DashboardRouteErrorBoundary } from "@/components/errors/DashboardRouteErrorBoundary";
 import { useDashboardScrollOnNavigation } from "@/hooks/useDashboardScrollOnNavigation";
 import { DASHBOARD_MAIN_SCROLL_ID } from "@/lib/dashboardScroll";
 import { NEXIA_SCROLLBAR } from "@/components/ui/layout/scrollPresentation";
@@ -26,7 +27,9 @@ export const AthleteMobileShell: React.FC = () => {
                     NEXIA_SCROLLBAR
                 )}
             >
-                <Outlet />
+                <DashboardRouteErrorBoundary>
+                    <Outlet />
+                </DashboardRouteErrorBoundary>
             </main>
             <AthleteBottomNav />
         </div>
