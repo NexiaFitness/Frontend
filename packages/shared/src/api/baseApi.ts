@@ -12,6 +12,7 @@
  * @updated UX Sprint 1 - TICK-D04: interceptor refresh token en 401 (mutex, un reintento)
  * @updated 2026-04 - Authorization: resolver access token (localStorage + Redux); evita 401 cuando la sesión
  *   es válida en el store pero el storage no está legible o desincronizado.
+ * @updated 2026-10-01 - B2a: refreshAccessToken ok|invalid|network; 408/429 transitorios; candado vía AuthRefreshPlatform
  */
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
@@ -19,10 +20,13 @@ import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolk
 import { API_CONFIG, AUTH_CONFIG } from "@nexia/shared/config/constants";
 import {
     CLIENT_VERSION_HEADER,
+    clearRefreshNetworkFailure,
     getApiClientVersion,
+    noteRefreshNetworkFailure,
     noteResponseRequestId,
     notifyApiError,
 } from "../config/apiTelemetry";
+import { getAuthRefreshPlatform } from "./authRefreshPlatform";
 import type { RootState } from "../store";
 
 /**
@@ -85,17 +89,19 @@ const setStorageSafely = (key: string, value: string): void => {
 };
 
 /** Mutex: solo una petición de refresh a la vez (TICK-D04). */
-let refreshPromise: Promise<boolean> | null = null;
+let refreshPromise: Promise<RefreshResult> | null = null;
+
+export type RefreshResult = "ok" | "invalid" | "network";
 
 /** Evita que POST /auth/refresh cuelgue indefinidamente y bloquee otras peticiones (p. ej. login). */
 const REFRESH_FETCH_TIMEOUT_MS = 20_000;
+
+const ENDPOINTS_SKIP_5XX_TELEMETRY = new Set<string>(["reportClientError"]);
 
 /**
  * Mutaciones donde 401 significa credenciales/token inválidos en esa petición, no "access caducado".
  * No deben disparar refresh+retry (riesgo de bloqueo si /auth/refresh no responde).
  */
-const ENDPOINTS_SKIP_5XX_TELEMETRY = new Set<string>(["reportClientError"]);
-
 const ENDPOINTS_401_SKIP_REFRESH = new Set<string>([
     "login",
     "register",
@@ -116,8 +122,9 @@ const ENDPOINTS_NO_AUTH = new Set<string>([
 /**
  * Llama a POST /auth/refresh con el refresh_token, persiste nuevos tokens y user.
  * No usa authApi para evitar dependencia circular (authApi extiende baseApi).
+ * @internal exported for unit tests (B2a).
  */
-const doRefresh = async (refreshToken: string): Promise<boolean> => {
+export const refreshAccessToken = async (refreshToken: string): Promise<RefreshResult> => {
     const url = `${API_CONFIG.BASE_URL}/auth/refresh`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), REFRESH_FETCH_TIMEOUT_MS);
@@ -128,7 +135,15 @@ const doRefresh = async (refreshToken: string): Promise<boolean> => {
             body: JSON.stringify({ refresh_token: refreshToken }),
             signal: controller.signal,
         });
-        if (!res.ok) return false;
+        if (res.status === 401 || res.status === 403) {
+            return "invalid";
+        }
+        if (res.status === 408 || res.status === 429 || res.status >= 500) {
+            return "network";
+        }
+        if (!res.ok) {
+            return "invalid";
+        }
         const data = (await res.json()) as {
             access_token?: string;
             refresh_token?: string;
@@ -137,13 +152,16 @@ const doRefresh = async (refreshToken: string): Promise<boolean> => {
         if (data.access_token) setStorageSafely(AUTH_CONFIG.TOKEN_KEY, data.access_token);
         if (data.refresh_token) setStorageSafely(AUTH_CONFIG.REFRESH_KEY, data.refresh_token);
         if (data.user) setStorageSafely(AUTH_CONFIG.USER_KEY, JSON.stringify(data.user));
-        return true;
+        return "ok";
     } catch {
-        return false;
+        return "network";
     } finally {
         clearTimeout(timeoutId);
     }
 };
+
+const doRefresh = (refreshToken: string): Promise<RefreshResult> =>
+    refreshAccessToken(refreshToken);
 
 /**
  * Wrapper de fetch que suprime logs de errores 403 en consola del navegador
@@ -327,10 +345,30 @@ const baseQueryWithReauth: BaseQueryFn<
             }
 
             try {
-                if (!refreshPromise) refreshPromise = doRefresh(refreshToken);
-                const refreshed = await refreshPromise;
+                if (!refreshPromise) {
+                    const refreshTokenAt401 = refreshToken;
+                    refreshPromise = getAuthRefreshPlatform().withRefreshLock(async () => {
+                        const latestRefresh = getTokenSafely(AUTH_CONFIG.REFRESH_KEY);
+                        if (!latestRefresh) {
+                            return "invalid" as RefreshResult;
+                        }
+                        if (latestRefresh !== refreshTokenAt401) {
+                            return "ok";
+                        }
+                        return doRefresh(latestRefresh);
+                    });
+                }
+                const refreshOutcome = await refreshPromise;
 
-                if (!refreshed) {
+                if (refreshOutcome === "network") {
+                    noteRefreshNetworkFailure();
+                    restoreConsole();
+                    return result;
+                }
+
+                clearRefreshNetworkFailure();
+
+                if (refreshOutcome === "invalid") {
                     notifyApiError({ type: "session_expired" });
                     api.dispatch({ type: "auth/sessionExpired" });
                     restoreConsole();

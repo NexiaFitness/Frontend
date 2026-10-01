@@ -10,7 +10,15 @@
  * @updated 2026-09 — mensajes HTTP/Starlette en español; 405 despliegue API desincronizado
  */
 
+import { hadRecentRefreshNetworkFailure } from "../config/apiTelemetry";
+
 const FALLBACK = "Ha ocurrido un error. Inténtalo de nuevo.";
+
+const REFRESH_NETWORK_401_ES =
+    "Sin conexión estable. No pudimos renovar tu sesión; inténtalo de nuevo cuando tengas red.";
+
+const SESSION_AUTH_401_ES =
+    "Tu sesión ha expirado o no tienes permiso. Vuelve a iniciar sesión.";
 
 const EMAIL_DELIVERY_FAILED_ES =
     "No hemos podido enviar el email. Inténtalo de nuevo en unos minutos.";
@@ -37,8 +45,12 @@ function localizeHttpDetail(detail: string, status?: number): string {
         return API_DEPLOYMENT_MISMATCH_405;
     }
 
-    if (normalized === "not authenticated" || normalized === "not authorized") {
-        return "Tu sesión ha expirado o no tienes permiso. Vuelve a iniciar sesión.";
+    if (
+        normalized === "not authenticated" ||
+        normalized === "not authorized" ||
+        normalized === "could not validate credentials"
+    ) {
+        return SESSION_AUTH_401_ES;
     }
 
     if (normalized === "forbidden") {
@@ -138,6 +150,10 @@ export function getMutationErrorMessage(error: unknown): string {
     if (typeof error === "object" && error !== null) {
         const status = resolveHttpStatus(error);
 
+        if (status === 401 && hadRecentRefreshNetworkFailure()) {
+            return REFRESH_NETWORK_401_ES;
+        }
+
         if (status === 405) {
             return API_DEPLOYMENT_MISMATCH_405;
         }
@@ -172,7 +188,10 @@ export function getMutationErrorMessage(error: unknown): string {
             );
         }
         if (typeof status === "number" && status === 401) {
-            return "Tu sesión ha expirado o no tienes permiso. Vuelve a iniciar sesión.";
+            if (hadRecentRefreshNetworkFailure()) {
+                return REFRESH_NETWORK_401_ES;
+            }
+            return SESSION_AUTH_401_ES;
         }
         if (typeof status === "number" && status === 403) {
             return "No tienes permiso para realizar esta acción.";

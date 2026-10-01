@@ -1,4 +1,9 @@
 import { describe, expect, it } from "vitest";
+import {
+    clearRefreshNetworkFailure,
+    noteRefreshNetworkFailure,
+    resetApiTelemetryForTests,
+} from "../config/apiTelemetry";
 import { getMutationErrorMessage } from "./errorMessage";
 
 describe("getMutationErrorMessage — forgot-password 503", () => {
@@ -17,4 +22,29 @@ describe("getMutationErrorMessage — forgot-password 503", () => {
     );
   });
 
+});
+
+describe("getMutationErrorMessage — auth / sesión", () => {
+  it("traduce Could not validate credentials", () => {
+    expect(
+      getMutationErrorMessage({
+        status: 401,
+        data: { detail: "Could not validate credentials" },
+      })
+    ).toBe("Tu sesión ha expirado o no tienes permiso. Vuelve a iniciar sesión.");
+  });
+
+  it("401 tras fallo de red en refresh", () => {
+    resetApiTelemetryForTests();
+    noteRefreshNetworkFailure();
+    expect(
+      getMutationErrorMessage({
+        status: 401,
+        data: { detail: "Could not validate credentials" },
+      })
+    ).toBe(
+      "Sin conexión estable. No pudimos renovar tu sesión; inténtalo de nuevo cuando tengas red."
+    );
+    clearRefreshNetworkFailure();
+  });
 });

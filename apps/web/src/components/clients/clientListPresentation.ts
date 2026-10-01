@@ -57,7 +57,8 @@ export const CLIENT_LIST_COPY = {
     noActivity: "Sin actividad reciente",
     invitationPending: "Invitación pendiente",
     adherenceLabel: "Adherencia",
-    loadError: "Error al cargar clientes",
+    loadErrorFallback:
+        "No hemos podido cargar la lista de clientes. Inténtalo de nuevo en unos instantes.",
 } as const;
 
 export const CLIENT_LIST_PAGE = cn(PLATFORM_PAGE_SHELL, "relative pb-10 lg:pb-12");

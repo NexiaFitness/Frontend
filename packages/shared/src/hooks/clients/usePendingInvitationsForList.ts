@@ -21,6 +21,7 @@ export interface UsePendingInvitationsForListResult {
     items: Invitation[];
     isLoading: boolean;
     isError: boolean;
+    error: unknown;
     refetch: () => void;
 }
 
@@ -36,7 +37,7 @@ export function usePendingInvitationsForList({
     search,
     rosterEmails,
 }: UsePendingInvitationsForListParams): UsePendingInvitationsForListResult {
-    const { data: pendingData, isLoading, isError, refetch } = useListInvitationsQuery(
+    const { data: pendingData, isLoading, isError, error, refetch } = useListInvitationsQuery(
         { status: "pending", page_size: 50 },
         { skip },
     );
@@ -57,6 +58,7 @@ export function usePendingInvitationsForList({
         items,
         isLoading,
         isError,
+        error,
         refetch,
     };
 }

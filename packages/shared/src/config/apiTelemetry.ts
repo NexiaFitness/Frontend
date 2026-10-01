@@ -13,6 +13,7 @@ export const REQUEST_ID_HEADER = "X-Request-ID";
 let clientVersion = "unknown";
 let onApiError: ((event: ApiTelemetryErrorEvent) => void) | null = null;
 let lastRequestId: string | null = null;
+let lastRefreshNetworkFailure = false;
 
 export function configureApiTelemetry(options: {
     clientVersion: string;
@@ -41,8 +42,21 @@ export function getLastRequestId(): string | null {
     return lastRequestId;
 }
 
+export function noteRefreshNetworkFailure(): void {
+    lastRefreshNetworkFailure = true;
+}
+
+export function clearRefreshNetworkFailure(): void {
+    lastRefreshNetworkFailure = false;
+}
+
+export function hadRecentRefreshNetworkFailure(): boolean {
+    return lastRefreshNetworkFailure;
+}
+
 export function resetApiTelemetryForTests(): void {
     clientVersion = "unknown";
     onApiError = null;
     lastRequestId = null;
+    lastRefreshNetworkFailure = false;
 }

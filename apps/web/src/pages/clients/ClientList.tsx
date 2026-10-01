@@ -15,6 +15,7 @@ import {
     useGetCurrentTrainerProfileQuery,
     useCompleteProfileModal,
     usePendingInvitationsForList,
+    getMutationErrorMessage,
 } from "@nexia/shared";
 import type { ClientStatus } from "@nexia/shared/types/client";
 import type { RootState } from "@nexia/shared/store";
@@ -112,6 +113,7 @@ export const ClientList: React.FC = () => {
         items: invitationItems,
         isLoading: invitationsLoading,
         isError: invitationsError,
+        error: invitationsQueryError,
     } = usePendingInvitationsForList({
         skip: !isTrainerOrAdmin || !showInvitations,
         search: searchDebounced.trim() || null,
@@ -155,10 +157,15 @@ export const ClientList: React.FC = () => {
         (!showInvitations || invitationItems.length === 0);
     const rosterTotal = total + (showInvitations ? invitationItems.length : 0);
 
-    const errorDetail =
-        error && typeof error === "object" && "data" in error && error.data && typeof error.data === "object" && "detail" in error.data
-            ? String((error.data as { detail?: unknown }).detail)
-            : "Error desconocido";
+    const listErrorMessage = useMemo(() => {
+        if (isError && error) {
+            return getMutationErrorMessage(error);
+        }
+        if (invitationsError && invitationsQueryError) {
+            return getMutationErrorMessage(invitationsQueryError);
+        }
+        return CLIENT_LIST_COPY.loadErrorFallback;
+    }, [error, invitationsError, invitationsQueryError, isError]);
 
     return (
         <>
@@ -231,9 +238,7 @@ export const ClientList: React.FC = () => {
                     ) : null}
 
                     {listError ? (
-                        <Alert variant="error">
-                            {CLIENT_LIST_COPY.loadError}: {errorDetail}
-                        </Alert>
+                        <Alert variant="error">{listErrorMessage}</Alert>
                     ) : null}
 
                     {!listLoading && !listError && isEmpty ? (

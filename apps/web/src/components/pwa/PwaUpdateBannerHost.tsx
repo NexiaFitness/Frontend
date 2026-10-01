@@ -1,23 +1,54 @@
 /**
- * PwaUpdateBannerHost.tsx — Monta el banner según ruta y estado PWA.
- * Contexto: oculto en `/dashboard/sessions/:id/run` (modo guiado atleta).
- * @author Frontend Team
- * @since v5.x
+ * PWA update prompt (B1) — banner when a new service worker is waiting.
  */
 
-import React from "react";
+import { useRegisterSW } from "virtual:pwa-register/react";
 import { useLocation } from "react-router-dom";
-import { usePwaUpdatePrompt } from "@/hooks/pwa/usePwaUpdatePrompt";
-import { isAthleteSessionRunPath } from "@/lib/pwaSessionRunRoute";
-import { PwaUpdateBanner } from "./PwaUpdateBanner";
+import { Button } from "@/components/ui/buttons";
+import {
+    PWA_UPDATE_BANNER_COPY,
+    pwaUpdateBannerBodyClass,
+    pwaUpdateBannerShellClass,
+    pwaUpdateBannerTitleClass,
+} from "./pwaUpdateBannerPresentation";
+import { shouldShowPwaUpdateBanner } from "./pwaUpdateBannerVisibility";
 
-export const PwaUpdateBannerHost: React.FC = () => {
-  const { pathname } = useLocation();
-  const { shouldOfferUpdate, dismissUntilNextCheck, applyUpdate } = usePwaUpdatePrompt();
+export function PwaUpdateBannerHost(): JSX.Element | null {
+    const location = useLocation();
+    const {
+        needRefresh: [needRefresh, setNeedRefresh],
+        updateServiceWorker,
+    } = useRegisterSW({
+        immediate: true,
+    });
 
-  if (!shouldOfferUpdate || isAthleteSessionRunPath(pathname)) {
-    return null;
-  }
+    if (!shouldShowPwaUpdateBanner(location.pathname, needRefresh)) {
+        return null;
+    }
 
-  return <PwaUpdateBanner onUpdate={applyUpdate} onDismiss={dismissUntilNextCheck} />;
-};
+    const applyUpdate = (): void => {
+        void updateServiceWorker(true);
+    };
+
+    return (
+        <aside
+            className={pwaUpdateBannerShellClass}
+            role="region"
+            aria-label={PWA_UPDATE_BANNER_COPY.title}
+            data-testid="pwa-update-banner"
+        >
+            <div className="min-w-0 text-left">
+                <p className={pwaUpdateBannerTitleClass}>{PWA_UPDATE_BANNER_COPY.title}</p>
+                <p className={pwaUpdateBannerBodyClass}>{PWA_UPDATE_BANNER_COPY.body}</p>
+            </div>
+            <div className="flex shrink-0 gap-2">
+                <Button type="button" variant="ghost-primary" size="sm" onClick={() => setNeedRefresh(false)}>
+                    {PWA_UPDATE_BANNER_COPY.dismiss}
+                </Button>
+                <Button type="button" variant="primary" size="sm" onClick={applyUpdate}>
+                    {PWA_UPDATE_BANNER_COPY.action}
+                </Button>
+            </div>
+        </aside>
+    );
+}

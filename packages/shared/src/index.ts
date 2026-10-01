@@ -4,6 +4,7 @@ export * from "./analytics/planBlockAnalytics";
 // API
 export * from "./api/authApi";
 export * from "./api/baseApi";
+export * from "./api/authRefreshPlatform";
 export * from "./api/clientsApi";
 export * from "./api/invitationsApi";
 export * from "./api/sessionLoadApi";

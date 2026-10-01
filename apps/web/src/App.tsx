@@ -264,6 +264,18 @@ import { AthleteMobileSuspenseFallback } from "./components/athlete/AthleteMobil
 import { ErrorBoundary } from "./components/errors/ErrorBoundary";
 import { PwaUpdateBannerHost } from "./components/pwa/PwaUpdateBannerHost";
 
+/** QA OBS routes: dynamic import stripped from production bundles (import.meta.env.DEV). */
+const DevObs5xxProbePage = import.meta.env.DEV
+  ? lazyWithRetry(() =>
+      import("./pages/dev/DevObsQaPage").then((m) => ({ default: m.DevObs5xxProbePage }))
+    )
+  : null;
+const DevReactBoundaryProbePage = import.meta.env.DEV
+  ? lazyWithRetry(() =>
+      import("./pages/dev/DevObsQaPage").then((m) => ({ default: m.DevReactBoundaryProbePage }))
+    )
+  : null;
+
 // Protección de rutas
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AthleteOnboardingGate } from "./components/auth/AthleteOnboardingGate";
@@ -676,6 +688,31 @@ function App() {
               </RoleProtectedRoute>
             }
           />
+
+          {import.meta.env.DEV && DevObs5xxProbePage && DevReactBoundaryProbePage ? (
+            <>
+              <Route
+                path="__dev/obs-5xx"
+                element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<AthleteMobileSuspenseFallback />}>
+                      <DevObs5xxProbePage />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="__dev/react-boundary"
+                element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<AthleteMobileSuspenseFallback />}>
+                      <DevReactBoundaryProbePage />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+            </>
+          ) : null}
 
           {/* Athlete portal */}
           <Route
