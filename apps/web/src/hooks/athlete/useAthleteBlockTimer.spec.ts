@@ -47,6 +47,27 @@ describe("useAthleteBlockTimer (B6 wall clock)", () => {
         expect(result.current.elapsedSeconds).toBe(63);
     });
 
+    it("reinicia el cronó al cambiar stepKey con active true", () => {
+        const stepA: AthleteRunStep = { ...COUNTUP_STEP, stepKey: "amrap-a" };
+        const stepB: AthleteRunStep = { ...COUNTUP_STEP, stepKey: "amrap-b" };
+
+        const { result, rerender } = renderHook(
+            ({ step }) => useAthleteBlockTimer(step, true),
+            { initialProps: { step: stepA } }
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(20_000);
+        });
+        expect(result.current.elapsedSeconds).toBe(20);
+
+        rerender({ step: stepB });
+        act(() => {
+            vi.advanceTimersByTime(3_000);
+        });
+        expect(result.current.elapsedSeconds).toBe(3);
+    });
+
     it("pausa y reanuda sin perder ni sumar tiempo", () => {
         const { result, rerender } = renderHook(
             ({ active }) => useAthleteBlockTimer(COUNTUP_STEP, active),

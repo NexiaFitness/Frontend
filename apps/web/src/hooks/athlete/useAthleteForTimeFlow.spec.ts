@@ -80,6 +80,25 @@ describe("useAthleteForTimeFlow (B4)", () => {
         expect(result.current.allRoundsComplete).toBe(true);
     });
 
+    it("reinicia el cronó al cambiar stepKey con active true", () => {
+        const { result, rerender } = renderHook(
+            ({ stepKey }) =>
+                useAthleteForTimeFlow(stepKey, FOUR_ROUNDS, true),
+            { initialProps: { stepKey: "for-time-a" } }
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(15_000);
+        });
+        expect(result.current.elapsedSeconds).toBe(15);
+
+        rerender({ stepKey: "for-time-b" });
+        act(() => {
+            vi.advanceTimersByTime(4_000);
+        });
+        expect(result.current.elapsedSeconds).toBe(4);
+    });
+
     it("pausa cuando active es false y reanuda sin contar la pausa", () => {
         const { result, rerender } = renderHook(
             ({ active }) => useAthleteForTimeFlow("for-time-step", FOUR_ROUNDS, active),

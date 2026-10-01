@@ -62,7 +62,7 @@ export function useAthleteBlockTimer(
             segmentStartedAtRef.current = null;
             syncElapsedFromRefs();
         }
-    }, [active, runStep?.timedMode, syncElapsedFromRefs]);
+    }, [active, runStep?.stepKey, runStep?.timedMode, syncElapsedFromRefs]);
 
     const tick = useCallback(() => {
         if (!active || segmentStartedAtRef.current == null) return;

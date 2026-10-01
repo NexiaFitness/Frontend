@@ -84,7 +84,7 @@ export function useAthleteForTimeFlow(
             segmentStartedAtRef.current = null;
             syncElapsedFromRefs();
         }
-    }, [allRoundsComplete, running, syncElapsedFromRefs]);
+    }, [allRoundsComplete, running, stepKey, syncElapsedFromRefs]);
 
     const tick = useCallback(() => {
         if (!running || segmentStartedAtRef.current == null) return;
