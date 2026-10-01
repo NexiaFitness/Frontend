@@ -16,8 +16,12 @@ import "./index.css";
 // Inicializar storage ANTES de crear el store
 import { initStorage } from '@nexia/shared/storage/IStorage';
 import { webStorage } from './storage/webStorage';
+import { registerPreloadErrorRecovery } from "./lib/lazyWithRetry";
 
 initStorage(webStorage);
+
+// Recarga única si un chunk lazy ya no existe tras un despliegue (ver lib/lazyWithRetry.ts)
+registerPreloadErrorRecovery();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

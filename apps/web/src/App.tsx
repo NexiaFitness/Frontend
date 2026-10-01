@@ -12,11 +12,13 @@
  * @since v1.0.0
  * @updated v5.0.0 - Fase 2b: todas las rutas dashboard anidadas bajo DashboardShell
  * @updated v5.x - Fase 2: code splitting por bloques funcionales
+ * @updated v5.x - Rutas lazy con lazyWithRetry: recarga única ante chunks obsoletos tras un despliegue
  */
 
-import React, { useEffect, lazy, Suspense } from "react";
+import React, { useEffect, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
+import { lazyWithRetry } from "./lib/lazyWithRetry";
 
 // Páginas públicas (críticas: estáticas)
 import Home from "./pages/Home";
@@ -24,231 +26,231 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 
 // Bloque 1: Públicas secundarias (lazy)
-const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
-const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
-const InvitationAcceptPage = lazy(() => import("./pages/invitation/InvitationAcceptPage"));
-const AthleteOnboardingPage = lazy(() => import("./pages/onboarding/AthleteOnboardingPage"));
+const ForgotPassword = lazyWithRetry(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazyWithRetry(() => import("./pages/auth/ResetPassword"));
+const VerifyEmail = lazyWithRetry(() => import("./pages/auth/VerifyEmail"));
+const InvitationAcceptPage = lazyWithRetry(() => import("./pages/invitation/InvitationAcceptPage"));
+const AthleteOnboardingPage = lazyWithRetry(() => import("./pages/onboarding/AthleteOnboardingPage"));
 
 // Bloque 2: Dashboards por rol (lazy)
-const TrainerDashboard = lazy(() =>
+const TrainerDashboard = lazyWithRetry(() =>
   import("./pages/dashboard/trainer/TrainerDashboard").then((m) => ({ default: m.TrainerDashboard }))
 );
-const AdminDashboard = lazy(() =>
+const AdminDashboard = lazyWithRetry(() =>
   import("./pages/dashboard/admin/AdminDashboard").then((m) => ({ default: m.AdminDashboard }))
 );
-const AthleteDashboard = lazy(() =>
+const AthleteDashboard = lazyWithRetry(() =>
   import("./pages/dashboard/athlete/AthleteDashboard").then((m) => ({ default: m.AthleteDashboard }))
 );
-const AthletePlanPage = lazy(() =>
+const AthletePlanPage = lazyWithRetry(() =>
   import("./pages/dashboard/athlete/AthletePlanPage").then((m) => ({ default: m.AthletePlanPage }))
 );
-const SessionsRouteSwitcher = lazy(() =>
+const SessionsRouteSwitcher = lazyWithRetry(() =>
   import("./pages/dashboard/athlete/SessionsRouteSwitcher").then((m) => ({
     default: m.SessionsRouteSwitcher,
   }))
 );
-const AthleteSessionPreviewPage = lazy(() =>
+const AthleteSessionPreviewPage = lazyWithRetry(() =>
   import("./pages/dashboard/athlete/AthleteSessionPreviewPage").then((m) => ({
     default: m.AthleteSessionPreviewPage,
   }))
 );
-const AthleteSessionRunPage = lazy(() =>
+const AthleteSessionRunPage = lazyWithRetry(() =>
   import("./pages/dashboard/athlete/AthleteSessionRunPage").then((m) => ({
     default: m.AthleteSessionRunPage,
   }))
 );
-const AthleteSessionFeedbackPage = lazy(() =>
+const AthleteSessionFeedbackPage = lazyWithRetry(() =>
   import("./pages/dashboard/athlete/AthleteSessionFeedbackPage").then((m) => ({
     default: m.AthleteSessionFeedbackPage,
   }))
 );
-const AthleteFeedbackHistoryPage = lazy(() =>
+const AthleteFeedbackHistoryPage = lazyWithRetry(() =>
   import("./pages/dashboard/athlete/AthleteFeedbackHistoryPage").then((m) => ({
     default: m.AthleteFeedbackHistoryPage,
   }))
 );
-const AthleteSessionSummaryPage = lazy(() =>
+const AthleteSessionSummaryPage = lazyWithRetry(() =>
   import("./pages/dashboard/athlete/AthleteSessionSummaryPage").then((m) => ({
     default: m.AthleteSessionSummaryPage,
   }))
 );
-const AthleteProgressPage = lazy(() =>
+const AthleteProgressPage = lazyWithRetry(() =>
   import("./pages/dashboard/athlete/AthleteProgressPage").then((m) => ({
     default: m.AthleteProgressPage,
   }))
 );
-const AthleteExerciseProgressPage = lazy(() =>
+const AthleteExerciseProgressPage = lazyWithRetry(() =>
   import("./pages/dashboard/athlete/AthleteExerciseProgressPage").then((m) => ({
     default: m.AthleteExerciseProgressPage,
   }))
 );
-const PwaPreviewPage = lazy(() => import("./pages/dev/PwaPreviewPage"));
+const PwaPreviewPage = lazyWithRetry(() => import("./pages/dev/PwaPreviewPage"));
 
 // Bloque 3: Módulos trainer (lazy)
-const CompleteProfile = lazy(() =>
+const CompleteProfile = lazyWithRetry(() =>
   import("./pages/dashboard/trainer/CompleteProfile").then((m) => ({ default: m.CompleteProfile }))
 );
-const ClientInvitePage = lazy(() =>
+const ClientInvitePage = lazyWithRetry(() =>
   import("./pages/clients/ClientInvitePage").then((m) => ({ default: m.ClientInvitePage }))
 );
-const ClientList = lazy(() =>
+const ClientList = lazyWithRetry(() =>
   import("./pages/clients/ClientList").then((m) => ({ default: m.ClientList }))
 );
-const ClientDetail = lazy(() =>
+const ClientDetail = lazyWithRetry(() =>
   import("./pages/clients/ClientDetail").then((m) => ({ default: m.ClientDetail }))
 );
-const ClientEdit = lazy(() =>
+const ClientEdit = lazyWithRetry(() =>
   import("./pages/clients/ClientEdit").then((m) => ({ default: m.ClientEdit }))
 );
 
-const TrainingPlansPage = lazy(() =>
+const TrainingPlansPage = lazyWithRetry(() =>
   import("./pages/trainingPlans/TrainingPlansPage").then((m) => ({ default: m.TrainingPlansPage }))
 );
-const TrainingPlanDetail = lazy(() =>
+const TrainingPlanDetail = lazyWithRetry(() =>
   import("./pages/trainingPlans/TrainingPlanDetail").then((m) => ({ default: m.TrainingPlanDetail }))
 );
-const TrainingPlanEdit = lazy(() =>
+const TrainingPlanEdit = lazyWithRetry(() =>
   import("./pages/trainingPlans/TrainingPlanEdit").then((m) => ({ default: m.TrainingPlanEdit }))
 );
-const CreateTrainingPlan = lazy(() =>
+const CreateTrainingPlan = lazyWithRetry(() =>
   import("./pages/trainingPlans/CreateTrainingPlan").then((m) => ({ default: m.CreateTrainingPlan }))
 );
-const CreateTrainingPlanTemplate = lazy(() =>
+const CreateTrainingPlanTemplate = lazyWithRetry(() =>
   import("./pages/trainingPlans/CreateTrainingPlanTemplate").then((m) => ({ default: m.CreateTrainingPlanTemplate }))
 );
-const TrainingPlanTemplateDetail = lazy(() =>
+const TrainingPlanTemplateDetail = lazyWithRetry(() =>
   import("./pages/trainingPlans/TrainingPlanTemplateDetail").then((m) => ({
     default: m.TrainingPlanTemplateDetail,
   }))
 );
-const TrainingPlanTemplateEditor = lazy(() =>
+const TrainingPlanTemplateEditor = lazyWithRetry(() =>
   import("./pages/trainingPlans/TrainingPlanTemplateEditor").then((m) => ({
     default: m.TrainingPlanTemplateEditor,
   }))
 );
-const TemplateProgramWeeklyStructurePage = lazy(() =>
+const TemplateProgramWeeklyStructurePage = lazyWithRetry(() =>
   import("./pages/trainingPlans/TemplateProgramWeeklyStructurePage").then((m) => ({
     default: m.TemplateProgramWeeklyStructurePage,
   }))
 );
-const EditTemplateSessionPage = lazy(() =>
+const EditTemplateSessionPage = lazyWithRetry(() =>
   import("./pages/trainingPlans/EditTemplateSessionPage").then((m) => ({
     default: m.EditTemplateSessionPage,
   }))
 );
-const WeeklyStructurePage = lazy(() =>
+const WeeklyStructurePage = lazyWithRetry(() =>
   import("./pages/trainingPlans/WeeklyStructurePage").then((m) => ({
     default: m.WeeklyStructurePage,
   }))
 );
-const ExerciseList = lazy(() =>
+const ExerciseList = lazyWithRetry(() =>
   import("./pages/exercises").then((m) => ({ default: m.ExerciseList }))
 );
-const ExerciseDetail = lazy(() =>
+const ExerciseDetail = lazyWithRetry(() =>
   import("./pages/exercises").then((m) => ({ default: m.ExerciseDetail }))
 );
-const AdminCatalogListPage = lazy(() =>
+const AdminCatalogListPage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/catalog").then((m) => ({ default: m.AdminCatalogListPage }))
 );
-const AdminCatalogExerciseCreatePage = lazy(() =>
+const AdminCatalogExerciseCreatePage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/catalog").then((m) => ({
     default: m.AdminCatalogExerciseCreatePage,
   }))
 );
-const AdminCatalogExerciseEditPage = lazy(() =>
+const AdminCatalogExerciseEditPage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/catalog").then((m) => ({
     default: m.AdminCatalogExerciseEditPage,
   }))
 );
-const AdminCatalogImportPage = lazy(() =>
+const AdminCatalogImportPage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/catalog").then((m) => ({
     default: m.AdminCatalogImportPage,
   }))
 );
-const AdminUsersListPage = lazy(() =>
+const AdminUsersListPage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/users").then((m) => ({ default: m.AdminUsersListPage }))
 );
-const AdminUserDetailPage = lazy(() =>
+const AdminUserDetailPage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/users").then((m) => ({ default: m.AdminUserDetailPage }))
 );
-const AdminSupervisedClientPage = lazy(() =>
+const AdminSupervisedClientPage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/users").then((m) => ({
     default: m.AdminSupervisedClientPage,
   }))
 );
-const AdminAuditLogPage = lazy(() =>
+const AdminAuditLogPage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/operations").then((m) => ({ default: m.AdminAuditLogPage }))
 );
-const AdminOrganizationsListPage = lazy(() =>
+const AdminOrganizationsListPage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/organizations").then((m) => ({
     default: m.AdminOrganizationsListPage,
   }))
 );
-const AdminOrganizationsDetailPage = lazy(() =>
+const AdminOrganizationsDetailPage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/organizations").then((m) => ({
     default: m.AdminOrganizationsDetailPage,
   }))
 );
-const AdminTaxonomiesPage = lazy(() =>
+const AdminTaxonomiesPage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/taxonomies").then((m) => ({ default: m.AdminTaxonomiesPage }))
 );
-const AdminTaxonomiesRedirect = lazy(() =>
+const AdminTaxonomiesRedirect = lazyWithRetry(() =>
   import("./pages/dashboard/admin/taxonomies").then((m) => ({
     default: m.AdminTaxonomiesRedirect,
   }))
 );
-const AdminPhysicalTestsPage = lazy(() =>
+const AdminPhysicalTestsPage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/physical-tests").then((m) => ({
     default: m.AdminPhysicalTestsPage,
   }))
 );
-const GenerateReports = lazy(() =>
+const GenerateReports = lazyWithRetry(() =>
   import("./pages/reports/GenerateReports").then((m) => ({ default: m.GenerateReports }))
 );
-const SchedulingPage = lazy(() =>
+const SchedulingPage = lazyWithRetry(() =>
   import("./pages/scheduling/SchedulingPage").then((m) => ({ default: m.SchedulingPage }))
 );
-const NewScheduledSessionPage = lazy(() =>
+const NewScheduledSessionPage = lazyWithRetry(() =>
   import("./pages/scheduling/NewScheduledSessionPage").then((m) => ({ default: m.NewScheduledSessionPage }))
 );
-const EditScheduledSessionPage = lazy(() =>
+const EditScheduledSessionPage = lazyWithRetry(() =>
   import("./pages/scheduling/EditScheduledSessionPage").then((m) => ({ default: m.EditScheduledSessionPage }))
 );
-const CreateSessionFromTemplate = lazy(() =>
+const CreateSessionFromTemplate = lazyWithRetry(() =>
   import("./pages/sessionProgramming/CreateSessionFromTemplate").then((m) => ({ default: m.CreateSessionFromTemplate }))
 );
-const CreateSession = lazy(() =>
+const CreateSession = lazyWithRetry(() =>
   import("./pages/sessionProgramming/CreateSession").then((m) => ({ default: m.CreateSession }))
 );
-const EditSession = lazy(() =>
+const EditSession = lazyWithRetry(() =>
   import("./pages/sessionProgramming/EditSession").then((m) => ({ default: m.EditSession }))
 );
-const CreateTemplate = lazy(() =>
+const CreateTemplate = lazyWithRetry(() =>
   import("./pages/sessionProgramming/CreateTemplate").then((m) => ({ default: m.CreateTemplate }))
 );
-const SessionDetail = lazy(() =>
+const SessionDetail = lazyWithRetry(() =>
   import("./pages/sessionProgramming/SessionDetail").then((m) => ({ default: m.SessionDetail }))
 );
-const SessionReviewPage = lazy(() =>
+const SessionReviewPage = lazyWithRetry(() =>
   import("./pages/sessionProgramming/SessionReviewPage").then((m) => ({ default: m.SessionReviewPage }))
 );
-const StandaloneSessionDetail = lazy(() =>
+const StandaloneSessionDetail = lazyWithRetry(() =>
   import("./pages/standaloneSessions/StandaloneSessionDetail").then((m) => ({ default: m.StandaloneSessionDetail }))
 );
-const EditStandaloneSession = lazy(() =>
+const EditStandaloneSession = lazyWithRetry(() =>
   import("./pages/standaloneSessions/EditStandaloneSession").then((m) => ({ default: m.EditStandaloneSession }))
 );
-const CreateTestEvaluation = lazy(() =>
+const CreateTestEvaluation = lazyWithRetry(() =>
   import("./pages/testing").then((m) => ({ default: m.CreateTestEvaluation }))
 );
-const LegacyCreateTestRedirect = lazy(() =>
+const LegacyCreateTestRedirect = lazyWithRetry(() =>
   import("./pages/testing").then((m) => ({ default: m.CreateTestResult }))
 );
 
 // Bloque 4: Account, NotFound (lazy)
-const Account = lazy(() => import("./pages/account/Account"));
-const NotFound = lazy(() =>
+const Account = lazyWithRetry(() => import("./pages/account/Account"));
+const NotFound = lazyWithRetry(() =>
   import("./pages/NotFound").then((m) => ({ default: m.NotFound }))
 );
 
