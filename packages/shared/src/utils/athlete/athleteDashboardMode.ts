@@ -1,6 +1,6 @@
 /**
  * athleteDashboardMode.ts — Modo global del dashboard atleta V01 (F3b-FE-04).
- * Una sola fuente de verdad para copy y UI por estado.
+ * D10: sin plan activo pero con sesiones → mismos modos train/rest que con plan.
  */
 
 import type { TrainingSession } from "../../types/trainingSessions";
@@ -26,10 +26,51 @@ export interface ResolveDashboardModeInput {
     today?: Date;
 }
 
+function resolveRestMode(
+    nextSession: TrainingSession | undefined,
+    today: Date,
+    planned?: number,
+    completed?: number
+): AthleteDashboardMode {
+    const nextDate = nextSession?.session_date;
+    if (!nextDate) {
+        return "rest_far";
+    }
+
+    const daysUntil = computeDaysUntilSession(nextDate, today);
+    if (daysUntil === 1) {
+        return "rest_tomorrow";
+    }
+    if (daysUntil >= 2 && daysUntil <= 3) {
+        return "rest_near";
+    }
+
+    if (planned != null && completed != null && planned > 0 && completed < planned) {
+        return "week_partial";
+    }
+
+    return "rest_far";
+}
+
 export function resolveDashboardMode(input: ResolveDashboardModeInput): AthleteDashboardMode {
     const today = input.today ?? new Date();
+    const todaySession = input.todaySession;
 
     if (!input.hasActivePlan) {
+        if (todaySession) {
+            if (todaySession.status === "completed") {
+                return "train_today_done";
+            }
+            return "train_today";
+        }
+        if (input.nextSession) {
+            return resolveRestMode(
+                input.nextSession,
+                today,
+                input.sessionsPlanned,
+                input.sessionsCompleted
+            );
+        }
         return "no_plan";
     }
 
@@ -49,7 +90,6 @@ export function resolveDashboardMode(input: ResolveDashboardModeInput): AthleteD
         return "week_done";
     }
 
-    const todaySession = input.todaySession;
     if (todaySession) {
         if (todaySession.status === "completed") {
             return "train_today_done";
@@ -57,22 +97,5 @@ export function resolveDashboardMode(input: ResolveDashboardModeInput): AthleteD
         return "train_today";
     }
 
-    const nextDate = input.nextSession?.session_date;
-    if (!nextDate) {
-        return "rest_far";
-    }
-
-    const daysUntil = computeDaysUntilSession(nextDate, today);
-    if (daysUntil === 1) {
-        return "rest_tomorrow";
-    }
-    if (daysUntil >= 2 && daysUntil <= 3) {
-        return "rest_near";
-    }
-
-    if (planned != null && completed != null && planned > 0 && completed < planned) {
-        return "week_partial";
-    }
-
-    return "rest_far";
+    return resolveRestMode(input.nextSession, today, planned, completed);
 }

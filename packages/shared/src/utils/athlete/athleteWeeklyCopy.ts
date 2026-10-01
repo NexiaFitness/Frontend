@@ -267,9 +267,14 @@ export function buildWeeklyInsightCopy(ctx: WeeklyInsightCopyContext): WeeklyIns
 
 export function shouldShowWeeklyInsight(
     summary: AthleteWeeklySummary | undefined,
-    hasActivePlan: boolean
+    _hasActivePlan: boolean
 ): boolean {
-    return hasActivePlan && summary != null;
+    if (!summary) return false;
+    if (summary.adherence.sessions_planned > 0) return true;
+    if (summary.training_streak > 0) return true;
+    if (summary.personal_records.length > 0) return true;
+    if (summary.feedback.has_trainer_response) return true;
+    return false;
 }
 
 export function buildPersonalRecordChipLabel(record: AthleteWeeklyPersonalRecord): string {

@@ -6,7 +6,8 @@
  * @since v6.1.0
  */
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
+import { isAthleteExtraSession } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import { useNavigate } from "react-router-dom";
 import { AthleteDashboardHeader } from "@/components/athlete/AthleteDashboardHeader";
 import { AthleteDaySessionsSheet } from "@/components/athlete/AthleteDaySessionsSheet";
@@ -61,6 +62,8 @@ export const AthleteDashboard: React.FC = () => {
         periodizationStrip,
         showFeedbackBadge,
         trainerNote,
+        extraTodaySessionCount,
+        hasScheduledSessions,
         isLoading,
         isError,
         heroSubtitle,
@@ -69,6 +72,17 @@ export const AthleteDashboard: React.FC = () => {
         refreshDashboard,
         insightDeepLinkContext,
     } = useAthleteDashboard();
+
+    const todayStripDay = useMemo(
+        () => weekStrip.find((d) => d.isToday) ?? null,
+        [weekStrip]
+    );
+
+    const showExtraSessionBadge = Boolean(
+        todaySession && isAthleteExtraSession(todaySession, hasActivePlan)
+    );
+
+    const showTrainingShell = hasActivePlan || hasScheduledSessions;
 
     const weeklyInsight = useAthleteWeeklyInsight(
         hasActivePlan,
@@ -169,7 +183,7 @@ export const AthleteDashboard: React.FC = () => {
 
     const showStickyCta = Boolean(
         todaySession &&
-            hasActivePlan &&
+            showTrainingShell &&
             todaySession.status !== "completed"
     );
 
@@ -203,17 +217,24 @@ export const AthleteDashboard: React.FC = () => {
                         <AthletePeriodizationStrip strip={periodizationStrip} />
                     )}
 
-                    {hasActivePlan && (
+                    {showTrainingShell && (
                         <SessionTodayCard
                             session={todaySession}
                             hero={sessionHero}
-                            planProgressPercent={planProgressPercent}
+                            planProgressPercent={hasActivePlan ? planProgressPercent : null}
                             onCta={handleHeroCta}
                             hideStartCtaOnMobile={showStickyCta}
+                            extraTodaySessionCount={extraTodaySessionCount}
+                            onOpenExtraTodaySessions={
+                                extraTodaySessionCount > 0
+                                    ? () => setDaySheetDay(todayStripDay)
+                                    : undefined
+                            }
+                            showExtraSessionBadge={showExtraSessionBadge}
                         />
                     )}
 
-                    {hasActivePlan && (
+                    {hasScheduledSessions && (
                         <WeekStrip
                             days={weekStrip}
                             onDayClick={isDesktop ? undefined : setDaySheetDay}
@@ -237,16 +258,18 @@ export const AthleteDashboard: React.FC = () => {
                         />
                     )}
 
-                    {!hasActivePlan && (
+                    {!showTrainingShell && (
                         <AthleteEmptyState
                             variant="plan"
+                            title="Hoy toca descansar"
+                            description="Tu entrenador te irá añadiendo sesiones. Cuando haya una en el calendario, la verás aquí."
                             action={
                                 <Button
-                                    variant="primary"
+                                    variant="secondary"
                                     className={ATHLETE_PRIMARY_CTA}
-                                    onClick={() => navigate("/dashboard/account")}
+                                    onClick={() => navigate("/dashboard/sessions")}
                                 >
-                                    Ver mi cuenta
+                                    Ver mis sesiones
                                 </Button>
                             }
                         />

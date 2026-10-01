@@ -156,6 +156,55 @@ export function findTodaySession(
     return sessions.find((s) => isSessionToday(s, today));
 }
 
+/** Sesiones del día local (cualquier estado). */
+export function listSessionsOnLocalDay(
+    sessions: TrainingSession[],
+    today = new Date()
+): TrainingSession[] {
+    return sessions.filter((s) => isSessionToday(s, today));
+}
+
+/**
+ * D10 — Tarjeta «Hoy»: primera sesión pendiente hoy; si no hay, la primera del día.
+ */
+export function findTodayPrimarySession(
+    sessions: TrainingSession[],
+    today = new Date()
+): TrainingSession | undefined {
+    const todaySessions = listSessionsOnLocalDay(sessions, today);
+    if (todaySessions.length === 0) return undefined;
+
+    const pending = todaySessions.filter(
+        (s) => s.status !== "completed" && s.status !== "cancelled" && s.status !== "skipped"
+    );
+    pending.sort((a, b) => a.id - b.id);
+    if (pending.length > 0) {
+        return pending[0];
+    }
+    todaySessions.sort((a, b) => a.id - b.id);
+    return todaySessions[0];
+}
+
+/** Cuántas sesiones más hay hoy además de la primaria (mixto mismo día). */
+export function countAdditionalTodaySessions(
+    sessions: TrainingSession[],
+    primary: TrainingSession | undefined,
+    today = new Date()
+): number {
+    const todaySessions = listSessionsOnLocalDay(sessions, today);
+    if (todaySessions.length <= 1) return 0;
+    if (!primary) return todaySessions.length - 1;
+    return todaySessions.filter((s) => s.id !== primary.id).length;
+}
+
+/** Etiqueta «Sesión extra» solo con plan activo y sesión sin training_plan_id. */
+export function isAthleteExtraSession(
+    session: TrainingSession,
+    hasActivePlan: boolean
+): boolean {
+    return hasActivePlan && (session.training_plan_id == null || session.training_plan_id === 0);
+}
+
 export function findNextUpcomingSession(
     sessions: TrainingSession[],
     today = new Date()

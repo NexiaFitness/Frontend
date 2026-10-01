@@ -19,6 +19,7 @@ import {
     formatAthleteDate,
     getCompletedSessionCompletionPercent,
     getSessionStatusLabel,
+    isAthleteExtraSession,
     isPartiallyClosedSession,
     isSessionToday,
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
@@ -26,6 +27,7 @@ import {
 export interface AthleteSessionListItemProps {
     session: TrainingSession;
     onSelect: (sessionId: number) => void;
+    hasActivePlan?: boolean;
 }
 
 function statusBadgeVariant(session: TrainingSession) {
@@ -45,6 +47,7 @@ function completionTone(
 export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
     session,
     onSelect,
+    hasActivePlan = false,
 }) => {
     const statusLabel = getSessionStatusLabel(session);
     const completion = getCompletedSessionCompletionPercent(session);
@@ -70,6 +73,11 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
                     <span className={ATHLETE_SESSION_STATUS_BADGE[statusVariant]}>
                         {statusLabel}
                     </span>
+                    {isAthleteExtraSession(session, hasActivePlan) && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground">
+                            Sesión extra
+                        </span>
+                    )}
                     {session.session_date && (
                         <span className="text-caption text-muted-foreground">
                             {formatAthleteDate(session.session_date)}

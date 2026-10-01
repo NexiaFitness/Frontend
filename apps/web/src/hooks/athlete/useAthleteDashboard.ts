@@ -4,6 +4,20 @@
  */
 
 import { useMemo, useState, useCallback, useEffect } from "react";
+
+function formatLocalIsoDate(d: Date): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function athleteSessionsDateWindow(): { dateFrom: string; dateTo: string } {
+    const today = new Date();
+    const from = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 60);
+    const to = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 60);
+    return { dateFrom: formatLocalIsoDate(from), dateTo: formatLocalIsoDate(to) };
+}
 import { useSelector } from "react-redux";
 import { useGetAthleteWeeklySummaryQuery } from "@nexia/shared/api/athleteApi";
 import {
@@ -30,9 +44,10 @@ import {
 } from "@nexia/shared/utils/athlete/athletePeriodizationCopy";
 import {
     buildWeekStrip,
+    countAdditionalTodaySessions,
     findLatestTrainerSessionNote,
     findNextUpcomingSession,
-    findTodaySession,
+    findTodayPrimarySession,
     type WeekDayStripItem,
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import { hasUnreadTrainerResponse } from "@nexia/shared/utils/athlete/athleteFeedbackUtils";
@@ -50,6 +65,8 @@ export interface AthleteDashboardData {
     periodizationStrip: PeriodizationStripCopy | null;
     showFeedbackBadge: boolean;
     trainerNote: { session: TrainingSession; note: string } | null;
+    extraTodaySessionCount: number;
+    hasScheduledSessions: boolean;
     isLoading: boolean;
     isError: boolean;
     isRestDay: boolean;
@@ -64,14 +81,26 @@ export function useAthleteDashboard(): AthleteDashboardData {
     const { user } = useSelector((state: RootState) => state.auth);
     const { clientId, isLoading: profileLoading } = useAthleteContext();
 
+    const dateWindow = useMemo(() => athleteSessionsDateWindow(), []);
+
     const {
         data: sessions = [],
         isLoading: sessionsLoading,
         isError: sessionsError,
         refetch: refetchSessions,
-    } = useGetTrainingSessionsByClientQuery(clientId ?? 0, {
-        skip: !clientId,
-    });
+    } = useGetTrainingSessionsByClientQuery(
+        clientId
+            ? {
+                  clientId,
+                  limit: 200,
+                  dateFrom: dateWindow.dateFrom,
+                  dateTo: dateWindow.dateTo,
+              }
+            : 0,
+        {
+            skip: !clientId,
+        }
+    );
 
     const currentYear = new Date().getFullYear();
 
@@ -92,10 +121,15 @@ export function useAthleteDashboard(): AthleteDashboardData {
 
     const { data: weeklySummary, isLoading: weeklyLoading } = useGetAthleteWeeklySummaryQuery(
         undefined,
-        { skip: !clientId || !(planSummary?.has_active_plan ?? false) }
+        { skip: !clientId }
     );
 
-    const todaySession = useMemo(() => findTodaySession(sessions), [sessions]);
+    const todaySession = useMemo(() => findTodayPrimarySession(sessions), [sessions]);
+    const extraTodaySessionCount = useMemo(
+        () => countAdditionalTodaySessions(sessions, todaySession),
+        [sessions, todaySession]
+    );
+    const hasScheduledSessions = sessions.length > 0;
     const nextSession = useMemo(
         () => findNextUpcomingSession(sessions),
         [sessions]
@@ -184,6 +218,8 @@ export function useAthleteDashboard(): AthleteDashboardData {
         periodizationStrip,
         showFeedbackBadge,
         trainerNote,
+        extraTodaySessionCount,
+        hasScheduledSessions,
         isLoading,
         isError: sessionsError,
         isRestDay,

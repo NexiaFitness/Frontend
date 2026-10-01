@@ -134,7 +134,7 @@ export function buildDashboardHeaderCopy(ctx: AthleteDashboardCopyContext): Dash
 
     switch (ctx.mode) {
         case "no_plan":
-            return { subtitle: "Tu espacio de entrenamiento" };
+            return { subtitle: "Tu entrenamiento" };
         case "train_today":
             return { subtitle: `${weekday} · sesión de hoy` };
         case "train_today_done":
@@ -226,14 +226,15 @@ export function buildSessionHeroCopy(ctx: AthleteDashboardCopyContext): SessionH
     const seed = resolveSeed(ctx);
     const today = ctx.today ?? new Date();
 
-    if (!ctx.hasActivePlan || ctx.mode === "no_plan") {
+    if (ctx.mode === "no_plan") {
         return {
             badge: null,
-            headline: "Tu plan está en camino",
-            subline: "Tu entrenador preparará tu programación. Mientras tanto, revisa tu perfil o escríbele.",
+            headline: "Hoy toca descansar",
+            subline:
+                "Tu entrenador te irá añadiendo sesiones. Cuando haya una en el calendario, la verás aquí.",
             variant: "no-plan",
-            tone: "empty",
-            cta: { label: "Ver mi cuenta", action: "account" },
+            tone: "neutral",
+            cta: { label: "Ver mis sesiones", action: "sessions" },
             targetSessionId: null,
             meta: null,
         };

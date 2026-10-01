@@ -6,6 +6,8 @@
  */
 
 import React, { useCallback, useState } from "react";
+import { useGetClientTrainingPlanSummaryQuery } from "@nexia/shared/api/clientsApi";
+import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { AthleteEmptyState } from "@/components/athlete/empty/AthleteEmptyState";
@@ -38,6 +40,14 @@ export const AthleteSessionsPage: React.FC = () => {
     const filterDate = (location.state as { filterDate?: string } | null)?.filterDate;
     const [peekSession, setPeekSession] = useState<TrainingSession | null>(null);
     const { blockTapBriefly, shouldBlockTap } = useSwipePeekGuard();
+
+    const { clientId } = useAthleteContext();
+    const currentYear = new Date().getFullYear();
+    const { data: planSummary } = useGetClientTrainingPlanSummaryQuery(
+        { clientId: clientId ?? 0, year: currentYear },
+        { skip: !clientId }
+    );
+    const hasActivePlan = planSummary?.has_active_plan ?? false;
 
     const { sessions, filter, setFilter, isLoading, isError, refreshSessions } =
         useAthleteSessionsList();
@@ -120,12 +130,14 @@ export const AthleteSessionsPage: React.FC = () => {
                                         <AthleteSessionListItem
                                             session={session}
                                             onSelect={handleSelectSession}
+                                            hasActivePlan={hasActivePlan}
                                         />
                                     ) : (
                                         <div {...getSwipeHandlers(session)}>
                                             <AthleteSessionListItem
                                                 session={session}
                                                 onSelect={handleSelectSession}
+                                                hasActivePlan={hasActivePlan}
                                             />
                                         </div>
                                     )}

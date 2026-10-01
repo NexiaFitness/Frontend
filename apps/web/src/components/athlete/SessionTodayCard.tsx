@@ -28,6 +28,10 @@ export interface SessionTodayCardProps {
     onCta: (action: SessionHeroCtaAction, sessionId: number | null) => void;
     /** Móvil: el footer sticky ya muestra «Empezar sesión» — evitar CTA duplicado en card. */
     hideStartCtaOnMobile?: boolean;
+    /** D10 — sesiones adicionales hoy (mixto). */
+    extraTodaySessionCount?: number;
+    onOpenExtraTodaySessions?: () => void;
+    showExtraSessionBadge?: boolean;
 }
 
 export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
@@ -36,6 +40,9 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
     planProgressPercent,
     onCta,
     hideStartCtaOnMobile = false,
+    extraTodaySessionCount = 0,
+    onOpenExtraTodaySessions,
+    showExtraSessionBadge = false,
 }) => {
     const style = SESSION_HERO_TONE_STYLES[hero.tone];
     const progressLabel =
@@ -74,14 +81,31 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
             />
 
             <div className="relative space-y-2">
-                {hero.badge && (
-                    <Badge
-                        variant={style.badgeVariant}
-                        className={style.badgeClass}
+                <div className="flex flex-wrap items-center gap-2">
+                    {hero.badge && (
+                        <Badge
+                            variant={style.badgeVariant}
+                            className={style.badgeClass}
+                        >
+                            {hero.badge}
+                        </Badge>
+                    )}
+                    {showExtraSessionBadge && session && (
+                        <Badge variant="subtle" className="text-xs">
+                            Sesión extra
+                        </Badge>
+                    )}
+                </div>
+                {extraTodaySessionCount > 0 && onOpenExtraTodaySessions ? (
+                    <button
+                        type="button"
+                        onClick={onOpenExtraTodaySessions}
+                        className="text-left text-sm font-medium text-primary underline-offset-2 hover:underline"
                     >
-                        {hero.badge}
-                    </Badge>
-                )}
+                        +{extraTodaySessionCount} sesión
+                        {extraTodaySessionCount === 1 ? "" : "es"} más hoy
+                    </button>
+                ) : null}
                 <h2
                     className={cn(
                         "font-bold leading-snug text-foreground",

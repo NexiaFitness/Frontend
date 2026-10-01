@@ -63,14 +63,12 @@ export function useAthleteWeeklyInsight(
     deepLinkContext?: InsightDeepLinkContext | null
 ): AthleteWeeklyInsightData {
     const { data, isLoading, isError, refetch } = useGetAthleteWeeklySummaryQuery(undefined, {
-        skip: !hasActivePlan,
+        skip: clientId == null || clientId <= 0,
     });
 
     const refetchSummary = useCallback(() => {
-        if (hasActivePlan) {
-            void refetch();
-        }
-    }, [hasActivePlan, refetch]);
+        void refetch();
+    }, [refetch]);
 
     return useMemo(() => {
         const empty: AthleteWeeklyInsightData = {
@@ -86,10 +84,6 @@ export function useAthleteWeeklyInsight(
             isError,
             refetch: refetchSummary,
         };
-
-        if (!hasActivePlan) {
-            return { ...empty, isLoading: false, refetch: refetchSummary };
-        }
 
         if (isLoading || !data) {
             return { ...empty, isLoading, isError, refetch: refetchSummary };
