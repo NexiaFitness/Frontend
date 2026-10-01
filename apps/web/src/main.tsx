@@ -21,10 +21,12 @@ import {
   registerClientErrorReporting,
   reportClientError,
 } from "./lib/clientErrorReporter";
+import { registerAuthRefreshPlatform } from "./platform/authRefreshPlatform";
 
 initStorage(webStorage);
 
 registerClientErrorReporting();
+registerAuthRefreshPlatform();
 // Recarga única si un chunk lazy ya no existe tras un despliegue (ver lib/lazyWithRetry.ts)
 registerPreloadErrorRecovery({
   onFallback: () => {
