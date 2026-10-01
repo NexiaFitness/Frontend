@@ -111,14 +111,24 @@ export const AthleteSessionPreviewPage: React.FC = () => {
         setWellbeingOpen(true);
     };
 
+    const goToRun = () => {
+        navigate(`/dashboard/sessions/${sessionId}/run`);
+    };
+
     const handleWellbeingSubmit = async (level: 1 | 2 | 3) => {
-        try {
-            await submit(level);
-            setWellbeingOpen(false);
-            navigate(`/dashboard/sessions/${sessionId}/run`);
-        } catch {
-            showToast("error", "No se pudo guardar el check-in");
+        const result = await submit(level);
+        setWellbeingOpen(false);
+        if (result === "failed") {
+            showToast(
+                "warning",
+                "No se pudo guardar el check-in. Puedes entrenar igualmente."
+            );
         }
+        goToRun();
+    };
+
+    const handleWellbeingSkip = () => {
+        goToRun();
     };
 
     if (isLoading) {
@@ -256,6 +266,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                 isOpen={wellbeingOpen}
                 onClose={() => setWellbeingOpen(false)}
                 onSubmit={handleWellbeingSubmit}
+                onSkip={handleWellbeingSkip}
                 isSubmitting={submittingWellbeing}
             />
 

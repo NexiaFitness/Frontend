@@ -1,5 +1,8 @@
 /**
- * useWellbeingCheckIn.ts — Pre-session wellbeing triage (F2).
+ * useWellbeingCheckIn.ts — Pre-session wellbeing triage (F2 / B7).
+ *
+ * @author Frontend Team
+ * @since 2026-10-01
  */
 
 import { useCallback } from "react";
@@ -7,15 +10,22 @@ import { useSubmitWellbeingCheckInMutation } from "@nexia/shared/api/trainingSes
 
 export type WellbeingLevel = 1 | 2 | 3;
 
+export type WellbeingSubmitResult = "saved" | "failed";
+
 export function useWellbeingCheckIn(sessionId: number) {
     const [submitMutation, { isLoading }] = useSubmitWellbeingCheckInMutation();
 
     const submit = useCallback(
-        async (level: WellbeingLevel) => {
-            await submitMutation({
-                sessionId,
-                body: { pre_fatigue_level: level },
-            }).unwrap();
+        async (level: WellbeingLevel): Promise<WellbeingSubmitResult> => {
+            try {
+                await submitMutation({
+                    sessionId,
+                    body: { pre_fatigue_level: level },
+                }).unwrap();
+                return "saved";
+            } catch {
+                return "failed";
+            }
         },
         [sessionId, submitMutation]
     );

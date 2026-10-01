@@ -14,6 +14,7 @@ export interface WellbeingCheckInSheetProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (level: WellbeingLevel) => Promise<void>;
+    onSkip: () => void;
     isSubmitting?: boolean;
 }
 
@@ -21,6 +22,7 @@ export const WellbeingCheckInSheet: React.FC<WellbeingCheckInSheetProps> = ({
     isOpen,
     onClose,
     onSubmit,
+    onSkip,
     isSubmitting = false,
 }) => {
     const [selected, setSelected] = useState<WellbeingLevel | null>(null);
@@ -65,6 +67,18 @@ export const WellbeingCheckInSheet: React.FC<WellbeingCheckInSheetProps> = ({
                         disabled={isSubmitting}
                     >
                         Cancelar
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        className="min-h-touch-athlete w-full"
+                        onClick={() => {
+                            if (isSubmitting) return;
+                            resetAndClose();
+                            onSkip();
+                        }}
+                        disabled={isSubmitting}
+                    >
+                        Omitir
                     </Button>
                 </div>
             }
