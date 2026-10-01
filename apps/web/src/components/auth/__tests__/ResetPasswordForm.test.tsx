@@ -180,7 +180,9 @@ describe("ResetPasswordForm", () => {
             await fillValidForm(user);
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
-            expect(await screen.findByText(/invalid or expired reset token/i))
+            expect(
+                await screen.findByText(/el enlace de recuperación no es válido o ha caducado/i)
+            )
                 .toBeInTheDocument();
         });
 
@@ -337,7 +339,9 @@ describe("ResetPasswordForm", () => {
             await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "Newpass123");
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
-            expect(await screen.findByText(/invalid or expired reset token/i))
+            expect(
+                await screen.findByText(/el enlace de recuperación no es válido o ha caducado/i)
+            )
                 .toBeInTheDocument();
 
             // Clear server error and use default handler for success

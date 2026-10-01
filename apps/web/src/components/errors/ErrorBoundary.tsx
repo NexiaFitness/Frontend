@@ -14,6 +14,7 @@
 
 import { Component, ErrorInfo, ReactNode } from "react";
 import { Button } from "@/components/ui/buttons";
+import { isChunkLoadError } from "@/lib/lazyWithRetry";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -44,21 +45,30 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       if (this.props.fallback) {
         return this.props.fallback;
       }
+      const staleChunk = this.state.error != null && isChunkLoadError(this.state.error);
       return (
         <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 p-8 text-center">
-          <h2 className="text-lg font-semibold text-destructive">Error al cargar la página</h2>
+          <h2 className="text-lg font-semibold text-destructive">
+            {staleChunk ? "Hay una versión nueva de NEXIA" : "Error al cargar la página"}
+          </h2>
           <p className="max-w-md text-sm text-muted-foreground">
-            Ha ocurrido un error inesperado. Por favor, intenta recargar o volver al inicio.
+            {staleChunk
+              ? "Actualiza la app para cargar la última versión. Si el problema continúa, vuelve al inicio."
+              : "Ha ocurrido un error inesperado. Por favor, intenta recargar o volver al inicio."}
           </p>
           <Button
             type="button"
             variant="primary"
             size="sm"
             onClick={() => {
+              if (staleChunk) {
+                window.location.reload();
+                return;
+              }
               window.location.assign("/");
             }}
           >
-            Volver al inicio
+            {staleChunk ? "Actualizar" : "Volver al inicio"}
           </Button>
         </div>
       );

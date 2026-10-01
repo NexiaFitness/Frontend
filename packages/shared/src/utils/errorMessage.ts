@@ -49,6 +49,19 @@ function localizeHttpDetail(detail: string, status?: number): string {
         );
     }
 
+    if (
+        normalized === "invalid or expired token" ||
+        normalized === "invalid or expired reset token" ||
+        normalized === "invalid token scope" ||
+        normalized === "invalid token payload" ||
+        normalized === "invalid token or user"
+    ) {
+        return (
+            "El enlace de recuperación no es válido o ha caducado. " +
+            "Solicita uno nuevo para continuar."
+        );
+    }
+
     return detail;
 }
 

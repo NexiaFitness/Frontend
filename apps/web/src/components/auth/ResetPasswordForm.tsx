@@ -44,7 +44,7 @@ export const ResetPasswordForm: React.FC = () => {
     const [isPasswordReset, setIsPasswordReset] = React.useState(false);
 
     // Obtener token de la URL
-    const tokenFromUrl = searchParams.get("token") || "";
+    const tokenFromUrl = (searchParams.get("token") || "").trim();
 
     const initialFormState: ResetPasswordFormData = {
         token: tokenFromUrl,

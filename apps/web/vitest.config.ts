@@ -66,6 +66,10 @@ export default defineConfig({
             '@': path.resolve(__dirname, './src'),
             '@shared': path.resolve(__dirname, '../../packages/shared/src'),
             '@nexia/shared': path.resolve(__dirname, '../../packages/shared/src'),
+            'virtual:pwa-register/react': path.resolve(
+                __dirname,
+                './src/test-utils/mocks/pwaRegisterReact.ts'
+            ),
         },
     },
 

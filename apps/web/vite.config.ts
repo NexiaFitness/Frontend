@@ -21,7 +21,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       includeAssets: ["icons/*.png", "icons/icon.svg", "favicon.svg"],
       manifest: {
         name: "NEXIA Fitness",

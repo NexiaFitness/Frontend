@@ -13,6 +13,7 @@ import { useDispatch } from "react-redux";
 import { clearError } from "@nexia/shared/store/authSlice";
 import type { AppDispatch } from "@nexia/shared/store";
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { getMutationErrorMessage } from "@nexia/shared/utils/errorMessage";
 
 interface UseAuthFormProps<T> {
     initialState: T;
@@ -90,22 +91,28 @@ export function useAuthForm<T extends Record<string, unknown>>({
 
     // Manejar errores de servidor
     const handleServerError = useCallback((error: RTKError): string => {
-        let errorMessage = "Error de conexión. Intenta de nuevo.";
+        const hasApiDetail =
+            "data" in error &&
+            error.data != null &&
+            typeof error.data === "object" &&
+            ("detail" in (error.data as object) || "message" in (error.data as object));
+
+        let errorMessage = getMutationErrorMessage(error);
+
+        if (
+            !hasApiDetail &&
+            (errorMessage === "Ha ocurrido un error. Inténtalo de nuevo." ||
+                errorMessage.startsWith("No se pudo completar la operación"))
+        ) {
+            errorMessage = "Error de conexión. Intenta de nuevo.";
+        }
 
         if ("status" in error) {
-            // 1. Si el backend manda mensaje → usarlo
-            if ("data" in error && error.data) {
-                const data = error.data as { detail?: string; message?: string };
-
-                if (data.detail) {
-                    errorMessage = data.detail;
-                } else if (data.message) {
-                    errorMessage = data.message;
-                }
-            }
-
-            // 2. Si no había mensaje → fallback por código
-            if (errorMessage === "Error de conexión. Intenta de nuevo.") {
+            const genericPrefix = "No se pudo completar la operación";
+            if (
+                errorMessage.startsWith(genericPrefix) ||
+                errorMessage === "Error de conexión. Intenta de nuevo."
+            ) {
                 if (error.status === 401) {
                     errorMessage = "Correo o contraseña incorrectos";
                 } else if (error.status === 409) {

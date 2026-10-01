@@ -262,6 +262,7 @@ import { DashboardShell } from "./components/dashboard/DashboardShell";
 import { ToastProvider } from "./components/ui/feedback";
 import { AthleteMobileSuspenseFallback } from "./components/athlete/AthleteMobileSuspenseFallback";
 import { ErrorBoundary } from "./components/errors/ErrorBoundary";
+import { PwaUpdateBannerHost } from "./components/pwa/PwaUpdateBannerHost";
 
 // Protección de rutas
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -315,6 +316,7 @@ function App() {
   return (
     <ToastProvider>
       <ErrorBoundary>
+        <PwaUpdateBannerHost />
         <Suspense fallback={<AthleteMobileSuspenseFallback />}>
           <Routes>
             <Route element={<PublicLayout />}>
