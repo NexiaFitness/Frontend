@@ -21,7 +21,7 @@ import {
 
 export interface AthleteRatingScaleProps {
     label: string;
-    value: number;
+    value: number | null;
     min?: number;
     max?: number;
     color?: AthleteRatingColor;
@@ -47,15 +47,20 @@ export const AthleteRatingScale: React.FC<AthleteRatingScaleProps> = ({
         [min, max]
     );
 
-    const progressPercent =
-        max === min ? 100 : ((value - min) / (max - min)) * 100;
+    const hasValue = value != null;
+    const safeValue = value ?? min;
+    const progressPercent = hasValue
+        ? max === min
+            ? 100
+            : ((safeValue - min) / (max - min)) * 100
+        : 0;
 
     return (
         <div className={ATHLETE_RATING_FIELD}>
             <div className="flex items-center justify-between gap-3">
                 <span className={ATHLETE_RATING_LABEL}>{label}</span>
                 <span className={ATHLETE_RATING_VALUE_PILL[color]} aria-hidden>
-                    {value}
+                    {hasValue ? value : "—"}
                 </span>
             </div>
 
@@ -71,8 +76,8 @@ export const AthleteRatingScale: React.FC<AthleteRatingScaleProps> = ({
                 />
                 <div className={ATHLETE_RATING_SEGMENT_ROW}>
                     {steps.map((step) => {
-                        const isSelected = step === value;
-                        const isFilled = step <= value;
+                        const isSelected = hasValue && step === value;
+                        const isFilled = hasValue && step <= safeValue;
 
                         return (
                             <button

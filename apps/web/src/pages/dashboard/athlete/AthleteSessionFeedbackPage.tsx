@@ -44,6 +44,11 @@ import {
 } from "@/components/athlete/layout/athleteLayoutClasses";
 import { cn } from "@/lib/utils";
 import { scrollDashboardMainToElementAfterPaint } from "@/lib/dashboardScroll";
+import {
+    buildAthleteSessionFeedbackCreateBody,
+    EMPTY_ATHLETE_SESSION_FEEDBACK_TOUCHED,
+    type AthleteSessionFeedbackTouched,
+} from "@/hooks/athlete/athleteSessionFeedbackPayload";
 
 // ---------------------------------------------------------------------------
 // Satisfaccion 1-5: etiquetas descriptivas por valor seleccionado.
@@ -80,11 +85,14 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
     const [createFeedback, { isLoading: isSubmitting }] = useCreateSessionFeedbackMutation();
     const [createRating] = useCreateClientRatingMutation();
 
-    // Sensaciones fisiologicas
-    const [effort, setEffort] = useState(7);
-    const [fatigue, setFatigue] = useState(5);
-    const [sleep, setSleep] = useState(7);
-    const [motivation, setMotivation] = useState(7);
+    // Sensaciones fisiologicas — sin preselección (B8; antes useState 7/5 mostraba RPE en QA)
+    const [effort, setEffort] = useState<number | null>(null);
+    const [fatigue, setFatigue] = useState<number | null>(null);
+    const [sleep, setSleep] = useState<number | null>(null);
+    const [motivation, setMotivation] = useState<number | null>(null);
+    const [touched, setTouched] = useState<AthleteSessionFeedbackTouched>(
+        EMPTY_ATHLETE_SESSION_FEEDBACK_TOUCHED
+    );
     const [pain, setPain] = useState("");
     const [notes, setNotes] = useState("");
 
@@ -106,15 +114,15 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
         try {
             await createFeedback({
                 sessionId,
-                body: {
-                    client_id: clientId,
-                    perceived_effort: effort,
-                    fatigue_level: fatigue,
-                    sleep_quality: sleep,
-                    motivation_level: motivation,
-                    pain_or_discomfort: pain.trim() || null,
-                    notes: notes.trim() || null,
-                },
+                body: buildAthleteSessionFeedbackCreateBody(clientId, {
+                    effort,
+                    fatigue,
+                    sleep,
+                    motivation,
+                    pain,
+                    notes,
+                    touched,
+                }),
             }).unwrap();
 
             // Enviar valoracion de sesion si el atleta la selecciono.
@@ -188,7 +196,10 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
         <AthleteRatingScale
             label="Calidad del sueño"
             value={sleep}
-            onChange={setSleep}
+            onChange={(v) => {
+                setSleep(v);
+                setTouched((prev) => ({ ...prev, sleep: true }));
+            }}
             lowAnchor="Mala"
             highAnchor="Excelente"
         />
@@ -198,7 +209,10 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
         <AthleteRatingScale
             label="Motivación"
             value={motivation}
-            onChange={setMotivation}
+            onChange={(v) => {
+                setMotivation(v);
+                setTouched((prev) => ({ ...prev, motivation: true }));
+            }}
             lowAnchor="Baja"
             highAnchor="Alta"
         />
@@ -307,7 +321,10 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
                         <AthleteRatingScale
                             label="Esfuerzo percibido"
                             value={effort}
-                            onChange={setEffort}
+                            onChange={(v) => {
+                                setEffort(v);
+                                setTouched((prev) => ({ ...prev, effort: true }));
+                            }}
                             lowAnchor="Fácil"
                             highAnchor="Máximo"
                         />
@@ -315,7 +332,10 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
                             label="Fatiga"
                             value={fatigue}
                             color="warning"
-                            onChange={setFatigue}
+                            onChange={(v) => {
+                                setFatigue(v);
+                                setTouched((prev) => ({ ...prev, fatigue: true }));
+                            }}
                             lowAnchor="Fresco"
                             highAnchor="Agotado"
                         />
