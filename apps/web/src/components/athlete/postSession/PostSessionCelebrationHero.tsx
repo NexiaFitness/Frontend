@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
 import type { PostSessionCelebrationCopy } from "@nexia/shared/utils/athlete/athletePostSessionAiInsight";
+import type { PostSessionCompletionUnitsLabel } from "@nexia/shared/types/trainingSessions";
+import { formatPostSessionCompletionUnitsLabel } from "@nexia/shared/utils/athlete/postSessionCompletionUnitsLabel";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { PostSessionCompletionRing } from "./PostSessionCompletionRing";
 import { POST_SESSION_CELEBRATION_STYLES } from "./postSessionPresentation";
@@ -17,6 +19,7 @@ export interface PostSessionCelebrationHeroProps {
     completionPercent: number;
     actualSets: number;
     plannedSets: number;
+    completionUnitsLabel?: PostSessionCompletionUnitsLabel;
     canShare: boolean;
     isSharing: boolean;
     onShare: () => void;
@@ -27,6 +30,7 @@ export const PostSessionCelebrationHero: React.FC<PostSessionCelebrationHeroProp
     completionPercent,
     actualSets,
     plannedSets,
+    completionUnitsLabel,
     canShare,
     isSharing,
     onShare,
@@ -104,7 +108,8 @@ export const PostSessionCelebrationHero: React.FC<PostSessionCelebrationHeroProp
                                 <span className="font-medium tabular-nums text-foreground/90">
                                     {actualSets}
                                 </span>
-                                /{plannedSets} series
+                                /{plannedSets}{" "}
+                                {formatPostSessionCompletionUnitsLabel(completionUnitsLabel)}
                             </p>
                         </div>
 

@@ -63,6 +63,7 @@ export const AthleteSessionSummaryPage: React.FC = () => {
                     completionPercent={completionPercent}
                     actualSets={report.total_actual_sets}
                     plannedSets={report.total_planned_sets}
+                    completionUnitsLabel={report.completion_units_label}
                     canShare={canShare}
                     isSharing={isSharing}
                     onShare={() => void share()}

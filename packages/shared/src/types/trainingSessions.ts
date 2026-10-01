@@ -379,6 +379,9 @@ export interface PostSessionExerciseReport {
     completion_pct: number;
 }
 
+/** Post-session hero counter label (GET post-session-report). */
+export type PostSessionCompletionUnitsLabel = "sets" | "blocks" | "units";
+
 export interface PostSessionReport {
     session_id: number;
     session_name: string;
@@ -388,6 +391,7 @@ export interface PostSessionReport {
     actual_duration: number | null;
     total_planned_sets: number;
     total_actual_sets: number;
+    completion_units_label?: PostSessionCompletionUnitsLabel;
     completion_percentage: number;
     planned_volume: number | null;
     actual_volume: number | null;
