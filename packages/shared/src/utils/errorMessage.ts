@@ -12,6 +12,9 @@
 
 const FALLBACK = "Ha ocurrido un error. Inténtalo de nuevo.";
 
+const EMAIL_DELIVERY_FAILED_ES =
+    "No hemos podido enviar el email. Inténtalo de nuevo en unos minutos.";
+
 const GENERIC_SERVER_ERROR_EN = "internal server error";
 
 const API_DEPLOYMENT_MISMATCH_405 =
@@ -65,10 +68,26 @@ function localizeHttpDetail(detail: string, status?: number): string {
     return detail;
 }
 
+function extractStructuredDetailMessage(detail: unknown): string | null {
+    if (detail == null || typeof detail !== "object" || Array.isArray(detail)) {
+        return null;
+    }
+    const record = detail as Record<string, unknown>;
+    if (record.code === "email_delivery_failed") {
+        return EMAIL_DELIVERY_FAILED_ES;
+    }
+    if (typeof record.message === "string" && record.message.trim()) {
+        return localizeHttpDetail(record.message, 503);
+    }
+    return null;
+}
+
 /** Normaliza `detail` de respuestas FastAPI a texto único para la UI. */
 function formatHttpDetail(detail: unknown, status?: number): string | null {
     if (detail == null) return null;
     if (typeof detail === "string") return localizeHttpDetail(detail, status);
+    const structured = extractStructuredDetailMessage(detail);
+    if (structured) return structured;
     if (Array.isArray(detail)) {
         const parts = detail.map((item) => {
             if (item && typeof item === "object" && "msg" in item) {
