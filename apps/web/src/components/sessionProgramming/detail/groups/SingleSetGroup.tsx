@@ -22,6 +22,7 @@ import {
     DETAIL_TABLE_CLASS,
     DETAIL_TABLE_HEAD_CLASS,
 } from "../detailTableLayout";
+import { TrainerExerciseNote } from "../TrainerExerciseNote";
 import {
     DetailEffortCell,
     DetailEffortHeaderCell,
@@ -206,9 +207,7 @@ export const SingleSetGroup: React.FC<SingleSetGroupProps> = ({ blockTitle, grou
                 </table>
             </div>
 
-            {slot.notes && (
-                <p className="mt-2 text-[11px] italic text-muted-foreground">{slot.notes}</p>
-            )}
+            {slot.notes ? <TrainerExerciseNote text={slot.notes} /> : null}
         </DetailCardShell>
     );
 };

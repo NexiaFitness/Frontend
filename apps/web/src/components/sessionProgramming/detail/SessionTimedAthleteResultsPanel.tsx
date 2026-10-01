@@ -1,0 +1,87 @@
+/**
+ * SessionTimedAthleteResultsPanel — Registro estructurado AMRAP/EMOM/For Time (B10).
+ *
+ * Contexto: Resultados en timed_block_results; no mezclar con notes de prescripción.
+ *
+ * @author Frontend Team
+ * @since 2026-10-02
+ */
+
+import React, { useMemo } from "react";
+import { Timer } from "lucide-react";
+import { useGetClientTimedBlockResultsQuery } from "@nexia/shared/api/clientsApi";
+import { formatForTimeDuration } from "@nexia/shared/utils/athlete/forTimeResult";
+import { LoadingSpinner } from "@/components/ui/feedback";
+
+export interface SessionTimedAthleteResultsPanelProps {
+    clientId: number;
+    sessionId: number;
+    enabled?: boolean;
+}
+
+function formatTimedRow(mode: string, totalSeconds: number | null, rounds: number | null): string {
+    if (mode === "for_time" && totalSeconds != null) {
+        return formatForTimeDuration(totalSeconds);
+    }
+    if (mode === "amrap" && rounds != null) {
+        return `${rounds} rondas`;
+    }
+    if (mode === "emom") {
+        return "Registro EMOM (ver detalle en historial timed)";
+    }
+    return totalSeconds != null ? formatForTimeDuration(totalSeconds) : "—";
+}
+
+export const SessionTimedAthleteResultsPanel: React.FC<SessionTimedAthleteResultsPanelProps> = ({
+    clientId,
+    sessionId,
+    enabled = true,
+}) => {
+    const { data, isLoading } = useGetClientTimedBlockResultsQuery(
+        { clientId, limit: 50 },
+        { skip: !enabled || !clientId || !sessionId }
+    );
+
+    const rows = useMemo(
+        () => (data?.items ?? []).filter((item) => item.training_session_id === sessionId),
+        [data?.items, sessionId]
+    );
+
+    if (!enabled || rows.length === 0) {
+        if (isLoading && enabled) {
+            return (
+                <div className="flex justify-center rounded-xl border border-border bg-card p-6">
+                    <LoadingSpinner size="md" />
+                </div>
+            );
+        }
+        return null;
+    }
+
+    return (
+        <section className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
+            <div className="flex items-center gap-2">
+                <Timer className="size-5 text-primary" aria-hidden />
+                <h2 className="text-lg font-semibold text-foreground">Registro del atleta</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">
+                Bloques cronometrados (For Time, AMRAP, EMOM). Separado de las indicaciones del entrenador en cada ejercicio.
+            </p>
+            <ul className="space-y-2">
+                {rows.map((row) => (
+                    <li
+                        key={row.id}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 text-sm"
+                    >
+                        <span className="font-medium uppercase tracking-wide text-primary/80">
+                            {row.timed_mode.replace("_", " ")}
+                        </span>
+                        <span className="tabular-nums text-foreground">
+                            {formatTimedRow(row.timed_mode, row.total_seconds, row.rounds_completed)}
+                        </span>
+                    </li>
+                ))}
+            </ul>
+        </section>
+    );
+};

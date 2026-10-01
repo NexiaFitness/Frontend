@@ -73,7 +73,8 @@ function incrementSessionReportCount(): void {
 }
 
 function fingerprint(payload: ClientErrorPayload): string {
-  return [payload.kind, payload.route, payload.message.slice(0, 120)].join("|");
+  // Same throw often fires both window "error" and react_boundary — dedupe by route + message.
+  return [payload.route, payload.message.slice(0, 120)].join("|");
 }
 
 function shouldSend(payload: ClientErrorPayload): boolean {
@@ -135,7 +136,8 @@ async function sendClientError(payload: ClientErrorPayload): Promise<void> {
   }
 
   try {
-    if (typeof navigator.sendBeacon === "function") {
+    // sendBeacon cannot attach Authorization — use fetch when logged in (OBS / QA-0D user_id).
+    if (typeof navigator.sendBeacon === "function" && !token) {
       const blob = new Blob([body], { type: "application/json" });
       const ok = navigator.sendBeacon(url, blob);
       if (ok) {

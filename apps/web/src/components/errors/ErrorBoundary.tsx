@@ -1,21 +1,29 @@
 /**
- * ErrorBoundary.tsx — Captura errores en componentes hijos y muestra fallback UI.
+ * ErrorBoundary.tsx — Captura errores en componentes hijos y muestra fallback UI premium.
  *
- * Contexto: Envuelve rutas lazy para evitar que un error en un chunk cargado dinámicamente
- * rompa toda la aplicación. Usa componentDidCatch y getDerivedStateFromError (class component).
+ * Contexto: Envuelve rutas lazy y el shell raíz. Variante route (B9) con Reintentar local.
+ * Copy en errorBoundaryPresentation.ts.
  *
- * Notas de mantenimiento: No usar librerías externas. Fallback debe ser accesible y permitir
- * recuperación. "Volver al inicio" usa location.assign("/") para recargar y limpiar el estado
- * del boundary (un <Link> no resetea hasError y la pantalla de error seguía visible).
+ * Notas de mantenimiento: "Ir al inicio" → /dashboard si hay token JWT; si no, / (público).
+ * El reporte a POST /client-errors no incluye datos sensibles (clientErrorReporter).
  *
  * @author Frontend Team
  * @since v5.x
+ * @updated 2026-10-02 — UI premium; home href según sesión
  */
 
 import { Component, ErrorInfo, ReactNode } from "react";
+import { AUTH_CONFIG } from "@nexia/shared/config/constants";
 import { Button } from "@/components/ui/buttons";
 import { isChunkLoadError } from "@/lib/lazyWithRetry";
 import { reportReactBoundaryError } from "@/lib/clientErrorReporter";
+import {
+    ERROR_BOUNDARY_COPY,
+    errorBoundaryBodyClass,
+    errorBoundaryHomeLinkClass,
+    errorBoundaryShellClass,
+    errorBoundaryTitleClass,
+} from "./errorBoundaryPresentation";
 
 export type ErrorBoundaryVariant = "root" | "route";
 
@@ -30,15 +38,29 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
+  retryFailed: boolean;
+}
+
+function resolvePanelHomeHref(): string {
+  try {
+    if (typeof window !== "undefined" && window.localStorage.getItem(AUTH_CONFIG.TOKEN_KEY)) {
+      return "/dashboard";
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return "/";
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  private retryPending = false;
+
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, retryFailed: false };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { hasError: true, error };
   }
 
@@ -48,17 +70,32 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       prevProps.resetKey !== this.props.resetKey &&
       this.props.resetKey != null
     ) {
-      this.setState({ hasError: false, error: null });
+      this.setState({ hasError: false, error: null, retryFailed: false });
+      this.retryPending = false;
     }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    if (this.retryPending) {
+      this.retryPending = false;
+      this.setState({ retryFailed: true });
+    }
     console.error("[ErrorBoundary] Caught error:", error, errorInfo);
     reportReactBoundaryError(error, errorInfo.componentStack ?? "");
   }
 
   private handleRetry = (): void => {
+    this.retryPending = true;
     this.setState({ hasError: false, error: null });
+  };
+
+  private handleGoHome = (): void => {
+    const staleChunk = this.state.error != null && isChunkLoadError(this.state.error);
+    if (staleChunk) {
+      window.location.reload();
+      return;
+    }
+    window.location.assign(resolvePanelHomeHref());
   };
 
   render(): ReactNode {
@@ -68,45 +105,82 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
       const isRoute = this.props.variant === "route";
       const staleChunk = this.state.error != null && isChunkLoadError(this.state.error);
-      return (
-        <div
-          className={
-            isRoute
-              ? "flex min-h-[40vh] flex-col items-center justify-center gap-4 p-6 text-center"
-              : "flex min-h-[50vh] flex-col items-center justify-center gap-4 p-8 text-center"
-          }
-          role="alert"
-        >
-          <h2 className="text-lg font-semibold text-destructive">
-            {staleChunk ? "Hay una versión nueva de NEXIA" : "Error al cargar la página"}
-          </h2>
-          <p className="max-w-md text-sm text-muted-foreground">
-            {staleChunk
-              ? "Actualiza la app para cargar la última versión. Si el problema continúa, vuelve al inicio."
-              : isRoute
-                ? "Esta sección ha fallado. El resto de la app sigue disponible."
-                : "Ha ocurrido un error inesperado. Por favor, intenta recargar o volver al inicio."}
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {isRoute && !staleChunk ? (
-              <Button type="button" variant="primary" size="sm" onClick={this.handleRetry}>
-                Reintentar
+      const { retryFailed } = this.state;
+
+      if (staleChunk) {
+        const copy = ERROR_BOUNDARY_COPY.stale_chunk;
+        return (
+          <div className={errorBoundaryShellClass("root")} role="alert">
+            <h2 className={errorBoundaryTitleClass}>{copy.title}</h2>
+            <p className={errorBoundaryBodyClass}>{copy.body}</p>
+            <div className="flex w-full max-w-xs flex-col items-center gap-3">
+              <Button type="button" variant="primary" size="sm" className="min-h-touch-athlete w-full" onClick={this.handleGoHome}>
+                {copy.primary}
               </Button>
+              <button type="button" className={errorBoundaryHomeLinkClass} onClick={() => window.location.assign(resolvePanelHomeHref())}>
+                {copy.homeLink}
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      const copy = isRoute
+        ? retryFailed
+          ? ERROR_BOUNDARY_COPY.routeAfterRetry
+          : ERROR_BOUNDARY_COPY.route
+        : ERROR_BOUNDARY_COPY.root;
+
+      const primaryIsHome = isRoute && retryFailed;
+
+      return (
+        <div className={errorBoundaryShellClass(isRoute ? "route" : "root")} role="alert">
+          <h2 className={errorBoundaryTitleClass}>{copy.title}</h2>
+          <p className={errorBoundaryBodyClass}>{copy.body}</p>
+          <div className="flex w-full max-w-xs flex-col items-center gap-3">
+            {primaryIsHome ? (
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                className="min-h-touch-athlete w-full"
+                onClick={this.handleGoHome}
+              >
+                {copy.homeLink}
+              </Button>
+            ) : (
+              <>
+                {isRoute ? (
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    className="min-h-touch-athlete w-full"
+                    onClick={this.handleRetry}
+                  >
+                    {copy.retry}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    className="min-h-touch-athlete w-full"
+                    onClick={this.handleRetry}
+                  >
+                    {copy.retry}
+                  </Button>
+                )}
+                <button type="button" className={errorBoundaryHomeLinkClass} onClick={this.handleGoHome}>
+                  {copy.homeLink}
+                </button>
+              </>
+            )}
+            {primaryIsHome && isRoute ? (
+              <button type="button" className={errorBoundaryHomeLinkClass} onClick={this.handleRetry}>
+                {copy.retry}
+              </button>
             ) : null}
-            <Button
-              type="button"
-              variant={isRoute && !staleChunk ? "secondary" : "primary"}
-              size="sm"
-              onClick={() => {
-                if (staleChunk) {
-                  window.location.reload();
-                  return;
-                }
-                window.location.assign("/dashboard");
-              }}
-            >
-              {staleChunk ? "Actualizar" : isRoute ? "Ir al inicio del panel" : "Volver al inicio"}
-            </Button>
           </div>
         </div>
       );

@@ -101,11 +101,8 @@ export function buildForTimeSavePayloads(input: {
         actual_sets: number;
         actual_effort_value?: number;
         actual_duration?: number;
-        notes?: string;
     };
 }> {
-    const splits = input.cumulativeSplits ?? [];
-    const note = formatForTimeCompletionNote(input.totalSeconds, splits);
     const payloads: Array<{
         blockExerciseId: number;
         roundKey: string;
@@ -116,11 +113,10 @@ export function buildForTimeSavePayloads(input: {
             actual_sets: number;
             actual_effort_value?: number;
             actual_duration?: number;
-            notes?: string;
         };
     }> = [];
 
-    let wroteMeta = false;
+    let wroteDuration = false;
 
     for (const round of input.rounds) {
         for (const slot of round.slots) {
@@ -133,15 +129,10 @@ export function buildForTimeSavePayloads(input: {
                     actual_weight: slot.defaultWeight,
                     actual_reps: String(slot.defaultReps),
                     actual_sets: nextSets,
-                    ...(!wroteMeta
-                        ? {
-                              notes: note,
-                              actual_duration: input.totalSeconds,
-                          }
-                        : {}),
+                    ...(!wroteDuration ? { actual_duration: input.totalSeconds } : {}),
                 },
             });
-            wroteMeta = true;
+            wroteDuration = true;
         }
     }
 

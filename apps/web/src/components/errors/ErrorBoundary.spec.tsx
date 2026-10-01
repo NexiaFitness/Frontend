@@ -39,6 +39,7 @@ describe("ErrorBoundary route variant (B9)", () => {
         );
 
         expect(screen.getByRole("alert")).toBeInTheDocument();
+        expect(screen.getByText(/No hemos podido abrir esta pantalla/i)).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Reintentar" })).toBeInTheDocument();
 
         allowProbeRender = true;

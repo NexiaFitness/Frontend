@@ -93,9 +93,8 @@ describe("forTimeResult", () => {
         });
 
         expect(payloads).toHaveLength(4);
-        expect(payloads[0]?.data.notes).toBe("12:34");
         expect(payloads[0]?.data.actual_duration).toBe(754);
-        expect(payloads[0]?.data.notes).not.toContain("(");
+        expect(payloads[0]?.data).not.toHaveProperty("notes");
         expect(payloads[3]?.data.actual_effort_value).toBe(7);
     });
 
@@ -110,7 +109,7 @@ describe("forTimeResult", () => {
         });
 
         expect(payloads).toHaveLength(2);
-        expect(payloads[0]?.data.notes).toBe("2:35 (1:15 · 2:35)");
         expect(payloads[0]?.data.actual_duration).toBe(155);
+        expect(payloads[0]?.data).not.toHaveProperty("notes");
     });
 });

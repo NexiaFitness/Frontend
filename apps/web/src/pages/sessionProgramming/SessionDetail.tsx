@@ -46,6 +46,7 @@ import {
     SessionContextStrip,
     SessionAlertsPanel,
     SessionExecutionSummary,
+    SessionTimedAthleteResultsPanel,
 } from "@/components/sessionProgramming/detail";
 import {
     navigateDashboardBack,
@@ -320,11 +321,18 @@ export const SessionDetail: React.FC = () => {
             />
 
             {showExecutionSummary && session.client_id ? (
-                <SessionExecutionSummary
-                    sessionId={session.id}
-                    clientId={session.client_id}
-                    enabled={showExecutionSummary}
-                />
+                <>
+                    <SessionTimedAthleteResultsPanel
+                        clientId={session.client_id}
+                        sessionId={session.id}
+                        enabled={showExecutionSummary}
+                    />
+                    <SessionExecutionSummary
+                        sessionId={session.id}
+                        clientId={session.client_id}
+                        enabled={showExecutionSummary}
+                    />
+                </>
             ) : null}
 
             <div>

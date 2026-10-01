@@ -144,7 +144,6 @@ export function buildEmomSavePayloads(input: {
         actual_weight: number;
         actual_reps: string;
         actual_effort_value?: number;
-        notes?: string;
     };
 }> {
     const overrides = input.asPlanned
@@ -156,12 +155,6 @@ export function buildEmomSavePayloads(input: {
               templateSlots: input.templateSlots,
           });
 
-    const scoreNote = formatEmomCompletionNotation(
-        input.intervals,
-        input.asPlanned,
-        input.asPlanned ? undefined : input.failedCount
-    );
-
     const payloads: Array<{
         blockExerciseId: number;
         intervalKey: string;
@@ -170,11 +163,8 @@ export function buildEmomSavePayloads(input: {
             actual_weight: number;
             actual_reps: string;
             actual_effort_value?: number;
-            notes?: string;
         };
     }> = [];
-
-    let wroteNote = false;
 
     for (const interval of input.intervals) {
         for (const slot of interval.slots) {
@@ -192,10 +182,8 @@ export function buildEmomSavePayloads(input: {
                 data: {
                     actual_weight: slot.defaultWeight,
                     actual_reps: String(reps),
-                    ...(!wroteNote ? { notes: scoreNote } : {}),
                 },
             });
-            wroteNote = true;
         }
     }
 

@@ -3,9 +3,9 @@ import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentati
 
 export const PWA_UPDATE_BANNER_COPY = {
     title: "Hay una versión nueva de NEXIA",
-    body: "Actualiza para usar la última versión de la app.",
-    action: "Actualizar",
-    dismiss: "Ahora no",
+    body: "Un toque y sigues con la última versión — tus datos no se pierden.",
+    action: "Actualizar ahora",
+    dismiss: "Más tarde",
 } as const;
 
 export const pwaUpdateBannerShellClass = cn(

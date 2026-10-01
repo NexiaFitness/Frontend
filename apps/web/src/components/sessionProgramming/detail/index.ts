@@ -16,3 +16,5 @@ export { EmomGroup } from "./groups/EmomGroup";
 export { ForTimeGroup } from "./groups/ForTimeGroup";
 export { SessionExecutionSummary } from "./SessionExecutionSummary";
 export type { SessionExecutionSummaryProps } from "./SessionExecutionSummary";
+export { SessionTimedAthleteResultsPanel } from "./SessionTimedAthleteResultsPanel";
+export type { SessionTimedAthleteResultsPanelProps } from "./SessionTimedAthleteResultsPanel";
