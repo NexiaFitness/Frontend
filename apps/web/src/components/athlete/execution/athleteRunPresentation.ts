@@ -504,8 +504,8 @@ export function getAthleteBlockTimerHint(
     groupKind: string,
     isCountup: boolean,
     isReady = false,
-    forTimeRoundIndex?: number,
-    forTimeRoundTotal?: number
+    _forTimeRoundIndex?: number,
+    _forTimeRoundTotal?: number
 ): string {
     if (isReady) {
         if (isCountup) {
@@ -518,14 +518,7 @@ export function getAthleteBlockTimerHint(
     }
     if (isCountup) {
         if (groupKind === "for_time") {
-            if (
-                forTimeRoundTotal != null &&
-                forTimeRoundIndex != null &&
-                forTimeRoundIndex >= forTimeRoundTotal - 1
-            ) {
-                return "Última ronda — pulsa «Ronda completada» al terminar para cerrar el bloque.";
-            }
-            return "Cronómetro activo — pulsa «Ronda completada» al terminar cada ronda.";
+            return "Cronómetro activo — completa las rondas a tu ritmo y pulsa «Terminar» cuando acabes el bloque.";
         }
         return "Cronómetro activo — completa la ronda lo antes posible.";
     }

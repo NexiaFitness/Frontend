@@ -79,13 +79,9 @@ export const AthleteSessionRunPage: React.FC = () => {
         emomIntervalLabel,
         emomTechniqueSlots,
         forTimeRoundLabel,
-        forTimeRoundIndex,
         forTimeRoundTotal,
-        forTimeSplitViews,
-        forTimeRoundAdvanceCue,
-        forTimeCumulativeSplits,
         forTimeTotalSeconds,
-        setForTimeTotalSeconds,
+        onForTimeTotalSecondsChange,
         forTimeTechniqueSlots,
         blockTimer,
         blockWorkIsReady,
@@ -348,13 +344,9 @@ export const AthleteSessionRunPage: React.FC = () => {
                         emomIntervalLabel={emomIntervalLabel}
                         emomTechniqueSlots={emomTechniqueSlots}
                         forTimeRoundLabel={forTimeRoundLabel}
-                        forTimeRoundIndex={forTimeRoundIndex}
                         forTimeRoundTotal={forTimeRoundTotal}
-                        forTimeSplitViews={forTimeSplitViews}
-                        forTimeRoundAdvanceCue={forTimeRoundAdvanceCue}
-                        forTimeCumulativeSplits={forTimeCumulativeSplits}
                         forTimeTotalSeconds={forTimeTotalSeconds}
-                        onForTimeTotalSecondsChange={setForTimeTotalSeconds}
+                        onForTimeTotalSecondsChange={onForTimeTotalSecondsChange}
                         forTimeTechniqueSlots={forTimeTechniqueSlots}
                         blockTimer={blockTimer}
                         blockWorkIsReady={blockWorkIsReady}

@@ -69,12 +69,14 @@ import {
 } from "@nexia/shared/utils/athlete/emomResult";
 import {
     buildForTimeSavePayloads,
+    clampForTimeTotalSeconds,
     isForTimeCompletionValid,
 } from "@nexia/shared/utils/athlete/forTimeResult";
 import type { SlotLogValues } from "@/components/athlete/execution/AthleteMultiSlotLogger";
 import { useAthleteExercisePr } from "@/hooks/athlete/useAthleteExercisePr";
 import { useAthleteRunRestFlow } from "@/hooks/athlete/useAthleteRunRestFlow";
 import { useAthleteBlockTimer } from "@/hooks/athlete/useAthleteBlockTimer";
+import { useAthleteRunWakeLock } from "@/hooks/athlete/useAthleteRunWakeLock";
 import { useAthleteBlockWorkPhase } from "@/hooks/athlete/useAthleteBlockWorkPhase";
 import { useAthleteEmomFlow } from "@/hooks/athlete/useAthleteEmomFlow";
 import { useAthleteForTimeFlow } from "@/hooks/athlete/useAthleteForTimeFlow";
@@ -451,8 +453,7 @@ export function useAthleteSessionRun({
     }, [currentStepKey, isBatchStep]);
 
     const blockTimerRef = useRef(0);
-    const forTimeDataRef = useRef<{ cumulativeSplits: number[]; totalSeconds: number }>({
-        cumulativeSplits: [],
+    const forTimeDataRef = useRef<{ totalSeconds: number }>({
         totalSeconds: 0,
     });
 
@@ -771,7 +772,7 @@ export function useAthleteSessionRun({
                     }
                 }
             } else if (isForTime && currentRunStep.forTimeRounds) {
-                const { cumulativeSplits, totalSeconds } = forTimeDataRef.current;
+                const { totalSeconds } = forTimeDataRef.current;
                 if (!isForTimeCompletionValid(totalSeconds)) {
                     return;
                 }
@@ -789,7 +790,7 @@ export function useAthleteSessionRun({
                             sessionId,
                             runStep: currentRunStep,
                             totalSeconds,
-                            cumulativeSplits,
+                            cumulativeSplits: [],
                         })
                     ).unwrap();
                 } else {
@@ -798,10 +799,14 @@ export function useAthleteSessionRun({
                             sessionId,
                             runStep: currentRunStep,
                             totalSeconds,
-                            cumulativeSplits,
+                            cumulativeSplits: [],
                         })
                     );
                 }
+
+                // Post-session /summary completion % uses actual_sets vs planned_sets on block
+                // exercises (compute_session_completion_percentage). FOR TIME must persist sets
+                // via the execution payloads below — timed_block_results alone does not move %.
 
                 for (const payload of payloads) {
                     const round = currentRunStep.forTimeRounds.find(
@@ -811,8 +816,6 @@ export function useAthleteSessionRun({
                         round?.slots.find(
                             (item) => item.blockExerciseId === payload.blockExerciseId
                         ) ?? null;
-                    const splitSeconds =
-                        round != null ? cumulativeSplits[round.roundIndex - 1] : undefined;
 
                     loggedSetsRef.current.set(
                         payload.blockExerciseId,
@@ -832,7 +835,6 @@ export function useAthleteSessionRun({
                                 },
                                 slotReferences[slot.stepKey]?.suggestion
                             ),
-                            split_seconds: splitSeconds,
                             input_mode: "duration" as const,
                         };
                         if (isOnline) {
@@ -1011,6 +1013,12 @@ export function useAthleteSessionRun({
         : false;
     const showStepActions = Boolean(currentRunStep) && !isCurrentStepSaved;
 
+    const handleForTimeTotalSecondsChange = useCallback((seconds: number) => {
+        const clamped = clampForTimeTotalSeconds(seconds);
+        setForTimeTotalSeconds(clamped);
+        forTimeDataRef.current.totalSeconds = clamped;
+    }, []);
+
     const onConfirm = useCallback(async (): Promise<boolean> => {
         if (isAmrapBlock) {
             if (amrapRounds === 0 && amrapPartialTotal === 0) {
@@ -1182,7 +1190,6 @@ export function useAthleteSessionRun({
         forTimeTotalSeconds > 0 ? forTimeTotalSeconds : forTimeFlow.elapsedSeconds;
 
     forTimeDataRef.current = {
-        cumulativeSplits: [],
         totalSeconds: resolvedForTimeTotalSeconds,
     };
 
@@ -1333,6 +1340,8 @@ export function useAthleteSessionRun({
         restFlow.phase,
     ]);
 
+    // FOR TIME: «Terminar» marca allRoundsComplete → entra en logging_rest (descanso prescrito
+    // post-bloque) sin esperar time cap ni splits por ronda.
     useEffect(() => {
         if (!isForTimeBlock || !forTimeFlow.allRoundsComplete) return;
         if (!blockWork.isRunning) return;
@@ -1398,6 +1407,22 @@ export function useAthleteSessionRun({
     const waitingForCache = !isOnline && loadingFromNetwork && !cachedSnapshot;
     const isLoading = (loadingFromNetwork && !isUsingCache && isOnline) || waitingForCache;
 
+    const timedBlockClockActive =
+        showStepActions &&
+        isTimedBlock &&
+        blockWork.isRunning &&
+        restFlow.phase === "doing" &&
+        !(isForTimeBlock && forTimeFlow.allRoundsComplete) &&
+        !(isEmomBlock && emomFlow.allIntervalsComplete);
+
+    const restWakeLockActive =
+        showStepActions &&
+        restFlow.hasRestTimer &&
+        restFlow.remainingSeconds > 0 &&
+        (restFlow.phase === "logging_rest" || restFlow.phase === "rest_overlay");
+
+    useAthleteRunWakeLock(timedBlockClockActive || restWakeLockActive);
+
     return {
         session,
         isOnline,
@@ -1433,12 +1458,8 @@ export function useAthleteSessionRun({
         emomTechniqueSlots,
         forTimeRoundLabel: forTimeReferenceLabel ?? forTimeFlow.roundLabel,
         forTimeTotalSeconds,
-        setForTimeTotalSeconds,
-        forTimeRoundIndex: forTimeFlow.roundIndex,
+        onForTimeTotalSecondsChange: handleForTimeTotalSecondsChange,
         forTimeRoundTotal: forTimeFlow.roundTotal,
-        forTimeSplitViews: forTimeFlow.splitViews,
-        forTimeRoundAdvanceCue: forTimeFlow.roundAdvanceCue,
-        forTimeCumulativeSplits: forTimeFlow.cumulativeSplits,
         forTimeTechniqueSlots,
         blockTimer: displayBlockTimer,
         blockWorkIsReady: blockWork.isReady,

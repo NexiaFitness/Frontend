@@ -4,12 +4,14 @@ import {
     buildForTimeSavePayloads,
     buildForTimeSplitViews,
     clampForTimeTotalSeconds,
+    combineForTimeMinSec,
     formatForTimeCompletionNote,
     formatForTimeDuration,
     formatForTimeRoundLabel,
     formatForTimeSegmentDelta,
     isForTimeCompletionValid,
     parseForTimeMmSs,
+    splitForTimeTotalSeconds,
 } from "./forTimeResult";
 
 const SLOT = {
@@ -67,6 +69,12 @@ describe("forTimeResult", () => {
         expect(isForTimeCompletionValid(754)).toBe(true);
         expect(isForTimeCompletionValid(0)).toBe(false);
         expect(isForTimeCompletionValid(-1)).toBe(false);
+    });
+
+    it("splitForTimeTotalSeconds y combineForTimeMinSec", () => {
+        expect(splitForTimeTotalSeconds(754)).toEqual({ minutes: 12, seconds: 34 });
+        expect(combineForTimeMinSec(12, 34)).toBe(754);
+        expect(combineForTimeMinSec(0, 60)).toBeNull();
     });
 
     it("parseForTimeMmSs y clamp", () => {

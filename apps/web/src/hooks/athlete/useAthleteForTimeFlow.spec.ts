@@ -49,14 +49,34 @@ describe("useAthleteForTimeFlow (B4)", () => {
 
         expect(result.current.elapsedSeconds).toBe(754);
         expect(result.current.allRoundsComplete).toBe(false);
-        expect(result.current.cumulativeSplits).toEqual([]);
 
         act(() => {
             result.current.finishBlock();
         });
 
         expect(result.current.allRoundsComplete).toBe(true);
-        expect(result.current.cumulativeSplits).toEqual([]);
         expect(result.current.elapsedSeconds).toBe(754);
+    });
+
+    it("deja de contar tras finishBlock aunque pase el tiempo", () => {
+        const { result } = renderHook(() =>
+            useAthleteForTimeFlow("for-time-step", FOUR_ROUNDS, true)
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(10_000);
+        });
+        expect(result.current.elapsedSeconds).toBe(10);
+
+        act(() => {
+            result.current.finishBlock();
+        });
+
+        act(() => {
+            vi.advanceTimersByTime(120_000);
+        });
+
+        expect(result.current.elapsedSeconds).toBe(10);
+        expect(result.current.allRoundsComplete).toBe(true);
     });
 });

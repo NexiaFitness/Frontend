@@ -23,8 +23,6 @@ import { AthleteAmrapResultLogger } from "./AthleteAmrapResultLogger";
 import { AthleteEmomCompletionReview } from "./AthleteEmomCompletionReview";
 import { AthleteForTimeCompletionReview } from "./AthleteForTimeCompletionReview";
 import { AthleteForTimeLiveProgress } from "./AthleteForTimeLiveProgress";
-import type { ForTimeRoundAdvanceCue } from "@/hooks/athlete/useAthleteForTimeFlow";
-import type { ForTimeSplitView } from "@nexia/shared/utils/athlete/forTimeResult";
 import { AthleteRunBlockTimer } from "./AthleteRunBlockTimer";
 import { AthleteRoundEffortSection } from "./AthleteRoundEffortSection";
 import { AthleteRunSessionReadyCard } from "./AthleteRunSessionReadyCard";
@@ -63,11 +61,7 @@ export interface TimedBlockStepViewProps {
     emomIntervalLabel: string | null;
     emomTechniqueSlots: import("@nexia/shared/utils/athlete/buildAthleteRunSteps").AthleteRunRoundSlot[];
     forTimeRoundLabel: string | null;
-    forTimeRoundIndex: number;
     forTimeRoundTotal: number;
-    forTimeSplitViews: readonly ForTimeSplitView[];
-    forTimeRoundAdvanceCue: ForTimeRoundAdvanceCue | null;
-    forTimeCumulativeSplits: readonly number[];
     forTimeTotalSeconds: number;
     onForTimeTotalSecondsChange: (seconds: number) => void;
     forTimeTechniqueSlots: import("@nexia/shared/utils/athlete/buildAthleteRunSteps").AthleteRunRoundSlot[];
@@ -112,11 +106,7 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
     emomIntervalLabel,
     emomTechniqueSlots,
     forTimeRoundLabel,
-    forTimeRoundIndex,
     forTimeRoundTotal,
-    forTimeSplitViews,
-    forTimeRoundAdvanceCue,
-    forTimeCumulativeSplits,
     forTimeTotalSeconds,
     onForTimeTotalSecondsChange,
     forTimeTechniqueSlots,
@@ -210,10 +200,7 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
 
                     {isForTime ? (
                         <AthleteForTimeLiveProgress
-                            roundIndex={forTimeRoundIndex}
                             roundTotal={forTimeRoundTotal}
-                            splitViews={forTimeSplitViews}
-                            roundAdvanceCue={forTimeRoundAdvanceCue}
                             blockWorkIsReady={blockWorkIsReady}
                         />
                     ) : null}
@@ -225,7 +212,6 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
                         isCountup={blockTimer.isCountup}
                         isExpired={blockTimer.isExpired}
                         isReady={blockWorkIsReady}
-                        forTimeRoundIndex={isForTime ? forTimeRoundIndex : undefined}
                         forTimeRoundTotal={isForTime ? forTimeRoundTotal : undefined}
                     />
 

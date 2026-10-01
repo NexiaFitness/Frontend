@@ -69,6 +69,22 @@ export function clampForTimeTotalSeconds(seconds: number): number {
     return Math.max(0, Math.floor(seconds));
 }
 
+export function splitForTimeTotalSeconds(totalSeconds: number): {
+    minutes: number;
+    seconds: number;
+} {
+    const safe = clampForTimeTotalSeconds(totalSeconds);
+    return { minutes: Math.floor(safe / 60), seconds: safe % 60 };
+}
+
+/** Returns null when seconds ≥ 60 or parts are negative. */
+export function combineForTimeMinSec(minutes: number, seconds: number): number | null {
+    const m = Math.floor(minutes);
+    const s = Math.floor(seconds);
+    if (m < 0 || s < 0 || s >= 60) return null;
+    return m * 60 + s;
+}
+
 export function buildForTimeSavePayloads(input: {
     rounds: readonly AthleteForTimeRound[];
     cumulativeSplits?: readonly number[];
