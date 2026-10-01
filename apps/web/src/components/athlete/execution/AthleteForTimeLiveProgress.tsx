@@ -59,14 +59,8 @@ export const AthleteForTimeLiveProgress: React.FC<AthleteForTimeLiveProgressProp
 
     const nextActionHint = useMemo(() => {
         if (blockWorkIsReady) return null;
-        if (roundAdvanceCue && !roundAdvanceCue.isLastRound) {
-            return `Haz la ronda ${roundAdvanceCue.completedRoundIndex + 1} y pulsa «Ronda completada» cuando termines.`;
-        }
-        if (roundIndex >= roundTotal - 1) {
-            return "Última ronda — al terminar pulsa «Registrar tiempo final» abajo.";
-        }
-        return `Completa los ejercicios de la ronda ${roundIndex + 1} y pulsa «Ronda ${roundIndex + 1} completada» abajo.`;
-    }, [blockWorkIsReady, roundAdvanceCue, roundIndex, roundTotal]);
+        return `Completa las ${roundTotal} rondas a tu ritmo y pulsa «Terminar» cuando acabes el bloque.`;
+    }, [blockWorkIsReady, roundTotal]);
 
     if (blockWorkIsReady || roundTotal === 0) return null;
 

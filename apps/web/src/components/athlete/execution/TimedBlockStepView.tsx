@@ -68,6 +68,8 @@ export interface TimedBlockStepViewProps {
     forTimeSplitViews: readonly ForTimeSplitView[];
     forTimeRoundAdvanceCue: ForTimeRoundAdvanceCue | null;
     forTimeCumulativeSplits: readonly number[];
+    forTimeTotalSeconds: number;
+    onForTimeTotalSecondsChange: (seconds: number) => void;
     forTimeTechniqueSlots: import("@nexia/shared/utils/athlete/buildAthleteRunSteps").AthleteRunRoundSlot[];
     blockTimer: UseAthleteBlockTimerResult;
     blockWorkIsReady?: boolean;
@@ -115,6 +117,8 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
     forTimeSplitViews,
     forTimeRoundAdvanceCue,
     forTimeCumulativeSplits,
+    forTimeTotalSeconds,
+    onForTimeTotalSecondsChange,
     forTimeTechniqueSlots,
     blockTimer,
     blockWorkIsReady = false,
@@ -308,11 +312,8 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
 
                     {isForTime && runStep.forTimeRounds?.length ? (
                         <AthleteForTimeCompletionReview
-                            totalSeconds={
-                                forTimeCumulativeSplits[forTimeCumulativeSplits.length - 1] ??
-                                blockTimer.displaySeconds
-                            }
-                            cumulativeSplits={forTimeCumulativeSplits}
+                            totalSeconds={forTimeTotalSeconds}
+                            onTotalSecondsChange={onForTimeTotalSecondsChange}
                             roundRpe={roundRpe}
                             onRoundRpeChange={onRoundRpeChange}
                         />

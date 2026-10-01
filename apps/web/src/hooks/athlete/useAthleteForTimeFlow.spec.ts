@@ -27,9 +27,9 @@ function round(index: number, total: number): AthleteForTimeRound {
     };
 }
 
-const ROUNDS = [round(1, 2), round(2, 2)];
+const FOUR_ROUNDS = [round(1, 4), round(2, 4), round(3, 4), round(4, 4)];
 
-describe("useAthleteForTimeFlow", () => {
+describe("useAthleteForTimeFlow (B4)", () => {
     beforeEach(() => {
         vi.useFakeTimers();
     });
@@ -38,45 +38,25 @@ describe("useAthleteForTimeFlow", () => {
         vi.useRealTimers();
     });
 
-    it("cronó continuo, splits acumulados y cierre tras última ronda", () => {
+    it("termina el bloque con un solo finishBlock y conserva el cronó", () => {
         const { result } = renderHook(() =>
-            useAthleteForTimeFlow("for-time-step", ROUNDS, true)
+            useAthleteForTimeFlow("for-time-step", FOUR_ROUNDS, true)
         );
 
-        expect(result.current.roundLabel).toBe("Rondas 1 de 2");
-        expect(result.current.elapsedSeconds).toBe(0);
-
         act(() => {
-            vi.advanceTimersByTime(75000);
+            vi.advanceTimersByTime(754_000);
         });
 
-        expect(result.current.elapsedSeconds).toBe(75);
-
-        act(() => {
-            result.current.completeRound();
-        });
-
-        expect(result.current.roundAdvanceCue).toEqual({
-            completedRoundIndex: 1,
-            cumulativeSeconds: 75,
-            segmentSeconds: 75,
-            isLastRound: false,
-        });
-        expect(result.current.cumulativeSplits).toEqual([75]);
-        expect(result.current.roundLabel).toBe("Rondas 2 de 2");
+        expect(result.current.elapsedSeconds).toBe(754);
         expect(result.current.allRoundsComplete).toBe(false);
+        expect(result.current.cumulativeSplits).toEqual([]);
 
         act(() => {
-            vi.advanceTimersByTime(80000);
+            result.current.finishBlock();
         });
 
-        expect(result.current.elapsedSeconds).toBe(155);
-
-        act(() => {
-            result.current.completeRound();
-        });
-
-        expect(result.current.cumulativeSplits).toEqual([75, 155]);
         expect(result.current.allRoundsComplete).toBe(true);
+        expect(result.current.cumulativeSplits).toEqual([]);
+        expect(result.current.elapsedSeconds).toBe(754);
     });
 });

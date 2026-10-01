@@ -202,6 +202,7 @@ export function useAthleteSessionRun({
     const [rpe, setRpe] = useState<number | null>(null);
     const [slotLogs, setSlotLogs] = useState<Record<string, SlotLogValues>>({});
     const [roundRpe, setRoundRpe] = useState<number | null>(null);
+    const [forTimeTotalSeconds, setForTimeTotalSeconds] = useState(0);
     const [amrapRounds, setAmrapRounds] = useState(0);
     const [amrapPartialReps, setAmrapPartialReps] = useState<Record<string, number>>({});
     const [amrapPartialOpen, setAmrapPartialOpen] = useState(false);
@@ -231,6 +232,7 @@ export function useAthleteSessionRun({
         setEmomAsPlanned(null);
         setEmomFailedCount(0);
         setEmomFailureEntries([]);
+        setForTimeTotalSeconds(0);
     }, [sessionId]);
 
     const currentRunStep: AthleteRunStep | undefined = runSteps[step];
@@ -770,17 +772,12 @@ export function useAthleteSessionRun({
                 }
             } else if (isForTime && currentRunStep.forTimeRounds) {
                 const { cumulativeSplits, totalSeconds } = forTimeDataRef.current;
-                if (
-                    !isForTimeCompletionValid(
-                        cumulativeSplits,
-                        currentRunStep.forTimeRounds.length
-                    )
-                ) {
+                if (!isForTimeCompletionValid(totalSeconds)) {
                     return;
                 }
                 const payloads = buildForTimeSavePayloads({
                     rounds: currentRunStep.forTimeRounds,
-                    cumulativeSplits,
+                    cumulativeSplits: [],
                     totalSeconds,
                     roundRpe,
                     getNextActualSets,
@@ -971,10 +968,11 @@ export function useAthleteSessionRun({
             }
 
             if (isForTimeBlock && currentRunStep.forTimeRounds?.length) {
-                return isForTimeCompletionValid(
-                    forTimeDataRef.current.cumulativeSplits,
-                    currentRunStep.forTimeRounds.length
-                );
+                const total =
+                    forTimeTotalSeconds > 0
+                        ? forTimeTotalSeconds
+                        : forTimeDataRef.current.totalSeconds;
+                return isForTimeCompletionValid(total);
             }
 
             if (!currentRunStep.slots?.length) return false;
@@ -1004,6 +1002,7 @@ export function useAthleteSessionRun({
         slotLogs,
         reps,
         weight,
+        forTimeTotalSeconds,
     ]);
 
     const isLastStep = step === runSteps.length - 1;
@@ -1179,10 +1178,20 @@ export function useAthleteSessionRun({
             showStepActions
     );
 
+    const resolvedForTimeTotalSeconds =
+        forTimeTotalSeconds > 0 ? forTimeTotalSeconds : forTimeFlow.elapsedSeconds;
+
     forTimeDataRef.current = {
-        cumulativeSplits: [...forTimeFlow.cumulativeSplits],
-        totalSeconds: forTimeFlow.elapsedSeconds,
+        cumulativeSplits: [],
+        totalSeconds: resolvedForTimeTotalSeconds,
     };
+
+    useEffect(() => {
+        if (!isForTimeBlock || !forTimeFlow.allRoundsComplete) return;
+        setForTimeTotalSeconds((previous) =>
+            previous > 0 ? previous : forTimeFlow.elapsedSeconds
+        );
+    }, [forTimeFlow.allRoundsComplete, forTimeFlow.elapsedSeconds, isForTimeBlock]);
 
     const emomActiveGroupContext = useMemo(() => {
         if (!isEmomBlock || !currentRunStep || !emomFlow.currentInterval) return null;
@@ -1281,25 +1290,11 @@ export function useAthleteSessionRun({
             };
         }
         if (isForTimeBlock && blockWork.isRunning && !forTimeFlow.allRoundsComplete) {
-            const isLastForTimeRound =
-                forTimeFlow.roundTotal > 0 &&
-                forTimeFlow.roundIndex >= forTimeFlow.roundTotal - 1;
             return {
                 ...restFlow,
-                stickyPrimaryLabel: isLastForTimeRound
-                    ? "Registrar tiempo final"
-                    : `Ronda ${forTimeFlow.roundIndex + 1} completada`,
-                stickyPrimaryAction: forTimeFlow.completeRound,
+                stickyPrimaryLabel: "Terminar",
+                stickyPrimaryAction: forTimeFlow.finishBlock,
                 stickyPrimaryDisabled: false,
-                stickyPrimaryLoading: false,
-            };
-        }
-        if (isForTimeBlock && blockWork.isRunning && forTimeFlow.allRoundsComplete) {
-            return {
-                ...restFlow,
-                stickyPrimaryLabel: undefined,
-                stickyPrimaryAction: undefined,
-                stickyPrimaryDisabled: true,
                 stickyPrimaryLoading: false,
             };
         }
@@ -1310,9 +1305,7 @@ export function useAthleteSessionRun({
         blockWork.start,
         emomFlow.allIntervalsComplete,
         forTimeFlow.allRoundsComplete,
-        forTimeFlow.completeRound,
-        forTimeFlow.roundIndex,
-        forTimeFlow.roundTotal,
+        forTimeFlow.finishBlock,
         isEmomBlock,
         isForTimeBlock,
         isTimedBlock,
@@ -1365,11 +1358,17 @@ export function useAthleteSessionRun({
     ]);
 
     const forTimeTechniqueSlots: AthleteRunRoundSlot[] = useMemo(() => {
-        if (forTimeFlow.currentRound?.slots.length) {
-            return forTimeFlow.currentRound.slots;
+        if (currentRunStep?.forTimeRounds?.length) {
+            return currentRunStep.forTimeRounds.flatMap((round) => round.slots);
         }
-        return currentRunStep?.forTimeRounds?.[0]?.slots ?? currentRunStep?.slots ?? [];
-    }, [currentRunStep?.forTimeRounds, currentRunStep?.slots, forTimeFlow.currentRound]);
+        return currentRunStep?.slots ?? [];
+    }, [currentRunStep?.forTimeRounds, currentRunStep?.slots]);
+
+    const forTimeReferenceLabel = useMemo(() => {
+        const total = forTimeFlow.roundTotal;
+        if (total <= 0) return null;
+        return total === 1 ? "1 ronda (referencia)" : `${total} rondas (referencia)`;
+    }, [forTimeFlow.roundTotal]);
 
     const emomTechniqueSlots: AthleteRunRoundSlot[] = useMemo(() => {
         if (emomFlow.currentInterval?.slots.length) {
@@ -1432,7 +1431,9 @@ export function useAthleteSessionRun({
         emomTemplateSlots,
         emomIntervalLabel: emomFlow.intervalLabel,
         emomTechniqueSlots,
-        forTimeRoundLabel: forTimeFlow.roundLabel,
+        forTimeRoundLabel: forTimeReferenceLabel ?? forTimeFlow.roundLabel,
+        forTimeTotalSeconds,
+        setForTimeTotalSeconds,
         forTimeRoundIndex: forTimeFlow.roundIndex,
         forTimeRoundTotal: forTimeFlow.roundTotal,
         forTimeSplitViews: forTimeFlow.splitViews,

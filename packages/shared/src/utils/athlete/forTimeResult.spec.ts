@@ -3,11 +3,13 @@ import type { AthleteForTimeRound } from "./buildAthleteRunSteps";
 import {
     buildForTimeSavePayloads,
     buildForTimeSplitViews,
+    clampForTimeTotalSeconds,
     formatForTimeCompletionNote,
     formatForTimeDuration,
     formatForTimeRoundLabel,
     formatForTimeSegmentDelta,
     isForTimeCompletionValid,
+    parseForTimeMmSs,
 } from "./forTimeResult";
 
 const SLOT = {
@@ -55,18 +57,41 @@ describe("forTimeResult", () => {
         expect(formatForTimeSegmentDelta(80)).toBe("+1:20");
     });
 
-    it("formatForTimeCompletionNote — total y splits", () => {
+    it("formatForTimeCompletionNote — total sin splits", () => {
+        expect(formatForTimeCompletionNote(754, [])).toBe("12:34");
         expect(formatForTimeCompletionNote(75, [75])).toBe("1:15");
         expect(formatForTimeCompletionNote(155, [75, 155])).toBe("2:35 (1:15 · 2:35)");
     });
 
-    it("isForTimeCompletionValid", () => {
-        expect(isForTimeCompletionValid([75, 155], 2)).toBe(true);
-        expect(isForTimeCompletionValid([75], 2)).toBe(false);
-        expect(isForTimeCompletionValid([], 0)).toBe(false);
+    it("isForTimeCompletionValid — solo total > 0", () => {
+        expect(isForTimeCompletionValid(754)).toBe(true);
+        expect(isForTimeCompletionValid(0)).toBe(false);
+        expect(isForTimeCompletionValid(-1)).toBe(false);
     });
 
-    it("buildForTimeSavePayloads — duration y nota en primer log", () => {
+    it("parseForTimeMmSs y clamp", () => {
+        expect(parseForTimeMmSs("12:34")).toBe(754);
+        expect(parseForTimeMmSs("bad")).toBe(null);
+        expect(clampForTimeTotalSeconds(12.9)).toBe(12);
+    });
+
+    it("buildForTimeSavePayloads — 4 rondas, un total, sin splits", () => {
+        const rounds = [round(1, 4), round(2, 4), round(3, 4), round(4, 4)];
+        const payloads = buildForTimeSavePayloads({
+            rounds,
+            totalSeconds: 754,
+            roundRpe: 7,
+            getNextActualSets: () => 1,
+        });
+
+        expect(payloads).toHaveLength(4);
+        expect(payloads[0]?.data.notes).toBe("12:34");
+        expect(payloads[0]?.data.actual_duration).toBe(754);
+        expect(payloads[0]?.data.notes).not.toContain("(");
+        expect(payloads[3]?.data.actual_effort_value).toBe(7);
+    });
+
+    it("buildForTimeSavePayloads — duration y nota con splits legacy", () => {
         const rounds = [round(1, 2), round(2, 2)];
         const payloads = buildForTimeSavePayloads({
             rounds,
@@ -79,7 +104,5 @@ describe("forTimeResult", () => {
         expect(payloads).toHaveLength(2);
         expect(payloads[0]?.data.notes).toBe("2:35 (1:15 · 2:35)");
         expect(payloads[0]?.data.actual_duration).toBe(155);
-        expect(payloads[1]?.data.notes).toBeUndefined();
-        expect(payloads[1]?.data.actual_effort_value).toBe(8);
     });
 });

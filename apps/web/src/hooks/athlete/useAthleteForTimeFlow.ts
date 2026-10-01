@@ -33,7 +33,8 @@ export interface UseAthleteForTimeFlowResult {
     splitViews: readonly ForTimeSplitView[];
     allRoundsComplete: boolean;
     roundAdvanceCue: ForTimeRoundAdvanceCue | null;
-    completeRound: () => void;
+    /** B4: un solo toque — detiene cronó y abre cierre (sin splits por ronda). */
+    finishBlock: () => void;
 }
 
 export function useAthleteForTimeFlow(
@@ -85,33 +86,11 @@ export function useAthleteForTimeFlow(
         return () => window.clearInterval(timer);
     }, [active, allRoundsComplete, rounds.length, stepKey]);
 
-    const completeRound = useCallback(() => {
+    const finishBlock = useCallback(() => {
         if (allRoundsComplete || rounds.length === 0) return;
-
-        const split = elapsedRef.current;
-        const previousCumulative = splitsRef.current[splitsRef.current.length - 1] ?? 0;
-        const segmentSeconds = split - previousCumulative;
-        const completedRoundIndex = roundIndex + 1;
-        const isLastRound = roundIndex >= rounds.length - 1;
-
-        forTimeFlowHaptic(isLastRound ? 200 : 120);
-
-        setRoundAdvanceCue({
-            completedRoundIndex,
-            cumulativeSeconds: split,
-            segmentSeconds,
-            isLastRound,
-        });
-
-        setCumulativeSplits((previous) => [...previous, split]);
-
-        if (isLastRound) {
-            setAllRoundsComplete(true);
-            return;
-        }
-
-        setRoundIndex((current) => current + 1);
-    }, [allRoundsComplete, roundIndex, rounds.length]);
+        forTimeFlowHaptic(200);
+        setAllRoundsComplete(true);
+    }, [allRoundsComplete, rounds.length]);
 
     const currentRound = rounds[roundIndex] ?? null;
     const roundLabel = currentRound
@@ -130,6 +109,6 @@ export function useAthleteForTimeFlow(
         splitViews,
         allRoundsComplete,
         roundAdvanceCue,
-        completeRound,
+        finishBlock,
     };
 }

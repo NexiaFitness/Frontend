@@ -1,45 +1,61 @@
 /**
- * AthleteForTimeCompletionReview.tsx — Cierre FOR TIME: total + splits + RPE (V05).
+ * AthleteForTimeCompletionReview.tsx — Cierre FOR TIME: tiempo total editable + RPE (B4).
  */
 
-import React, { useMemo } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Minus, Plus } from "lucide-react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
-    buildForTimeSplitViews,
+    clampForTimeTotalSeconds,
     formatForTimeDuration,
-    formatForTimeSegmentDelta,
+    parseForTimeMmSs,
 } from "@nexia/shared/utils/athlete/forTimeResult";
 import { AthleteRoundEffortSection } from "./AthleteRoundEffortSection";
 import {
     ATHLETE_RUN_AMRAP_HINT,
-    ATHLETE_RUN_AMRAP_PARTIAL_ROW_LABEL,
     ATHLETE_RUN_AMRAP_ROUNDS_CARD,
     ATHLETE_RUN_AMRAP_ROUNDS_LABEL,
-    ATHLETE_RUN_FOR_TIME_SPLITS_CUMULATIVE,
-    ATHLETE_RUN_FOR_TIME_SPLITS_ROW,
-    ATHLETE_RUN_FOR_TIME_SPLITS_ROUND,
-    ATHLETE_RUN_FOR_TIME_SPLITS_SEGMENT,
-    ATHLETE_RUN_FOR_TIME_TOTAL_VALUE,
     ATHLETE_RUN_LOGGER_REVEAL,
 } from "./athleteRunPresentation";
 
 export interface AthleteForTimeCompletionReviewProps {
     totalSeconds: number;
-    cumulativeSplits: readonly number[];
+    onTotalSecondsChange: (seconds: number) => void;
     roundRpe: number | null;
     onRoundRpeChange: (value: number | null) => void;
 }
 
+const STEP_SECONDS = 5;
+
 export const AthleteForTimeCompletionReview: React.FC<AthleteForTimeCompletionReviewProps> = ({
     totalSeconds,
-    cumulativeSplits,
+    onTotalSecondsChange,
     roundRpe,
     onRoundRpeChange,
 }) => {
-    const splitViews = useMemo(
-        () => buildForTimeSplitViews(cumulativeSplits),
-        [cumulativeSplits]
+    const [mmSsInput, setMmSsInput] = useState(() => formatForTimeDuration(totalSeconds));
+
+    useEffect(() => {
+        setMmSsInput(formatForTimeDuration(totalSeconds));
+    }, [totalSeconds]);
+
+    const applySeconds = useCallback(
+        (next: number) => {
+            const clamped = clampForTimeTotalSeconds(next);
+            onTotalSecondsChange(clamped);
+            setMmSsInput(formatForTimeDuration(clamped));
+        },
+        [onTotalSecondsChange]
     );
+
+    const onInputBlur = (): void => {
+        const parsed = parseForTimeMmSs(mmSsInput);
+        if (parsed != null) {
+            applySeconds(parsed);
+            return;
+        }
+        setMmSsInput(formatForTimeDuration(totalSeconds));
+    };
 
     return (
         <div className={`space-y-3 ${ATHLETE_RUN_LOGGER_REVEAL}`}>
@@ -48,34 +64,38 @@ export const AthleteForTimeCompletionReview: React.FC<AthleteForTimeCompletionRe
                 <div className="relative z-[1] space-y-3">
                     <p className={ATHLETE_RUN_AMRAP_ROUNDS_LABEL}>Cierre FOR TIME</p>
                     <p className={ATHLETE_RUN_AMRAP_HINT}>
-                        Tiempo total del bloque. Revisa los splits por ronda antes de confirmar.
+                        Tiempo total del bloque en mm:ss. Ajusta si el cronómetro no refleja tu
+                        tiempo real.
                     </p>
-                    <p className={ATHLETE_RUN_FOR_TIME_TOTAL_VALUE}>
-                        {formatForTimeDuration(totalSeconds)}
-                    </p>
+                    <div className="flex items-center justify-center gap-2">
+                        <button
+                            type="button"
+                            className="inline-flex h-12 min-h-12 w-12 min-w-12 items-center justify-center rounded-lg border border-border bg-background"
+                            aria-label="Restar 5 segundos"
+                            onClick={() => applySeconds(totalSeconds - STEP_SECONDS)}
+                        >
+                            <Minus className="h-5 w-5" aria-hidden />
+                        </button>
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            className="h-12 min-h-12 w-28 rounded-lg border border-border bg-background text-center text-2xl font-semibold tabular-nums text-foreground"
+                            value={mmSsInput}
+                            onChange={(event) => setMmSsInput(event.target.value)}
+                            onBlur={onInputBlur}
+                            aria-label="Tiempo total mm:ss"
+                        />
+                        <button
+                            type="button"
+                            className="inline-flex h-12 min-h-12 w-12 min-w-12 items-center justify-center rounded-lg border border-border bg-background"
+                            aria-label="Sumar 5 segundos"
+                            onClick={() => applySeconds(totalSeconds + STEP_SECONDS)}
+                        >
+                            <Plus className="h-5 w-5" aria-hidden />
+                        </button>
+                    </div>
                 </div>
             </div>
-
-            {splitViews.length > 0 ? (
-                <div className="space-y-2">
-                    <p className={ATHLETE_RUN_AMRAP_PARTIAL_ROW_LABEL}>Desglose por ronda</p>
-                    {splitViews.map((split) => (
-                        <div key={split.roundIndex} className={ATHLETE_RUN_FOR_TIME_SPLITS_ROW}>
-                            <span className={ATHLETE_RUN_FOR_TIME_SPLITS_ROUND}>
-                                Ronda {split.roundIndex}
-                            </span>
-                            <div className="flex items-baseline gap-2">
-                                <span className={ATHLETE_RUN_FOR_TIME_SPLITS_CUMULATIVE}>
-                                    {formatForTimeDuration(split.cumulativeSeconds)}
-                                </span>
-                                <span className={ATHLETE_RUN_FOR_TIME_SPLITS_SEGMENT}>
-                                    {formatForTimeSegmentDelta(split.segmentSeconds)}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : null}
 
             <AthleteRoundEffortSection
                 variant="block"

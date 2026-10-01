@@ -38,27 +38,40 @@ export function buildForTimeSplitViews(
     }));
 }
 
-/** Nota compacta post-sesión: total + splits acumulados entre paréntesis. */
+/** Nota compacta post-sesión: total; splits solo si se registraron. */
 export function formatForTimeCompletionNote(
     totalSeconds: number,
-    cumulativeSplits: readonly number[]
+    cumulativeSplits?: readonly number[]
 ): string {
     const total = formatForTimeDuration(totalSeconds);
-    if (cumulativeSplits.length <= 1) return total;
-    const splits = cumulativeSplits.map(formatForTimeDuration).join(" · ");
-    return `${total} (${splits})`;
+    const splits = cumulativeSplits ?? [];
+    if (splits.length <= 1) return total;
+    const splitLabels = splits.map(formatForTimeDuration).join(" · ");
+    return `${total} (${splitLabels})`;
 }
 
-export function isForTimeCompletionValid(
-    cumulativeSplits: readonly number[],
-    roundTotal: number
-): boolean {
-    return roundTotal > 0 && cumulativeSplits.length === roundTotal;
+/** B4: basta tiempo total > 0 (splits opcionales). */
+export function isForTimeCompletionValid(totalSeconds: number): boolean {
+    return totalSeconds > 0;
+}
+
+export function parseForTimeMmSs(value: string): number | null {
+    const trimmed = value.trim();
+    const match = /^(\d+):(\d{1,2})$/.exec(trimmed);
+    if (!match) return null;
+    const mins = Number.parseInt(match[1] ?? "0", 10);
+    const secs = Number.parseInt(match[2] ?? "0", 10);
+    if (Number.isNaN(mins) || Number.isNaN(secs) || secs >= 60) return null;
+    return mins * 60 + secs;
+}
+
+export function clampForTimeTotalSeconds(seconds: number): number {
+    return Math.max(0, Math.floor(seconds));
 }
 
 export function buildForTimeSavePayloads(input: {
     rounds: readonly AthleteForTimeRound[];
-    cumulativeSplits: readonly number[];
+    cumulativeSplits?: readonly number[];
     totalSeconds: number;
     roundRpe: number | null;
     getNextActualSets: (blockExerciseId: number, loggedSets?: number) => number;
@@ -75,7 +88,8 @@ export function buildForTimeSavePayloads(input: {
         notes?: string;
     };
 }> {
-    const note = formatForTimeCompletionNote(input.totalSeconds, input.cumulativeSplits);
+    const splits = input.cumulativeSplits ?? [];
+    const note = formatForTimeCompletionNote(input.totalSeconds, splits);
     const payloads: Array<{
         blockExerciseId: number;
         roundKey: string;

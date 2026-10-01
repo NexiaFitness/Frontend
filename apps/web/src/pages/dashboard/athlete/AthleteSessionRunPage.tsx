@@ -84,6 +84,8 @@ export const AthleteSessionRunPage: React.FC = () => {
         forTimeSplitViews,
         forTimeRoundAdvanceCue,
         forTimeCumulativeSplits,
+        forTimeTotalSeconds,
+        setForTimeTotalSeconds,
         forTimeTechniqueSlots,
         blockTimer,
         blockWorkIsReady,
@@ -351,6 +353,8 @@ export const AthleteSessionRunPage: React.FC = () => {
                         forTimeSplitViews={forTimeSplitViews}
                         forTimeRoundAdvanceCue={forTimeRoundAdvanceCue}
                         forTimeCumulativeSplits={forTimeCumulativeSplits}
+                        forTimeTotalSeconds={forTimeTotalSeconds}
+                        onForTimeTotalSecondsChange={setForTimeTotalSeconds}
                         forTimeTechniqueSlots={forTimeTechniqueSlots}
                         blockTimer={blockTimer}
                         blockWorkIsReady={blockWorkIsReady}
