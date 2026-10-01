@@ -1,5 +1,8 @@
 /**
  * useAthleteRunWakeLock.ts — Activa Wake Lock mientras el run lo requiere (B6).
+ *
+ * @author Frontend Team
+ * @since 2026-10-01
  */
 
 import { useEffect } from "react";

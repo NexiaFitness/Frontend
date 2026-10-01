@@ -79,4 +79,28 @@ describe("useAthleteForTimeFlow (B4)", () => {
         expect(result.current.elapsedSeconds).toBe(10);
         expect(result.current.allRoundsComplete).toBe(true);
     });
+
+    it("pausa cuando active es false y reanuda sin contar la pausa", () => {
+        const { result, rerender } = renderHook(
+            ({ active }) => useAthleteForTimeFlow("for-time-step", FOUR_ROUNDS, active),
+            { initialProps: { active: true } }
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(8_000);
+        });
+        expect(result.current.elapsedSeconds).toBe(8);
+
+        rerender({ active: false });
+        act(() => {
+            vi.advanceTimersByTime(45_000);
+        });
+        expect(result.current.elapsedSeconds).toBe(8);
+
+        rerender({ active: true });
+        act(() => {
+            vi.advanceTimersByTime(2_000);
+        });
+        expect(result.current.elapsedSeconds).toBe(10);
+    });
 });

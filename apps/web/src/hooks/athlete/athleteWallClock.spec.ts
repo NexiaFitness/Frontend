@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     elapsedSecondsSince,
+    flushWallClockSegmentMs,
     remainingSecondsUntil,
     subscribeAthleteWallClockTick,
+    wallClockElapsedSeconds,
 } from "./athleteWallClock";
 
 describe("athleteWallClock (B6)", () => {
@@ -13,6 +15,17 @@ describe("athleteWallClock (B6)", () => {
 
     afterEach(() => {
         vi.useRealTimers();
+    });
+
+    it("wallClockElapsedSeconds acumula pausa entre tramos", () => {
+        const start = Date.now();
+        vi.advanceTimersByTime(5_000);
+        const accumulated = flushWallClockSegmentMs(0, start);
+        expect(wallClockElapsedSeconds(accumulated, null)).toBe(5);
+
+        const segmentStart = Date.now();
+        vi.advanceTimersByTime(3_000);
+        expect(wallClockElapsedSeconds(accumulated, segmentStart)).toBe(8);
     });
 
     it("elapsedSecondsSince usa Date.now()", () => {

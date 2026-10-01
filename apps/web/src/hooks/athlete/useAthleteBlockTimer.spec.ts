@@ -46,4 +46,28 @@ describe("useAthleteBlockTimer (B6 wall clock)", () => {
 
         expect(result.current.elapsedSeconds).toBe(63);
     });
+
+    it("pausa y reanuda sin perder ni sumar tiempo", () => {
+        const { result, rerender } = renderHook(
+            ({ active }) => useAthleteBlockTimer(COUNTUP_STEP, active),
+            { initialProps: { active: true } }
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(10_000);
+        });
+        expect(result.current.elapsedSeconds).toBe(10);
+
+        rerender({ active: false });
+        act(() => {
+            vi.advanceTimersByTime(30_000);
+        });
+        expect(result.current.elapsedSeconds).toBe(10);
+
+        rerender({ active: true });
+        act(() => {
+            vi.advanceTimersByTime(5_000);
+        });
+        expect(result.current.elapsedSeconds).toBe(15);
+    });
 });

@@ -1,5 +1,8 @@
 /**
  * AthleteForTimeCompletionReview.tsx — Cierre FOR TIME: min/seg editables + RPE (B4).
+ *
+ * @author Frontend Team
+ * @since 2026-10-01
  */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";

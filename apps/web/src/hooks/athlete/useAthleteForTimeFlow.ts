@@ -1,14 +1,18 @@
 /**
  * useAthleteForTimeFlow.ts — Flujo FOR TIME (B4): cronó global + «Terminar» sin splits por ronda.
- * B6: wall clock; deja de contar tras finishBlock / allRoundsComplete.
+ * B6: wall clock con pausa acumulada; congela al finishBlock.
+ *
+ * @author Frontend Team
+ * @since 2026-10-01
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AthleteForTimeRound } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
 import { formatForTimeRoundLabel } from "@nexia/shared/utils/athlete/forTimeResult";
 import {
-    elapsedSecondsSince,
+    flushWallClockSegmentMs,
     useAthleteWallClockTick,
+    wallClockElapsedSeconds,
 } from "@/hooks/athlete/athleteWallClock";
 
 function forTimeFlowHaptic(ms: number) {
@@ -34,14 +38,16 @@ export function useAthleteForTimeFlow(
 ): UseAthleteForTimeFlowResult {
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [allRoundsComplete, setAllRoundsComplete] = useState(false);
-    const startedAtRef = useRef<number | null>(null);
+    const accumulatedMsRef = useRef(0);
+    const segmentStartedAtRef = useRef<number | null>(null);
     const frozenElapsedRef = useRef<number | null>(null);
     const elapsedRef = useRef(0);
 
     useEffect(() => {
         setElapsedSeconds(0);
         setAllRoundsComplete(false);
-        startedAtRef.current = null;
+        accumulatedMsRef.current = 0;
+        segmentStartedAtRef.current = null;
         frozenElapsedRef.current = null;
         elapsedRef.current = 0;
     }, [stepKey]);
@@ -53,26 +59,51 @@ export function useAthleteForTimeFlow(
     const running =
         active && !allRoundsComplete && rounds.length > 0;
 
+    const syncElapsedFromRefs = useCallback(() => {
+        setElapsedSeconds(
+            wallClockElapsedSeconds(accumulatedMsRef.current, segmentStartedAtRef.current)
+        );
+    }, []);
+
     useEffect(() => {
-        if (!running) return;
-        if (startedAtRef.current === null) {
-            startedAtRef.current = Date.now();
+        if (allRoundsComplete) return;
+
+        if (running) {
+            if (segmentStartedAtRef.current === null) {
+                segmentStartedAtRef.current = Date.now();
+            }
+            syncElapsedFromRefs();
+            return;
         }
-    }, [running]);
+
+        if (segmentStartedAtRef.current != null) {
+            accumulatedMsRef.current = flushWallClockSegmentMs(
+                accumulatedMsRef.current,
+                segmentStartedAtRef.current
+            );
+            segmentStartedAtRef.current = null;
+            syncElapsedFromRefs();
+        }
+    }, [allRoundsComplete, running, syncElapsedFromRefs]);
 
     const tick = useCallback(() => {
-        if (!running || startedAtRef.current == null) return;
-        const next = elapsedSecondsSince(startedAtRef.current);
-        setElapsedSeconds(next);
-    }, [running]);
+        if (!running || segmentStartedAtRef.current == null) return;
+        syncElapsedFromRefs();
+    }, [running, syncElapsedFromRefs]);
 
     useAthleteWallClockTick(running, tick);
 
     const finishBlock = useCallback(() => {
         if (allRoundsComplete || rounds.length === 0) return;
         forTimeFlowHaptic(200);
-        const startedAt = startedAtRef.current ?? Date.now();
-        const frozen = elapsedSecondsSince(startedAt);
+        if (segmentStartedAtRef.current != null) {
+            accumulatedMsRef.current = flushWallClockSegmentMs(
+                accumulatedMsRef.current,
+                segmentStartedAtRef.current
+            );
+            segmentStartedAtRef.current = null;
+        }
+        const frozen = wallClockElapsedSeconds(accumulatedMsRef.current, null);
         frozenElapsedRef.current = frozen;
         setElapsedSeconds(frozen);
         elapsedRef.current = frozen;

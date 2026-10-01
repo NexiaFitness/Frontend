@@ -1,13 +1,17 @@
 /**
  * useAthleteBlockTimer.ts — Cronómetro de bloque V05 Fase C (AMRAP / EMOM / for_time).
- * B6: tiempo real con startedAt + Date.now(); recálculo en visibilitychange.
+ * B6: wall clock con pausa acumulada cuando `active` es false (p. ej. logging_rest).
+ *
+ * @author Frontend Team
+ * @since 2026-10-01
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AthleteRunStep } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
 import {
-    elapsedSecondsSince,
     useAthleteWallClockTick,
+    wallClockElapsedSeconds,
+    flushWallClockSegmentMs,
 } from "@/hooks/athlete/athleteWallClock";
 
 export interface UseAthleteBlockTimerResult {
@@ -23,26 +27,47 @@ export function useAthleteBlockTimer(
     active: boolean
 ): UseAthleteBlockTimerResult {
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
-    const startedAtRef = useRef<number | null>(null);
+    const accumulatedMsRef = useRef(0);
+    const segmentStartedAtRef = useRef<number | null>(null);
 
     useEffect(() => {
-        startedAtRef.current = null;
+        accumulatedMsRef.current = 0;
+        segmentStartedAtRef.current = null;
         setElapsedSeconds(0);
     }, [runStep?.stepKey]);
 
+    const syncElapsedFromRefs = useCallback(() => {
+        setElapsedSeconds(
+            wallClockElapsedSeconds(accumulatedMsRef.current, segmentStartedAtRef.current)
+        );
+    }, []);
+
     useEffect(() => {
-        if (!active) {
-            startedAtRef.current = null;
-        } else if (startedAtRef.current === null && runStep?.timedMode) {
-            startedAtRef.current = Date.now();
+        const timed = Boolean(runStep?.timedMode);
+        if (!timed) return;
+
+        if (active) {
+            if (segmentStartedAtRef.current === null) {
+                segmentStartedAtRef.current = Date.now();
+            }
+            syncElapsedFromRefs();
+            return;
         }
-    }, [active, runStep?.timedMode]);
+
+        if (segmentStartedAtRef.current != null) {
+            accumulatedMsRef.current = flushWallClockSegmentMs(
+                accumulatedMsRef.current,
+                segmentStartedAtRef.current
+            );
+            segmentStartedAtRef.current = null;
+            syncElapsedFromRefs();
+        }
+    }, [active, runStep?.timedMode, syncElapsedFromRefs]);
 
     const tick = useCallback(() => {
-        const startedAt = startedAtRef.current;
-        if (startedAt == null) return;
-        setElapsedSeconds(elapsedSecondsSince(startedAt));
-    }, []);
+        if (!active || segmentStartedAtRef.current == null) return;
+        syncElapsedFromRefs();
+    }, [active, syncElapsedFromRefs]);
 
     useAthleteWallClockTick(Boolean(active && runStep?.timedMode), tick);
 
