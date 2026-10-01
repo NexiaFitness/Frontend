@@ -82,6 +82,19 @@ export function inferRoundSlotLayout<T extends ParallelRoundLineLike>(
         return { rounds: 1, slotLines: [] };
     }
 
+    const effectiveBlockRounds =
+        blockRounds != null && blockRounds > 0 ? blockRounds : null;
+    const maxPerExercise = maxLinesPerExerciseId(sorted);
+
+    // Constructor: N filas (1/ronda) del mismo ejercicio — no forzar 2 slots (QA-0C-D1).
+    if (
+        effectiveBlockRounds != null &&
+        lineCount === effectiveBlockRounds &&
+        maxPerExercise === effectiveBlockRounds
+    ) {
+        return { rounds: effectiveBlockRounds, slotLines: [sorted] };
+    }
+
     // Colapsado canónico: 1 fila por slot.
     if (lineCount <= minSlots) {
         const rounds = Math.max(1, blockRounds ?? sorted[0]?.planned_sets ?? 1);
