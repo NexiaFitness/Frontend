@@ -8,6 +8,10 @@
  * @author NEXIA Frontend Team
  * @since v1.0.0
  * @updated 2026-09 — mensajes HTTP/Starlette en español; 405 despliegue API desincronizado
+ * @updated 2026-10 — mensajes de autenticación del backend (login, bloqueo, OTP, contraseña) en español
+ * Notas de mantenimiento: el backend devuelve `detail` en inglés; todo texto que llegue a la UI
+ * debe traducirse aquí (única capa de localización). El login mantiene un mensaje genérico a
+ * propósito: no revela si falla el email o la contraseña (evita enumeración de cuentas).
  */
 
 import { hadRecentRefreshNetworkFailure } from "../config/apiTelemetry";
@@ -19,6 +23,8 @@ const REFRESH_NETWORK_401_ES =
 
 const SESSION_AUTH_401_ES =
     "Tu sesión ha expirado o no tienes permiso. Vuelve a iniciar sesión.";
+
+const AUTH_INVALID_CREDENTIALS_ES = "Correo o contraseña incorrectos";
 
 const EMAIL_DELIVERY_FAILED_ES =
     "No hemos podido enviar el email. Inténtalo de nuevo en unos minutos.";
@@ -50,6 +56,38 @@ function localizeHttpDetail(detail: string, status?: number): string {
         normalized === "not authorized" ||
         normalized === "could not validate credentials"
     ) {
+        return SESSION_AUTH_401_ES;
+    }
+
+    if (normalized === "incorrect email or password") {
+        return AUTH_INVALID_CREDENTIALS_ES;
+    }
+
+    if (normalized.startsWith("account temporarily locked")) {
+        return "Cuenta bloqueada temporalmente por demasiados intentos. Inténtalo de nuevo más tarde.";
+    }
+
+    if (normalized === "account is deactivated") {
+        return "Esta cuenta está desactivada. Contacta con tu entrenador o con soporte.";
+    }
+
+    if (normalized === "email already registered") {
+        return "Este email ya está registrado.";
+    }
+
+    if (normalized === "current password is incorrect") {
+        return "La contraseña actual no es correcta.";
+    }
+
+    if (normalized === "invalid otp code") {
+        return "El código no es correcto. Revisa el código e inténtalo de nuevo.";
+    }
+
+    if (normalized === "otp expired" || normalized === "no otp pending") {
+        return "El código ha caducado o no existe. Solicita uno nuevo.";
+    }
+
+    if (normalized === "invalid or expired refresh token") {
         return SESSION_AUTH_401_ES;
     }
 
