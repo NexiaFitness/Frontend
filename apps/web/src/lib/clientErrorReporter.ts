@@ -5,6 +5,7 @@
 
 import { API_CONFIG, AUTH_CONFIG } from "@nexia/shared/config/constants";
 import {
+  CLIENT_VERSION_HEADER,
   configureApiTelemetry,
   getApiClientVersion,
   getLastRequestId,
@@ -127,6 +128,7 @@ async function sendClientError(payload: ClientErrorPayload): Promise<void> {
   const token = readBearerToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    [CLIENT_VERSION_HEADER]: getApiClientVersion(),
   };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
