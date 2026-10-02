@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
+import { createDefaultSetData } from "@/components/sessionProgramming/constructor/utils/singleSetRow";
 import { buildExercisePayloadFromLine } from "./buildExercisePayload";
 
 /** Contrato constructor → API: línea expandida FOR TIME guarda planned_sets ≥ 1. */
@@ -18,12 +19,22 @@ describe("buildExercisePayloadFromLine FOR TIME (C)", () => {
         const line = {
             orderInBlock: 1,
             exercise: {
+                id: "ex-ft-1",
                 exerciseId: 10,
+                exerciseName: "Thruster",
                 plannedWeight: null,
                 plannedReps: "12",
+                plannedAssistanceKg: null,
+                plannedDuration: null,
+                effortCharacter: null,
+                effortValue: null,
                 notes: null,
             },
-            setDataEntry: { plannedReps: "12", plannedWeight: 40 },
+            setDataEntry: {
+                ...createDefaultSetData(60),
+                plannedReps: "12",
+                plannedWeight: 40,
+            },
         };
 
         const payload = buildExercisePayloadFromLine(row, line);

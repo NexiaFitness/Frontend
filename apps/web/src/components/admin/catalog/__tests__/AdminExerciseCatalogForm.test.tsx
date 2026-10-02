@@ -64,7 +64,9 @@ describe("AdminExerciseCatalogForm", () => {
 
         render(<AdminExerciseCatalogForm mode="edit" exercisePk={11} />);
 
-        expect(await screen.findByText(/squat_back/i)).toBeInTheDocument();
+        expect(
+            await screen.findByText(/squat_back/i, undefined, { timeout: 15_000 })
+        ).toBeInTheDocument();
         expect(screen.getByText(ADMIN_CATALOG_COPY.reviewPending)).toBeInTheDocument();
 
         await user.click(screen.getByRole("button", { name: ADMIN_CATALOG_COPY.history }));

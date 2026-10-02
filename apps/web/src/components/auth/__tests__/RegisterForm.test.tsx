@@ -167,7 +167,7 @@ describe("RegisterForm", () => {
       await fillExistingEmailForm(user);
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
-      expect(await screen.findByText(/email already registered/i))
+      expect(await screen.findByText(/este email ya está registrado/i))
         .toBeInTheDocument();
 
       expect(mockNavigate).not.toHaveBeenCalled();
