@@ -1,7 +1,8 @@
 /**
  * blockAuthoringSummaryPresentation.ts — Tokens paso Resumen wizard D-PAP.
  *
- * Paridad: PeriodBlockCard (cualidades + carga), modales premium, paso Patrones.
+ * Paridad: PeriodBlockCard (cualidades + carga), Semana tipo unificada.
+ * DESIGN_PREMIUM.md §2 (375 una columna), §4.4 (un primary = veredicto si completo).
  */
 
 import { cn } from "@/lib/utils";
@@ -20,9 +21,20 @@ export const BLOCK_AUTHORING_SUMMARY_HERO_CLASS = cn(
     "flex items-center justify-center border-primary/20 bg-gradient-to-b from-primary/[0.06] to-transparent py-2.5 md:py-3",
 );
 
-/** Grid principal: cualidades | carga (como PeriodBlockCard). */
+/** Grid principal: cualidades | carga — 1 col en 375, 2 en desktop. */
 export const BLOCK_AUTHORING_SUMMARY_MAIN_GRID_CLASS =
     "grid grid-cols-1 gap-3 md:grid-cols-2";
+
+/** Zona unificada días + patrones. */
+export const BLOCK_AUTHORING_SUMMARY_WEEK_TYPE_CLASS = cn(
+    AUTHORING_STEP_INNER_PANEL_CLASS,
+    "space-y-3 p-3 md:p-3.5",
+);
+
+export const BLOCK_AUTHORING_SUMMARY_WEEK_TYPE_LABEL = "Semana tipo";
+
+export const BLOCK_AUTHORING_SUMMARY_VERDICT_INCOMPLETE_TITLE =
+    "Falta completar la semana tipo";
 
 export const BLOCK_AUTHORING_SUMMARY_SECTION_CLASS = cn(
     AUTHORING_STEP_INNER_PANEL_CLASS,

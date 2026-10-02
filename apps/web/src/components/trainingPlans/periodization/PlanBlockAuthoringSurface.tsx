@@ -847,6 +847,11 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                                 onEditStep={navigation.goToStep}
                                 hideIntro
                                 premiumLayout
+                                structureCoverageMessage={
+                                    dateStructureGap.show
+                                        ? dateStructureGap.message
+                                        : null
+                                }
                             />
                         ) : null}
                     </BlockAuthoringStepBody>
