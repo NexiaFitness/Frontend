@@ -163,3 +163,9 @@ packages/shared/src/**/*.js.map
 .claude/
 
 .vercel
+
+# Playwright / QA local artifacts
+test-results/
+**/test-results/
+playwright-report/
+**/playwright-report/
