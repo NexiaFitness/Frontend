@@ -71,9 +71,7 @@ export const AthleteExerciseProgressPage: React.FC = () => {
     if (isError || !exerciseId) {
         return (
             <div className={`${ATHLETE_PAGE} space-y-4`}>
-                <Alert variant="error">
-                    <p className="font-medium">No pudimos cargar este ejercicio</p>
-                </Alert>
+                <Alert variant="error" title="No pudimos cargar este ejercicio" />
                 <Button variant="secondary" onClick={() => navigate("/dashboard/progress")}>
                     Volver a progreso
                 </Button>

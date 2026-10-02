@@ -45,9 +45,7 @@ export const AthleteSessionSummaryPage: React.FC = () => {
     if (isError || !report || !celebration) {
         return (
             <div className={`space-y-4 ${ATHLETE_PAGE_X} pb-24 pt-4`}>
-                <Alert variant="error">
-                    <p className="font-medium">No pudimos cargar el resumen</p>
-                </Alert>
+                <Alert variant="error" title="No pudimos cargar el resumen" />
                 <Button variant="secondary" onClick={() => navigate("/dashboard/sessions")}>
                     Mis sesiones
                 </Button>

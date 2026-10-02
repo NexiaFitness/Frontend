@@ -31,12 +31,11 @@ export const AthleteProgressPage: React.FC = () => {
     if (progress.isError) {
         return (
             <div className={ATHLETE_PAGE}>
-                <Alert variant="error">
-                    <p className="font-medium">No pudimos cargar tu progreso</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Comprueba tu conexión e inténtalo de nuevo.
-                    </p>
-                </Alert>
+                <Alert
+                    variant="error"
+                    title="No pudimos cargar tu progreso"
+                    description="Comprueba tu conexión e inténtalo de nuevo."
+                />
             </div>
         );
     }

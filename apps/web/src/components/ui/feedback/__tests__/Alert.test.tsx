@@ -118,4 +118,15 @@ describe("Alert API title/description/action/icon", () => {
         expect(container.querySelector("svg")).toBeNull();
         expect(screen.getByRole("status")).toHaveTextContent("Sin icono");
     });
+
+    it("modo compact mantiene role=status en warning", () => {
+        render(
+            <Alert variant="warning" compact title="Callout compacto" />,
+        );
+
+        const el = screen.getByRole("status");
+        expect(el).toHaveAttribute("aria-live", "polite");
+        expect(el.className).toMatch(/px-3/);
+        expect(el).toHaveTextContent("Callout compacto");
+    });
 });

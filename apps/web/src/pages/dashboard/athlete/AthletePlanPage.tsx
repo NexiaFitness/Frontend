@@ -24,10 +24,11 @@ export const AthletePlanPage: React.FC = () => {
     if (plan.isError) {
         return (
             <div className={ATHLETE_PAGE}>
-                <Alert variant="error">
-                    <p className="font-medium">No pudimos cargar tu plan</p>
-                    <p className="mt-1 text-muted-foreground">Inténtalo de nuevo más tarde.</p>
-                </Alert>
+                <Alert
+                    variant="error"
+                    title="No pudimos cargar tu plan"
+                    description="Inténtalo de nuevo más tarde."
+                />
             </div>
         );
     }

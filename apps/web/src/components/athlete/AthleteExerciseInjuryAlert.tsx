@@ -1,9 +1,15 @@
 /**
  * AthleteExerciseInjuryAlert.tsx — Callout conflicto ejercicio↔lesión (F3b-FE-01).
+ *
+ * Contexto: preview/run atleta. Compact = AthleteInjuryCallout (Alert compact);
+ * expandido = Alert unificado sin icono duplicado.
+ *
+ * @author Frontend Team
+ * @since v9.0.0
+ * @updated v9.2.0 — sin AlertTriangle duplicado
  */
 
 import React from "react";
-import { AlertTriangle } from "lucide-react";
 import { Alert } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import type { InjuryAlert } from "@nexia/shared/types/injuryAlert";
@@ -46,31 +52,29 @@ export const AthleteExerciseInjuryAlert: React.FC<AthleteExerciseInjuryAlertProp
     }
 
     return (
-        <Alert variant={isDanger ? "error" : "warning"}>
-            <div className="flex gap-3">
-                <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
-                <div className="min-w-0 flex-1 space-y-2">
-                    <p className="font-medium">
-                        {isDanger ? "Precaución con este ejercicio" : "Ten en cuenta tu lesión"}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">{exerciseName}</span>
-                        {" — "}
-                        {displayMessage}
-                    </p>
-                    {onConsultTrainer && (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="min-h-touch-athlete"
-                            onClick={onConsultTrainer}
-                        >
-                            Habla con tu entrenador
-                        </Button>
-                    )}
-                </div>
-            </div>
-        </Alert>
+        <Alert
+            variant={isDanger ? "error" : "warning"}
+            title={isDanger ? "Precaución con este ejercicio" : "Ten en cuenta tu lesión"}
+            description={
+                <>
+                    <span className="font-medium text-foreground">{exerciseName}</span>
+                    {" — "}
+                    {displayMessage}
+                </>
+            }
+            action={
+                onConsultTrainer ? (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="min-h-touch-athlete"
+                        onClick={onConsultTrainer}
+                    >
+                        Habla con tu entrenador
+                    </Button>
+                ) : undefined
+            }
+        />
     );
 };

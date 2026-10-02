@@ -17,6 +17,10 @@ import type { AlertVariant } from "./alertContract";
 export const ALERT_ROOT_BASE_CLASS =
     "relative flex items-start gap-3 rounded-lg border p-4";
 
+/** Callout denso (lesiones atleta, filas bajo ejercicio). DESIGN_PREMIUM §2 mobile-first. */
+export const ALERT_ROOT_COMPACT_CLASS =
+    "relative flex items-center gap-2.5 rounded-lg border px-3 py-2.5";
+
 export const ALERT_BODY_CLASS = "min-w-0 flex-1 text-sm leading-snug text-foreground";
 
 export const ALERT_TITLE_CLASS = "font-medium text-foreground";
@@ -45,8 +49,16 @@ const VARIANT_DISMISS: Record<AlertVariant, string> = {
     error: "text-destructive/80 hover:text-destructive",
 };
 
-export function alertRootClass(variant: AlertVariant, className?: string): string {
-    return cn(ALERT_ROOT_BASE_CLASS, VARIANT_CONTAINER[variant], className);
+export function alertRootClass(
+    variant: AlertVariant,
+    className?: string,
+    compact = false,
+): string {
+    return cn(
+        compact ? ALERT_ROOT_COMPACT_CLASS : ALERT_ROOT_BASE_CLASS,
+        VARIANT_CONTAINER[variant],
+        className,
+    );
 }
 
 export function alertDismissButtonClass(variant: AlertVariant): string {

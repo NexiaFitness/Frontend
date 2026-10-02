@@ -357,12 +357,10 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
                 </section>
 
                 {pain.trim().length > 0 && (
-                    <Alert variant="warning">
-                        <p className="text-sm">
-                            Si el dolor persiste, contacta con tu entrenador antes de la próxima
-                            sesión.
-                        </p>
-                    </Alert>
+                    <Alert
+                        variant="warning"
+                        title="Si el dolor persiste, contacta con tu entrenador antes de la próxima sesión."
+                    />
                 )}
             </div>
 

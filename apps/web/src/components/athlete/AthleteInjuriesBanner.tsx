@@ -1,9 +1,15 @@
 /**
  * AthleteInjuriesBanner.tsx — Banner lesiones V04 + conflictos check-alert (F3b-FE-01).
+ *
+ * Contexto: preview sesión atleta. Usa Alert unificado (DESIGN_PREMIUM.md §5.2)
+ * sin icono Lucide duplicado.
+ *
+ * @author Frontend Team
+ * @since v9.0.0
+ * @updated v9.2.0 — API title/description/action
  */
 
 import React from "react";
-import { AlertTriangle } from "lucide-react";
 import { Alert } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import type { ExerciseInjuryConflict } from "@nexia/shared/types/injuryAlert";
@@ -35,29 +41,24 @@ export const AthleteInjuriesBanner: React.FC<AthleteInjuriesBannerProps> = ({
     const conflictCount = conflicts.length;
 
     return (
-        <Alert variant={conflictCount > 0 ? "warning" : "warning"}>
-            <div className="flex gap-3">
-                <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
-                <div className="min-w-0 flex-1 space-y-3">
-                    <div className="space-y-1">
-                        <p className="font-medium">Limitaciones registradas</p>
-                        <p className="text-sm text-muted-foreground">
-                            Si sientes dolor, para y avisa a tu entrenador.
+        <Alert
+            variant="warning"
+            title="Limitaciones registradas"
+            description={
+                <div className="space-y-3">
+                    <p>Si sientes dolor, para y avisa a tu entrenador.</p>
+                    {isCheckingConflicts ? (
+                        <p className="text-caption text-muted-foreground">
+                            Revisando ejercicios de la sesión…
                         </p>
-                        {isCheckingConflicts && (
-                            <p className="text-caption text-muted-foreground">
-                                Revisando ejercicios de la sesión…
-                            </p>
-                        )}
-                        {!isCheckingConflicts && conflictCount > 0 && (
-                            <p className="text-sm font-medium text-warning">
-                                {conflictCount === 1
-                                    ? "1 ejercicio de esta sesión puede afectar tu lesión."
-                                    : `${conflictCount} ejercicios de esta sesión pueden afectar tu lesión.`}
-                            </p>
-                        )}
-                    </div>
-
+                    ) : null}
+                    {!isCheckingConflicts && conflictCount > 0 ? (
+                        <p className="text-sm font-medium text-warning">
+                            {conflictCount === 1
+                                ? "1 ejercicio de esta sesión puede afectar tu lesión."
+                                : `${conflictCount} ejercicios de esta sesión pueden afectar tu lesión.`}
+                        </p>
+                    ) : null}
                     <ul className="space-y-1 text-sm">
                         {injuries.map((injury) => (
                             <li key={injury.id} className="flex flex-wrap items-center gap-2">
@@ -70,18 +71,19 @@ export const AthleteInjuriesBanner: React.FC<AthleteInjuriesBannerProps> = ({
                             </li>
                         ))}
                     </ul>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="min-h-touch-athlete"
-                        onClick={onConsultTrainer}
-                    >
-                        Consultar
-                    </Button>
                 </div>
-            </div>
-        </Alert>
+            }
+            action={
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="min-h-touch-athlete"
+                    onClick={onConsultTrainer}
+                >
+                    Consultar
+                </Button>
+            }
+        />
     );
 };

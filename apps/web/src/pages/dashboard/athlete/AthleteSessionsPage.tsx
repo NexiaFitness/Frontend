@@ -85,12 +85,11 @@ export const AthleteSessionsPage: React.FC = () => {
                     <AthleteSessionsHeader showSwipeHint={!isDesktop} />
 
                     {isError && (
-                        <Alert variant="error">
-                            <p className="font-medium">Error al cargar sesiones</p>
-                            <p className="mt-1 text-muted-foreground">
-                                Inténtalo de nuevo más tarde.
-                            </p>
-                        </Alert>
+                        <Alert
+                            variant="error"
+                            title="Error al cargar sesiones"
+                            description="Inténtalo de nuevo más tarde."
+                        />
                     )}
 
                     <div className="space-y-3">

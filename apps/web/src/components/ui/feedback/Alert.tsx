@@ -51,6 +51,8 @@ export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
      * @default true
      */
     icon?: boolean | React.ReactNode;
+    /** Densidad reducida (callouts atleta / filas). */
+    compact?: boolean;
 }
 
 const toneByVariant: Record<AlertVariant, NexiaSemanticTone> = {
@@ -69,6 +71,7 @@ export const Alert: React.FC<AlertProps> = ({
     onDismiss,
     action,
     icon = true,
+    compact = false,
     ...rest
 }) => {
     const role = alertAriaRole(variant);
@@ -97,24 +100,33 @@ export const Alert: React.FC<AlertProps> = ({
         icon === false ? null : icon === true ? (
             <NexiaSemanticIcon
                 tone={toneByVariant[variant]}
-                className={ALERT_ICON_WRAP_CLASS}
+                size={compact ? "sm" : "md"}
+                className={compact ? undefined : ALERT_ICON_WRAP_CLASS}
             />
         ) : (
-            <span className={ALERT_ICON_WRAP_CLASS}>{icon}</span>
+            <span className={compact ? undefined : ALERT_ICON_WRAP_CLASS}>{icon}</span>
         );
 
     return (
         <div
-            className={alertRootClass(variant, className)}
+            className={alertRootClass(variant, className, compact)}
             role={role}
             aria-live={live}
             {...rest}
         >
             {iconNode}
             {action ? (
-                <div className={ALERT_ACTION_ROW_CLASS}>
+                <div
+                    className={
+                        compact
+                            ? "flex min-w-0 flex-1 items-center justify-between gap-2"
+                            : ALERT_ACTION_ROW_CLASS
+                    }
+                >
                     <div className={ALERT_BODY_CLASS}>{body}</div>
-                    <div className={ALERT_ACTION_SLOT_CLASS}>{action}</div>
+                    <div className={compact ? "shrink-0" : ALERT_ACTION_SLOT_CLASS}>
+                        {action}
+                    </div>
                 </div>
             ) : (
                 <div className={ALERT_BODY_CLASS}>{body}</div>

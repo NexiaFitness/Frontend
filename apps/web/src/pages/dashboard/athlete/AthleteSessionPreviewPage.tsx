@@ -138,10 +138,11 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     if (!session) {
         return (
             <div className={cn(ATHLETE_PAGE, "space-y-4")}>
-                <Alert variant="error">
-                    <p className="font-medium">Sesión no encontrada</p>
-                    <p className="mt-1 text-muted-foreground">Vuelve a la lista e inténtalo de nuevo.</p>
-                </Alert>
+                <Alert
+                    variant="error"
+                    title="Sesión no encontrada"
+                    description="Vuelve a la lista e inténtalo de nuevo."
+                />
                 <Button variant="secondary" onClick={() => navigate("/dashboard/sessions")}>
                     Mis sesiones
                 </Button>
@@ -219,12 +220,11 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                         />
                     </div>
                 ) : (
-                    <Alert variant="info">
-                        <p className="font-medium">Sin ejercicios todavía</p>
-                        <p className="mt-1 text-muted-foreground">
-                            Tu entrenador aún no ha publicado el contenido de esta sesión.
-                        </p>
-                    </Alert>
+                    <Alert
+                        variant="info"
+                        title="Sin ejercicios todavía"
+                        description="Tu entrenador aún no ha publicado el contenido de esta sesión."
+                    />
                 )}
 
                 {session.status === "completed" && (

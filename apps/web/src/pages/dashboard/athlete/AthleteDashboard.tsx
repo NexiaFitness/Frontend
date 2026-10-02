@@ -173,10 +173,11 @@ export const AthleteDashboard: React.FC = () => {
     if (isError) {
         return (
             <div className="space-y-4 px-4 pb-24 pt-4 lg:pb-8 lg:px-8">
-                <Alert variant="error">
-                    <p className="font-medium">No pudimos cargar tu entrenamiento</p>
-                    <p className="mt-1 text-muted-foreground">Comprueba tu conexión e inténtalo de nuevo.</p>
-                </Alert>
+                <Alert
+                    variant="error"
+                    title="No pudimos cargar tu entrenamiento"
+                    description="Comprueba tu conexión e inténtalo de nuevo."
+                />
             </div>
         );
     }
