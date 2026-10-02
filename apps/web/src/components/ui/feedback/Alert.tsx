@@ -1,19 +1,21 @@
 /**
  * Alert.tsx — Alerta unificada de feedback inline (apps/web).
  *
- * Contexto: capa de feedback premium (DESIGN_PREMIUM.md §3, §5.2). API con
- * title/description/action/onDismiss/icon; contrato ARIA en alertContract.ts.
+ * Contexto: capa de feedback premium (DESIGN_PREMIUM.md §3, §5.2, §4.4).
+ * API title/description/action/onDismiss/icon; ARIA en alertContract.ts.
+ * Criterio pantalla vs Alert: si quitando el mensaje no queda contenido útil,
+ * usar tarjeta de estado de pantalla (B2/B3), no este componente.
  *
- * Notas de mantenimiento: diferimiento packages/ui-* (agent.md §6) — extracción
- * futura mueve contrato + presentation + este componente. No usar para Toast
- * ni pantallas NotFound/ErrorBoundary enteras.
+ * Notas de mantenimiento: diferimiento packages/ui-* (agent.md §6). Acción
+ * interna: una sola, Button ghost-primary (nunca outline-primary).
  *
  * @author Frontend Team
  * @since v2.6.0
- * @updated v9.2.0 — API unificada + ARIA por variante
+ * @updated v9.2.1 — CircleAlert error; slots 1ª línea; Cerrar aviso
  */
 
 import React from "react";
+import { X } from "lucide-react";
 
 import { NexiaSemanticIcon } from "./NexiaSemanticIcon";
 import type { NexiaSemanticTone } from "./nexiaSemanticIconPresentation";
@@ -23,11 +25,11 @@ import {
     type AlertVariant,
 } from "./alertContract";
 import {
-    ALERT_ACTION_ROW_CLASS,
     ALERT_ACTION_SLOT_CLASS,
     ALERT_BODY_CLASS,
+    ALERT_CONTENT_COLUMN_CLASS,
     ALERT_DESCRIPTION_CLASS,
-    ALERT_ICON_WRAP_CLASS,
+    ALERT_FIRST_LINE_SLOT_CLASS,
     ALERT_TITLE_CLASS,
     alertDismissButtonClass,
     alertRootClass,
@@ -44,7 +46,7 @@ export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
     children?: React.ReactNode;
     className?: string;
     onDismiss?: () => void;
-    /** Acciones (Reintentar, enlace, etc.). */
+    /** Una sola acción (ghost-primary). En estrecho baja bajo el texto. */
     action?: React.ReactNode;
     /**
      * Icono semántico por defecto; `false` lo oculta; ReactNode lo sustituye.
@@ -87,7 +89,13 @@ export const Alert: React.FC<AlertProps> = ({
                     </div>
                 ) : null}
                 {children != null ? (
-                    <div className={title != null || description != null ? ALERT_DESCRIPTION_CLASS : undefined}>
+                    <div
+                        className={
+                            title != null || description != null
+                                ? ALERT_DESCRIPTION_CLASS
+                                : undefined
+                        }
+                    >
                         {children}
                     </div>
                 ) : null}
@@ -98,13 +106,16 @@ export const Alert: React.FC<AlertProps> = ({
 
     const iconNode =
         icon === false ? null : icon === true ? (
-            <NexiaSemanticIcon
-                tone={toneByVariant[variant]}
-                size={compact ? "sm" : "md"}
-                className={compact ? undefined : ALERT_ICON_WRAP_CLASS}
-            />
+            <span className={ALERT_FIRST_LINE_SLOT_CLASS} data-testid="alert-icon-slot">
+                <NexiaSemanticIcon
+                    tone={toneByVariant[variant]}
+                    size={compact ? "sm" : "md"}
+                />
+            </span>
         ) : (
-            <span className={compact ? undefined : ALERT_ICON_WRAP_CLASS}>{icon}</span>
+            <span className={ALERT_FIRST_LINE_SLOT_CLASS} data-testid="alert-icon-slot">
+                {icon}
+            </span>
         );
 
     return (
@@ -116,30 +127,24 @@ export const Alert: React.FC<AlertProps> = ({
         >
             {iconNode}
             {action ? (
-                <div
-                    className={
-                        compact
-                            ? "flex min-w-0 flex-1 items-center justify-between gap-2"
-                            : ALERT_ACTION_ROW_CLASS
-                    }
-                >
+                <div className={ALERT_CONTENT_COLUMN_CLASS}>
                     <div className={ALERT_BODY_CLASS}>{body}</div>
-                    <div className={compact ? "shrink-0" : ALERT_ACTION_SLOT_CLASS}>
-                        {action}
-                    </div>
+                    <div className={ALERT_ACTION_SLOT_CLASS}>{action}</div>
                 </div>
             ) : (
                 <div className={ALERT_BODY_CLASS}>{body}</div>
             )}
             {onDismiss ? (
-                <button
-                    type="button"
-                    onClick={onDismiss}
-                    className={alertDismissButtonClass(variant)}
-                    aria-label="Cerrar alerta"
-                >
-                    ×
-                </button>
+                <span className={ALERT_FIRST_LINE_SLOT_CLASS} data-testid="alert-dismiss-slot">
+                    <button
+                        type="button"
+                        onClick={onDismiss}
+                        className={alertDismissButtonClass(variant)}
+                        aria-label="Cerrar aviso"
+                    >
+                        <X className="size-4" aria-hidden />
+                    </button>
+                </span>
             ) : null}
         </div>
     );

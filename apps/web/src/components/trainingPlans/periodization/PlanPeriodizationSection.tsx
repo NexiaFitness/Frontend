@@ -730,13 +730,14 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
           variant="warning"
           title="No se encontró el bloque solicitado."
           action={
-            <button
+            <Button
               type="button"
-              className="text-sm font-medium text-primary underline hover:no-underline"
+              variant="ghost-primary"
+              size="sm"
               onClick={handleExitBlockWeeks}
             >
               Volver a planificación
-            </button>
+            </Button>
           }
         />
       );
@@ -764,13 +765,14 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
           variant="warning"
           title="Faltan fechas del bloque en la URL."
           action={
-            <button
+            <Button
               type="button"
-              className="text-sm font-medium text-primary underline hover:no-underline"
+              variant="ghost-primary"
+              size="sm"
               onClick={handleExitBlockAuthoring}
             >
               Volver a planificación
-            </button>
+            </Button>
           }
         />
       );
@@ -781,13 +783,14 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
           variant="warning"
           title="Falta el identificador del bloque."
           action={
-            <button
+            <Button
               type="button"
-              className="text-sm font-medium text-primary underline hover:no-underline"
+              variant="ghost-primary"
+              size="sm"
               onClick={handleExitBlockAuthoring}
             >
               Volver a planificación
-            </button>
+            </Button>
           }
         />
       );

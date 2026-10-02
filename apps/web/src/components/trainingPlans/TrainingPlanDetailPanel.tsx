@@ -98,16 +98,15 @@ export const TrainingPlanDetailPanel: React.FC<TrainingPlanDetailPanelProps> = (
                 <Alert
                     variant="error"
                     action={
-                        <>
-                            {!isNotFound && (
-                                <Button variant="outline-destructive" size="sm" onClick={() => refetch()}>
-                                    Reintentar
-                                </Button>
-                            )}
-                            <Button variant="outline" size="sm" onClick={onClose}>
+                        isNotFound ? (
+                            <Button variant="ghost-primary" size="sm" onClick={onClose}>
                                 Cerrar
                             </Button>
-                        </>
+                        ) : (
+                            <Button variant="ghost-primary" size="sm" onClick={() => refetch()}>
+                                Reintentar
+                            </Button>
+                        )
                     }
                 >
                     {isNotFound

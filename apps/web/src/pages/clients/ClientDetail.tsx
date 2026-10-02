@@ -228,20 +228,19 @@ export const ClientDetail: React.FC = () => {
             <Alert
                 variant="error"
                 action={
-                    <>
-                        {isForbiddenError ? (
-                            <Button variant="primary" size="sm" onClick={() => navigate("/dashboard/clients")}>
-                                Volver a Clientes
-                            </Button>
-                        ) : (
-                            <Button variant="outline-destructive" size="sm" onClick={refetchAll}>
-                                Reintentar
-                            </Button>
-                        )}
-                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
-                            Ir al Dashboard
+                    isForbiddenError ? (
+                        <Button
+                            variant="ghost-primary"
+                            size="sm"
+                            onClick={() => navigate("/dashboard/clients")}
+                        >
+                            Volver a Clientes
                         </Button>
-                    </>
+                    ) : (
+                        <Button variant="ghost-primary" size="sm" onClick={refetchAll}>
+                            Reintentar
+                        </Button>
+                    )
                 }
             >
                 {isForbiddenError ? (

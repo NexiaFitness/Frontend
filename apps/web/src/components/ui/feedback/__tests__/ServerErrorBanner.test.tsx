@@ -40,14 +40,14 @@ describe("ServerErrorBanner", () => {
             <ServerErrorBanner error="Dismissible error" onDismiss={onDismiss} />,
         );
 
-        await user.click(screen.getByRole("button", { name: "Cerrar alerta" }));
+        await user.click(screen.getByRole("button", { name: "Cerrar aviso" }));
         expect(onDismiss).toHaveBeenCalledTimes(1);
     });
 
     it("no muestra botón de cierre sin onDismiss", () => {
         render(<ServerErrorBanner error="Non-dismissible error" />);
         expect(
-            screen.queryByRole("button", { name: "Cerrar alerta" }),
+            screen.queryByRole("button", { name: "Cerrar aviso" }),
         ).not.toBeInTheDocument();
     });
 });

@@ -390,13 +390,14 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                             : "No hay plan activo asignado."
                     }
                     action={
-                        <button
+                        <Button
                             type="button"
-                            className="text-sm font-medium text-primary underline hover:no-underline"
+                            variant="ghost-primary"
+                            size="sm"
                             onClick={clearPlanQuery}
                         >
                             Volver al plan activo
-                        </button>
+                        </Button>
                     }
                 />
             )}

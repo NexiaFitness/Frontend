@@ -413,7 +413,7 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
             <Alert
                 variant="error"
                 action={
-                    <Button variant="outline-destructive" size="sm" onClick={() => refetch()}>
+                    <Button variant="ghost-primary" size="sm" onClick={() => refetch()}>
                         Reintentar
                     </Button>
                 }

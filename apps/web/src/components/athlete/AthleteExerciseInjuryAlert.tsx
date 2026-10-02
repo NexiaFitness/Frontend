@@ -66,7 +66,7 @@ export const AthleteExerciseInjuryAlert: React.FC<AthleteExerciseInjuryAlertProp
                 onConsultTrainer ? (
                     <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost-primary"
                         size="sm"
                         className="min-h-touch-athlete"
                         onClick={onConsultTrainer}

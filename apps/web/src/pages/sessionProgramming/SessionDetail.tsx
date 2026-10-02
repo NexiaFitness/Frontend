@@ -237,8 +237,8 @@ export const SessionDetail: React.FC = () => {
                             : getMutationErrorMessage(error)
                     }
                     action={
-                        <Button variant="outline" size="sm" onClick={goBack}>
-                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                        <Button variant="ghost-primary" size="sm" onClick={goBack}>
+                            <ArrowLeft className="mr-1 size-4" aria-hidden />
                             {backTarget ? "Volver" : "Volver a sesiones"}
                         </Button>
                     }

@@ -1,8 +1,12 @@
 /**
  * nexiaSemanticIconPresentation.ts — Tinte y tamaño de iconos en Alert / avisos.
  *
- * Contrato diseño (DESIGN_PREMIUM.md §5.2): solo trazo Lucide; prohibido shell circular
- * alrededor del glyph y prohibido SVG rellenos / XCircle en error.
+ * Contrato diseño (DESIGN_PREMIUM.md §5.2): solo trazo Lucide; prohibido shell
+ * circular / caja alrededor del glyph; error = CircleAlert (no XCircle/CircleX).
+ *
+ * @author Frontend Team
+ * @since v9.1.0
+ * @updated v9.2.1 — error CircleAlert; tinte destructive/80
  */
 
 import { cn } from "@/lib/utils";

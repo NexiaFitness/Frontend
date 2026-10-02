@@ -843,13 +843,14 @@ export const WeeklyStructureEditor = forwardRef<
                             title="No se pudieron cargar los patrones de movimiento"
                             description="El catálogo no está disponible."
                             action={
-                                <button
+                                <Button
                                     type="button"
+                                    variant="ghost-primary"
+                                    size="sm"
                                     onClick={() => refetchPatterns()}
-                                    className="text-xs font-medium text-primary underline hover:no-underline"
                                 >
                                     Reintentar
-                                </button>
+                                </Button>
                             }
                         />
                     )}

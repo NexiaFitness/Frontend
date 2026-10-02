@@ -1,18 +1,22 @@
 /**
- * Alert.test.tsx — API unificada, ARIA por variante y reenvío de atributos.
+ * Alert.test.tsx — API unificada, ARIA, iconos, dismiss y matriz de combinaciones.
  *
- * Contexto: A0 feedback unificado. error → role=alert; warning|info|success → status.
+ * Contexto: A0b feedback (DESIGN_PREMIUM.md §5.2). error → role=alert;
+ * warning|info|success → status. Error icon = CircleAlert (no X).
  *
- * @see DESIGN_PREMIUM.md §5.2
  * @author Frontend Team
  * @since v9.2.0
+ * @updated v9.2.1 — matriz variantes × title/action/dismiss × líneas
  */
 
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "@/test-utils/render";
 import { Alert } from "../Alert";
-import { alertAriaLive, alertAriaRole } from "../alertContract";
+import { alertAriaLive, alertAriaRole, type AlertVariant } from "../alertContract";
+import { ALERT_ACTION_BUTTON_VARIANT } from "../alertPresentation";
+
+const VARIANTS: AlertVariant[] = ["info", "success", "warning", "error"];
 
 describe("alertContract ARIA", () => {
     it("mapea error a alert/assertive y el resto a status/polite", () => {
@@ -71,6 +75,52 @@ describe("Alert attribute forwarding", () => {
     });
 });
 
+describe("Alert iconografía §5.2", () => {
+    it("error usa CircleAlert (data-tone=error), no X como icono semántico", () => {
+        render(<Alert variant="error" title="Error de login" onDismiss={() => undefined} />);
+
+        const icon = screen
+            .getByTestId("alert-icon-slot")
+            .querySelector("[data-nexia-semantic-tone='error']");
+        expect(icon).not.toBeNull();
+        expect(icon?.tagName.toLowerCase()).toBe("svg");
+
+        const dismiss = screen.getByRole("button", { name: "Cerrar aviso" });
+        expect(dismiss.querySelector("svg")).not.toBeNull();
+        // Icono semántico ≠ botón cerrar (no doble X de mismo glyph)
+        expect(
+            screen.getByTestId("alert-icon-slot").querySelector("svg"),
+        ).not.toBe(dismiss.querySelector("svg"));
+    });
+
+    it("warning/info/success conservan tones semánticos", () => {
+        const { rerender } = render(<Alert variant="warning" title="W" />);
+        expect(
+            screen
+                .getByTestId("alert-icon-slot")
+                .querySelector("[data-nexia-semantic-tone='warning']"),
+        ).not.toBeNull();
+
+        rerender(<Alert variant="info" title="I" />);
+        expect(
+            screen
+                .getByTestId("alert-icon-slot")
+                .querySelector("[data-nexia-semantic-tone='info']"),
+        ).not.toBeNull();
+
+        rerender(<Alert variant="success" title="S" />);
+        expect(
+            screen
+                .getByTestId("alert-icon-slot")
+                .querySelector("[data-nexia-semantic-tone='success']"),
+        ).not.toBeNull();
+    });
+
+    it("documenta variante de acción ghost-primary", () => {
+        expect(ALERT_ACTION_BUTTON_VARIANT).toBe("ghost-primary");
+    });
+});
+
 describe("Alert API title/description/action/icon", () => {
     it("renderiza title y description", () => {
         render(
@@ -85,7 +135,7 @@ describe("Alert API title/description/action/icon", () => {
         expect(screen.getByRole("alert")).toHaveTextContent("Inténtalo de nuevo.");
     });
 
-    it("renderiza action y onDismiss", async () => {
+    it("renderiza action y onDismiss con aria-label Cerrar aviso", async () => {
         const user = userEvent.setup();
         const onDismiss = vi.fn();
         const onRetry = vi.fn();
@@ -106,7 +156,7 @@ describe("Alert API title/description/action/icon", () => {
         await user.click(screen.getByRole("button", { name: "Reintentar" }));
         expect(onRetry).toHaveBeenCalledTimes(1);
 
-        await user.click(screen.getByRole("button", { name: "Cerrar alerta" }));
+        await user.click(screen.getByRole("button", { name: "Cerrar aviso" }));
         expect(onDismiss).toHaveBeenCalledTimes(1);
     });
 
@@ -115,18 +165,92 @@ describe("Alert API title/description/action/icon", () => {
             <Alert variant="warning" icon={false} title="Sin icono" />,
         );
 
-        expect(container.querySelector("svg")).toBeNull();
+        expect(container.querySelector("[data-nexia-semantic-tone]")).toBeNull();
         expect(screen.getByRole("status")).toHaveTextContent("Sin icono");
     });
 
     it("modo compact mantiene role=status en warning", () => {
-        render(
-            <Alert variant="warning" compact title="Callout compacto" />,
-        );
+        render(<Alert variant="warning" compact title="Callout compacto" />);
 
         const el = screen.getByRole("status");
         expect(el).toHaveAttribute("aria-live", "polite");
         expect(el.className).toMatch(/px-3/);
         expect(el).toHaveTextContent("Callout compacto");
+    });
+});
+
+describe("Alert matriz variantes × title/action/dismiss × líneas", () => {
+    it.each(VARIANTS)(
+        "%s: sin título, sin acción, sin dismiss (una línea)",
+        (variant) => {
+            render(
+                <Alert variant={variant} data-testid={`m-${variant}-bare`}>
+                    Mensaje corto
+                </Alert>,
+            );
+            const el = screen.getByTestId(`m-${variant}-bare`);
+            expect(el).toHaveAttribute("role", alertAriaRole(variant));
+            expect(el).toHaveTextContent("Mensaje corto");
+            expect(screen.queryByRole("button", { name: "Cerrar aviso" })).toBeNull();
+        },
+    );
+
+    it.each(VARIANTS)("%s: con título + descripción multilínea + acción + dismiss", (variant) => {
+        render(
+            <Alert
+                variant={variant}
+                data-testid={`m-${variant}-full`}
+                title="Título del aviso"
+                description={
+                    <>
+                        Primera línea de detalle.
+                        <br />
+                        Segunda línea de detalle para alinear icono a la primera.
+                    </>
+                }
+                onDismiss={() => undefined}
+                action={
+                    <button type="button">Acción única</button>
+                }
+            />,
+        );
+
+        const el = screen.getByTestId(`m-${variant}-full`);
+        expect(el).toHaveAttribute("role", alertAriaRole(variant));
+        expect(el).toHaveTextContent("Título del aviso");
+        expect(el).toHaveTextContent("Segunda línea de detalle");
+        expect(screen.getByRole("button", { name: "Acción única" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Cerrar aviso" })).toBeInTheDocument();
+        expect(screen.getByTestId("alert-icon-slot")).toBeInTheDocument();
+        expect(screen.getByTestId("alert-dismiss-slot")).toBeInTheDocument();
+    });
+
+    it.each(VARIANTS)("%s: solo título + dismiss, sin acción", (variant) => {
+        render(
+            <Alert
+                variant={variant}
+                title="Solo título"
+                onDismiss={() => undefined}
+                data-testid={`m-${variant}-title-dismiss`}
+            />,
+        );
+        expect(screen.getByTestId(`m-${variant}-title-dismiss`)).toHaveTextContent("Solo título");
+        expect(screen.getByRole("button", { name: "Cerrar aviso" })).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Acción única" })).toBeNull();
+    });
+
+    it.each(VARIANTS)("%s: sin título, con acción, sin dismiss", (variant) => {
+        render(
+            <Alert
+                variant={variant}
+                data-testid={`m-${variant}-action`}
+                action={<button type="button">Ir</button>}
+            >
+                Cuerpo sin título
+            </Alert>,
+        );
+        expect(screen.getByTestId(`m-${variant}-action`)).toHaveTextContent("Cuerpo sin título");
+        expect(screen.getByRole("button", { name: "Ir" })).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Cerrar aviso" })).toBeNull();
     });
 });

@@ -1,14 +1,20 @@
 /**
  * NexiaSemanticIcon.tsx — Icono semántico para Alert y chips de validación.
- * @see DESIGN_PREMIUM.md §5.2 — sin anillo extra; error usa Lucide X (no XCircle).
+ *
+ * @see DESIGN_PREMIUM.md §5.2 — sin anillo/caja alrededor; error = CircleAlert
+ * (trazo), no X ni XCircle/CircleX.
+ *
+ * @author Frontend Team
+ * @since v9.1.0
+ * @updated v9.2.1 — error CircleAlert
  */
 
 import React from "react";
 import {
     AlertTriangle,
     CheckCircle2,
+    CircleAlert,
     Info,
-    X,
     type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,7 +27,7 @@ const ICON_BY_TONE: Record<NexiaSemanticTone, LucideIcon> = {
     info: Info,
     success: CheckCircle2,
     warning: AlertTriangle,
-    error: X,
+    error: CircleAlert,
 };
 
 export interface NexiaSemanticIconProps {
@@ -40,6 +46,7 @@ export const NexiaSemanticIcon: React.FC<NexiaSemanticIconProps> = ({
         <Icon
             className={cn(nexiaSemanticIconClass(tone, size), className)}
             aria-hidden
+            data-nexia-semantic-tone={tone}
         />
     );
 };

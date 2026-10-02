@@ -334,7 +334,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                             structureGap.configurePath ? (
                                 <Button
                                     type="button"
-                                    variant="primary"
+                                    variant="ghost-primary"
                                     size="sm"
                                     className="h-8 px-2.5 text-xs"
                                     onClick={() =>
@@ -343,7 +343,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                                         })
                                     }
                                 >
-                                    <ExternalLink className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                                    <ExternalLink className="mr-1.5 size-4" aria-hidden />
                                     {SESSION_DAY_CONTEXT_COPY.configureWeekCta}
                                 </Button>
                             ) : undefined

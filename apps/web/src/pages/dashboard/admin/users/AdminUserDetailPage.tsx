@@ -172,7 +172,7 @@ export const AdminUserDetailPage: React.FC = () => {
                         action={
                             <Button
                                 type="button"
-                                variant="outline-destructive"
+                                variant="ghost-primary"
                                 size="sm"
                                 onClick={() => refetch()}
                             >

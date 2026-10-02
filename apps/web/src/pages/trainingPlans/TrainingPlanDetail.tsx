@@ -13,6 +13,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, RotateCcw } from "lucide-react";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import type { TrainingPlanInstance } from "@nexia/shared/types/training";
 import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
@@ -98,16 +99,21 @@ export const TrainingPlanDetail: React.FC = () => {
                         isNotFound ? undefined : "Por favor, intenta de nuevo."
                     }
                     action={
-                        <>
-                            {!isNotFound && (
-                                <Button variant="outline-destructive" size="sm" onClick={() => refetch()}>
-                                    Reintentar
-                                </Button>
-                            )}
-                            <Button variant="outline" size="sm" onClick={() => navigate("/dashboard/training-plans")}>
+                        isNotFound ? (
+                            <Button
+                                variant="ghost-primary"
+                                size="sm"
+                                onClick={() => navigate("/dashboard/training-plans")}
+                            >
+                                <ArrowLeft className="mr-1 size-4" aria-hidden />
                                 Volver a Planes
                             </Button>
-                        </>
+                        ) : (
+                            <Button variant="ghost-primary" size="sm" onClick={() => refetch()}>
+                                <RotateCcw className="mr-1 size-4" aria-hidden />
+                                Reintentar
+                            </Button>
+                        )
                     }
                 />
             </div>
