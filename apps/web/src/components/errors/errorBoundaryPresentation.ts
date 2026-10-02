@@ -1,16 +1,16 @@
 /**
- * errorBoundaryPresentation.ts — Copy y estilos del fallback ErrorBoundary (B9 / premium).
+ * errorBoundaryPresentation.ts — Copy del fallback ErrorBoundary.
  *
- * Contexto: Mensajes tranquilizadores, mobile-first; sin rojo de alarma en pantallas de error.
+ * Contexto: Mensajes tranquilizadores; UI vía ScreenStateCard
+ * (screenStatePresentation). DESIGN_PREMIUM.md §2, §5.2.
  *
- * Notas de mantenimiento: alinear con DESIGN_PREMIUM y portal atleta (375×812).
+ * Notas: el aviso PWA «Hay una versión nueva de NEXIA» (stale_chunk) no se
+ * migra ni se modifica — patrón conservado a petición de Nelson.
  *
  * @author Frontend Team
  * @since 2026-10-02
+ * @updated v9.2.2 — copy + ScreenStateCard
  */
-
-import { cn } from "@/lib/utils";
-import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentation";
 
 export type ErrorBoundaryUiMode = "route" | "root" | "stale_chunk";
 
@@ -40,16 +40,3 @@ export const ERROR_BOUNDARY_COPY = {
         homeLink: "Ir al inicio",
     },
 } as const;
-
-export function errorBoundaryShellClass(variant: "route" | "root"): string {
-    return cn(
-        NEXIA_GLASS_CARD,
-        "mx-auto flex w-full max-w-md flex-col items-center gap-5 px-6 py-8 text-center",
-        variant === "route" ? "min-h-[40vh] justify-center" : "min-h-[50vh] justify-center"
-    );
-}
-
-export const errorBoundaryTitleClass = "text-lg font-semibold text-foreground";
-export const errorBoundaryBodyClass = "max-w-sm text-sm leading-relaxed text-muted-foreground";
-export const errorBoundaryHomeLinkClass =
-    "text-sm font-medium text-primary underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded-sm";
