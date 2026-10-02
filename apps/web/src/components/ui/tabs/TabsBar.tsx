@@ -1,20 +1,19 @@
 /**
  * TabsBar.tsx — Barra segmentada premium reutilizable (atleta + entrenador + admin).
  *
- * Patrón canónico: shell glass → scroll con gutter → track flex (NEXIA_SEGMENTED_*).
- * Usos: tabs de ficha cliente, conmutadores Sesiones/Plantillas, filtros V02 atleta.
- *
- * `distribute="content"` — ítems al ancho del label + scroll (7 tabs cliente).
- * `distribute="equal"` — ítems repartidos en fila (filtros atleta, 2 tabs).
+ * Patrón canónico: shell glass → scroll → track flex (NEXIA_SEGMENTED_*).
+ * Indicador activo: solo pill (NEXIA_SEGMENTED_ITEM_SELECTED). Scrollbar oculto
+ * para no leerse como segunda barra bajo la pestaña.
+ * Al cambiar `value`, centra el ítem activo en el scroll (móvil).
  *
  * Doc: design/platform/04_REGISTRY_CODIGO_FUENTE.md · platformPremiumPresentation.ts
  *
  * @author Frontend Team
  * @since v6.x
- * @updated 2026-07-21 — underline legacy eliminado; diseño unificado plataforma
+ * @updated v9.2.3 — scrollIntoView activo; sin doble indicador scrollbar
  */
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import {
     NEXIA_SEGMENTED_SCROLL,
@@ -45,6 +44,19 @@ export interface TabsBarProps {
     activeAriaCurrent?: "page" | "step";
 }
 
+function centerTabInScroller(tab: HTMLElement, scroller: HTMLElement) {
+    const max = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+    const tabCenter = tab.offsetLeft + tab.offsetWidth / 2;
+    let target = tabCenter - scroller.clientWidth / 2;
+    // Extremos: alinear al borde para no dejar media etiqueta visible.
+    if (target <= 8) target = 0;
+    else if (target >= max - 8) target = max;
+    scroller.scrollTo({
+        left: Math.min(Math.max(0, target), max),
+        behavior: "smooth",
+    });
+}
+
 export const TabsBar: React.FC<TabsBarProps> = ({
     items,
     value,
@@ -54,9 +66,21 @@ export const TabsBar: React.FC<TabsBarProps> = ({
     distribute = "content",
     activeAriaCurrent = "page",
 }) => {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const activeRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        const tab = activeRef.current;
+        const scroller = scrollRef.current;
+        if (!tab || !scroller) return;
+        if (typeof scroller.scrollTo !== "function") return;
+        centerTabInScroller(tab, scroller);
+    }, [value]);
+
     return (
         <nav className={cn(NEXIA_SEGMENTED_SHELL, className)} aria-label={ariaLabel}>
             <div
+                ref={scrollRef}
                 className={NEXIA_SEGMENTED_SCROLL}
                 style={{ WebkitOverflowScrolling: "touch" }}
             >
@@ -72,6 +96,7 @@ export const TabsBar: React.FC<TabsBarProps> = ({
                         return (
                             <button
                                 key={tab.id}
+                                ref={isActive ? activeRef : undefined}
                                 type="button"
                                 role="tab"
                                 onClick={() => !isDisabled && onChange(tab.id)}

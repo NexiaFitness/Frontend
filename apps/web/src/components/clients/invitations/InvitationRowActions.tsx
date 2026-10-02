@@ -49,7 +49,7 @@ export const InvitationRowActions: React.FC<InvitationRowActionsProps> = ({
                     disabled={isResending}
                     className={CLIENT_LIST_INVITATION_RESEND}
                 >
-                    <Mail className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                    <Mail className="h-3.5 w-3.5" aria-hidden />
                     Reenviar
                 </Button>
                 {actionError ? (
@@ -75,7 +75,7 @@ export const InvitationRowActions: React.FC<InvitationRowActionsProps> = ({
                 disabled={isResending}
                 className="min-h-touch sm:min-h-0"
             >
-                <Mail className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                <Mail className="h-3.5 w-3.5" aria-hidden />
                 Reenviar
             </Button>
             {actionError ? (

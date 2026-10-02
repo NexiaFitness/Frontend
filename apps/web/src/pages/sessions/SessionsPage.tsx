@@ -357,12 +357,12 @@ export const SessionsPage: React.FC = () => {
                 />
                 {activeTab === "sessions" ? (
                     <Button size="sm" onClick={() => navigate("/dashboard/session-programming/create-session")}>
-                        <Plus className="mr-1 h-4 w-4" aria-hidden />
+                        <Plus className="h-4 w-4" aria-hidden />
                         Nueva sesión
                     </Button>
                 ) : (
                     <Button size="sm" onClick={() => navigate("/dashboard/session-programming/create-template")}>
-                        <Plus className="mr-1 h-4 w-4" aria-hidden />
+                        <Plus className="h-4 w-4" aria-hidden />
                         Nueva plantilla
                     </Button>
                 )}
@@ -595,7 +595,7 @@ export const SessionsPage: React.FC = () => {
                                 size="sm"
                                 onClick={() => navigate("/dashboard/session-programming/create-template")}
                             >
-                                <Plus className="mr-1 h-4 w-4" aria-hidden />
+                                <Plus className="h-4 w-4" aria-hidden />
                                 Crear primera plantilla
                             </Button>
                         </div>

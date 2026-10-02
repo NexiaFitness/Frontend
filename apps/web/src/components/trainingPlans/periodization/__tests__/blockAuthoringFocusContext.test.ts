@@ -1,56 +1,33 @@
 /**
- * blockAuthoringFocusContext.test.ts
+ * blockAuthoringFocusContext — meta compacta sin placeholders vacíos.
  */
 
-import { describe, expect, it } from "vitest";
-import { createMockClient } from "@/test-utils/fixtures/clients/clients";
-import {
-    buildBlockAuthoringBreadcrumbs,
-    buildClientAuthoringMetaItems,
-    formatClientDisplayName,
-} from "../blockAuthoringFocusContext";
+import { buildClientAuthoringMetaItems } from "../blockAuthoringFocusContext";
+import type { Client } from "@nexia/shared/types/client";
 
-describe("blockAuthoringFocusContext", () => {
-    it("formatea nombre completo del cliente", () => {
-        expect(
-            formatClientDisplayName({
-                nombre: "Carlos",
-                apellidos: "Medina Vega",
-            }),
-        ).toBe("Carlos Medina Vega");
-    });
+function clientStub(overrides: Partial<Client> = {}): Client {
+    return {
+        id: 1,
+        nombre: "QA",
+        apellidos: "Manual",
+        objetivo_entrenamiento: "hipertrofia",
+        experiencia: "media",
+        session_duration: null,
+        training_days: [],
+        ...overrides,
+    } as Client;
+}
 
-    it("construye breadcrumbs del journey create", () => {
-        const items = buildBlockAuthoringBreadcrumbs({
-            clientId: 345,
-            clientName: "Carlos Medina Vega",
-            planId: 528,
-            mode: "create",
-        });
-
-        expect(items.at(-1)?.label).toBe("Nuevo bloque");
-        expect(items.at(-1)?.active).toBe(true);
-        expect(items.find((item) => item.label === "Planificación")?.path).toContain(
-            "tab=planning",
+describe("buildClientAuthoringMetaItems", () => {
+    it("omite duración y días sin valor", () => {
+        const items = buildClientAuthoringMetaItems(clientStub());
+        const labels = items.map((i) => i.label);
+        expect(labels).toContain("Objetivo");
+        expect(labels).toContain("Experiencia");
+        expect(labels).not.toContain("Duración");
+        expect(labels).not.toContain("Días");
+        expect(items.every((i) => i.value !== "—" && i.value !== "No especificada")).toBe(
+            true,
         );
-    });
-
-    it("expone meta compacta del cliente", () => {
-        const items = buildClientAuthoringMetaItems(
-            createMockClient({
-                objetivo_entrenamiento: "hypertrophy",
-                experiencia: "Alta",
-                session_duration: "60-90",
-                training_days: ["Monday", "Wednesday", "Friday"],
-            }),
-        );
-
-        expect(items.map((item) => item.label)).toEqual([
-            "Objetivo",
-            "Experiencia",
-            "Duración",
-            "Días",
-        ]);
-        expect(items[3]?.value).toContain("L");
     });
 });

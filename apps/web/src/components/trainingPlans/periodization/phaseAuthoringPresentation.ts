@@ -37,7 +37,7 @@ export const AUTHORING_FOCUS_TOP_ROW_CLASS =
     "flex items-start justify-between gap-2 sm:gap-3";
 
 export const AUTHORING_FOCUS_IDENTITY_ROW_CLASS =
-    "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1";
+    "flex flex-col items-start gap-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-4 sm:gap-y-1";
 
 export const AUTHORING_FOCUS_NAME_CLASS = cn(
     "min-w-0 shrink-0 text-sm font-semibold leading-snug text-foreground sm:text-base",
@@ -47,7 +47,7 @@ export const AUTHORING_FOCUS_NAME_GRADIENT_CLASS = NEXIA_PORTAL_GREETING_NAME;
 
 export const AUTHORING_FOCUS_META_CLASS = cn(
     NEXIA_PORTAL_GREETING_SUBTITLE,
-    "min-w-0 text-right text-xs leading-relaxed sm:text-sm",
+    "min-w-0 text-left text-xs leading-relaxed sm:text-sm",
 );
 
 /** Reserva vertical del título de tarea (p. ej. «Bloque en creación») cuando no se muestra. */
@@ -86,10 +86,14 @@ export const AUTHORING_WIZARD_COLUMN_CLASS =
 /** Stack título → hint → contenido dentro del body del paso. */
 export const AUTHORING_STEP_BODY_STACK_CLASS = "flex flex-col gap-6 md:gap-8";
 
-/** Pregunta principal del paso — techo NEXIA_PORTAL (paridad atleta/trainer). */
+/**
+ * Pregunta principal del paso — techo NEXIA_PORTAL.
+ * Sin truncate del greeting H1: el título de tarjeta debe hacer wrap.
+ */
 export const AUTHORING_STEP_QUESTION_CLASS = cn(
     NEXIA_PORTAL_ACCOUNT_GREETING_H1,
-    "max-w-none",
+    "max-w-none overflow-visible whitespace-normal break-words text-clip",
+    "[overflow-wrap:anywhere]",
 );
 
 /** Instrucción de apoyo — más suave que el título. */

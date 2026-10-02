@@ -313,7 +313,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                                 onClick={() => onViewDetail(session)}
                             >
                                 Ver detalles
-                                <ChevronRight className="ml-1 h-3.5 w-3.5" aria-hidden />
+                                <ChevronRight className="h-3.5 w-3.5" aria-hidden />
                             </Button>
                         ) : null}
                         {onReplicate && "period_block_id" in session && session.period_block_id ? (
@@ -324,7 +324,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                                 className="w-full sm:flex-1"
                                 onClick={() => onReplicate(session)}
                             >
-                                <Copy className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                                <Copy className="h-3.5 w-3.5" aria-hidden />
                                 Replicar
                             </Button>
                         ) : null}

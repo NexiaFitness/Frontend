@@ -154,12 +154,12 @@ export const AdminPhysicalTestsPage: React.FC = () => {
                             className={ADMIN_PT_BACK_BUTTON}
                             onClick={() => goBack()}
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                            <ArrowLeft className="h-4 w-4" aria-hidden />
                             {ADMIN_PT_COPY.backToAdmin}
                         </Button>
                         {isStandard ? (
                             <Button type="button" variant="primary" size="sm" onClick={openCreate}>
-                                <Plus className="mr-2 h-4 w-4" aria-hidden />
+                                <Plus className="h-4 w-4" aria-hidden />
                                 {ADMIN_PT_COPY.newStandard}
                             </Button>
                         ) : null}

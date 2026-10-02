@@ -181,7 +181,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                         className={TEMPLATE_LIBRARY_BACK_BUTTON}
                         onClick={() => goBack()}
                     >
-                        <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                        <ArrowLeft className="h-4 w-4" aria-hidden />
                         {TEMPLATE_LIBRARY_COPY.createBack}
                     </Button>
                     <PageTitle

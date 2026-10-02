@@ -384,7 +384,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
         return (
             <div className="space-y-4 px-4 py-8 lg:px-8">
                 <Button variant="ghost-primary" size="sm" className="w-fit" onClick={handleBack}>
-                    <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                    <ArrowLeft className="h-4 w-4" aria-hidden />
                     Biblioteca
                 </Button>
                 <Alert variant="error">
@@ -455,7 +455,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                         onClick={() => setDuplicateOpen(true)}
                         disabled={isPublishingFlow}
                     >
-                        <Copy className="mr-2 h-4 w-4" aria-hidden />
+                        <Copy className="h-4 w-4" aria-hidden />
                         {DUPLICATE_TEMPLATE_ACTION_LABEL}
                     </Button>
                     {publicationUi.showPublishAction ? (

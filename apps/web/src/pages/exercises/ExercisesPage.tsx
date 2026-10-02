@@ -282,7 +282,7 @@ export const ExercisesPage: React.FC = () => {
                             onClick={() => setShowForm(!showForm)}
                             className={EXERCISES_LIBRARY_PRIMARY_CTA}
                         >
-                            <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+                            <Plus className="h-4 w-4 shrink-0" aria-hidden />
                             Nuevo ejercicio
                         </Button>
                     )}
@@ -359,7 +359,7 @@ export const ExercisesPage: React.FC = () => {
                                     onClick={() => setShowForm(true)}
                                     className={EXERCISES_LIBRARY_PRIMARY_CTA}
                                 >
-                                    <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+                                    <Plus className="h-4 w-4 shrink-0" aria-hidden />
                                     Añadir primer ejercicio
                                 </Button>
                             ) : undefined

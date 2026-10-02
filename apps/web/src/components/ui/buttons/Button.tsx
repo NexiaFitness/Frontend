@@ -112,7 +112,7 @@ export const Button = forwardRef<
             >
                 {isLoading && (
                     <span
-                        className="mr-2 inline-block size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                        className="inline-block size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
                         aria-hidden="true"
                     />
                 )}

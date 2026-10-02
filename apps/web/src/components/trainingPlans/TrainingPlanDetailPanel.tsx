@@ -19,7 +19,7 @@ import React, { useState, Suspense, lazy } from "react";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { Button } from "@/components/ui/buttons";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { LoadingSpinner } from "@/components/ui/feedback";
 import { ResourceQueryState } from "@/components/ui/feedback/ResourceQueryState";
 import { extractHttpStatus } from "@/components/ui/feedback/resourceQueryStateContract";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";

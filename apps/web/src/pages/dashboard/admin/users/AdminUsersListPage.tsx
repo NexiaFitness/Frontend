@@ -127,7 +127,7 @@ export const AdminUsersListPage: React.FC = () => {
                             className={ADMIN_USERS_BACK_BUTTON}
                             onClick={() => goBack()}
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                            <ArrowLeft className="h-4 w-4" aria-hidden />
                             {ADMIN_USERS_COPY.backToAdmin}
                         </Button>
                         <Button
@@ -136,7 +136,7 @@ export const AdminUsersListPage: React.FC = () => {
                             size="sm"
                             onClick={() => setCreateOpen(true)}
                         >
-                            <Plus className="mr-2 h-4 w-4" aria-hidden />
+                            <Plus className="h-4 w-4" aria-hidden />
                             {ADMIN_USERS_COPY.listNewAdmin}
                         </Button>
                     </div>

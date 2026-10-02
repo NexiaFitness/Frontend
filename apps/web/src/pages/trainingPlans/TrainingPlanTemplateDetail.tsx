@@ -130,7 +130,7 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                         className={TEMPLATE_LIBRARY_BACK_BUTTON}
                         onClick={handleBack}
                     >
-                        <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                        <ArrowLeft className="h-4 w-4" aria-hidden />
                         {TEMPLATE_LIBRARY_COPY.detailBack}
                     </Button>
                 </div>
@@ -150,7 +150,7 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                             size="sm"
                             onClick={() => setDuplicateOpen(true)}
                         >
-                            <Copy className="mr-2 h-4 w-4" aria-hidden />
+                            <Copy className="h-4 w-4" aria-hidden />
                             {DUPLICATE_TEMPLATE_ACTION_LABEL}
                         </Button>
                         <Button

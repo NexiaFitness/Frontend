@@ -88,7 +88,7 @@ export const AdminCatalogImportPage: React.FC = () => {
                             className={ADMIN_CATALOG_BACK_BUTTON}
                             onClick={() => goBack()}
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                            <ArrowLeft className="h-4 w-4" aria-hidden />
                             {ADMIN_CATALOG_COPY.importBackToList}
                         </Button>
                     </div>
@@ -125,7 +125,7 @@ export const AdminCatalogImportPage: React.FC = () => {
                                 isLoading={isExporting}
                                 onClick={() => void handleExport()}
                             >
-                                <Download className="mr-2 h-4 w-4" aria-hidden />
+                                <Download className="h-4 w-4" aria-hidden />
                                 {ADMIN_CATALOG_COPY.importExportAction}
                             </Button>
                             <Button
@@ -136,7 +136,7 @@ export const AdminCatalogImportPage: React.FC = () => {
                                 onClick={() => void handleDownloadTemplate()}
                                 data-testid="admin-catalog-download-template"
                             >
-                                <Download className="mr-2 h-4 w-4" aria-hidden />
+                                <Download className="h-4 w-4" aria-hidden />
                                 {ADMIN_CATALOG_COPY.importTemplateAction}
                             </Button>
                         </div>

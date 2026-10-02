@@ -282,7 +282,7 @@ export const PeriodBlockCard: React.FC<Props> = ({
                                 }
                             >
                                 <Layers
-                                    className="mr-1.5 h-3.5 w-3.5"
+                                    className="h-3.5 w-3.5"
                                     aria-hidden
                                 />
                                 {STRUCTURE_COVERAGE_COPY.completeStructureCta}
@@ -296,7 +296,7 @@ export const PeriodBlockCard: React.FC<Props> = ({
                                 onClick={() => onViewWeeks(block)}
                             >
                                 <Layers
-                                    className="mr-1.5 h-3.5 w-3.5"
+                                    className="h-3.5 w-3.5"
                                     aria-hidden
                                 />
                                 Ver semanas

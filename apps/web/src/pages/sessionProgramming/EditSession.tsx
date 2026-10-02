@@ -783,7 +783,7 @@ export const EditSession: React.FC = () => {
                             className={SESSION_PROGRAMMING_BACK_BUTTON}
                             onClick={() => navigate(-1)}
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                            <ArrowLeft className="h-4 w-4" aria-hidden />
                             Volver
                         </Button>
                     </header>
@@ -1009,7 +1009,7 @@ export const EditSession: React.FC = () => {
                                                         )
                                                     }
                                                 >
-                                                    <ClipboardList className="mr-2 h-3.5 w-3.5" aria-hidden />
+                                                    <ClipboardList className="h-3.5 w-3.5" aria-hidden />
                                                     Crear plan
                                                 </Button>
                                             </div>
@@ -1170,7 +1170,7 @@ export const EditSession: React.FC = () => {
                             onClick={handleReviewAlignment}
                         >
                             Revisar alineación
-                            <ChevronRight className="ml-1 h-3.5 w-3.5" aria-hidden />
+                            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
                         </Button>
                     ) : (
                         <span className="hidden sm:block sm:flex-1" aria-hidden />

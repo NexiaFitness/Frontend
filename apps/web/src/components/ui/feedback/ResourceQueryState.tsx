@@ -8,30 +8,30 @@
  *
  * @author Frontend Team
  * @since v9.2.2
+ * @updated v9.2.3 — screenStateActions (sin mr-* en iconos)
  */
 
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { ArrowLeft, RotateCcw } from "lucide-react";
 import type { RootState } from "@nexia/shared/store";
-import { Button } from "@/components/ui/buttons";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 import { ScreenStateCard } from "./ScreenStateCard";
+import {
+    ScreenStateBackButton,
+    ScreenStateHomeButton,
+    ScreenStateRetryButton,
+} from "./screenStateActions";
 import {
     extractHttpStatus,
     resolveResourceQueryKind,
     type ResourceQueryResource,
 } from "./resourceQueryStateContract";
-import {
-    RESOURCE_QUERY_ACTION,
-    resourceQueryCopy,
-} from "./resourceQueryStatePresentation";
+import { resourceQueryCopy } from "./resourceQueryStatePresentation";
 import {
     SCREEN_STATE_INLINE_CLASS,
     SCREEN_STATE_PAGE_CLASS,
 } from "./screenStatePresentation";
-import { ALERT_ACTION_ICON_CLASS } from "./alertPresentation";
 
 export interface ResourceQueryStateProps {
     error: unknown;
@@ -78,37 +78,11 @@ export const ResourceQueryState: React.FC<ResourceQueryStateProps> = ({
             {primaryAction != null ? (
                 primaryAction
             ) : kind === "load_failed" && onRetry != null ? (
-                <Button
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    className="min-h-touch-athlete w-full"
-                    onClick={onRetry}
-                >
-                    <RotateCcw className={`${ALERT_ACTION_ICON_CLASS} mr-1`} aria-hidden />
-                    {RESOURCE_QUERY_ACTION.retry}
-                </Button>
+                <ScreenStateRetryButton onRetry={onRetry} />
             ) : (
-                <Button
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    className="min-h-touch-athlete w-full"
-                    onClick={() => navigate(homePath)}
-                >
-                    {RESOURCE_QUERY_ACTION.home}
-                </Button>
+                <ScreenStateHomeButton onHome={() => navigate(homePath)} />
             )}
-            <Button
-                type="button"
-                variant="ghost-primary"
-                size="sm"
-                className="min-h-touch-athlete w-full"
-                onClick={() => goBack()}
-            >
-                <ArrowLeft className={`${ALERT_ACTION_ICON_CLASS} mr-1`} aria-hidden />
-                {RESOURCE_QUERY_ACTION.back}
-            </Button>
+            <ScreenStateBackButton onBack={() => goBack()} />
         </>
     );
 

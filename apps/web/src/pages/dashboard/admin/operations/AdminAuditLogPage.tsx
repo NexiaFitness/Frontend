@@ -113,7 +113,7 @@ export const AdminAuditLogPage: React.FC = () => {
                             className={ADMIN_AUDIT_BACK_BUTTON}
                             onClick={() => goBack()}
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                            <ArrowLeft className="h-4 w-4" aria-hidden />
                             {ADMIN_AUDIT_COPY.backToAdmin}
                         </Button>
                     </div>

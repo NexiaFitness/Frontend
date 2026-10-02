@@ -97,7 +97,7 @@ export const TemplateProgramWeeklyStructurePage: React.FC = () => {
                     onClick={handleVolver}
                     className="shrink-0 self-start sm:self-center"
                 >
-                    <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                    <ArrowLeft className="h-4 w-4" aria-hidden />
                     Volver al editor
                 </Button>
             </div>

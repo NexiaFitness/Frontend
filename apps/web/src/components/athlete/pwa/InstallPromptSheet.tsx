@@ -195,7 +195,7 @@ export const InstallPromptSheet: React.FC<InstallPromptSheetProps> = ({
                                     className={INSTALL_PROMPT_PRIMARY_CTA}
                                     onClick={() => onInstall?.()}
                                 >
-                                    <Download className="mr-2 size-4" aria-hidden />
+                                    <Download className="size-4" aria-hidden />
                                     Instalar
                                 </Button>
                                 <Button

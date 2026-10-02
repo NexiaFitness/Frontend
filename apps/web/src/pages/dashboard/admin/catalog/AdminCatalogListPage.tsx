@@ -136,7 +136,7 @@ export const AdminCatalogListPage: React.FC = () => {
                             className={ADMIN_CATALOG_BACK_BUTTON}
                             onClick={() => goBack()}
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                            <ArrowLeft className="h-4 w-4" aria-hidden />
                             {ADMIN_CATALOG_COPY.backToAdmin}
                         </Button>
                         <Button
@@ -145,7 +145,7 @@ export const AdminCatalogListPage: React.FC = () => {
                             size="sm"
                             onClick={() => navigate("/dashboard/admin/catalog/import")}
                         >
-                            <Upload className="mr-2 h-4 w-4" aria-hidden />
+                            <Upload className="h-4 w-4" aria-hidden />
                             {ADMIN_CATALOG_COPY.listImport}
                         </Button>
                         <Button
@@ -154,7 +154,7 @@ export const AdminCatalogListPage: React.FC = () => {
                             size="sm"
                             onClick={() => navigate("/dashboard/admin/catalog/new")}
                         >
-                            <Plus className="mr-2 h-4 w-4" aria-hidden />
+                            <Plus className="h-4 w-4" aria-hidden />
                             {ADMIN_CATALOG_COPY.listNew}
                         </Button>
                     </div>

@@ -102,7 +102,7 @@ export const ReplicateSessionModal: React.FC<ReplicateSessionModalProps> = ({
                             isLoading={isLoading}
                             className={cn(NEXIA_PREMIUM_MODAL_PRIMARY_CTA_CLASS, "flex-1 sm:flex-none")}
                         >
-                            <Copy className="mr-1.5 h-4 w-4" aria-hidden />
+                            <Copy className="h-4 w-4" aria-hidden />
                             Replicar
                         </Button>
                     </div>

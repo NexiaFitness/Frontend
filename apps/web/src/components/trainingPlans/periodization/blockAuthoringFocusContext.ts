@@ -34,10 +34,23 @@ function formatClientTrainingDaysCompact(days?: string[] | null): string {
         .join(", ");
 }
 
+/** Valores vacíos / placeholder — no se muestran en la meta compacta. */
+const EMPTY_META_VALUES = new Set([
+    "",
+    "—",
+    "No definido",
+    "No especificada",
+    "No especificado",
+]);
+
+function isMeaningfulMetaValue(value: string): boolean {
+    return !EMPTY_META_VALUES.has(value.trim());
+}
+
 export function buildClientAuthoringMetaItems(
     client: Client,
 ): ClientAuthoringMetaItem[] {
-    return [
+    const candidates: ClientAuthoringMetaItem[] = [
         {
             label: "Objetivo",
             value: labelTrainingGoal(client.objetivo_entrenamiento),
@@ -55,6 +68,7 @@ export function buildClientAuthoringMetaItems(
             value: formatClientTrainingDaysCompact(client.training_days),
         },
     ];
+    return candidates.filter((item) => isMeaningfulMetaValue(item.value));
 }
 
 export function buildBlockAuthoringBreadcrumbs(options: {

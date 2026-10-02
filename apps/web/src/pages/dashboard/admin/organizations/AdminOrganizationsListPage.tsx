@@ -72,7 +72,7 @@ export const AdminOrganizationsListPage: React.FC = () => {
                             className={ADMIN_ORGS_BACK_BUTTON}
                             onClick={() => goBack()}
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                            <ArrowLeft className="h-4 w-4" aria-hidden />
                             {ADMIN_ORGS_COPY.backToAdmin}
                         </Button>
                     </div>

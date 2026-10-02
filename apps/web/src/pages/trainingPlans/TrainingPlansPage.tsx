@@ -546,7 +546,7 @@ export const TrainingPlansPage: React.FC = () => {
                         className={TEMPLATE_LIBRARY_PRIMARY_CTA}
                         onClick={handleCreatePlan}
                     >
-                        <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+                        <Plus className="h-4 w-4 shrink-0" aria-hidden />
                         Nueva planificación
                     </Button>
                 ) : (
@@ -556,7 +556,7 @@ export const TrainingPlansPage: React.FC = () => {
                         className={TEMPLATE_LIBRARY_PRIMARY_CTA}
                         onClick={handleCreateTemplate}
                     >
-                        <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+                        <Plus className="h-4 w-4 shrink-0" aria-hidden />
                         Nueva plantilla
                     </Button>
                 )}

@@ -1,21 +1,23 @@
 /**
- * Breadcrumbs.tsx — Componente de navegación jerárquica
+ * Breadcrumbs.tsx — Navegación jerárquica en una sola línea.
  *
- * Contexto:
- * - Proporciona contexto de ubicación al usuario
- * - Permite volver a niveles superiores (ej. Clientes > Atleta > Plan)
+ * Contexto: DESIGN_PREMIUM.md §2 (mobile-first). En 375–440px un flex sin wrap
+ * partía crumbs largos y cortaba el último.
  *
- * Notas de mantenimiento:
- * - Tokens: text-muted-foreground, hover:text-primary, text-foreground.
+ * Decisión móvil: **colapsar intermedios** (Dashboard > … > Planificación >
+ * Editar bloque) cuando hay más de 3 ítems. Evita scroll horizontal con texto
+ * a media palabra en el borde; el nombre completo queda en title/aria-label.
+ * Desktop (≥640px): todos los crumbs en una línea, intermedios con truncate.
  *
  * @author Frontend Team
  * @since v6.0.0
- * @updated v5.0.0 - Nexia Sparkle Flow: tokens
+ * @updated v9.2.3 — una línea; colapso móvil; truncate + title
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface BreadcrumbItem {
     label: string;
@@ -24,50 +26,180 @@ export interface BreadcrumbItem {
 }
 
 interface BreadcrumbsProps {
-    items?: BreadcrumbItem[]; // Opcional para evitar errores si no se pasan items
+    items?: BreadcrumbItem[];
     className?: string;
 }
 
-export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items = [], className = "" }) => {
-    // Defensa robusta contra items undefined/null o no-array
-    const safeItems = Array.isArray(items) ? items : [];
+type RenderItem =
+    | { kind: "crumb"; item: BreadcrumbItem; index: number }
+    | { kind: "ellipsis"; labels: string[]; key: string };
 
-    // Si no hay items, no renderizamos nada para evitar ruidos visuales
-    if (safeItems.length === 0) return null;
+function buildRenderItems(safeItems: BreadcrumbItem[]): {
+    mobile: RenderItem[];
+    desktop: RenderItem[];
+} {
+    const desktop: RenderItem[] = safeItems.map((item, index) => ({
+        kind: "crumb",
+        item,
+        index,
+    }));
+
+    if (safeItems.length <= 3) {
+        return { mobile: desktop, desktop };
+    }
+
+    const collapsed = safeItems.slice(1, -2);
+    const mobile: RenderItem[] = [
+        { kind: "crumb", item: safeItems[0], index: 0 },
+        {
+            kind: "ellipsis",
+            labels: collapsed.map((c) => c.label),
+            key: "ellipsis",
+        },
+        ...safeItems.slice(-2).map((item, i) => ({
+            kind: "crumb" as const,
+            item,
+            index: safeItems.length - 2 + i,
+        })),
+    ];
+
+    return { mobile, desktop };
+}
+
+function CrumbLabel({
+    item,
+    isLast,
+}: {
+    item: BreadcrumbItem;
+    isLast: boolean;
+}) {
+    const label = item.label || "";
+    const className = cn(
+        "block whitespace-nowrap",
+        isLast
+            ? "shrink-0 font-semibold text-foreground"
+            : "min-w-0 max-w-[7.5rem] truncate text-muted-foreground sm:max-w-[10rem]",
+        item.path && !item.active && "transition-colors hover:text-primary",
+        item.active && "font-semibold text-foreground",
+    );
+
+    if (item.path && !item.active) {
+        return (
+            <Link
+                to={item.path}
+                className={className}
+                title={label}
+                aria-label={label}
+            >
+                {label}
+            </Link>
+        );
+    }
 
     return (
-        <nav className={`flex ${className}`} aria-label="Breadcrumb">
-            <ol className="flex items-center space-x-1 text-xs sm:text-sm font-medium">
-                {safeItems.map((item, index) => (
-                    <li key={index} className="flex items-center">
-                        {index > 0 && (
+        <span
+            className={className}
+            title={label}
+            aria-label={label}
+            aria-current={item.active || isLast ? "page" : undefined}
+        >
+            {label}
+        </span>
+    );
+}
+
+function BreadcrumbList({
+    items,
+    totalCount,
+    className,
+}: {
+    items: RenderItem[];
+    totalCount: number;
+    className?: string;
+}) {
+    return (
+        <ol
+            className={cn(
+                "flex min-w-0 flex-nowrap items-center gap-0 text-xs font-medium sm:text-sm",
+                className,
+            )}
+        >
+            {items.map((entry, visualIndex) => {
+                if (entry.kind === "ellipsis") {
+                    const full = entry.labels.join(" › ");
+                    return (
+                        <li
+                            key={entry.key}
+                            className="flex shrink-0 items-center"
+                        >
+                            {visualIndex > 0 ? (
+                                <ChevronRight
+                                    className="mx-1 size-3.5 shrink-0 text-muted-foreground"
+                                    aria-hidden
+                                />
+                            ) : null}
+                            <span
+                                className="px-0.5 text-muted-foreground"
+                                title={full}
+                                aria-label={`Niveles intermedios: ${full}`}
+                            >
+                                …
+                            </span>
+                        </li>
+                    );
+                }
+
+                const { item, index } = entry;
+                const isLast = index === totalCount - 1;
+                return (
+                    <li
+                        key={`${index}-${item.label}`}
+                        className={cn(
+                            "flex items-center",
+                            isLast ? "min-w-0 shrink-0" : "min-w-0",
+                        )}
+                    >
+                        {visualIndex > 0 ? (
                             <ChevronRight
                                 className="mx-1 size-3.5 shrink-0 text-muted-foreground"
                                 aria-hidden
                             />
-                        )}
-                        {item && item.path && !item.active ? (
-                            <Link
-                                to={item.path}
-                                className="text-muted-foreground transition-colors hover:text-primary"
-                            >
-                                {item.label}
-                            </Link>
-                        ) : (
-                            <span
-                                className={
-                                    item?.active
-                                        ? "font-semibold text-foreground"
-                                        : "text-muted-foreground"
-                                }
-                                aria-current={item?.active ? "page" : undefined}
-                            >
-                                {item?.label || ""}
-                            </span>
-                        )}
+                        ) : null}
+                        <CrumbLabel item={item} isLast={isLast} />
                     </li>
-                ))}
-            </ol>
+                );
+            })}
+        </ol>
+    );
+}
+
+export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
+    items = [],
+    className = "",
+}) => {
+    const { mobile, desktop, safeItems } = useMemo(() => {
+        const safe = Array.isArray(items) ? items : [];
+        const lists = buildRenderItems(safe);
+        return { ...lists, safeItems: safe };
+    }, [items]);
+
+    if (safeItems.length === 0) return null;
+
+    return (
+        <nav
+            className={cn("min-w-0 max-w-full", className)}
+            aria-label="Breadcrumb"
+        >
+            <BreadcrumbList
+                items={mobile}
+                totalCount={safeItems.length}
+                className="sm:hidden"
+            />
+            <BreadcrumbList
+                items={desktop}
+                totalCount={safeItems.length}
+                className="hidden sm:flex"
+            />
         </nav>
     );
 };

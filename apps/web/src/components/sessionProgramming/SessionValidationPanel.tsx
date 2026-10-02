@@ -82,7 +82,7 @@ export const SessionValidationPanel: React.FC<SessionValidationPanelProps> = ({
             <div className="border-t border-border p-4 space-y-2">
                 {onEdit && (
                     <Button variant="outline" size="sm" className="w-full" onClick={onEdit}>
-                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        <ArrowLeft className="h-4 w-4" />
                         Volver a editar la sesión
                     </Button>
                 )}

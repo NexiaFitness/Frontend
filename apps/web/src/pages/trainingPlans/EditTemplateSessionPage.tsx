@@ -260,7 +260,7 @@ export const EditTemplateSessionPage: React.FC = () => {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <PageTitle title="Editar sesión de plantilla" subtitle={subtitle} />
                 <Button variant="outline" size="sm" onClick={handleBack} className="shrink-0">
-                    <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                    <ArrowLeft className="h-4 w-4" aria-hidden />
                     Volver al editor
                 </Button>
             </div>

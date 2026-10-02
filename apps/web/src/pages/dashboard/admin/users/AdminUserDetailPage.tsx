@@ -138,7 +138,7 @@ export const AdminUserDetailPage: React.FC = () => {
                             className={ADMIN_USERS_BACK_BUTTON}
                             onClick={() => goBack()}
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                            <ArrowLeft className="h-4 w-4" aria-hidden />
                             {ADMIN_USERS_COPY.backToUsers}
                         </Button>
                     </div>

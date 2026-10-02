@@ -71,7 +71,7 @@ export const TemplateProgramTimeline: React.FC<TemplateProgramTimelineProps> = (
                             className={TEMPLATE_EDITOR_EMPTY_CTA}
                             onClick={onAddSession}
                         >
-                            <Plus className="mr-2 h-4 w-4" aria-hidden />
+                            <Plus className="h-4 w-4" aria-hidden />
                             {TEMPLATE_EDITOR_COPY.emptyProgramCta}
                         </Button>
                     </div>
@@ -93,7 +93,7 @@ export const TemplateProgramTimeline: React.FC<TemplateProgramTimelineProps> = (
                 </div>
                 {!isArchived ? (
                     <Button variant="outline-primary" size="sm" onClick={onAddSession}>
-                        <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+                        <Plus className="h-4 w-4" aria-hidden />
                         {TEMPLATE_EDITOR_COPY.addSession}
                     </Button>
                 ) : null}

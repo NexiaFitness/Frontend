@@ -94,7 +94,8 @@ export const PLATFORM_ICON_SM = "h-4 w-4 shrink-0";
 
 export const PLATFORM_ICON_XS = "h-3.5 w-3.5";
 
-export const PLATFORM_ICON_BACK_GAP = "mr-2";
+/** @deprecated Preferir gap del Button; no añadir mr-* al icono (§4.4 DESIGN_PREMIUM). */
+export const PLATFORM_ICON_BACK_GAP = "";
 
 export const PLATFORM_LINK_CENTERED = cn(PLATFORM_LINK_PRIMARY, "mt-3 justify-center");
 
@@ -117,17 +118,28 @@ export const NEXIA_SEGMENTED_SHELL = cn(
     "rounded-lg border border-border/60 bg-background/30 p-1 backdrop-blur-sm"
 );
 
-/** Área scroll horizontal; pb reserva hueco entre ítems y thumb (móvil). */
+/**
+ * Área scroll horizontal. Scrollbar oculto: el pill activo es el único indicador
+ * (el thumb Nexia bajo la pestaña se leía como doble subrayado).
+ * Máscara suave en bordes: evita lectura de media palabra al hacer scroll.
+ */
 export const NEXIA_SEGMENTED_SCROLL = cn(
-    "overflow-x-auto pb-1.5 scrollbar-nexia",
-    "[&::-webkit-scrollbar]:h-1.5"
+    "overflow-x-auto",
+    "[scrollbar-width:none] [-ms-overflow-style:none]",
+    "[&::-webkit-scrollbar]:hidden",
+    "[mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)]",
 );
 
 /** Ítems repartidos a ancho completo (filtros 4 col, conmutador 2 col). */
 export const NEXIA_SEGMENTED_TRACK_EQUAL = "flex w-full min-w-0 gap-1";
 
-/** Ítems al ancho del contenido; scroll horizontal (ficha cliente 7 tabs). */
-export const NEXIA_SEGMENTED_TRACK_CONTENT = "flex w-max min-w-full gap-1";
+/**
+ * Ítems al ancho del contenido; scroll horizontal (ficha cliente 7 tabs).
+ * Padding lateral amplio: al llevar el activo al final, el vecino sale entero
+ * del viewport (sin “idad” cortado).
+ */
+export const NEXIA_SEGMENTED_TRACK_CONTENT =
+    "flex w-max min-w-full gap-1 px-4 sm:px-1";
 
 export const NEXIA_SEGMENTED_ITEM = cn(
     "inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md",

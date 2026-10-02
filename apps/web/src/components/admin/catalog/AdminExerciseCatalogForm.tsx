@@ -387,7 +387,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                             className={ADMIN_CATALOG_BACK_BUTTON}
                             onClick={handleCancel}
                         >
-                            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                            <ArrowLeft className="h-4 w-4" aria-hidden />
                             {ADMIN_CATALOG_COPY.backToList}
                         </Button>
                     </div>
@@ -769,7 +769,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                             }))
                                         }
                                     >
-                                        <Plus className="mr-2 h-4 w-4" aria-hidden />
+                                        <Plus className="h-4 w-4" aria-hidden />
                                         {ADMIN_CATALOG_COPY.addMuscle}
                                     </Button>
                                 </div>
@@ -867,7 +867,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                             }))
                                         }
                                     >
-                                        <Plus className="mr-2 h-4 w-4" aria-hidden />
+                                        <Plus className="h-4 w-4" aria-hidden />
                                         {ADMIN_CATALOG_COPY.addPattern}
                                     </Button>
                                 </div>
@@ -967,7 +967,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                             }))
                                         }
                                     >
-                                        <Plus className="mr-2 h-4 w-4" aria-hidden />
+                                        <Plus className="h-4 w-4" aria-hidden />
                                         {ADMIN_CATALOG_COPY.addJoint}
                                     </Button>
                                 </div>

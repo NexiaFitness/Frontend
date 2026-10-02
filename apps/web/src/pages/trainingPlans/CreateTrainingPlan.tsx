@@ -483,7 +483,7 @@ export const CreateTrainingPlan: React.FC = () => {
                     size="sm"
                     onClick={() => goBack()}
                 >
-                    <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                    <ArrowLeft className="h-4 w-4" aria-hidden />
                     Volver
                 </Button>
             </div>

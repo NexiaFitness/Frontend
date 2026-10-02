@@ -290,7 +290,7 @@ export const EditStandaloneSession: React.FC = () => {
             <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
                 <div className="flex items-center justify-between gap-3">
                     <Button type="button" variant="ghost" size="sm" onClick={goBack}>
-                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                        <ArrowLeft className="h-4 w-4" aria-hidden />
                         {backTarget ? "Volver" : "Sesiones"}
                     </Button>
                 </div>

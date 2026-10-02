@@ -185,7 +185,7 @@ export const ClientList: React.FC = () => {
                             onClick={handleAddClient}
                             className={CLIENT_LIST_PRIMARY_CTA}
                         >
-                            <Plus className="mr-2 size-4 shrink-0" aria-hidden />
+                            <Plus className="size-4 shrink-0" aria-hidden />
                             {CLIENT_LIST_COPY.addClient}
                         </Button>
                     </div>
@@ -245,7 +245,7 @@ export const ClientList: React.FC = () => {
                         <ClientListEmptyState
                             action={
                                 <Button variant="primary" onClick={handleAddClient} className="w-full">
-                                    <Plus className="mr-2 size-4" aria-hidden />
+                                    <Plus className="size-4" aria-hidden />
                                     {CLIENT_LIST_COPY.addFirstClient}
                                 </Button>
                             }

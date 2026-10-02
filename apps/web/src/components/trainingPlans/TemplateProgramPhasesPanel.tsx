@@ -73,7 +73,7 @@ export const TemplateProgramPhasesPanel: React.FC<TemplateProgramPhasesPanelProp
             <div className={TEMPLATE_EDITOR_DETAILS_BODY}>
                 {!isArchived ? (
                     <Button variant="outline" size="sm" onClick={onAddPhase}>
-                        <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+                        <Plus className="h-4 w-4" aria-hidden />
                         {TEMPLATE_EDITOR_COPY.addPhase}
                     </Button>
                 ) : null}
@@ -125,7 +125,7 @@ export const TemplateProgramPhasesPanel: React.FC<TemplateProgramPhasesPanelProp
                                                 onClick={() => onEditPhase(block)}
                                                 aria-label={TEMPLATE_EDITOR_COPY.editPhase}
                                             >
-                                                <Pencil className="mr-1 h-4 w-4" aria-hidden />
+                                                <Pencil className="h-4 w-4" aria-hidden />
                                                 {TEMPLATE_EDITOR_COPY.editPhase}
                                             </Button>
                                             <Button
@@ -134,7 +134,7 @@ export const TemplateProgramPhasesPanel: React.FC<TemplateProgramPhasesPanelProp
                                                 onClick={() => onDeletePhase(block)}
                                                 aria-label={TEMPLATE_EDITOR_COPY.deletePhase}
                                             >
-                                                <Trash2 className="mr-1 h-4 w-4" aria-hidden />
+                                                <Trash2 className="h-4 w-4" aria-hidden />
                                                 {TEMPLATE_EDITOR_COPY.deletePhase}
                                             </Button>
                                         </>

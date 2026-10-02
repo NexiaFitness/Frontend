@@ -191,7 +191,7 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                                 >
                                     <span className="flex-1 truncate text-left">{option.label}</span>
                                     {value === option.value && (
-                                        <Check className="ml-2 h-4 w-4 shrink-0" />
+                                        <Check className="h-4 w-4 shrink-0" />
                                     )}
                                 </button>
                             ))}

@@ -37,7 +37,7 @@ import {
 
 export type { AlertVariant } from "./alertContract";
 
-export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface AlertProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
     variant?: AlertVariant;
     /** Título opcional (línea principal). */
     title?: React.ReactNode;

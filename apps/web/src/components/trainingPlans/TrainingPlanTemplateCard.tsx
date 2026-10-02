@@ -224,7 +224,7 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
                         className={TEMPLATE_LIBRARY_CARD_DUPLICATE_BTN}
                         onClick={() => setDuplicateOpen(true)}
                     >
-                        <Copy className="mr-2 h-4 w-4" aria-hidden />
+                        <Copy className="h-4 w-4" aria-hidden />
                         {DUPLICATE_TEMPLATE_ACTION_LABEL}
                     </Button>
                     <Button variant="primary" size="sm" className="w-full min-h-touch" onClick={handlePrimary}>

@@ -343,7 +343,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                                         })
                                     }
                                 >
-                                    <ExternalLink className="mr-1.5 size-4" aria-hidden />
+                                    <ExternalLink className="size-4" aria-hidden />
                                     {SESSION_DAY_CONTEXT_COPY.configureWeekCta}
                                 </Button>
                             ) : undefined

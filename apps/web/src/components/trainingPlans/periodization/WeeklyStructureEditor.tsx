@@ -707,7 +707,7 @@ export const WeeklyStructureEditor = forwardRef<
                         disabled={isMutating}
                         className="shrink-0"
                     >
-                        <Plus className="h-4 w-4 mr-1" />
+                        <Plus className="h-4 w-4" />
                         Añadir semana
                     </Button>
                 )}
@@ -901,7 +901,7 @@ export const WeeklyStructureEditor = forwardRef<
                             isLoading={isMutating}
                             disabled={isMutating}
                         >
-                            <Save className="mr-1 h-4 w-4" aria-hidden />
+                            <Save className="h-4 w-4" aria-hidden />
                             Guardar semana
                         </Button>
                     </div>
@@ -918,7 +918,7 @@ export const WeeklyStructureEditor = forwardRef<
                                 onClick={() => handleOpenRepeatModal(viewWeek)}
                                 disabled={isMutating || viewWeek.id == null}
                             >
-                                <Copy className="mr-1 h-4 w-4" aria-hidden />
+                                <Copy className="h-4 w-4" aria-hidden />
                                 Repetir
                             </Button>
                         ) : null}
@@ -936,7 +936,7 @@ export const WeeklyStructureEditor = forwardRef<
                             onClick={() => setDeleteTarget(viewWeek)}
                             disabled={isMutating || viewWeek.id == null}
                         >
-                            <Trash2 className="mr-1 h-4 w-4" aria-hidden />
+                            <Trash2 className="h-4 w-4" aria-hidden />
                             Eliminar
                         </Button>
                     </div>

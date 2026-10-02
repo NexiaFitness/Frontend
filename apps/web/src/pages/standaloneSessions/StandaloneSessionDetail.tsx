@@ -298,7 +298,7 @@ export const StandaloneSessionDetail: React.FC = () => {
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-2">
                     <Button variant="outline" onClick={goBack}>
-                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                        <ArrowLeft className="h-4 w-4" aria-hidden />
                         Volver
                     </Button>
                     <Button

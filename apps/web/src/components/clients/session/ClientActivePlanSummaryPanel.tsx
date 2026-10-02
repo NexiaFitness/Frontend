@@ -390,7 +390,7 @@ export const ClientActivePlanSummaryPanel: React.FC<
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-semibold text-foreground">
                           <Calendar
-                            className="inline-block h-3 w-3 mr-1 -mt-0.5"
+                            className="inline-block h-3 w-3 -mt-0.5"
                             aria-hidden
                           />
                           {formatDateShort(s.scheduled_date)} ·{" "}

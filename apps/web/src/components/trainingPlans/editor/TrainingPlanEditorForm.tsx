@@ -207,7 +207,7 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
                     className="shrink-0 self-start"
                     onClick={onCancel}
                 >
-                    <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                    <ArrowLeft className="h-4 w-4" aria-hidden />
                     Volver
                 </Button>
             </div>
@@ -247,7 +247,7 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
                                             className="w-full shrink-0 border-success/30 bg-surface hover:bg-surface-2 sm:w-auto"
                                             onClick={() => onOpenActivePlan(featuredActiveInstance)}
                                         >
-                                            <ExternalLink className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                                            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                                             Abrir plan activo
                                         </Button>
                                     </div>

@@ -290,7 +290,7 @@ export const SessionDetail: React.FC = () => {
                     </div>
                 </div>
                 <Button variant="ghost-primary" size="sm" onClick={goBack} className="shrink-0">
-                    <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                    <ArrowLeft className="h-4 w-4" aria-hidden />
                     Volver
                 </Button>
             </div>

@@ -92,7 +92,7 @@ export const SaveAsTemplateModal: React.FC<SaveAsTemplateModalProps> = ({
                         disabled={isLoading}
                         isLoading={isLoading}
                     >
-                        <ClipboardList className="mr-1 h-4 w-4" aria-hidden />
+                        <ClipboardList className="h-4 w-4" aria-hidden />
                         Guardar plantilla
                     </Button>
                 </div>

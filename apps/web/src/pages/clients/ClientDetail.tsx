@@ -22,7 +22,7 @@ import React, { Suspense, lazy, useState, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useClientQuickNote } from "@/hooks/clients/useClientQuickNote";
-import { Button } from "@/components/ui/buttons";
+import { Alert } from "@/components/ui/feedback/Alert";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { ResourceQueryState } from "@/components/ui/feedback/ResourceQueryState";
 import { useClientDetail } from "@nexia/shared/hooks/clients/useClientDetail";

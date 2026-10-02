@@ -832,7 +832,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         className={SESSION_PROGRAMMING_BACK_BUTTON}
                         onClick={handleGoBack}
                     >
-                        <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                        <ArrowLeft className="h-4 w-4" aria-hidden />
                         Volver
                     </Button>
                 </header>
@@ -1113,7 +1113,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                                         }
                                                     >
                                                         <ClipboardList
-                                                            className="mr-2 h-3.5 w-3.5"
+                                                            className="h-3.5 w-3.5"
                                                             aria-hidden
                                                         />
                                                         Crear plan
