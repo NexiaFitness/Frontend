@@ -134,7 +134,7 @@ describe("PeriodizationPanel", () => {
         const banner = screen.getByRole("status");
         expect(banner).toBeInTheDocument();
 
-        const dismissButton = screen.getByRole("button", { name: /cerrar alerta/i });
+        const dismissButton = screen.getByRole("button", { name: /cerrar aviso/i });
         await user.click(dismissButton);
 
         expect(screen.queryByRole("status")).not.toBeInTheDocument();

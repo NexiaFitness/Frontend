@@ -100,7 +100,10 @@ describe("PlanBlockAuthoringSurface", () => {
                 name: /ir al resumen de carlos medina vega/i,
             }),
         ).toBeInTheDocument();
-        expect(screen.getByText(/nuevo bloque/i)).toBeInTheDocument();
+        // Copy «Nuevo bloque» vive en el crumb actual (mobile + desktop → varios nodos).
+        expect(
+            screen.getByTestId("block-authoring-focus-header"),
+        ).toHaveTextContent(/nuevo bloque/i);
         expect(screen.queryByText(/paso 1 de 5/i)).not.toBeInTheDocument();
         expect(screen.getByRole("button", { name: /siguiente/i })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /atrás/i })).toBeEnabled();
