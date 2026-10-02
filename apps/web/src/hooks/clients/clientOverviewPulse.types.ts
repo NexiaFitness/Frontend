@@ -7,6 +7,7 @@ import type { ClientRatingOut } from "@nexia/shared/types/client";
 import type { ClientLoadInsights } from "@nexia/shared/types/clientLoadInsights";
 import type { HabitInsightsOut } from "@nexia/shared/types/habits";
 import type { TrainingSession } from "@nexia/shared/types/training";
+import type { TrainingPlanWeeklySummary } from "@nexia/shared/types/trainingAnalytics";
 
 export type OverviewStatChipId =
     | "adherence"
@@ -64,6 +65,7 @@ export interface ClientOverviewPulseLoadingFlags {
     tests: boolean;
     plans: boolean;
     recommendations: boolean;
+    weeklyLoad: boolean;
 }
 
 export interface ClientOverviewPulseViewModel {
@@ -72,6 +74,7 @@ export interface ClientOverviewPulseViewModel {
     planCompact: OverviewPlanCompact;
     lastCompletedSession: TrainingSession | null;
     loadInsights: ClientLoadInsights | null;
+    weeklyPlanSummary: TrainingPlanWeeklySummary | null;
     pulseRows: OverviewPulseRow[];
     hasPulseContent: boolean;
     statChips: OverviewStatChip[];

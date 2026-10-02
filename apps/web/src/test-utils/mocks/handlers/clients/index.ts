@@ -14,6 +14,7 @@ import { deleteClientHandler } from "./delete"
 import { createClientPreviewHandler } from "./preview"
 import { getClientTrainingSessionsHandler, getSessionCoherenceHandler } from "./sessions"
 import { getClientFeedbackHandler } from "./feedback"
+import { getClientTrainingPlanWeeklySummaryHandler } from "./trainingPlanWeekly"
 
 // ===== EXPORTAR HANDLERS INDIVIDUALES =====
 
@@ -27,6 +28,7 @@ export * from "./fatigue"
 export * from "./sessions"
 export * from "./tests"
 export * from "./feedback"
+export * from "./trainingPlanWeekly"
 
 // ===== ARRAY DE HANDLERS BÁSICOS (COMPATIBILIDAD) =====
 
@@ -39,5 +41,6 @@ export const clientsHandlers = [
     getClientTrainingSessionsHandler,
     getSessionCoherenceHandler,
     getClientFeedbackHandler,
+    getClientTrainingPlanWeeklySummaryHandler,
 ]
 

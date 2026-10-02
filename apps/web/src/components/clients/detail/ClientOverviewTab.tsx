@@ -15,6 +15,7 @@ import { ClientAthleteCommsSection } from "./ClientAthleteCommsSection";
 import { ClientOverviewKpiRow } from "./ClientOverviewKpiRow";
 import { ClientOverviewLastSessionCard } from "./ClientOverviewLastSessionCard";
 import { ClientOverviewLoadBridge } from "./ClientOverviewLoadBridge";
+import { ClientOverviewWeeklyLoadCard } from "./ClientOverviewWeeklyLoadCard";
 import { ClientOverviewRelationCollapsible } from "./ClientOverviewRelationCollapsible";
 import { ClientOverviewTopSection } from "./ClientOverviewTopSection";
 import { RecommendationsCards } from "./RecommendationsCards";
@@ -101,6 +102,12 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
             <h2 className="sr-only">{OVERVIEW_ZONE_TITLES.pageTitle}</h2>
 
             <ClientOverviewKpiRow chips={vm.statChips} loadingFlags={vm.loadingFlags} />
+
+            <ClientOverviewWeeklyLoadCard
+                weeklySummary={vm.weeklyPlanSummary ?? undefined}
+                isLoading={vm.loadingFlags.weeklyLoad}
+                isError={false}
+            />
 
             <ClientOverviewTopSection
                 clientId={clientId}

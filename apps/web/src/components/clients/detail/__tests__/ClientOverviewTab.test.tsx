@@ -30,6 +30,7 @@ import {
     getClientTestResultsEmptyHandler,
 } from "@/test-utils/mocks/handlers/clients/tests";
 import { getClientFeedbackHandler } from "@/test-utils/mocks/handlers/clients/feedback";
+import { getClientTrainingPlanWeeklySummaryHandler } from "@/test-utils/mocks/handlers/clients/trainingPlanWeekly";
 import { getActivePlanByClientWithPlanHandler } from "@/test-utils/mocks/handlers/planning";
 import {
     mockNavigate,
@@ -74,6 +75,7 @@ describe("ClientOverviewTab", () => {
             getClientTrainingSessionsHandler,
             getClientTestResultsHandler,
             getClientFeedbackHandler,
+            getClientTrainingPlanWeeklySummaryHandler,
             http.get("*/habits/clients/:clientId/insights", () =>
                 HttpResponse.json(
                     {

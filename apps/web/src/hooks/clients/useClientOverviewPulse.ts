@@ -15,6 +15,7 @@ import {
     useGetClientTestResultsQuery,
     useGetClientRatingsQuery,
     useGetClientLoadInsightsQuery,
+    useGetClientTrainingPlanWeeklySummaryQuery,
 } from "@nexia/shared/api/clientsApi";
 import { useGetClientHabitInsightsQuery } from "@nexia/shared/api/habitsApi";
 import {
@@ -92,6 +93,15 @@ export function useClientOverviewPulse(
     } = useGetClientLoadInsightsQuery(isValidClientId ? clientId : 0, { skip });
 
     const {
+        data: weeklyPlanSummary,
+        isLoading: isLoadingWeeklyLoad,
+        refetch: refetchWeeklyLoad,
+    } = useGetClientTrainingPlanWeeklySummaryQuery(
+        { clientId: isValidClientId ? clientId : 0 },
+        { skip },
+    );
+
+    const {
         activeInjuries = [],
         isLoadingActive: isLoadingInjuries,
     } = useClientInjuries({
@@ -143,6 +153,7 @@ export function useClientOverviewPulse(
             tests: isLoadingTests,
             plans: isLoadingPlans,
             recommendations: isLoadingRecommendations,
+            weeklyLoad: isLoadingWeeklyLoad,
         }),
         [
             isLoadingCoherence,
@@ -154,6 +165,7 @@ export function useClientOverviewPulse(
             isLoadingTests,
             isLoadingPlans,
             isLoadingRecommendations,
+            isLoadingWeeklyLoad,
         ],
     );
 
@@ -227,6 +239,7 @@ export function useClientOverviewPulse(
         void refetchRatings();
         void refetchActivePlan();
         void refetchRecommendations();
+        void refetchWeeklyLoad();
     }, [
         refetchProgress,
         refetchFatigue,
@@ -237,15 +250,17 @@ export function useClientOverviewPulse(
         refetchRatings,
         refetchActivePlan,
         refetchRecommendations,
+        refetchWeeklyLoad,
     ]);
 
     return useMemo(
         () => ({
             ...viewModelCore,
+            weeklyPlanSummary: weeklyPlanSummary ?? null,
             isLoading,
             loadingFlags,
             refetch,
         }),
-        [viewModelCore, isLoading, loadingFlags, refetch],
+        [viewModelCore, weeklyPlanSummary, isLoading, loadingFlags, refetch],
     );
 }
