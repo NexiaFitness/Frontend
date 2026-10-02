@@ -142,7 +142,6 @@ export function useAthleteSessionRun({
                             actual_weight: data.actual_weight,
                             actual_reps: data.actual_reps,
                             actual_sets: data.actual_sets,
-                            notes: data.notes,
                         },
                     }).unwrap();
                     return;

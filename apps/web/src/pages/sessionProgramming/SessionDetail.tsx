@@ -132,9 +132,19 @@ export const SessionDetail: React.FC = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteSession, { isLoading: isDeleting }] = useDeleteTrainingSessionMutation();
 
-    const { data: session, isLoading, isError, error } = useGetTrainingSessionQuery(sessionId, {
+    const {
+        data: session,
+        isLoading,
+        isFetching,
+        isUninitialized,
+        isError,
+        error,
+    } = useGetTrainingSessionQuery(sessionId, {
         skip: !sessionId || Number.isNaN(sessionId) || !isAuthenticated,
     });
+
+    const sessionQueryPending =
+        !session && (isLoading || isFetching || isUninitialized);
 
     const {
         view: sessionStructure,
@@ -190,9 +200,13 @@ export const SessionDetail: React.FC = () => {
         );
     }
 
-    if (isLoading) {
+    if (sessionQueryPending) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div
+                className="flex items-center justify-center min-h-screen"
+                role="status"
+                aria-label="Cargando sesión"
+            >
                 <LoadingSpinner size="lg" />
             </div>
         );

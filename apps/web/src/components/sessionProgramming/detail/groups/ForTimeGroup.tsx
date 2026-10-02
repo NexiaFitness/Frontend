@@ -35,6 +35,7 @@ import {
     DetailRoundLabelCell,
     DetailTableColGroup,
 } from "../detailTableCells";
+import { TrainerExerciseNote } from "../TrainerExerciseNote";
 
 export interface ForTimeGroupProps {
     blockTitle: string;
@@ -139,20 +140,18 @@ export const ForTimeGroup: React.FC<ForTimeGroupProps> = ({ blockTitle, group })
                 </table>
             </div>
 
-            {group.slots.some((s) => s.notes) && (
-                <div className="mt-3 space-y-1">
+            {group.slots.some((s) => s.notes) ? (
+                <div className="mt-3 space-y-2">
                     {group.slots
                         .filter((s) => s.notes)
                         .map((slot) => (
-                            <p
-                                key={slot.slotLabel}
-                                className="text-[11px] italic text-muted-foreground"
-                            >
-                                {slot.slotLabel}: {slot.notes}
-                            </p>
+                            <div key={slot.slotLabel}>
+                                <p className="mb-1 text-sm font-semibold text-foreground">{slot.exerciseName}</p>
+                                <TrainerExerciseNote text={slot.notes!} />
+                            </div>
                         ))}
                 </div>
-            )}
+            ) : null}
         </DetailCardShell>
     );
 };

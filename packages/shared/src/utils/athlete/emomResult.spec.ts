@@ -106,7 +106,7 @@ describe("emomResult", () => {
         expect(resizeEmomFailureEntries([], 2, templateSlots)).toHaveLength(2);
     });
 
-    it("buildEmomSavePayloads — nota y reps en fallos", () => {
+    it("buildEmomSavePayloads — reps en fallos sin notes (B10 → timed_block_results)", () => {
         const intervals = [interval(1, "i1"), interval(2, "i2")];
         const templateSlots = intervals[0].slots;
         const payloads = buildEmomSavePayloads({
@@ -120,7 +120,7 @@ describe("emomResult", () => {
 
         expect(payloads).toHaveLength(2);
         expect(payloads[0]?.data.actual_reps).toBe("10");
-        expect(payloads[0]?.data.notes).toBe("1/2");
+        expect(payloads[0]?.data).not.toHaveProperty("notes");
         expect(payloads[1]?.data.actual_reps).toBe("6");
         expect(payloads[1]?.data.actual_effort_value).toBe(8);
     });

@@ -19,7 +19,24 @@ export interface SessionTimedAthleteResultsPanelProps {
     enabled?: boolean;
 }
 
-function formatTimedRow(mode: string, totalSeconds: number | null, rounds: number | null): string {
+function formatEmomIntervalScore(
+    completed: number | null,
+    failed: number | null
+): string {
+    const done = completed ?? 0;
+    const fail = failed ?? 0;
+    const total = done + fail;
+    if (total <= 0) return "—";
+    return `${done}/${total} intervalos`;
+}
+
+function formatTimedRow(
+    mode: string,
+    totalSeconds: number | null,
+    rounds: number | null,
+    emomCompleted: number | null,
+    emomFailed: number | null
+): string {
     if (mode === "for_time" && totalSeconds != null) {
         return formatForTimeDuration(totalSeconds);
     }
@@ -27,7 +44,7 @@ function formatTimedRow(mode: string, totalSeconds: number | null, rounds: numbe
         return `${rounds} rondas`;
     }
     if (mode === "emom") {
-        return "Registro EMOM (ver detalle en historial timed)";
+        return formatEmomIntervalScore(emomCompleted, emomFailed);
     }
     return totalSeconds != null ? formatForTimeDuration(totalSeconds) : "—";
 }
@@ -77,7 +94,13 @@ export const SessionTimedAthleteResultsPanel: React.FC<SessionTimedAthleteResult
                             {row.timed_mode.replace("_", " ")}
                         </span>
                         <span className="tabular-nums text-foreground">
-                            {formatTimedRow(row.timed_mode, row.total_seconds, row.rounds_completed)}
+                            {formatTimedRow(
+                                row.timed_mode,
+                                row.total_seconds,
+                                row.rounds_completed,
+                                row.emom_completed_count,
+                                row.emom_failed_count
+                            )}
                         </span>
                     </li>
                 ))}
