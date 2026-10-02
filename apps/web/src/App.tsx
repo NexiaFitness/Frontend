@@ -235,11 +235,15 @@ const SessionDetail = lazyWithRetry(() =>
 const SessionReviewPage = lazyWithRetry(() =>
   import("./pages/sessionProgramming/SessionReviewPage").then((m) => ({ default: m.SessionReviewPage }))
 );
-const StandaloneSessionDetail = lazyWithRetry(() =>
-  import("./pages/standaloneSessions/StandaloneSessionDetail").then((m) => ({ default: m.StandaloneSessionDetail }))
+const StandaloneSessionLegacyDetailPage = lazyWithRetry(() =>
+  import("./pages/standaloneSessions/StandaloneSessionLegacyDetailPage").then((m) => ({
+    default: m.StandaloneSessionLegacyDetailPage,
+  }))
 );
-const EditStandaloneSession = lazyWithRetry(() =>
-  import("./pages/standaloneSessions/EditStandaloneSession").then((m) => ({ default: m.EditStandaloneSession }))
+const StandaloneSessionLegacyEditPage = lazyWithRetry(() =>
+  import("./pages/standaloneSessions/StandaloneSessionLegacyEditPage").then((m) => ({
+    default: m.StandaloneSessionLegacyEditPage,
+  }))
 );
 const CreateTestEvaluation = lazyWithRetry(() =>
   import("./pages/testing").then((m) => ({ default: m.CreateTestEvaluation }))
@@ -828,7 +832,7 @@ function App() {
             path="standalone-sessions/:id"
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-                <StandaloneSessionDetail />
+                <StandaloneSessionLegacyDetailPage />
               </RoleProtectedRoute>
             }
           />
@@ -836,7 +840,7 @@ function App() {
             path="standalone-sessions/:id/edit"
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-                <EditStandaloneSession />
+                <StandaloneSessionLegacyEditPage />
               </RoleProtectedRoute>
             }
           />

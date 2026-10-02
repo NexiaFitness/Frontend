@@ -974,7 +974,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 {useStandaloneSession ? (
                                         <Input
                                             type="text"
-                                            value="Sesión libre"
+                                            value="Fuera del plan"
                                             disabled
                                             className="bg-muted"
                                         />
@@ -999,7 +999,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                     ) : (
                                         <p className={SESSION_PROGRAMMING_FIELD_ERROR}>
                                             No hay programa que cubra esta fecha. Elige otra fecha, crea
-                                            sesión suelta o asigna un plan al cliente.
+                                            sesión fuera del plan o asigna un plan al cliente.
                                         </p>
                                     )}
                                 </div>
@@ -1090,7 +1090,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                             <ClipboardList aria-hidden />
                                         </div>
                                         <p className={SESSION_PROGRAMMING_EMPTY_TITLE}>
-                                            {activePlanCoversDate ? "Sesión suelta" : "Sin plan asignado"}
+                                            {activePlanCoversDate ? "Fuera del plan" : "Sin plan asignado"}
                                         </p>
                                         <p className={SESSION_PROGRAMMING_EMPTY_DESCRIPTION}>
                                             {activePlanCoversDate

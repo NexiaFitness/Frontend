@@ -9,8 +9,8 @@ import { NEXIA_PORTAL_CARD_DESCRIPTION } from "@/components/athlete/account/athl
 export const SESSION_CREATE_KIND_COPY = {
     segmentedAriaLabel: "Tipo de creación de sesión",
     program: "Programa",
-    standalone: "Sesión suelta",
-    implicitStandaloneLabel: "Modo sesión suelta",
+    standalone: "Fuera del plan",
+    implicitStandaloneLabel: "Fuera del plan",
     switchToProgram: "Volver a programa",
 } as const;
 

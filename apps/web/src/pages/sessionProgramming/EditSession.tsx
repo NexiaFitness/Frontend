@@ -870,7 +870,7 @@ export const EditSession: React.FC = () => {
                                                 ) : (
                                                     <Input
                                                         type="text"
-                                                        value="Sesión libre"
+                                                        value="Fuera del plan"
                                                         disabled
                                                         className="bg-muted"
                                                     />
