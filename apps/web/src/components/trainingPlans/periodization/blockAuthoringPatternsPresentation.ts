@@ -31,6 +31,9 @@ export function authoringPatternDayCardClass(options: {
         options.hasPatterns &&
             !options.isEditing &&
             "border-primary/20",
+        !options.hasPatterns &&
+            !options.isEditing &&
+            "border-warning/30 bg-warning/[0.04]",
     );
 }
 
@@ -38,7 +41,7 @@ export const AUTHORING_PATTERN_DAY_CARD_TITLE_CLASS =
     "text-sm font-semibold tracking-tight text-foreground";
 
 export const AUTHORING_PATTERN_DAY_CARD_EMPTY_CLASS =
-    "text-xs leading-relaxed text-muted-foreground/90";
+    "inline-flex items-center gap-1.5 text-xs leading-relaxed text-warning";
 
 export const AUTHORING_PATTERN_DAY_CARD_EDIT_ICON_WRAP_CLASS =
     "pointer-events-none absolute right-3 top-3";

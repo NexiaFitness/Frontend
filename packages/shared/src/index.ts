@@ -442,6 +442,8 @@ export {
     weeklyStructureDraftsEqual,
     isWeeklyStructureDirty,
     classifyWeeksByTemplate,
+    classifyWeeksWithBaseline,
+    resolveStructureClassificationReference,
     findTemplateWeek,
     type WeekStructureKind,
 } from "./utils/weekStructureDiff";

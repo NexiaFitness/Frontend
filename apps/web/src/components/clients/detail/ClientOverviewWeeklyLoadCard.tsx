@@ -1,5 +1,8 @@
 /**
  * ClientOverviewWeeklyLoadCard — Carga semanal plan vs extra (D10 Fase 1).
+ *
+ * Diseño: DESIGN_PREMIUM.md §2 (glass+rim), §3 (warning solo exceso carga).
+ * Sin aviso de estructura: el entrenador actúa en PeriodBlockCard.
  */
 
 import React from "react";

@@ -13,7 +13,7 @@
  */
 
 import {
-    classifyWeeksByTemplate,
+    classifyWeeksWithBaseline,
     weeklyStructureDraftsEqual,
     weeksStructureEqual,
 } from "@nexia/shared";
@@ -346,7 +346,8 @@ export async function persistBlockStructureEdit(
             return false;
         }
 
-        const baselineKinds = classifyWeeksByTemplate(
+        const baselineKinds = classifyWeeksWithBaseline(
+            draft,
             diffBaseline,
             TEMPLATE_WEEK_ORDINAL,
         );
@@ -372,6 +373,30 @@ export async function persistBlockStructureEdit(
             },
         }).unwrap();
         changed = true;
+
+        for (const weekDraft of draft) {
+            if (weekDraft.week_ordinal === TEMPLATE_WEEK_ORDINAL) {
+                continue;
+            }
+            if (!weekChangedVsBaseline(weekDraft, baselineByOrdinal)) {
+                continue;
+            }
+            const isPersonalized =
+                baselineKinds[weekDraft.week_ordinal] === "personalizada";
+            const isNewOrdinal = !existingByOrdinal.has(weekDraft.week_ordinal);
+            if (isPersonalized || isNewOrdinal) {
+                await putOrCreateWeekDraft(
+                    planId,
+                    blockId,
+                    weekDraft,
+                    weekIdsByOrdinal,
+                    existingByOrdinal,
+                    updateWeek,
+                    createWeek,
+                );
+                changed = true;
+            }
+        }
 
         return changed;
     }

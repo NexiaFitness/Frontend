@@ -8,7 +8,10 @@
  * @since v9.0.0
  */
 
-import { classifyWeeksByTemplate, parseHabitualTrainingDaySet } from "@nexia/shared";
+import {
+    classifyWeeksWithBaseline,
+    parseHabitualTrainingDaySet,
+} from "@nexia/shared";
 import type { TrainingDayValue } from "@nexia/shared/types/client";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 
@@ -99,11 +102,11 @@ export function setActiveDaysOnWeek1(
         ];
     }
 
-    const referenceStructure =
-        structureBaseline != null && structureBaseline.length > 0
-            ? structureBaseline
-            : weeklyStructure;
-    const kinds = classifyWeeksByTemplate(referenceStructure, 1);
+    const kinds = classifyWeeksWithBaseline(
+        weeklyStructure,
+        structureBaseline,
+        1,
+    );
 
     return weeklyStructure.map((week) => {
         if (week.week_ordinal !== 1 && kinds[week.week_ordinal] === "personalizada") {

@@ -85,6 +85,21 @@ export function findTemplateWeek(
     return weeks.find((w) => w.week_ordinal === templateOrdinal) ?? null;
 }
 
+/**
+ * Reference snapshot for inherited/personalized classification (F5).
+ * Persisted baseline when present; otherwise current draft — aligns with
+ * setActiveDaysOnWeek1 and backend _classify_week_ordinals_by_template.
+ */
+export function resolveStructureClassificationReference(
+    draft: readonly WeekLike[],
+    structureBaseline?: readonly WeekLike[],
+): readonly WeekLike[] {
+    if (structureBaseline != null && structureBaseline.length > 0) {
+        return structureBaseline;
+    }
+    return draft;
+}
+
 /** Classify each week vs template as heredada or personalizada. */
 export function classifyWeeksByTemplate(
     weeks: readonly WeekLike[],
@@ -102,4 +117,17 @@ export function classifyWeeksByTemplate(
             weeksStructureEqual(w, template) ? "heredada" : "personalizada",
         ]),
     );
+}
+
+/** Classify weeks using baseline reference when available (F5 unified criterion). */
+export function classifyWeeksWithBaseline(
+    draft: readonly WeekLike[],
+    structureBaseline: readonly WeekLike[] | undefined,
+    templateOrdinal = 1,
+): Record<number, WeekStructureKind> {
+    const reference = resolveStructureClassificationReference(
+        draft,
+        structureBaseline,
+    );
+    return classifyWeeksByTemplate(reference, templateOrdinal);
 }

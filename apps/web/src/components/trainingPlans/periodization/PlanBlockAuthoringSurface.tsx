@@ -30,7 +30,7 @@ import type { AppDispatch } from "@nexia/shared/store";
 import type { Client } from "@nexia/shared/types/client";
 
 import { Button } from "@/components/ui/buttons";
-import { useToast } from "@/components/ui/feedback";
+import { Alert, useToast } from "@/components/ui/feedback";
 import { DiscardUnsavedChangesModal } from "@/components/ui/modals";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
@@ -58,6 +58,9 @@ import { BlockAuthoringStepLoad } from "./BlockAuthoringStepLoad";
 import { BlockAuthoringStepDays } from "./BlockAuthoringStepDays";
 import { BlockAuthoringStepPatterns } from "./BlockAuthoringStepPatterns";
 import { AUTHORING_PATTERNS_INCOMPLETE_STATUS_HINT } from "./blockAuthoringPatternsPresentation";
+import { buildBlockDateStructureGapViewModel } from "./blockDateStructureGap";
+import { shouldFetchWeeklyStructureHydration } from "./blockAuthoringStructureHydration";
+import { Link } from "react-router-dom";
 import { BlockAuthoringStepSummary } from "./BlockAuthoringStepSummary";
 import {
     ensureWeek1FromTrainingDays,
@@ -226,10 +229,14 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     }, [mode, blockId, blocks, loadBlock]);
 
     useEffect(() => {
-        if (mode !== "edit" || blockId == null || structureLoaded) {
-            return;
-        }
-        if (structureHydratedForBlockRef.current === blockId) {
+        if (
+            !shouldFetchWeeklyStructureHydration({
+                mode,
+                blockId,
+                structureLoaded,
+                hydratedBlockId: structureHydratedForBlockRef.current,
+            })
+        ) {
             return;
         }
 
@@ -311,6 +318,33 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
             activeDays,
         );
     }, [form.startDate, form.endDate, activeDays]);
+
+    const persistedBlock = useMemo(
+        () => (blockId != null ? blocks.find((b) => b.id === blockId) : undefined),
+        [blocks, blockId],
+    );
+
+    const dateStructureGap = useMemo(
+        () =>
+            buildBlockDateStructureGapViewModel({
+                planId,
+                blockId: blockId ?? null,
+                startDate: form.startDate,
+                endDate: form.endDate,
+                weeklyStructure: form.weeklyStructure,
+                persistedStartDate: persistedBlock?.start_date,
+                persistedEndDate: persistedBlock?.end_date,
+            }),
+        [
+            planId,
+            blockId,
+            form.startDate,
+            form.endDate,
+            form.weeklyStructure,
+            persistedBlock?.start_date,
+            persistedBlock?.end_date,
+        ],
+    );
 
     const { data: clientTrainingSessions = [] } = useGetTrainingSessionsByClientQuery(
         clientId,
@@ -651,6 +685,24 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                     guardar.
                 </p>
             ) : null}
+            {dateStructureGap.show ? (
+                <Alert
+                    variant="warning"
+                    data-testid="authoring-date-structure-gap"
+                    action={
+                        dateStructureGap.replicateWeekPath ? (
+                            <Link
+                                to={dateStructureGap.replicateWeekPath}
+                                className="text-sm font-medium text-primary underline-offset-2 hover:underline"
+                            >
+                                Replicar semana tipo
+                            </Link>
+                        ) : undefined
+                    }
+                >
+                    <p>{dateStructureGap.message}</p>
+                </Alert>
+            ) : null}
             <div className={AUTHORING_WIZARD_FOOTER_ROW_CLASS}>
                 <Button
                     type="button"
@@ -773,6 +825,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                             <BlockAuthoringStepPatterns
                                 activeDays={activeDays}
                                 weeklyStructure={form.weeklyStructure}
+                                structureBaseline={structureBaseline}
                                 onWeeklyStructureChange={setWeeklyStructure}
                                 catalog={patternsCatalog}
                                 catalogLoading={patternsLoading}

@@ -186,6 +186,61 @@ describe("persistBlockStructureEdit", () => {
         expect(syncRecurring).not.toHaveBeenCalled();
     });
 
+    it("tras sync-recurring persiste ordinal nuevo (F6: no return temprano)", async () => {
+        const draft = [
+            ...structuredClone(baseline),
+            {
+                week_ordinal: 3,
+                label: null,
+                days: [
+                    {
+                        day_of_week: 1,
+                        patterns: [{ movement_pattern_id: 1, sub_pattern: null }],
+                    },
+                ],
+            },
+        ];
+        draft[0].days[0].patterns.push({
+            movement_pattern_id: 8,
+            sub_pattern: null,
+        });
+
+        const createWeek = vi.fn(() => ({
+            unwrap: () =>
+                Promise.resolve({
+                    id: 99,
+                    week_ordinal: 3,
+                    label: null,
+                    days: draft[2].days,
+                }),
+        }));
+        const syncRecurring = vi.fn(() => ({
+            unwrap: () =>
+                Promise.resolve({
+                    applied_week_ordinals: [2],
+                    preserved_week_ordinals: [],
+                    updated_personalized_ordinals: [],
+                }),
+        }));
+
+        const saved = await persistBlockStructureEdit(
+            526,
+            42,
+            "2026-09-22",
+            "2026-10-05",
+            draft,
+            baseline,
+            existingStructure,
+            vi.fn(),
+            createWeek,
+            syncRecurring,
+        );
+
+        expect(saved).toBe(true);
+        expect(syncRecurring).toHaveBeenCalledTimes(1);
+        expect(createWeek).toHaveBeenCalledTimes(1);
+    });
+
     it("sync-recurring bootstrap cuando baseline vacío (bloque sin estructura previa)", async () => {
         const draft = [
             {

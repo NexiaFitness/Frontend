@@ -2,6 +2,9 @@
  * Athlete weekly summary types (F3b-BE-03 / F3b-FE-03).
  * Contract: docs/audits/portal-atleta/especificaciones-atleta/run-y-diseno/F3b_BE03_ATHLETE_WEEKLY_SUMMARY.md
  * Endpoint: GET /api/v1/athlete/weekly-summary
+ *
+ * OpenAPI (http://localhost:8000/api/v1/openapi.json):
+ * AthleteWeeklySummaryOut.structure_coverage — anyOf StructureCoverageOut | null (siempre presente en JSON).
  */
 
 export interface AthleteWeeklyAdherence {
@@ -33,10 +36,14 @@ export interface AthleteWeeklyFeedback {
     trainer_response_at: string | null;
 }
 
+import type { StructureCoverage } from "./trainingAnalytics";
+
 export interface AthleteWeeklySummary {
     client_id: number;
     week_start: string;
     week_end: string;
+    /** Nullable when no bloque activo o sin dato de cobertura; clave siempre en la respuesta API. */
+    structure_coverage: StructureCoverage | null;
     adherence: AthleteWeeklyAdherence;
     personal_records: AthleteWeeklyPersonalRecord[];
     feedback: AthleteWeeklyFeedback;

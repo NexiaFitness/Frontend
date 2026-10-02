@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
     classifyWeeksByTemplate,
+    classifyWeeksWithBaseline,
     isWeeklyStructureDirty,
     weeksStructureEqual,
 } from "../weekStructureDiff";
@@ -48,5 +49,15 @@ describe("weekStructureDiff", () => {
 
         const mixed = classifyWeeksByTemplate([template, different]);
         expect(mixed[2]).toBe("personalizada");
+    });
+
+    it("classifyWeeksWithBaseline usa baseline persistido (F5)", () => {
+        const baseline = [template, different];
+        const draft = [template, copy];
+        const fromDraftOnly = classifyWeeksByTemplate(draft, 1);
+        expect(fromDraftOnly[2]).toBe("heredada");
+
+        const unified = classifyWeeksWithBaseline(draft, baseline, 1);
+        expect(unified[2]).toBe("personalizada");
     });
 });

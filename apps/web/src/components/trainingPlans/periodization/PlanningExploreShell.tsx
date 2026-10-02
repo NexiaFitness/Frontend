@@ -74,6 +74,9 @@ interface Props {
     volumeIntensityPhase: PeriodizationVolumeNominalPhase;
     showOtherPlansAction?: boolean;
     onOpenOtherPlans?: () => void;
+    structureCoverageBlockId?: number | null;
+    structureCoverageIncomplete?: boolean;
+    structureCoverageWeeklyStructurePath?: string | null;
 }
 
 export const PlanningExploreShell: React.FC<Props> = ({
@@ -111,6 +114,9 @@ export const PlanningExploreShell: React.FC<Props> = ({
     volumeIntensityPhase,
     showOtherPlansAction = false,
     onOpenOtherPlans,
+    structureCoverageBlockId = null,
+    structureCoverageIncomplete = false,
+    structureCoverageWeeklyStructurePath = null,
 }) => {
     const hintFormPhase = isPickingPhaseRange ? calendarFormState.phase : "idle";
 
@@ -207,6 +213,16 @@ export const PlanningExploreShell: React.FC<Props> = ({
                                 volumeIntensityPhase={volumeIntensityPhase}
                                 structureDriftCount={
                                     structureDriftByBlockId[block.id]?.length ?? 0
+                                }
+                                structureCoverageIncomplete={
+                                    structureCoverageIncomplete &&
+                                    structureCoverageBlockId === block.id
+                                }
+                                structureCoverageWeeklyStructurePath={
+                                    structureCoverageIncomplete &&
+                                    structureCoverageBlockId === block.id
+                                        ? structureCoverageWeeklyStructurePath
+                                        : null
                                 }
                             />
                         </div>

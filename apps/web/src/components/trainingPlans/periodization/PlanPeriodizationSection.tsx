@@ -102,6 +102,9 @@ interface Props {
   onAuthoringChange?: (active: boolean) => void;
   showOtherPlansAction?: boolean;
   onOpenOtherPlans?: () => void;
+  structureCoverageBlockId?: number | null;
+  structureCoverageIncomplete?: boolean;
+  structureCoverageWeeklyStructurePath?: string | null;
 }
 
 export const PlanPeriodizationSection: React.FC<Props> = ({
@@ -114,6 +117,9 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   onAuthoringChange,
   showOtherPlansAction = false,
   onOpenOtherPlans,
+  structureCoverageBlockId = null,
+  structureCoverageIncomplete = false,
+  structureCoverageWeeklyStructurePath = null,
 }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -836,6 +842,9 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         volumeIntensityPhase={volumeNominal.phase}
         showOtherPlansAction={showOtherPlansAction}
         onOpenOtherPlans={onOpenOtherPlans}
+        structureCoverageBlockId={structureCoverageBlockId}
+        structureCoverageIncomplete={structureCoverageIncomplete}
+        structureCoverageWeeklyStructurePath={structureCoverageWeeklyStructurePath}
       />
 
       {deleteTarget != null && (

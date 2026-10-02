@@ -1,0 +1,54 @@
+[
+  {
+    "id": "all_inherited",
+    "template_ordinal": 1,
+    "weeks": [
+      {
+        "week_ordinal": 1,
+        "days": [
+          {
+            "day_of_week": 2,
+            "patterns": [{ "movement_pattern_id": 1, "sub_pattern": null }]
+          }
+        ]
+      },
+      {
+        "week_ordinal": 2,
+        "days": [
+          {
+            "day_of_week": 2,
+            "patterns": [{ "movement_pattern_id": 1, "sub_pattern": null }]
+          }
+        ]
+      }
+    ],
+    "expected_inherited": [2],
+    "expected_personalized": []
+  },
+  {
+    "id": "week2_personalized",
+    "template_ordinal": 1,
+    "weeks": [
+      {
+        "week_ordinal": 1,
+        "days": [
+          {
+            "day_of_week": 2,
+            "patterns": [{ "movement_pattern_id": 1, "sub_pattern": null }]
+          }
+        ]
+      },
+      {
+        "week_ordinal": 2,
+        "days": [
+          {
+            "day_of_week": 2,
+            "patterns": [{ "movement_pattern_id": 99, "sub_pattern": null }]
+          }
+        ]
+      }
+    ],
+    "expected_inherited": [],
+    "expected_personalized": [2]
+  }
+]

@@ -39,6 +39,7 @@ function weeklyStructureMutationInvalidates(arg: {
     return [
         { type: "WeeklyStructure" as const, id: `${arg.planId}-${arg.blockId}` },
         SESSION_RECOMMENDATIONS_LIST_TAG,
+        { type: "TrainingPlanWeeklySummary" as const, id: "LIST" },
     ];
 }
 

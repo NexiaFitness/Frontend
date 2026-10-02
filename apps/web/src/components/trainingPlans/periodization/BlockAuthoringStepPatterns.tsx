@@ -18,6 +18,7 @@ import {
 import { BlockPatternPickerSheet } from "./BlockPatternPickerSheet";
 import { PatternBadge } from "./PatternBadge";
 import { PeriodBlockIconButton } from "./PeriodBlockIconButton";
+import { NexiaSemanticIcon } from "@/components/ui/feedback";
 import {
     copyPatternsFromDayToDay,
     getCopyablePatternSourceDays,
@@ -34,6 +35,7 @@ import {
 interface Props {
     activeDays: readonly number[];
     weeklyStructure: readonly WeeklyStructureWeekCreate[];
+    structureBaseline?: readonly WeeklyStructureWeekCreate[];
     onWeeklyStructureChange: (next: WeeklyStructureWeekCreate[]) => void;
     catalog: MovementPattern[];
     catalogLoading?: boolean;
@@ -59,6 +61,7 @@ const WEEKDAY_FULL_ES = [
 export const BlockAuthoringStepPatterns: React.FC<Props> = ({
     activeDays,
     weeklyStructure,
+    structureBaseline,
     onWeeklyStructureChange,
     catalog,
     catalogLoading,
@@ -86,10 +89,11 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
                     weeklyStructure,
                     dayOfWeek,
                     patternId,
+                    structureBaseline,
                 ),
             );
         },
-        [weeklyStructure, onWeeklyStructureChange],
+        [weeklyStructure, structureBaseline, onWeeklyStructureChange],
     );
 
     const pickerPatterns = pickerDay != null
@@ -120,10 +124,11 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
                     weeklyStructure,
                     fromDayOfWeek,
                     pickerDay,
+                    structureBaseline,
                 ),
             );
         },
-        [pickerDay, weeklyStructure, onWeeklyStructureChange],
+        [pickerDay, weeklyStructure, structureBaseline, onWeeklyStructureChange],
     );
 
     if (activeDays.length === 0) {
@@ -186,7 +191,12 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
                                                 className={
                                                     AUTHORING_PATTERN_DAY_CARD_EMPTY_CLASS
                                                 }
+                                                data-testid={`authoring-day-without-patterns-${dayOfWeek}`}
                                             >
+                                                <NexiaSemanticIcon
+                                                    tone="warning"
+                                                    size="sm"
+                                                />
                                                 Pulsa para asignar patrones
                                             </span>
                                         ) : (

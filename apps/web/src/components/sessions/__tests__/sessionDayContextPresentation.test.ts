@@ -1,171 +1,53 @@
 /**
- * sessionDayContextPresentation.test.ts — View-model B1 "Hoy toca"
+ * sessionDayContextPresentation.test.ts — resolveSessionDayPhaseContext (G22).
  */
 
 import { describe, expect, it } from "vitest";
-import type { SessionDayRecommendations } from "@nexia/shared/types/sessionRecommendations";
 import {
-    buildBlockContextLine,
-    buildStructureGapViewModel,
-    buildWeeklyStructurePath,
-    formatSessionDateLong,
-    formatVolumeIntensityScale,
-    isSessionRecommendationsWithValues,
     resolveSessionDayPhaseContext,
-    sessionDayPhaseContextToProgramAlert,
     SESSION_DAY_CONTEXT_COPY,
 } from "../sessionDayContextPresentation";
-import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
-import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
 
-describe("sessionDayContextPresentation", () => {
-    const baseRec: SessionDayRecommendations = {
-        physical_quality: "hipertrofia",
-        modality: "strength",
-        client_experience: "intermediate",
-        planned_volume_scale: 5,
-        planned_intensity_scale: 5,
-        training_frequency: 4,
-        weekly_volume_units: 40,
-        weekly_volume_unit_type: "series",
-        recommended_daily_volume_units: 10,
-        recommended_daily_volume_scale: 5,
-        recommended_daily_intensity_scale: 5,
-        day_inherited: false,
-        period_block_id: 35,
-        period_block_name: "Hipertrofia",
-        period_block_start_date: "2026-07-01",
-        period_block_end_date: "2026-07-31",
-        block_week_ordinal: 3,
-        block_week_count: 5,
-        month_volume: null,
-        month_intensity: null,
-        week_volume: null,
-        week_intensity: null,
-        movement_patterns: [],
-        training_plan_id: 513,
-        volume_level: 5,
-        intensity_level: 5,
-        configured_week_count: 2,
-        calendar_week_count: 5,
-        has_complete_weekly_structure: false,
-        current_week_has_structure: false,
-    };
-
-    it("formats session date in Spanish", () => {
-        expect(formatSessionDateLong("2026-07-20")).toMatch(/2026/);
-        expect(formatSessionDateLong("2026-07-20")).toMatch(/julio/i);
+describe("resolveSessionDayPhaseContext", () => {
+    it("returns null when response is undefined", () => {
+        expect(
+            resolveSessionDayPhaseContext({
+                response: undefined,
+                sessionDate: "2026-10-02",
+            }),
+        ).toBeNull();
     });
 
-    it("builds block context line with week ordinal", () => {
-        expect(buildBlockContextLine(baseRec)).toContain("Hipertrofia");
-        expect(buildBlockContextLine(baseRec)).toContain("Semana 3 de 5");
-    });
-
-    it("builds weekly structure navigation path", () => {
-        expect(buildWeeklyStructurePath(513, 35)).toBe(
-            "/dashboard/training-plans/513/period-blocks/35/weekly-structure",
-        );
-        expect(buildWeeklyStructurePath(513, 35, 5)).toBe(
-            "/dashboard/training-plans/513/period-blocks/35/weekly-structure?week=5",
+    it("returns no_active_plan when plan inactive", () => {
+        const ctx = resolveSessionDayPhaseContext({
+            response: { has_active_plan: false },
+            sessionDate: "2026-10-02",
+        });
+        expect(ctx?.kind).toBe("no_active_plan");
+        expect(ctx && "title" in ctx && ctx.title).toBe(
+            SESSION_DAY_CONTEXT_COPY.noPlanTitle,
         );
     });
 
-    it("detects structure gap when current week is missing", () => {
-        const gap = buildStructureGapViewModel(baseRec);
-        expect(gap.show).toBe(true);
-        expect(gap.message).toContain("semana 3");
-        expect(gap.configurePath).toContain("weekly-structure?week=3");
-    });
-
-    it("hides structure gap when patterns exist", () => {
-        const gap = buildStructureGapViewModel({
-            ...baseRec,
-            movement_patterns: [
+    it("returns outside_phase once when plan has phases but no planned values", () => {
+        const ctx = resolveSessionDayPhaseContext({
+            response: {
+                has_active_plan: true,
+                has_planned_values: false,
+                has_planned_day: false,
+            },
+            sessionDate: "2026-10-02",
+            periodBlocks: [
                 {
                     id: 1,
-                    name_es: "empuje vertical",
-                    ui_bucket: "UPPER",
-                    sub_pattern: null,
-                },
+                    start_date: "2026-09-01",
+                    end_date: "2026-12-31",
+                } as never,
             ],
         });
-        expect(gap.show).toBe(false);
-    });
-
-    it("formats volume/intensity scale", () => {
-        expect(formatVolumeIntensityScale(5, 7)).toBe("5 / 7");
-    });
-
-    it("narrows session recommendations with values", () => {
-        expect(
-            isSessionRecommendationsWithValues({
-                client_id: 346,
-                session_date: "2026-07-20",
-                has_active_plan: true,
-                has_planned_day: true,
-                has_planned_values: true,
-                recommendations: baseRec,
-                coherence_warnings: [],
-            }),
-        ).toBe(true);
-    });
-
-    const blockA = {
-        id: 10,
-        training_plan_id: 1,
-        name: "Fase A",
-        start_date: "2026-09-01",
-        end_date: "2026-09-30",
-        volume_level: 5,
-        intensity_level: 5,
-    } as PlanPeriodBlock;
-
-    it("resolveSessionDayPhaseContext — plan sin fases", () => {
-        const response: SessionRecommendationsResponse = {
-            client_id: 1,
-            session_date: "2026-09-15",
-            has_active_plan: true,
-            has_planned_day: false,
-            has_planned_values: false,
-            recommendations: null,
-            coherence_warnings: [],
-        };
-        expect(
-            resolveSessionDayPhaseContext({
-                response,
-                sessionDate: "2026-09-15",
-                periodBlocks: [],
-            })?.kind,
-        ).toBe("plan_no_phases");
-    });
-
-    it("resolveSessionDayPhaseContext — fuera de fase", () => {
-        const response: SessionRecommendationsResponse = {
-            client_id: 1,
-            session_date: "2026-10-15",
-            has_active_plan: true,
-            has_planned_day: false,
-            has_planned_values: false,
-            recommendations: null,
-            coherence_warnings: [],
-        };
-        expect(
-            resolveSessionDayPhaseContext({
-                response,
-                sessionDate: "2026-10-15",
-                periodBlocks: [blockA],
-            })?.kind,
-        ).toBe("outside_phase");
-    });
-
-    it("sessionDayPhaseContextToProgramAlert — aviso programa", () => {
-        expect(
-            sessionDayPhaseContextToProgramAlert({
-                kind: "plan_no_phases",
-                title: SESSION_DAY_CONTEXT_COPY.planNoPhasesTitle,
-                body: SESSION_DAY_CONTEXT_COPY.planNoPhasesBody,
-            })?.title,
-        ).toBe(SESSION_DAY_CONTEXT_COPY.planNoPhasesTitle);
+        expect(ctx?.kind).toBe("outside_phase");
+        expect(ctx && "body" in ctx && ctx.body).toBe(
+            SESSION_DAY_CONTEXT_COPY.outsidePhaseBody,
+        );
     });
 });

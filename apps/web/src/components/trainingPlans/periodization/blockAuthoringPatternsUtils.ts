@@ -2,7 +2,7 @@
  * blockAuthoringPatternsUtils.ts — Patrones recurrentes por day_of_week (D-ST wizard).
  */
 
-import { classifyWeeksByTemplate } from "@nexia/shared";
+import { classifyWeeksWithBaseline } from "@nexia/shared";
 import type {
     WeeklyStructureDayPatternInput,
     WeeklyStructureWeekCreate,
@@ -92,6 +92,7 @@ export function togglePatternOnRecurringDay(
     weeklyStructure: readonly WeeklyStructureWeekCreate[],
     dayOfWeek: number,
     patternId: number,
+    structureBaseline?: readonly WeeklyStructureWeekCreate[],
 ): WeeklyStructureWeekCreate[] {
     const week1 = weeklyStructure.find((w) => w.week_ordinal === 1);
     if (!week1) return weeklyStructure.map(cloneWeek);
@@ -100,7 +101,7 @@ export function togglePatternOnRecurringDay(
     if (!week1Day) return weeklyStructure.map(cloneWeek);
 
     const nextPatterns = togglePatternOnList(week1Day.patterns, patternId);
-    const kinds = classifyWeeksByTemplate(weeklyStructure, 1);
+    const kinds = classifyWeeksWithBaseline(weeklyStructure, structureBaseline, 1);
 
     return weeklyStructure.map((week) => {
         if (week.week_ordinal !== 1 && kinds[week.week_ordinal] === "personalizada") {
@@ -168,6 +169,7 @@ export function copyPatternsFromDayToDay(
     weeklyStructure: readonly WeeklyStructureWeekCreate[],
     fromDayOfWeek: number,
     toDayOfWeek: number,
+    structureBaseline?: readonly WeeklyStructureWeekCreate[],
 ): WeeklyStructureWeekCreate[] {
     if (fromDayOfWeek === toDayOfWeek) {
         return weeklyStructure.map(cloneWeek);
@@ -188,7 +190,7 @@ export function copyPatternsFromDayToDay(
     }
 
     const nextPatterns = clonePatternInputs(sourcePatterns);
-    const kinds = classifyWeeksByTemplate(weeklyStructure, 1);
+    const kinds = classifyWeeksWithBaseline(weeklyStructure, structureBaseline, 1);
 
     return weeklyStructure.map((week) => {
         if (

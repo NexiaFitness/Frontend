@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { NexiaSemanticIcon } from "./NexiaSemanticIcon";
 import type { NexiaSemanticTone } from "./nexiaSemanticIconPresentation";
 
-interface AlertProps {
+interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
     variant?: "info" | "success" | "warning" | "error";
     children: React.ReactNode;
     className?: string;
@@ -67,6 +67,7 @@ export const Alert: React.FC<AlertProps> = ({
     className = "",
     onDismiss,
     action,
+    ...rest
 }) => {
     const styles = variantStyles[variant];
 
@@ -78,6 +79,7 @@ export const Alert: React.FC<AlertProps> = ({
                 className
             )}
             role="alert"
+            {...rest}
         >
             <NexiaSemanticIcon
                 tone={toneByVariant[variant]}

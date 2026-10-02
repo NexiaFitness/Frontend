@@ -20,11 +20,14 @@ import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
+import { Alert } from "@/components/ui/feedback/Alert";
 import { Button } from "@/components/ui/buttons";
 import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
 import { QualityShareBar } from "@/components/trainingPlans/periodization/QualityShareBar";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 import { cn } from "@/lib/utils";
+import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentation";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
     SESSION_DAY_CONTEXT_COPY,
     METRIC_LABEL_CLASS,
@@ -46,9 +49,15 @@ import {
     SESSION_PROGRAMMING_DAY_CONTEXT_GRID,
     SESSION_PROGRAMMING_DAY_HERO_HEADER,
     SESSION_PROGRAMMING_DAY_METRICS_BOX,
-    SESSION_PROGRAMMING_PANEL_ACCENT,
     SESSION_PROGRAMMING_PANEL_TITLE,
 } from "@/components/sessionProgramming/sessionProgrammingPresentation";
+
+/**
+ * SessionDayContextPanel.tsx — Bloque unificado "Hoy toca" (B1).
+ *
+ * Diseño: DESIGN_PREMIUM.md §2 (NEXIA_GLASS_CARD + rim), §4.4 (un primary CTA),
+ * §5.2 (Alert + NexiaSemanticIcon integrado en Alert).
+ */
 
 interface SessionDayContextPanelProps {
     clientId: number | null;
@@ -61,7 +70,7 @@ interface SessionDayContextPanelProps {
     className?: string;
 }
 
-const panelShell = SESSION_PROGRAMMING_PANEL_ACCENT;
+const panelShell = cn(NEXIA_GLASS_CARD, "relative");
 
 function ContextField({
     label,
@@ -95,9 +104,13 @@ function EmptyStatePanel({
     className?: string;
 }) {
     return (
-        <div className={cn(panelShell, "p-5", className)}>
-            <h3 className={SESSION_PROGRAMMING_PANEL_TITLE}>{title}</h3>
-            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{body}</p>
+        <div className={cn(panelShell, "p-5", className)} data-testid="session-day-empty-state">
+            <NexiaGlassAccentRim />
+            {/* DESIGN_PREMIUM §2 glass+rim · §5.2 Alert+NexiaSemanticIcon (icono vía Alert) */}
+            <Alert variant="warning" data-testid="session-day-empty-alert">
+                <p className="font-medium text-foreground">{title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{body}</p>
+            </Alert>
         </div>
     );
 }
@@ -191,6 +204,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
     if (layout === "sidebar") {
         return (
             <div className={cn(panelShell, "flex h-full min-h-0 flex-1 flex-col p-4", className)}>
+                <NexiaGlassAccentRim />
                 <div className="space-y-3">
                     <div>
                         <p className={METRIC_LABEL_CLASS}>{SESSION_DAY_CONTEXT_COPY.title}</p>
@@ -258,6 +272,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
 
     return (
         <div className={cn(panelShell, "overflow-hidden", className)}>
+            <NexiaGlassAccentRim />
             <div className={SESSION_PROGRAMMING_DAY_HERO_HEADER}>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                     <div className="min-w-0">
@@ -309,27 +324,30 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
 
             <div className={SESSION_PROGRAMMING_DAY_BODY_COMPACT}>
                 {structureGap?.show ? (
-                    <div className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2.5 sm:px-3.5">
-                        <p className="text-xs leading-snug text-warning sm:text-sm">
-                            {structureGap.message}
-                        </p>
-                        {structureGap.configurePath ? (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="mt-2 h-8 border-warning/40 px-2.5 text-xs text-warning hover:bg-warning/10"
-                                onClick={() =>
-                                    navigate(structureGap.configurePath!, {
-                                        state: returnToStateFromView(location),
-                                    })
-                                }
-                            >
-                                <ExternalLink className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                                {SESSION_DAY_CONTEXT_COPY.configureWeekCta}
-                            </Button>
-                        ) : null}
-                    </div>
+                    <Alert
+                        variant="warning"
+                        data-testid="session-day-structure-gap"
+                        action={
+                            structureGap.configurePath ? (
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    size="sm"
+                                    className="h-8 px-2.5 text-xs"
+                                    onClick={() =>
+                                        navigate(structureGap.configurePath!, {
+                                            state: returnToStateFromView(location),
+                                        })
+                                    }
+                                >
+                                    <ExternalLink className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                                    {SESSION_DAY_CONTEXT_COPY.configureWeekCta}
+                                </Button>
+                            ) : undefined
+                        }
+                    >
+                        <p className="leading-snug">{structureGap.message}</p>
+                    </Alert>
                 ) : null}
 
                 <div className={SESSION_PROGRAMMING_DAY_CONTEXT_GRID}>

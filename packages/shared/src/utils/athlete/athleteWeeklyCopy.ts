@@ -184,6 +184,7 @@ export function buildWeeklyInsightSubline(
 }
 
 function buildModeAwareHeadline(ctx: WeeklyInsightCopyContext): string | null {
+    // structure_coverage queda en API; no se muestra aviso al atleta (no puede resolver).
     const { adherence } = ctx.summary;
     const { sessions_planned: planned, sessions_completed: completed } = adherence;
     const today = ctx.today ?? new Date();

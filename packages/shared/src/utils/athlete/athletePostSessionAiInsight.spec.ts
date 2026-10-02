@@ -31,6 +31,7 @@ function baseWeekly(
         },
         training_streak: 2,
         highlights: [],
+        structure_coverage: null,
         ...overrides,
     };
 }

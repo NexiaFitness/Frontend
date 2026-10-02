@@ -243,11 +243,23 @@ export interface WeeklySessionEntry {
  * - Lista de sesiones de la semana
  * - Estadísticas de adherencia
  */
+export interface StructureCoverageDayGap {
+    week: number;
+    dow: number;
+}
+
+export interface StructureCoverage {
+    complete: boolean;
+    missing_week_ordinals: number[];
+    days_without_patterns: StructureCoverageDayGap[];
+}
+
 export interface TrainingPlanWeeklySummary {
     client_id: number;
     week_start: string;  // ISO date YYYY-MM-DD
     week_end: string;    // ISO date YYYY-MM-DD
     has_active_plan: boolean;
+    structure_coverage?: StructureCoverage | null;
     plan_name: string | null;
     plan_goal: string | null;
     /** primary_training_day_share — not block mix % */

@@ -31,6 +31,7 @@ import {
     useDeleteTrainingPlanMutation,
 } from "@nexia/shared/api/trainingPlansApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
+import { useGetClientTrainingPlanWeeklySummaryQuery } from "@nexia/shared/api/clientsApi";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import { LoadingSpinner, Alert, EmptyState, useToast } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
@@ -57,9 +58,12 @@ import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
 import { scrollDashboardMainToAnchorAfterPaint } from "@/lib/dashboardScroll";
 import { isBlockAuthoringActive, parseBlockAuthorParams } from "@/utils/blockAuthoringUrl";
 import {
+    findBlockContainingDate,
     hasMultipleClientTrainingPlans,
     toActivePlanDisplay,
 } from "@/components/trainingPlans/periodization/planningShellUtils";
+import { structureCoverageIncomplete, firstStructureCoverageWeekOrdinal } from "@/components/trainingPlans/periodization/structureCoveragePresentation";
+import { buildWeeklyStructurePath } from "@/components/sessions/sessionDayContextPresentation";
 import { ClientPlansSection } from "./ClientPlansSection";
 import { ClientPlanningHubShell } from "./ClientPlanningHubShell";
 
@@ -198,6 +202,40 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     const { data: periodBlocks = [] } = useGetPeriodBlocksQuery(planIdForAnalytics ?? 0, {
         skip: planIdForAnalytics == null,
     });
+
+    const { data: weeklyPlanSummary } = useGetClientTrainingPlanWeeklySummaryQuery(
+        { clientId },
+        {
+            skip: !clientId || clientId <= 0 || planIdForAnalytics == null,
+            refetchOnFocus: true,
+        },
+    );
+
+    const structureCoverageContext = useMemo(() => {
+        const coverage = weeklyPlanSummary?.structure_coverage;
+        if (!structureCoverageIncomplete(coverage) || !planIdForAnalytics) {
+            return {
+                coverage: null,
+                blockId: null as number | null,
+                weeklyStructurePath: null as string | null,
+            };
+        }
+        const weekStart = weeklyPlanSummary?.week_start;
+        const block =
+            weekStart != null
+                ? findBlockContainingDate(periodBlocks, weekStart)
+                : null;
+        const firstWeek = firstStructureCoverageWeekOrdinal(coverage);
+        return {
+            coverage,
+            blockId: block?.id ?? null,
+            weeklyStructurePath: buildWeeklyStructurePath(
+                planIdForAnalytics,
+                block?.id,
+                firstWeek,
+            ),
+        };
+    }, [weeklyPlanSummary, periodBlocks, planIdForAnalytics]);
     const { data: physicalQualities = [] } = useGetPhysicalQualitiesQuery();
 
     const [analyticsOpen, setAnalyticsOpen] = useState(false);
@@ -362,6 +400,13 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                 onAuthoringChange={setIsPhaseAuthoring}
                 showOtherPlansAction={showClientPlansHistory}
                 onOpenOtherPlans={handleOpenPlansHistory}
+                structureCoverageBlockId={structureCoverageContext.blockId}
+                structureCoverageIncomplete={structureCoverageIncomplete(
+                    structureCoverageContext.coverage,
+                )}
+                structureCoverageWeeklyStructurePath={
+                    structureCoverageContext.weeklyStructurePath
+                }
             />
 
             {showExploreSections ? (

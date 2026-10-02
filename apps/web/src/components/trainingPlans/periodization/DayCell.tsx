@@ -9,12 +9,20 @@ import type { MovementPattern } from "@nexia/shared/types/exercise";
 import type { WeeklyStructureDayPatternInput } from "@nexia/shared/types/weeklyStructure";
 
 import { Button } from "@/components/ui/buttons";
+import { NexiaSemanticIcon } from "@/components/ui/feedback";
 import { cn } from "@/lib/utils";
 import { PLATFORM_ALT_ITEM } from "@/components/ui/surface/platformPremiumPresentation";
 
 import { PatternBadge } from "./PatternBadge";
 import { PatternSelectorPanel } from "./PatternSelectorPanel";
 import { PatternSelectorPopover } from "./PatternSelectorPopover";
+
+/**
+ * DayCell.tsx — Fila día + chips de patrones + picker (PeriodizationWeeklyStructureEditor).
+ *
+ * Diseño: DESIGN_PREMIUM.md §5.2 — indicador inline (NexiaSemanticIcon) en celda
+ * sin patrones; sin bloque apilado extra.
+ */
 
 interface Props {
     layout: "row";
@@ -74,9 +82,13 @@ export const DayCell: React.FC<Props> = ({
                         {dateISO}
                     </span>
                 </p>
-                <div className="mt-1.5 flex flex-wrap gap-1">
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                     {assignedPatterns.length === 0 ? (
-                        <span className="text-xs text-muted-foreground">
+                        <span
+                            className="inline-flex items-center gap-1.5 text-xs text-warning"
+                            data-testid="day-cell-without-patterns"
+                        >
+                            <NexiaSemanticIcon tone="warning" size="sm" />
                             Sin patrones
                         </span>
                     ) : (

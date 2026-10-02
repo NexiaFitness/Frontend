@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronRight, Layers, Pencil, Trash2 } from "lucide-react";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
@@ -34,6 +35,14 @@ import {
     formatStructureDriftBadgeLabel,
     structureDriftBadgeAriaLabel,
 } from "./structureDriftPresentation";
+import { STRUCTURE_COVERAGE_COPY } from "./structureCoveragePresentation";
+
+/**
+ * PeriodBlockCard.tsx — Tarjeta de fase en hub de planificación.
+ *
+ * Diseño: DESIGN_PREMIUM.md §2 (glass+rim), §3 (badge warning), §4.4 (una acción
+ * de estructura: Completar o Ver semanas), §5 (NexiaGlassAccentRim).
+ */
 
 interface Props {
     block: PlanPeriodBlock;
@@ -48,6 +57,9 @@ interface Props {
     isFocused?: boolean;
     onSelectFocus?: (block: PlanPeriodBlock) => void;
     structureDriftCount?: number;
+    structureCoverageIncomplete?: boolean;
+    /** Ruta weekly-structure?week=N cuando hay hueco (primer ordinal faltante). */
+    structureCoverageWeeklyStructurePath?: string | null;
 }
 
 function parseLocal(s: string): Date {
@@ -81,10 +93,16 @@ export const PeriodBlockCard: React.FC<Props> = ({
     isFocused = false,
     onSelectFocus,
     structureDriftCount = 0,
+    structureCoverageIncomplete = false,
+    structureCoverageWeeklyStructurePath = null,
 }) => {
+    const navigate = useNavigate();
     const [showSessions, setShowSessions] = useState(false);
     const label = `${formatDateShort(block.start_date)} — ${formatDateShort(block.end_date)}`;
     const days = daysBetween(block.start_date, block.end_date);
+    const showCompleteStructureCta =
+        structureCoverageIncomplete &&
+        Boolean(structureCoverageWeeklyStructurePath);
 
     const volumeHint =
         volumeIntensityPhase === "complete" &&
@@ -136,6 +154,14 @@ export const PeriodBlockCard: React.FC<Props> = ({
                                 )}
                             >
                                 {formatStructureDriftBadgeLabel(structureDriftCount)}
+                            </span>
+                        ) : null}
+                        {structureCoverageIncomplete ? (
+                            <span
+                                className={STRUCTURE_DRIFT_BADGE_CLASS}
+                                data-testid="period-block-structure-incomplete-badge"
+                            >
+                                {STRUCTURE_COVERAGE_COPY.phaseBadge}
                             </span>
                         ) : null}
                     </div>
@@ -233,7 +259,9 @@ export const PeriodBlockCard: React.FC<Props> = ({
             </div>
             </button>
 
-            {(onViewWeeks != null || onCreateSessionForBlock != null) && (
+            {(onViewWeeks != null ||
+                onCreateSessionForBlock != null ||
+                showCompleteStructureCta) && (
                 <>
                     <div
                         className={PERIOD_BLOCK_CARD_DIVIDER_WRAP_CLASS}
@@ -242,7 +270,24 @@ export const PeriodBlockCard: React.FC<Props> = ({
                         <div className={PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS} />
                     </div>
                     <footer className={PERIOD_BLOCK_CARD_FOOTER_CLASS}>
-                        {onViewWeeks != null && (
+                        {showCompleteStructureCta ? (
+                            <Button
+                                type="button"
+                                variant="outline-primary"
+                                size="sm"
+                                className="w-full sm:flex-1"
+                                data-testid="period-block-complete-structure-cta"
+                                onClick={() =>
+                                    navigate(structureCoverageWeeklyStructurePath!)
+                                }
+                            >
+                                <Layers
+                                    className="mr-1.5 h-3.5 w-3.5"
+                                    aria-hidden
+                                />
+                                {STRUCTURE_COVERAGE_COPY.completeStructureCta}
+                            </Button>
+                        ) : onViewWeeks != null ? (
                             <Button
                                 type="button"
                                 variant="outline-primary"
@@ -256,7 +301,7 @@ export const PeriodBlockCard: React.FC<Props> = ({
                                 />
                                 Ver semanas
                             </Button>
-                        )}
+                        ) : null}
                         {onCreateSessionForBlock != null && (
                             <Button
                                 type="button"

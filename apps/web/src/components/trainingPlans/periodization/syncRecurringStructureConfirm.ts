@@ -8,7 +8,7 @@
  * @since v9.0.0
  */
 
-import { classifyWeeksByTemplate, weeksStructureEqual } from "@nexia/shared";
+import { classifyWeeksWithBaseline, weeksStructureEqual } from "@nexia/shared";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 
 const TEMPLATE_WEEK_ORDINAL = 1;
@@ -31,7 +31,11 @@ export function getSyncRecurringConfirmOrdinals(
         return [];
     }
 
-    const kinds = classifyWeeksByTemplate(baseline, TEMPLATE_WEEK_ORDINAL);
+    const kinds = classifyWeeksWithBaseline(
+        baseline,
+        baseline,
+        TEMPLATE_WEEK_ORDINAL,
+    );
     return Object.entries(kinds)
         .filter(
             ([ordinal, kind]) =>

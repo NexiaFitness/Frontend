@@ -59,7 +59,7 @@ import { PatternBadge } from "./PatternBadge";
 import { Button } from "@/components/ui/buttons";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
-import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
+import { LoadingSpinner, Alert, useToast, NexiaSemanticIcon } from "@/components/ui/feedback";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import { cn } from "@/lib/utils";
 
@@ -232,6 +232,16 @@ const DayEditor: React.FC<DayEditorProps> = ({
                     <span className="ml-auto inline-flex items-center rounded-md border border-primary/35 bg-primary/10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-primary">
                         {day.patterns.length}{" "}
                         {day.patterns.length === 1 ? "patrón" : "patrones"}
+                    </span>
+                )}
+                {!hasPatterns && (
+                    <span
+                        className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold text-warning"
+                        data-testid="weekly-editor-day-without-patterns"
+                    >
+                        {/* DESIGN_PREMIUM §5.2 — icono semántico inline, sin bloque apilado */}
+                        <NexiaSemanticIcon tone="warning" size="sm" />
+                        Sin patrones
                     </span>
                 )}
             </div>
@@ -670,9 +680,9 @@ export const WeeklyStructureEditor = forwardRef<
             ? draft.days
             : (displayWeek as WeeklyStructureWeek | null)?.days ?? [];
 
-    const visibleDays = isEditing
-        ? daysSource
-        : daysSource.filter((d) => d.patterns.length > 0);
+    // Vista y edición: mostrar todos los días configurados (incl. sin patrones).
+    // Filtrar vacíos ocultaba el indicador §5.2 y el hueco de cobertura.
+    const visibleDays = daysSource;
 
     const selectedTabId =
         activeWeekOrdinal || (weeks[0] ? String(weeks[0].week_ordinal) : "");

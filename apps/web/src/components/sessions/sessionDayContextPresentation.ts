@@ -261,18 +261,7 @@ export function resolveSessionDayPhaseContext(
         };
     }
 
-    const blockForDate = findBlockContainingDate([...periodBlocks], sessionDate);
-    const hasPlannedDay =
-        "has_planned_day" in response && response.has_planned_day === true;
-
-    if (!hasPlannedDay || !blockForDate) {
-        return {
-            kind: "outside_phase",
-            title: SESSION_DAY_CONTEXT_COPY.outsidePhaseTitle,
-            body: SESSION_DAY_CONTEXT_COPY.outsidePhaseBody,
-        };
-    }
-
+    // Plan con fases pero sin valores para esta fecha (G22): aviso fuerte, crear permitido.
     return {
         kind: "outside_phase",
         title: SESSION_DAY_CONTEXT_COPY.outsidePhaseTitle,
