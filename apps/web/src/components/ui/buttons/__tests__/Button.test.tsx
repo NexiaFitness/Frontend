@@ -25,6 +25,8 @@ describe("Button", () => {
             expect(button).toHaveClass("text-primary-foreground", "bg-gradient-to-r")
             // Default size=sm: h-9 px-3
             expect(button).toHaveClass("h-9", "px-3")
+            // Icon/text spacing: gap-1.5 (6px) — unique source in baseStyles
+            expect(button).toHaveClass("gap-1.5")
         })
 
         it("renders children correctly", () => {

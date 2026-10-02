@@ -10,18 +10,18 @@ import { cn } from "@/lib/utils";
 import {
     ATHLETE_SECTION_LABEL,
     NEXIA_PORTAL_CARD_TITLE,
-    NEXIA_PORTAL_GREETING_H1,
     NEXIA_PORTAL_GREETING_NAME,
     NEXIA_PORTAL_GREETING_SUBTITLE,
     NEXIA_PORTAL_PAGE_EYEBROW,
 } from "@/components/athlete/account/athleteSettingsPresentation";
 import { NEXIA_GLASS_CARD, NEXIA_GLASS_CARD_DESKTOP } from "@/components/ui/surface/glassSurfacePresentation";
+import { PLATFORM_PAGE_TITLE_H1 } from "@/components/ui/surface/platformPremiumPresentation";
 
 /** Ocultar CTA hasta que el flujo de reportes esté listo en producto. */
 export const CLIENT_HEADER_SHOW_GENERATE_REPORT = false;
 
 export {
-    NEXIA_PORTAL_GREETING_H1,
+    PLATFORM_PAGE_TITLE_H1,
     NEXIA_PORTAL_GREETING_NAME,
     NEXIA_PORTAL_GREETING_SUBTITLE,
     NEXIA_PORTAL_PAGE_EYEBROW,
@@ -52,11 +52,11 @@ export const CLIENT_HEADER_TITLE_ROW =
 export const CLIENT_HEADER_IDENTITY_BLOCK = "min-w-0 flex-1";
 
 /**
- * Título página (h1) — techo NEXIA_PORTAL en 375px; sm/lg solo escalan.
- * No reducir bajo el techo atleta en mobile.
+ * Título página (h1) — techo PLATFORM_PAGE_TITLE_H1 en 375px; sm/lg solo escalan.
+ * No reducir bajo el techo tipográfico en mobile.
  */
 export const CLIENT_HEADER_NAME = cn(
-    NEXIA_PORTAL_GREETING_H1,
+    PLATFORM_PAGE_TITLE_H1,
     "min-w-0 whitespace-normal break-words",
 );
 

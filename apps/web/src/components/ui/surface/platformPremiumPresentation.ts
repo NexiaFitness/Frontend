@@ -45,9 +45,9 @@ export const PLATFORM_PAGE_HEADING_STACK = "flex min-w-0 flex-col gap-1.5";
 export const PLATFORM_PAGE_BREADCRUMB = "mb-4";
 
 /**
- * h1 de página trainer/admin — techo tipográfico atleta (no reducir en mobile).
- * Importar vía clientHeaderPresentation / NEXIA_PORTAL_GREETING_H1 en consumidores
- * que ya usan portal; este token es el alias de layout plataforma.
+ * h1 de página trainer/admin — techo tipográfico (misma clase que saludo atleta).
+ * Usar este alias en cabeceras de plataforma; `NEXIA_PORTAL_GREETING_H1` queda
+ * reservado al saludo «Hola, {nombre}» del portal atleta/admin.
  */
 export { NEXIA_PORTAL_GREETING_H1 as PLATFORM_PAGE_TITLE_H1 } from "@/components/athlete/account/athleteSettingsPresentation";
 
