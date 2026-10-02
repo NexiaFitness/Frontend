@@ -4,6 +4,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/buttons";
+import { Alert } from "@/components/ui/feedback";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import {
     NEXIA_PREMIUM_MODAL_CONFIRM_ACTIONS_CLASS,
@@ -143,14 +144,10 @@ export const AdminTaxonomyDeactivateModal: React.FC<AdminTaxonomyDeactivateModal
         >
             <div className="space-y-3">
                 {blocked || conflictBreakdown ? (
-                    <p className="text-sm text-destructive" role="alert">
-                        {ADMIN_TAX_COPY.deactivateBlocked}
-                    </p>
+                    <Alert variant="error" compact title={ADMIN_TAX_COPY.deactivateBlocked} />
                 ) : null}
                 {formError && !blocked ? (
-                    <p className="text-sm text-destructive" role="alert">
-                        {formError}
-                    </p>
+                    <Alert variant="error" compact title={formError} />
                 ) : null}
                 {breakdownRows.length > 0 ? (
                     <div>

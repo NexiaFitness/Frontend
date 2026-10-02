@@ -5,6 +5,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
+import { Alert } from "@/components/ui/feedback";
 import { Input, FormCombobox, FormField } from "@/components/ui/forms";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useCreateClientExercisePerformanceRecord } from "@nexia/shared/hooks/clients/useCreateClientExercisePerformanceRecord";
@@ -157,11 +158,9 @@ export const ManualPerformanceRecordModal: React.FC<
                     placeholder="Contexto de la marca…"
                 />
 
-                {errors.form && (
-                    <p className="text-sm text-destructive" role="alert">
-                        {errors.form}
-                    </p>
-                )}
+                {errors.form ? (
+                    <Alert variant="error" compact title={errors.form} />
+                ) : null}
 
                 <div className="flex flex-wrap justify-end gap-2 pt-2">
                     <Button

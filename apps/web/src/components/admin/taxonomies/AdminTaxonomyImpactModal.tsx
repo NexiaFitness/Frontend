@@ -3,6 +3,7 @@
  */
 
 import React, { useState } from "react";
+import { Alert } from "@/components/ui/feedback";
 import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 import { useUpdateAdminTaxonomyMutation } from "@nexia/shared/api/adminTaxonomiesApi";
 import { parseAdminTaxonomiesApiError } from "@nexia/shared/utils/adminTaxonomies/parseAdminTaxonomiesApiError";
@@ -59,11 +60,7 @@ export const AdminTaxonomyImpactModal: React.FC<AdminTaxonomyImpactModalProps> =
                     : undefined
             }
             bodyContent={
-                error ? (
-                    <p className="text-sm text-destructive" role="alert">
-                        {error}
-                    </p>
-                ) : null
+                error ? <Alert variant="error" compact title={error} /> : null
             }
             confirmLabel={ADMIN_TAX_COPY.impactConfirm}
             cancelLabel={ADMIN_TAX_COPY.cancel}

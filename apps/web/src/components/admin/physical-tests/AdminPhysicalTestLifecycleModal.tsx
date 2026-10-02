@@ -4,6 +4,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/buttons";
+import { Alert } from "@/components/ui/feedback";
 import {
     NexiaPremiumModal,
     NEXIA_PREMIUM_MODAL_CONFIRM_ACTIONS_CLASS,
@@ -102,11 +103,7 @@ export const AdminPhysicalTestLifecycleModal: React.FC<
                 </div>
             }
         >
-            {formError ? (
-                <p className="text-sm text-destructive" role="alert">
-                    {formError}
-                </p>
-            ) : null}
+            {formError ? <Alert variant="error" compact title={formError} /> : null}
         </NexiaPremiumModal>
     );
 };

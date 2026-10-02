@@ -4,6 +4,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/buttons";
+import { Alert } from "@/components/ui/feedback";
 import { Input, Textarea } from "@/components/ui/forms";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import {
@@ -125,9 +126,7 @@ export const AdminCreateAdminModal: React.FC<AdminCreateAdminModalProps> = ({
         >
             <div className={ADMIN_USERS_MODAL_FIELD}>
                 {fieldErrors.form ? (
-                    <p className="text-sm text-destructive" role="alert">
-                        {fieldErrors.form}
-                    </p>
+                    <Alert variant="error" compact title={fieldErrors.form} />
                 ) : null}
                 <Input
                     label={ADMIN_USERS_COPY.fieldNombre}

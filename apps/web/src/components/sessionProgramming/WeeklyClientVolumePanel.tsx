@@ -3,9 +3,9 @@
  */
 
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, ChevronDown, Info } from "lucide-react";
+import { ChevronDown, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LoadingSpinner } from "@/components/ui/feedback";
+import { Alert, LoadingSpinner } from "@/components/ui/feedback";
 import type {
     SessionLoadUnmappedExerciseOut,
     WeeklyClientVolumePanelIntent,
@@ -205,28 +205,18 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                             ) : null}
 
                             {unmappedExercises.length > 0 ? (
-                                <div
-                                    role="alert"
-                                    className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2.5 text-xs leading-relaxed text-warning"
-                                >
-                                    <div className="flex items-start gap-2">
-                                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                                        <div>
-                                            <p className="font-medium">
-                                                {unmappedExercises.length === 1
-                                                    ? "1 ejercicio no suma volumen muscular"
-                                                    : `${unmappedExercises.length} ejercicios no suman volumen muscular`}
-                                            </p>
-                                            <p className="mt-1 text-warning/90">
-                                                Falta mapeo en catálogo:{" "}
-                                                {unmappedExercises
-                                                    .map((e) => e.name_es || e.exercise_code)
-                                                    .join(", ")}
-                                                . El admin debe corregir el catálogo.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                                <Alert
+                                    variant="warning"
+                                    className="text-xs"
+                                    title={
+                                        unmappedExercises.length === 1
+                                            ? "1 ejercicio no suma volumen muscular"
+                                            : `${unmappedExercises.length} ejercicios no suman volumen muscular`
+                                    }
+                                    description={`Falta mapeo en catálogo: ${unmappedExercises
+                                        .map((e) => e.name_es || e.exercise_code)
+                                        .join(", ")}. El admin debe corregir el catálogo.`}
+                                />
                             ) : null}
 
                             {noBlockMode ? (
