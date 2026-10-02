@@ -24,6 +24,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
+import { ResourceQueryState } from "@/components/ui/feedback/ResourceQueryState";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import {
     NexiaPremiumConfirmModal,
@@ -139,6 +140,7 @@ export const SessionDetail: React.FC = () => {
         isUninitialized,
         isError,
         error,
+        refetch: refetchSession,
     } = useGetTrainingSessionQuery(sessionId, {
         skip: !sessionId || Number.isNaN(sessionId) || !isAuthenticated,
     });
@@ -213,37 +215,13 @@ export const SessionDetail: React.FC = () => {
     }
 
     if (isError || !session) {
-        const httpStatus =
-            error != null &&
-            typeof error === "object" &&
-            "status" in error &&
-            typeof (error as { status?: unknown }).status === "number"
-                ? (error as { status: number }).status
-                : undefined;
-        const isNotFound = httpStatus === 404;
-
         return (
-            <div className="space-y-6 px-4 lg:px-8 py-8">
-                <Alert
-                    variant="error"
-                    title={
-                        isNotFound
-                            ? "Sesión no encontrada"
-                            : "No se pudo cargar la sesión"
-                    }
-                    description={
-                        isNotFound
-                            ? "La sesión no existe o ya no está disponible."
-                            : getMutationErrorMessage(error)
-                    }
-                    action={
-                        <Button variant="ghost-primary" size="sm" onClick={goBack}>
-                            <ArrowLeft className="mr-1 size-4" aria-hidden />
-                            {backTarget ? "Volver" : "Volver a sesiones"}
-                        </Button>
-                    }
-                />
-            </div>
+            <ResourceQueryState
+                error={error ?? { status: 404 }}
+                resource="session"
+                onRetry={() => refetchSession()}
+                fallbackPath={backTarget ?? "/dashboard/sessions"}
+            />
         );
     }
 

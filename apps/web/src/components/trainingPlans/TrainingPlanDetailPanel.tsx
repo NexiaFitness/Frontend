@@ -20,6 +20,8 @@ import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { ResourceQueryState } from "@/components/ui/feedback/ResourceQueryState";
+import { extractHttpStatus } from "@/components/ui/feedback/resourceQueryStateContract";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 import { TYPOGRAPHY } from "@/utils/typography";
 import {
@@ -92,28 +94,27 @@ export const TrainingPlanDetailPanel: React.FC<TrainingPlanDetailPanelProps> = (
     }
 
     if (isError || !plan) {
-        const isNotFound = error && "status" in error && (error as { status: number }).status === 404;
+        const kindStatus = extractHttpStatus(error);
+        const isMissing = kindStatus === 404 || error == null;
         return (
-            <div className="flex flex-col gap-4 p-6">
-                <Alert
-                    variant="error"
-                    action={
-                        isNotFound ? (
-                            <Button variant="ghost-primary" size="sm" onClick={onClose}>
-                                Cerrar
-                            </Button>
-                        ) : (
-                            <Button variant="ghost-primary" size="sm" onClick={() => refetch()}>
-                                Reintentar
-                            </Button>
-                        )
-                    }
-                >
-                    {isNotFound
-                        ? "El plan no existe o ha sido eliminado."
-                        : "Error al cargar el plan. Intenta de nuevo."}
-                </Alert>
-            </div>
+            <ResourceQueryState
+                error={error ?? { status: 404 }}
+                resource="plan"
+                onRetry={() => refetch()}
+                primaryAction={
+                    isMissing ? (
+                        <Button
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            className="min-h-touch-athlete w-full"
+                            onClick={onClose}
+                        >
+                            Cerrar
+                        </Button>
+                    ) : undefined
+                }
+            />
         );
     }
 

@@ -25,6 +25,7 @@ import {
   getBlockOverlapHint,
 } from "@nexia/shared/utils/periodBlockOverlap";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
+import { ResourceQueryState } from "@/components/ui/feedback/ResourceQueryState";
 import { Button } from "@/components/ui/buttons";
 import { usePeriodBlockForm } from "./usePeriodBlockForm";
 import { usePeriodizationVolumeRecommendations } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
@@ -726,14 +727,16 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     const weeksBlock = blocks.find((block) => block.id === blockWeeksId);
     if (!weeksBlock) {
       return (
-        <Alert
-          variant="warning"
-          title="No se encontró el bloque solicitado."
-          action={
+        <ResourceQueryState
+          error={{ status: 404 }}
+          resource="block"
+          fallbackPath={`/dashboard/clients/${clientId}?tab=planning`}
+          primaryAction={
             <Button
               type="button"
-              variant="ghost-primary"
+              variant="primary"
               size="sm"
+              className="min-h-touch-athlete w-full"
               onClick={handleExitBlockWeeks}
             >
               Volver a planificación

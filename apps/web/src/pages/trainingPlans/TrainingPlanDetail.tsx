@@ -13,12 +13,11 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, RotateCcw } from "lucide-react";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import type { TrainingPlanInstance } from "@nexia/shared/types/training";
 import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { Button } from "@/components/ui/buttons";
+import { ResourceQueryState } from "@/components/ui/feedback/ResourceQueryState";
 import { resolveTrainingPlanDetailRedirect } from "@/lib/trainingPlanNavigation";
 import { AssignPlanModal } from "@/components/trainingPlans";
 import { TrainingPlanHeader } from "@/components/trainingPlans/TrainingPlanHeader";
@@ -85,36 +84,13 @@ export const TrainingPlanDetail: React.FC = () => {
     }
 
     if (isError || !plan) {
-        const isNotFound = error && "status" in error && error.status === 404;
         return (
-            <div className="p-6" data-testid="training-plan-detail">
-                <Alert
-                    variant="error"
-                    title={
-                        isNotFound
-                            ? "El plan de entrenamiento solicitado no existe o ha sido eliminado."
-                            : "Error al cargar el plan de entrenamiento"
-                    }
-                    description={
-                        isNotFound ? undefined : "Por favor, intenta de nuevo."
-                    }
-                    action={
-                        isNotFound ? (
-                            <Button
-                                variant="ghost-primary"
-                                size="sm"
-                                onClick={() => navigate("/dashboard/training-plans")}
-                            >
-                                <ArrowLeft className="mr-1 size-4" aria-hidden />
-                                Volver a Planes
-                            </Button>
-                        ) : (
-                            <Button variant="ghost-primary" size="sm" onClick={() => refetch()}>
-                                <RotateCcw className="mr-1 size-4" aria-hidden />
-                                Reintentar
-                            </Button>
-                        )
-                    }
+            <div data-testid="training-plan-detail">
+                <ResourceQueryState
+                    error={error ?? { status: 404 }}
+                    resource="plan"
+                    onRetry={() => refetch()}
+                    fallbackPath="/dashboard/training-plans"
                 />
             </div>
         );

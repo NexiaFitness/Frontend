@@ -24,7 +24,7 @@ import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useClientQuickNote } from "@/hooks/clients/useClientQuickNote";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
-import { Alert } from "@/components/ui/feedback/Alert";
+import { ResourceQueryState } from "@/components/ui/feedback/ResourceQueryState";
 import { useClientDetail } from "@nexia/shared/hooks/clients/useClientDetail";
 import { TabsBar } from "@/components/ui/tabs";
 // Tabs components - estáticos (carga inmediata)
@@ -207,59 +207,15 @@ export const ClientDetail: React.FC = () => {
         );
     }
 
-    // Error state
+    // Error state — pantalla completa (404 / 403 / fallo de carga)
     if (hasError || !client) {
-        const isForbiddenError = clientError &&
-            typeof clientError === "object" &&
-            clientError !== null &&
-            "status" in clientError &&
-            clientError.status === 403;
-
-        const errorMessage =
-            clientError
-                ? typeof clientError === "string"
-                    ? clientError
-                    : typeof clientError === "object" && clientError !== null
-                      ? JSON.stringify(clientError)
-                      : String(clientError)
-                : null;
-
         return (
-            <Alert
-                variant="error"
-                action={
-                    isForbiddenError ? (
-                        <Button
-                            variant="ghost-primary"
-                            size="sm"
-                            onClick={() => navigate("/dashboard/clients")}
-                        >
-                            Volver a Clientes
-                        </Button>
-                    ) : (
-                        <Button variant="ghost-primary" size="sm" onClick={refetchAll}>
-                            Reintentar
-                        </Button>
-                    )
-                }
-            >
-                {isForbiddenError ? (
-                    <>
-                        <p className="mb-2 font-semibold text-foreground">No tienes acceso a este cliente</p>
-                        <p className="text-sm text-muted-foreground">
-                            Este cliente no está asignado a tu cuenta o no tienes permisos para verlo.
-                        </p>
-                    </>
-                ) : (
-                    <>
-                        <p className="mb-2 font-semibold text-foreground">Error al cargar los datos del cliente</p>
-                        <p className="mb-2 text-sm text-muted-foreground">Por favor, intenta de nuevo.</p>
-                        {errorMessage && (
-                            <div className="mt-2 font-mono text-label text-destructive">{errorMessage}</div>
-                        )}
-                    </>
-                )}
-            </Alert>
+            <ResourceQueryState
+                error={clientError ?? { status: 404 }}
+                resource="client"
+                onRetry={refetchAll}
+                fallbackPath="/dashboard/clients"
+            />
         );
     }
 
