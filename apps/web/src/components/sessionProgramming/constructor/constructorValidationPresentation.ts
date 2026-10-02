@@ -17,7 +17,7 @@ export function formatConstructorValidationToast(issues: ConstructorValidationIs
 
 export function emptySessionCreatedToast(isStandalone: boolean): string {
     if (isStandalone) {
-        return "Sesión libre creada. Añade bloques cuando quieras programar ejercicios.";
+        return "Sesión fuera del plan creada. Añade bloques cuando quieras programar ejercicios.";
     }
     return "Sesión creada. Añade bloques al constructor cuando quieras programar ejercicios.";
 }

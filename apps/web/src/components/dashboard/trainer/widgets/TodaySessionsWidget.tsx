@@ -44,7 +44,7 @@ const SESSION_STATUS_LABEL: Record<string, string> = {
 
 const SESSION_KIND_LABEL: Record<string, string> = {
     training: "Programa",
-    standalone: "Sesión libre",
+    standalone: "Fuera del plan",
 };
 
 function formatSessionTime(session: SessionOut): string {

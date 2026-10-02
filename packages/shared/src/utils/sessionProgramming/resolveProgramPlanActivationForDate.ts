@@ -25,4 +25,4 @@ export const PROGRAM_PLAN_NOT_ACTIVE_COPY =
     "Este plan no está activo para la fecha seleccionada. Usa el plan vigente del cliente o cambia la fecha.";
 
 export const PROGRAM_PLAN_NO_ACTIVE_FOR_DATE_COPY =
-    "No hay un plan activo del cliente para esta fecha. Asigna un plan o crea una sesión suelta.";
+    "No hay un plan activo del cliente para esta fecha. Asigna un plan o crea una sesión fuera del plan.";

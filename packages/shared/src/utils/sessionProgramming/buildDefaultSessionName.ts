@@ -99,7 +99,7 @@ export function buildDefaultSessionName(input: BuildDefaultSessionNameInput): st
     }
 
     if (isStandalone) {
-        return joinSegments(["Sesión libre", dateShort]);
+        return joinSegments(["Fuera del plan", dateShort]);
     }
 
     const quality = qualityLabel?.trim() || null;

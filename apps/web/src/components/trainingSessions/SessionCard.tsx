@@ -246,7 +246,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                         <p className="text-[11px] text-muted-foreground">{typeLabel}</p>
                         {isStandalone ? (
                             <span className={cn(SESSION_CARD_STANDALONE_BADGE, "mt-1 w-fit text-[10px]")}>
-                                Sesión libre
+                                Fuera del plan
                             </span>
                         ) : null}
                         {showPhaseChip ? (

@@ -11,10 +11,10 @@ export const SESSION_DAY_COEXISTENCE_COPY = {
     bodyProgram:
         "Puedes abrir lo existente o crear otra sesión de programa. No sustituye la anterior.",
     bodyStandalone:
-        "Puedes abrir lo existente o crear otra sesión suelta.",
+        "Puedes abrir lo existente o crear otra sesión fuera del plan.",
     openSession: "Abrir sesión",
     pickSession: "Elegir sesión",
-    createStandalone: "Sesión suelta",
+    createStandalone: "Fuera del plan",
     modalTitle: "Sesiones este día",
 } as const;
 
@@ -32,7 +32,7 @@ export interface SessionDayCoexistenceItem {
 export function labelSessionDayCoexistenceItem(item: SessionDayCoexistenceItem): string {
     const name = item.session_name?.trim() || "Sesión sin nombre";
     if (item.session_kind === "standalone") {
-        return `Sesión suelta · ${name}`;
+        return `Fuera del plan · ${name}`;
     }
     return `Sesión de programa · ${name}`;
 }
@@ -40,7 +40,7 @@ export function labelSessionDayCoexistenceItem(item: SessionDayCoexistenceItem):
 function labelForItem(item: SessionDayCoexistenceItem): string {
     const name = item.session_name?.trim() || "Sesión sin nombre";
     if (item.session_kind === "standalone") {
-        return `sesión suelta «${name}»`;
+        return `sesión fuera del plan «${name}»`;
     }
     return `sesión de programa «${name}»`;
 }
@@ -64,5 +64,5 @@ export function buildSessionDayCoexistenceMessage(
     if (creatingKind === "program") {
         return `Este día ya tiene ${listed}. Puedes crear además una sesión de programa; no sustituye la(s) existente(s).`;
     }
-    return `Este día ya tiene ${listed}. Puedes crear otra sesión suelta el mismo día si lo necesitas.`;
+    return `Este día ya tiene ${listed}. Puedes crear otra sesión fuera del plan el mismo día si lo necesitas.`;
 }

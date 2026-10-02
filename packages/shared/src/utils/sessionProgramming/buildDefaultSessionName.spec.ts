@@ -31,12 +31,12 @@ describe("buildDefaultSessionName", () => {
         expect(name).toBe("Hipertrofia · mié 24 jun");
     });
 
-    it("standalone session uses Sesión libre prefix", () => {
+    it("standalone session uses Fuera del plan prefix", () => {
         const name = buildDefaultSessionName({
             sessionDate: "2026-06-24",
             isStandalone: true,
         });
-        expect(name).toBe("Sesión libre · mié 24 jun");
+        expect(name).toBe("Fuera del plan · mié 24 jun");
     });
 
     it("template instantiate uses template name and date", () => {

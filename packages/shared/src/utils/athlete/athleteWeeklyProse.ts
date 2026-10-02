@@ -15,8 +15,18 @@ function formatWeightEs(value: number): string {
     return String(value).replace(".", ",");
 }
 
-function lowVolumeClosedLine(planned: number, pct: number): string {
+function lowVolumeClosedLine(
+    planned: number,
+    pct: number,
+    hasActivePlan: boolean,
+): string {
     if (planned === 1) {
+        if (!hasActivePlan) {
+            return (
+                `Completaste tu sesión de esta semana (${pct}%). ` +
+                "Cuando tu entrenador programe más entrenos, aquí verás tendencias de carga y récords."
+            );
+        }
         return (
             `Esta semana tenías una sesión en el plan y la completaste (${pct}%). ` +
             "Cuando el plan sume más días, aquí verás tendencias de carga y récords."
@@ -35,6 +45,7 @@ export function buildDeterministicWeeklyProse(
     const planned = adherence.sessions_planned;
     const completed = adherence.sessions_completed;
     const rate = adherence.adherence_rate;
+    const hasActivePlan = adherence.has_active_plan;
     const parts: string[] = [];
 
     if (planned > 0) {
@@ -43,7 +54,7 @@ export function buildDeterministicWeeklyProse(
         const lowVolume = planned <= LOW_VOLUME_WEEK_MAX_PLANNED;
 
         if (weekClosed && lowVolume) {
-            parts.push(lowVolumeClosedLine(planned, pct));
+            parts.push(lowVolumeClosedLine(planned, pct, hasActivePlan));
         } else if (weekClosed) {
             parts.push(
                 `Cerraste la semana con ${completed} de ${planned} sesiones (${pct}%). ` +
