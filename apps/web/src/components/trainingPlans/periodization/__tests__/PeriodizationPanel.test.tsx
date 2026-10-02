@@ -122,7 +122,8 @@ describe("PeriodizationPanel", () => {
     it("muestra banner informativo cuando faltan días con patrones", () => {
         renderPanel();
 
-        const banner = screen.getByRole("alert");
+        // warning → role=status (alertContract / A0 ARIA)
+        const banner = screen.getByRole("status");
         expect(banner).toHaveTextContent(/tienes 3 días sin patrones asignados/i);
     });
 
@@ -130,13 +131,13 @@ describe("PeriodizationPanel", () => {
         const user = userEvent.setup();
         renderPanel();
 
-        const banner = screen.getByRole("alert");
+        const banner = screen.getByRole("status");
         expect(banner).toBeInTheDocument();
 
         const dismissButton = screen.getByRole("button", { name: /cerrar alerta/i });
         await user.click(dismissButton);
 
-        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
     it("no muestra el banner cuando todos los días entrenables tienen patrón", () => {

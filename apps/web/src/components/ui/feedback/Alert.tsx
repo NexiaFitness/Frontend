@@ -1,60 +1,59 @@
 /**
- * Alert.tsx — Componente de alertas reutilizable
+ * Alert.tsx — Alerta unificada de feedback inline (apps/web).
  *
- * Contexto:
- * - Alertas para diferentes contextos: info, success, warning, error.
- * - Usa tokens de diseño de la app (primary, success, warning, destructive).
- * - Botón de cierre opcional (onDismiss).
- * - Prop opcional `action` para botones (ej. Reintentar) con gap y alineación respecto al texto.
- * - Iconos Lucide en trazo (`NexiaSemanticIcon`), sin SVG rellenos.
- * - Accesibilidad con role="alert"
+ * Contexto: capa de feedback premium (DESIGN_PREMIUM.md §3, §5.2). API con
+ * title/description/action/onDismiss/icon; contrato ARIA en alertContract.ts.
+ *
+ * Notas de mantenimiento: diferimiento packages/ui-* (agent.md §6) — extracción
+ * futura mueve contrato + presentation + este componente. No usar para Toast
+ * ni pantallas NotFound/ErrorBoundary enteras.
  *
  * @author Frontend Team
  * @since v2.6.0
+ * @updated v9.2.0 — API unificada + ARIA por variante
  */
 
 import React from "react";
-import { cn } from "@/lib/utils";
+
 import { NexiaSemanticIcon } from "./NexiaSemanticIcon";
 import type { NexiaSemanticTone } from "./nexiaSemanticIconPresentation";
+import {
+    alertAriaLive,
+    alertAriaRole,
+    type AlertVariant,
+} from "./alertContract";
+import {
+    ALERT_ACTION_ROW_CLASS,
+    ALERT_ACTION_SLOT_CLASS,
+    ALERT_BODY_CLASS,
+    ALERT_DESCRIPTION_CLASS,
+    ALERT_ICON_WRAP_CLASS,
+    ALERT_TITLE_CLASS,
+    alertDismissButtonClass,
+    alertRootClass,
+} from "./alertPresentation";
 
-interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
-    variant?: "info" | "success" | "warning" | "error";
-    children: React.ReactNode;
+export type { AlertVariant } from "./alertContract";
+
+export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
+    variant?: AlertVariant;
+    /** Título opcional (línea principal). */
+    title?: React.ReactNode;
+    /** Descripción opcional; si no hay title/description, se usa children. */
+    description?: React.ReactNode;
+    children?: React.ReactNode;
     className?: string;
     onDismiss?: () => void;
-    /** Botones u otras acciones: se separan del mensaje con gap y alineación vertical */
+    /** Acciones (Reintentar, enlace, etc.). */
     action?: React.ReactNode;
+    /**
+     * Icono semántico por defecto; `false` lo oculta; ReactNode lo sustituye.
+     * @default true
+     */
+    icon?: boolean | React.ReactNode;
 }
 
-/** Estilos por variante usando tokens de la app (sin fondos blancos) */
-const variantStyles = {
-    info: {
-        container: "bg-primary/10 border border-primary/30",
-        text: "text-foreground",
-        dismissButton: "text-primary/80 hover:text-primary",
-    },
-    success: {
-        container: "bg-success/10 border border-success/30",
-        text: "text-foreground",
-        dismissButton: "text-success/80 hover:text-success",
-    },
-    warning: {
-        container: "bg-warning/10 border border-warning/30",
-        text: "text-foreground",
-        dismissButton: "text-warning/80 hover:text-warning",
-    },
-    error: {
-        container: "bg-destructive/10 border border-destructive/30",
-        text: "text-foreground",
-        dismissButton: "text-destructive/80 hover:text-destructive",
-    },
-};
-
-const toneByVariant: Record<
-    NonNullable<AlertProps["variant"]>,
-    NexiaSemanticTone
-> = {
+const toneByVariant: Record<AlertVariant, NexiaSemanticTone> = {
     info: "info",
     success: "success",
     warning: "warning",
@@ -63,53 +62,73 @@ const toneByVariant: Record<
 
 export const Alert: React.FC<AlertProps> = ({
     variant = "info",
+    title,
+    description,
     children,
     className = "",
     onDismiss,
     action,
+    icon = true,
     ...rest
 }) => {
-    const styles = variantStyles[variant];
+    const role = alertAriaRole(variant);
+    const live = alertAriaLive(variant);
+
+    const body =
+        title != null || description != null ? (
+            <>
+                {title != null ? <p className={ALERT_TITLE_CLASS}>{title}</p> : null}
+                {description != null ? (
+                    <div className={title != null ? ALERT_DESCRIPTION_CLASS : ALERT_BODY_CLASS}>
+                        {description}
+                    </div>
+                ) : null}
+                {children != null ? (
+                    <div className={title != null || description != null ? ALERT_DESCRIPTION_CLASS : undefined}>
+                        {children}
+                    </div>
+                ) : null}
+            </>
+        ) : (
+            children
+        );
+
+    const iconNode =
+        icon === false ? null : icon === true ? (
+            <NexiaSemanticIcon
+                tone={toneByVariant[variant]}
+                className={ALERT_ICON_WRAP_CLASS}
+            />
+        ) : (
+            <span className={ALERT_ICON_WRAP_CLASS}>{icon}</span>
+        );
 
     return (
         <div
-            className={cn(
-                "relative flex items-start gap-3 rounded-lg border p-4",
-                styles.container,
-                className
-            )}
-            role="alert"
+            className={alertRootClass(variant, className)}
+            role={role}
+            aria-live={live}
             {...rest}
         >
-            <NexiaSemanticIcon
-                tone={toneByVariant[variant]}
-                className="mt-0.5"
-            />
+            {iconNode}
             {action ? (
-                <div
-                    className={cn(
-                        "flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4",
-                        styles.text
-                    )}
-                >
-                    <div className="min-w-0 flex-1 text-sm leading-snug">{children}</div>
-                    <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-                        {action}
-                    </div>
+                <div className={ALERT_ACTION_ROW_CLASS}>
+                    <div className={ALERT_BODY_CLASS}>{body}</div>
+                    <div className={ALERT_ACTION_SLOT_CLASS}>{action}</div>
                 </div>
             ) : (
-                <div className={cn("min-w-0 flex-1 text-sm leading-snug", styles.text)}>{children}</div>
+                <div className={ALERT_BODY_CLASS}>{body}</div>
             )}
-            {onDismiss && (
+            {onDismiss ? (
                 <button
                     type="button"
                     onClick={onDismiss}
-                    className={`absolute top-3 right-3 text-sm ${styles.dismissButton}`}
+                    className={alertDismissButtonClass(variant)}
                     aria-label="Cerrar alerta"
                 >
                     ×
                 </button>
-            )}
+            ) : null}
         </div>
     );
 };
