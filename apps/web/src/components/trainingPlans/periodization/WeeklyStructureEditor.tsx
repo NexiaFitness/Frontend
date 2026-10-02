@@ -651,12 +651,13 @@ export const WeeklyStructureEditor = forwardRef<
     if (isErrorStructure) {
         return (
             <div className="py-6">
-                <Alert variant="error">
-                    <p className="font-medium">Error al cargar la estructura semanal</p>
-                    <p className="text-sm opacity-90">
-                        {getMutationErrorMessage(errorStructure) || "Intenta de nuevo más tarde."}
-                    </p>
-                </Alert>
+                <Alert
+                    variant="error"
+                    title="Error al cargar la estructura semanal"
+                    description={
+                        getMutationErrorMessage(errorStructure) || "Intenta de nuevo más tarde."
+                    }
+                />
             </div>
         );
     }
@@ -836,21 +837,21 @@ export const WeeklyStructureEditor = forwardRef<
                     </div>
 
                     {isErrorPatterns && (
-                        <Alert variant="warning" className="text-sm">
-                            <p className="font-medium">
-                                No se pudieron cargar los patrones de movimiento
-                            </p>
-                            <p className="opacity-90">
-                                El catálogo no está disponible.
-                            </p>
-                            <button
-                                type="button"
-                                onClick={() => refetchPatterns()}
-                                className="mt-1 text-xs underline hover:no-underline"
-                            >
-                                Reintentar
-                            </button>
-                        </Alert>
+                        <Alert
+                            variant="warning"
+                            className="text-sm"
+                            title="No se pudieron cargar los patrones de movimiento"
+                            description="El catálogo no está disponible."
+                            action={
+                                <button
+                                    type="button"
+                                    onClick={() => refetchPatterns()}
+                                    className="text-xs font-medium text-primary underline hover:no-underline"
+                                >
+                                    Reintentar
+                                </button>
+                            }
+                        />
                     )}
 
                     {visibleDays.length === 0 && !isEditing ? (
@@ -982,11 +983,20 @@ export const WeeklyStructureEditor = forwardRef<
                 <div className="space-y-4">
                     {/* Conflict warning */}
                     {repeatConflictMessage && (
-                        <Alert variant="warning" className="text-sm">
-                            <p className="font-medium">Conflicto detectado</p>
-                            <p className="opacity-90">{repeatConflictMessage}</p>
-                            <p className="opacity-90 mt-1">Activa &quot;Sobrescribir existentes&quot; para forzar la copia.</p>
-                        </Alert>
+                        <Alert
+                            variant="warning"
+                            className="text-sm"
+                            title="Conflicto detectado"
+                            description={
+                                <>
+                                    <p>{repeatConflictMessage}</p>
+                                    <p className="mt-1">
+                                        Activa &quot;Sobrescribir existentes&quot; para forzar la
+                                        copia.
+                                    </p>
+                                </>
+                            }
+                        />
                     )}
 
                     {/* Target week ordinals */}

@@ -541,7 +541,7 @@ export const SessionReviewPage: React.FC = () => {
     if (!sessionId || isNaN(sessionId)) {
         return (
             <div className="px-4 lg:px-8 py-8">
-                <Alert variant="error">ID de sesión inválido.</Alert>
+                <Alert variant="error" title="ID de sesión inválido." />
             </div>
         );
     }
@@ -558,7 +558,7 @@ export const SessionReviewPage: React.FC = () => {
     if (isErrorSession || !session) {
         return (
             <div className="px-4 lg:px-8 py-8">
-                <Alert variant="error">No se pudo cargar la sesión.</Alert>
+                <Alert variant="error" title="No se pudo cargar la sesión." />
             </div>
         );
     }

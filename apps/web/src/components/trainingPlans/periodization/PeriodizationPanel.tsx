@@ -299,9 +299,8 @@ export const PeriodizationPanel: React.FC<Props> = ({
                                 variant="warning"
                                 onDismiss={() => setIsMissingDaysBannerDismissed(true)}
                                 className="text-xs"
-                            >
-                                Tienes {missingPatternDays} {missingPatternDays === 1 ? "día" : "días"} sin patrones asignados.
-                            </Alert>
+                                title={`Tienes ${missingPatternDays} ${missingPatternDays === 1 ? "día" : "días"} sin patrones asignados.`}
+                            />
                         )}
                         <PeriodizationWeeklyStructureEditor
                             startDate={formState.startDate}

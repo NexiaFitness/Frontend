@@ -101,10 +101,11 @@ export const WeeklyStructurePage: React.FC = () => {
     if (isErrorPlan || !plan) {
         return (
             <div>
-                <Alert variant="error">
-                    <p className="font-medium">Plan no encontrado</p>
-                    <p className="text-sm opacity-90">No se pudo cargar el plan de entrenamiento.</p>
-                </Alert>
+                <Alert
+                    variant="error"
+                    title="Plan no encontrado"
+                    description="No se pudo cargar el plan de entrenamiento."
+                />
             </div>
         );
     }
@@ -112,10 +113,11 @@ export const WeeklyStructurePage: React.FC = () => {
     if (!block) {
         return (
             <div>
-                <Alert variant="error">
-                    <p className="font-medium">Bloque no encontrado</p>
-                    <p className="text-sm opacity-90">El bloque de periodización no existe en este plan.</p>
-                </Alert>
+                <Alert
+                    variant="error"
+                    title="Bloque no encontrado"
+                    description="El bloque de periodización no existe en este plan."
+                />
             </div>
         );
     }

@@ -596,13 +596,11 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
             ) : null}
 
             {error != null ? (
-                <Alert variant="error">
-                    <p className="font-medium">No se pudo validar la alineación con el plan</p>
-                    <p className="text-sm opacity-90">
-                        Ha ocurrido un error al consultar la validación. Inténtalo de nuevo
-                        en unos instantes.
-                    </p>
-                </Alert>
+                <Alert
+                    variant="error"
+                    title="No se pudo validar la alineación con el plan"
+                    description="Ha ocurrido un error al consultar la validación. Inténtalo de nuevo en unos instantes."
+                />
             ) : null}
 
             {data?.overall_status === "not_applicable" ? (
@@ -695,13 +693,11 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
             )}
 
             {error != null && (
-                <Alert variant="error">
-                    <p className="font-medium">No se pudo validar la alineación con el plan</p>
-                    <p className="text-sm opacity-90">
-                        Ha ocurrido un error al consultar la validación. Inténtalo de nuevo
-                        en unos instantes.
-                    </p>
-                </Alert>
+                <Alert
+                    variant="error"
+                    title="No se pudo validar la alineación con el plan"
+                    description="Ha ocurrido un error al consultar la validación. Inténtalo de nuevo en unos instantes."
+                />
             )}
 
             {data?.overall_status === "not_applicable" && layout === "stack" ? (

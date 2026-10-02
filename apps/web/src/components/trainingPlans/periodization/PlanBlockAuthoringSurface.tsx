@@ -689,6 +689,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                 <Alert
                     variant="warning"
                     data-testid="authoring-date-structure-gap"
+                    title={dateStructureGap.message}
                     action={
                         dateStructureGap.replicateWeekPath ? (
                             <Link
@@ -699,9 +700,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                             </Link>
                         ) : undefined
                     }
-                >
-                    <p>{dateStructureGap.message}</p>
-                </Alert>
+                />
             ) : null}
             <div className={AUTHORING_WIZARD_FOOTER_ROW_CLASS}>
                 <Button

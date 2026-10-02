@@ -54,11 +54,13 @@ function injuryDetail(injury: InjuryWithDetails): string | null {
 function InjuryAlert({ injury }: { injury: InjuryWithDetails }) {
     const detail = injuryDetail(injury);
     return (
-        <Alert variant={injuryVariant(injury)}>
-            <span className="font-medium">Lesión activa: </span>
-            {injuryHeadline(injury)}
-            {detail ? <span className="text-muted-foreground"> · {detail}</span> : null}
-        </Alert>
+        <Alert
+            variant={injuryVariant(injury)}
+            title="Lesión activa"
+            description={
+                detail ? `${injuryHeadline(injury)} · ${detail}` : injuryHeadline(injury)
+            }
+        />
     );
 }
 
@@ -132,7 +134,7 @@ export const SessionAlertsPanel: React.FC<SessionAlertsPanelProps> = ({
             {hasAlerts ? (
                 <div className="space-y-2" role="region" aria-label="Avisos de la sesión">
                     {showOutsidePhase ? (
-                        <Alert variant="warning">{SESSION_OUTSIDE_PHASE_COPY}</Alert>
+                        <Alert variant="warning" title={SESSION_OUTSIDE_PHASE_COPY} />
                     ) : null}
                     {injuriesToShow.map((injury) => (
                         <InjuryAlert key={`injury-${injury.id}`} injury={injury} />
@@ -146,10 +148,12 @@ export const SessionAlertsPanel: React.FC<SessionAlertsPanelProps> = ({
                     )}
 
                     {warningsToShow.map((w, i) => (
-                        <Alert key={`coh-${i}`} variant="warning">
-                            <span className="font-medium">Coherencia: </span>
-                            {w.message}
-                        </Alert>
+                        <Alert
+                            key={`coh-${i}`}
+                            variant="warning"
+                            title="Coherencia"
+                            description={w.message}
+                        />
                     ))}
 
                     {remainingWarnings > 0 && (
@@ -160,10 +164,11 @@ export const SessionAlertsPanel: React.FC<SessionAlertsPanelProps> = ({
                     )}
 
                     {showLegacyNote ? (
-                        <Alert variant="info">
-                            <span className="font-medium">Notas del perfil: </span>
-                            {legacyInjuryNote!.trim()}
-                        </Alert>
+                        <Alert
+                            variant="info"
+                            title="Notas del perfil"
+                            description={legacyInjuryNote!.trim()}
+                        />
                     ) : null}
                 </div>
             ) : null}

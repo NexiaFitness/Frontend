@@ -107,10 +107,12 @@ function EmptyStatePanel({
         <div className={cn(panelShell, "p-5", className)} data-testid="session-day-empty-state">
             <NexiaGlassAccentRim />
             {/* DESIGN_PREMIUM §2 glass+rim · §5.2 Alert+NexiaSemanticIcon (icono vía Alert) */}
-            <Alert variant="warning" data-testid="session-day-empty-alert">
-                <p className="font-medium text-foreground">{title}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{body}</p>
-            </Alert>
+            <Alert
+                variant="warning"
+                data-testid="session-day-empty-alert"
+                title={title}
+                description={body}
+            />
         </div>
     );
 }
@@ -327,6 +329,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                     <Alert
                         variant="warning"
                         data-testid="session-day-structure-gap"
+                        title={structureGap.message}
                         action={
                             structureGap.configurePath ? (
                                 <Button
@@ -345,9 +348,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                                 </Button>
                             ) : undefined
                         }
-                    >
-                        <p className="leading-snug">{structureGap.message}</p>
-                    </Alert>
+                    />
                 ) : null}
 
                 <div className={SESSION_PROGRAMMING_DAY_CONTEXT_GRID}>

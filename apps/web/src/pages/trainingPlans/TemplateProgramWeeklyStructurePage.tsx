@@ -72,17 +72,13 @@ export const TemplateProgramWeeklyStructurePage: React.FC = () => {
 
     if (isErrorTemplate || !template) {
         return (
-            <Alert variant="error">
-                <p className="font-medium">Plantilla no encontrada</p>
-            </Alert>
+            <Alert variant="error" title="Plantilla no encontrada" />
         );
     }
 
     if (!block) {
         return (
-            <Alert variant="error">
-                <p className="font-medium">Bloque no encontrado</p>
-            </Alert>
+            <Alert variant="error" title="Bloque no encontrado" />
         );
     }
 

@@ -195,7 +195,7 @@ export const SessionDetail: React.FC = () => {
     if (!sessionId || Number.isNaN(sessionId)) {
         return (
             <div className="p-6">
-                <Alert variant="error">ID de sesion invalido</Alert>
+                <Alert variant="error" title="ID de sesión inválido" />
             </div>
         );
     }
@@ -224,23 +224,25 @@ export const SessionDetail: React.FC = () => {
 
         return (
             <div className="space-y-6 px-4 lg:px-8 py-8">
-                {!isNotFound && isError ? (
-                    <Alert variant="error">{getMutationErrorMessage(error)}</Alert>
-                ) : null}
-                <div className="py-20 text-center">
-                    <p className="text-lg font-semibold">Sesión no encontrada</p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                        La sesión no existe o ya no está disponible.
-                    </p>
-                    <Button
-                        variant="outline"
-                        className="mt-4"
-                        onClick={goBack}
-                    >
-                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
-                        {backTarget ? "Volver" : "Volver a sesiones"}
-                    </Button>
-                </div>
+                <Alert
+                    variant="error"
+                    title={
+                        isNotFound
+                            ? "Sesión no encontrada"
+                            : "No se pudo cargar la sesión"
+                    }
+                    description={
+                        isNotFound
+                            ? "La sesión no existe o ya no está disponible."
+                            : getMutationErrorMessage(error)
+                    }
+                    action={
+                        <Button variant="outline" size="sm" onClick={goBack}>
+                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                            {backTarget ? "Volver" : "Volver a sesiones"}
+                        </Button>
+                    }
+                />
             </div>
         );
     }
@@ -371,7 +373,7 @@ export const SessionDetail: React.FC = () => {
                         <LoadingSpinner size="md" />
                     </div>
                 ) : isErrorExercises ? (
-                    <Alert variant="error">No se pudieron cargar los ejercicios</Alert>
+                    <Alert variant="error" title="No se pudieron cargar los ejercicios" />
                 ) : sessionStructure.blocks.length === 0 ? (
                     <div className="rounded-lg border border-dashed border-border/60 bg-surface/40 px-4 py-10 text-center text-sm text-muted-foreground">
                         Esta sesión todavía no tiene ejercicios asignados.

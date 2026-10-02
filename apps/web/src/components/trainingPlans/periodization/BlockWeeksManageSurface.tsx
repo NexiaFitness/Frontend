@@ -339,26 +339,27 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
             </header>
 
             {orphanWeekOrdinals.length > 0 ? (
-                <Alert variant="warning" className="mb-4">
-                    <p className="text-sm leading-relaxed">
-                        Falta la semana tipo (semana 1). El guardado desde el
-                        asistente fallará hasta que exista. Elige una semana
-                        existente para usarla como semana tipo:
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                        {orphanWeekOrdinals.map((ordinal) => (
-                            <Button
-                                key={ordinal}
-                                type="button"
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => handlePromoteWeekToTemplate(ordinal)}
-                            >
-                                Usar semana {ordinal} como semana tipo
-                            </Button>
-                        ))}
-                    </div>
-                </Alert>
+                <Alert
+                    variant="warning"
+                    className="mb-4"
+                    title="Falta la semana tipo (semana 1)"
+                    description="El guardado desde el asistente fallará hasta que exista. Elige una semana existente para usarla como semana tipo."
+                    action={
+                        <div className="flex flex-wrap gap-2">
+                            {orphanWeekOrdinals.map((ordinal) => (
+                                <Button
+                                    key={ordinal}
+                                    type="button"
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => handlePromoteWeekToTemplate(ordinal)}
+                                >
+                                    Usar semana {ordinal} como semana tipo
+                                </Button>
+                            ))}
+                        </div>
+                    }
+                />
             ) : null}
 
             <div className={AUTHORING_STEP_CARD_CLASS}>

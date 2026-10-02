@@ -708,11 +708,17 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
       (("status" in error && (error.status === 404 || error.status === "PARSING_ERROR")) ||
         getMutationErrorMessage(error).toLowerCase().includes("not found"));
     return (
-      <Alert variant="error">
-        {isNotFound
-          ? "El plan de entrenamiento no existe o ha sido eliminado."
-          : `Error al cargar los bloques de periodización: ${getMutationErrorMessage(error)}`}
-      </Alert>
+      <Alert
+        variant="error"
+        title={
+          isNotFound
+            ? "El plan de entrenamiento no existe o ha sido eliminado."
+            : "Error al cargar los bloques de periodización"
+        }
+        description={
+          isNotFound ? undefined : getMutationErrorMessage(error)
+        }
+      />
     );
   }
 
@@ -720,16 +726,19 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     const weeksBlock = blocks.find((block) => block.id === blockWeeksId);
     if (!weeksBlock) {
       return (
-        <Alert variant="warning">
-          No se encontró el bloque solicitado.{" "}
-          <button
-            type="button"
-            className="font-medium underline"
-            onClick={handleExitBlockWeeks}
-          >
-            Volver a planificación
-          </button>
-        </Alert>
+        <Alert
+          variant="warning"
+          title="No se encontró el bloque solicitado."
+          action={
+            <button
+              type="button"
+              className="text-sm font-medium text-primary underline hover:no-underline"
+              onClick={handleExitBlockWeeks}
+            >
+              Volver a planificación
+            </button>
+          }
+        />
       );
     }
     return (
@@ -751,30 +760,36 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
       (!blockAuthorParams.blockStart || !blockAuthorParams.blockEnd)
     ) {
       return (
-        <Alert variant="warning">
-          Faltan fechas del bloque en la URL.{" "}
-          <button
-            type="button"
-            className="font-medium underline"
-            onClick={handleExitBlockAuthoring}
-          >
-            Volver a planificación
-          </button>
-        </Alert>
+        <Alert
+          variant="warning"
+          title="Faltan fechas del bloque en la URL."
+          action={
+            <button
+              type="button"
+              className="text-sm font-medium text-primary underline hover:no-underline"
+              onClick={handleExitBlockAuthoring}
+            >
+              Volver a planificación
+            </button>
+          }
+        />
       );
     }
     if (blockAuthorParams.mode === "edit" && blockAuthorParams.blockId == null) {
       return (
-        <Alert variant="warning">
-          Falta el identificador del bloque.{" "}
-          <button
-            type="button"
-            className="font-medium underline"
-            onClick={handleExitBlockAuthoring}
-          >
-            Volver a planificación
-          </button>
-        </Alert>
+        <Alert
+          variant="warning"
+          title="Falta el identificador del bloque."
+          action={
+            <button
+              type="button"
+              className="text-sm font-medium text-primary underline hover:no-underline"
+              onClick={handleExitBlockAuthoring}
+            >
+              Volver a planificación
+            </button>
+          }
+        />
       );
     }
 

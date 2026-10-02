@@ -321,10 +321,13 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     if (viewResolution.kind === "recoverable_error") {
         return (
             <div className="space-y-4" data-testid="client-planning-recoverable-error">
-                <Alert variant="error">
-                    {viewResolution.errorMessage ??
-                        "No se pudo cargar el plan. Inténtalo de nuevo."}
-                </Alert>
+                <Alert
+                    variant="error"
+                    title="No se pudo cargar el plan"
+                    description={
+                        viewResolution.errorMessage ?? "Inténtalo de nuevo."
+                    }
+                />
             </div>
         );
     }
@@ -377,17 +380,25 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
             data-testid="client-planning-tab"
         >
             {showNonActiveBanner && (
-                <Alert variant="warning" className="text-sm">
-                    Estás viendo la periodización de un plan concreto (enlace o pestaña).{" "}
-                    {activePlan ? "Puede no ser el plan activo del cliente." : "No hay plan activo asignado."}{" "}
-                    <button
-                        type="button"
-                        className="font-medium text-foreground underline hover:no-underline"
-                        onClick={clearPlanQuery}
-                    >
-                        Volver al plan activo
-                    </button>
-                </Alert>
+                <Alert
+                    variant="warning"
+                    className="text-sm"
+                    title="Estás viendo la periodización de un plan concreto (enlace o pestaña)."
+                    description={
+                        activePlan
+                            ? "Puede no ser el plan activo del cliente."
+                            : "No hay plan activo asignado."
+                    }
+                    action={
+                        <button
+                            type="button"
+                            className="text-sm font-medium text-primary underline hover:no-underline"
+                            onClick={clearPlanQuery}
+                        >
+                            Volver al plan activo
+                        </button>
+                    }
+                />
             )}
 
             <PlanPeriodizationSection

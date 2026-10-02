@@ -89,6 +89,14 @@ export const TrainingPlanDetail: React.FC = () => {
             <div className="p-6" data-testid="training-plan-detail">
                 <Alert
                     variant="error"
+                    title={
+                        isNotFound
+                            ? "El plan de entrenamiento solicitado no existe o ha sido eliminado."
+                            : "Error al cargar el plan de entrenamiento"
+                    }
+                    description={
+                        isNotFound ? undefined : "Por favor, intenta de nuevo."
+                    }
                     action={
                         <>
                             {!isNotFound && (
@@ -101,11 +109,7 @@ export const TrainingPlanDetail: React.FC = () => {
                             </Button>
                         </>
                     }
-                >
-                    {isNotFound
-                        ? "El plan de entrenamiento solicitado no existe o ha sido eliminado."
-                        : "Error al cargar el plan de entrenamiento. Por favor, intenta de nuevo."}
-                </Alert>
+                />
             </div>
         );
     }
@@ -123,9 +127,11 @@ export const TrainingPlanDetail: React.FC = () => {
                 breadcrumbItems={breadcrumbItems}
                 onAssignPlan={() => setAssignModalOpen(true)}
             />
-            <Alert variant="warning">
-                Este plan no tiene cliente asignado. Asigna un cliente para editar periodización, sesiones y analítica desde su ficha.
-            </Alert>
+            <Alert
+                variant="warning"
+                title="Este plan no tiene cliente asignado"
+                description="Asigna un cliente para editar periodización, sesiones y analítica desde su ficha."
+            />
             <AssignPlanModal
                 open={assignModalOpen}
                 onClose={() => setAssignModalOpen(false)}
