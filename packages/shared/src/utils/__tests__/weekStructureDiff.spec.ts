@@ -51,12 +51,13 @@ describe("weekStructureDiff", () => {
         expect(mixed[2]).toBe("personalizada");
     });
 
-    it("classifyWeeksWithBaseline usa baseline persistido (F5)", () => {
+    it("classifyWeeksWithBaseline usa baseline persistido (F5 / setActiveDays)", () => {
         const baseline = [template, different];
         const draft = [template, copy];
         const fromDraftOnly = classifyWeeksByTemplate(draft, 1);
         expect(fromDraftOnly[2]).toBe("heredada");
 
+        // Baseline congela personalización del servidor para propagación.
         const unified = classifyWeeksWithBaseline(draft, baseline, 1);
         expect(unified[2]).toBe("personalizada");
     });

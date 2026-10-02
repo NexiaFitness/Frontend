@@ -13,7 +13,7 @@
  */
 
 import {
-    classifyWeeksWithBaseline,
+    classifyWeeksByTemplate,
     weeklyStructureDraftsEqual,
     weeksStructureEqual,
 } from "@nexia/shared";
@@ -346,19 +346,26 @@ export async function persistBlockStructureEdit(
             return false;
         }
 
-        const baselineKinds = classifyWeeksWithBaseline(
-            draft,
+        const baselineKinds = classifyWeeksByTemplate(
             diffBaseline,
+            TEMPLATE_WEEK_ORDINAL,
+        );
+        const draftKinds = classifyWeeksByTemplate(
+            draft,
             TEMPLATE_WEEK_ORDINAL,
         );
         const personalizedUpdates = draft.filter((weekDraft) => {
             if (weekDraft.week_ordinal === TEMPLATE_WEEK_ORDINAL) {
                 return false;
             }
-            if (baselineKinds[weekDraft.week_ordinal] !== "personalizada") {
+            if (!weekChangedVsBaseline(weekDraft, baselineByOrdinal)) {
                 return false;
             }
-            return weekChangedVsBaseline(weekDraft, baselineByOrdinal);
+            // Servidor personalizada (p. ej. Restaurar) o personalizada nueva en draft.
+            return (
+                baselineKinds[weekDraft.week_ordinal] === "personalizada" ||
+                draftKinds[weekDraft.week_ordinal] === "personalizada"
+            );
         });
 
         await syncRecurring({
@@ -374,28 +381,24 @@ export async function persistBlockStructureEdit(
         }).unwrap();
         changed = true;
 
+        // Ordinales nuevos (no en servidor): sync-recurring no los crea.
         for (const weekDraft of draft) {
             if (weekDraft.week_ordinal === TEMPLATE_WEEK_ORDINAL) {
                 continue;
             }
-            if (!weekChangedVsBaseline(weekDraft, baselineByOrdinal)) {
+            if (existingByOrdinal.has(weekDraft.week_ordinal)) {
                 continue;
             }
-            const isPersonalized =
-                baselineKinds[weekDraft.week_ordinal] === "personalizada";
-            const isNewOrdinal = !existingByOrdinal.has(weekDraft.week_ordinal);
-            if (isPersonalized || isNewOrdinal) {
-                await putOrCreateWeekDraft(
-                    planId,
-                    blockId,
-                    weekDraft,
-                    weekIdsByOrdinal,
-                    existingByOrdinal,
-                    updateWeek,
-                    createWeek,
-                );
-                changed = true;
-            }
+            await putOrCreateWeekDraft(
+                planId,
+                blockId,
+                weekDraft,
+                weekIdsByOrdinal,
+                existingByOrdinal,
+                updateWeek,
+                createWeek,
+            );
+            changed = true;
         }
 
         return changed;

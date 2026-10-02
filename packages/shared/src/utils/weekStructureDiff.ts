@@ -119,7 +119,11 @@ export function classifyWeeksByTemplate(
     );
 }
 
-/** Classify weeks using baseline reference when available (F5 unified criterion). */
+/**
+ * Clasifica usando el snapshot de referencia (baseline persistido si existe).
+ * Para propagación setActiveDays / patrones: no pisa personalizadas del servidor
+ * aunque el draft haya divergido la semana tipo.
+ */
 export function classifyWeeksWithBaseline(
     draft: readonly WeekLike[],
     structureBaseline: readonly WeekLike[] | undefined,

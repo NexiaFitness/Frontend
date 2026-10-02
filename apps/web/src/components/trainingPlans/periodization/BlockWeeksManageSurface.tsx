@@ -12,7 +12,7 @@ import React, {
 import { X } from "lucide-react";
 
 import {
-    classifyWeeksWithBaseline,
+    classifyWeeksByTemplate,
     getMutationErrorMessage,
     isWeeklyStructureDirty,
     weeklyStructureDraftsEqual,
@@ -173,8 +173,8 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
     );
 
     const weekKindByOrdinal = useMemo(
-        () => classifyWeeksWithBaseline(draft, baseline, 1),
-        [draft, baseline],
+        () => classifyWeeksByTemplate(draft, 1),
+        [draft],
     );
 
     const editorTrainingDays = useMemo(() => {

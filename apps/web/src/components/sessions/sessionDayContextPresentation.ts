@@ -9,7 +9,6 @@ import type {
     SessionDayRecommendations,
     SessionRecommendationsResponse,
 } from "@nexia/shared/types/sessionRecommendations";
-import { findBlockContainingDate } from "@/components/trainingPlans/periodization/planningShellUtils";
 
 export const SESSION_DAY_CONTEXT_COPY = {
     title: "Hoy toca",
@@ -236,7 +235,7 @@ export interface ResolveSessionDayPhaseContextInput {
 export function resolveSessionDayPhaseContext(
     input: ResolveSessionDayPhaseContextInput,
 ): SessionDayPhaseContext | null {
-    const { response, sessionDate, periodBlocks = [] } = input;
+    const { response, periodBlocks = [] } = input;
     if (!response) {
         return null;
     }
