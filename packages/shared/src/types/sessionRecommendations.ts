@@ -101,6 +101,10 @@ export interface SessionDayRecommendations {
     has_complete_weekly_structure?: boolean | null;
     /** Si la semana ordinal de session_date tiene fila en weekly_structure_weeks */
     current_week_has_structure?: boolean | null;
+    /** Ordinales 1..N del bloque sin fila de estructura semanal */
+    missing_structure_week_ordinals?: number[] | null;
+    /** El día ISO de session_date tiene al menos un patrón en la estructura */
+    current_day_has_patterns?: boolean | null;
 }
 
 /** Respuesta sin plan activo */

@@ -32,6 +32,17 @@ function sessionWord(count: number): string {
     return count === 1 ? "sesión" : "sesiones";
 }
 
+function extraCompletedSuffix(adherence: AthleteWeeklyAdherence): string {
+    const extra = adherence.sessions_extra_completed ?? 0;
+    if (!adherence.has_active_plan || extra <= 0) {
+        return "";
+    }
+    if (extra === 1) {
+        return " Más 1 sesión extra.";
+    }
+    return ` Más ${extra} sesiones extra.`;
+}
+
 function remainingSessionsPhrase(count: number): string {
     if (count === 1) return "Te queda 1 sesión esta semana.";
     return `Te quedan ${count} ${sessionWord(count)} esta semana.`;
@@ -118,10 +129,11 @@ export function buildWeeklyAdherenceHeadline(
     }
 
     if (completed >= planned) {
+        const extra = extraCompletedSuffix(adherence);
         if (planned === 1) {
-            return "Sesión hecha. Semana cerrada. Buen trabajo.";
+            return `Sesión hecha. Semana del plan cerrada.${extra} Buen trabajo.`;
         }
-        return `Buena semana: ${completed} de ${planned}. Mantén el ritmo.`;
+        return `Buena semana: ${completed} de ${planned}.${extra} Mantén el ritmo.`;
     }
 
     const remaining = planned - completed;

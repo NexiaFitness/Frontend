@@ -38,6 +38,32 @@ export function weeksStructureEqual(
     return normalizeWeek(left) === normalizeWeek(right);
 }
 
+/**
+ * True when weekly structure draft differs from persisted baseline (D-PRES).
+ * Empty baseline after a confirmed GET means "no structure on server" — not unknown.
+ */
+export function isWeeklyStructureDirty(
+    draft: readonly WeeklyStructureWeekCreate[],
+    baseline: readonly WeeklyStructureWeekCreate[],
+): boolean {
+    if (baseline.length === 0 && draft.length === 0) {
+        return false;
+    }
+    if (baseline.length !== draft.length) {
+        return true;
+    }
+    const baselineByOrdinal = new Map(
+        baseline.map((w) => [w.week_ordinal, w]),
+    );
+    return draft.some((w) => {
+        const base = baselineByOrdinal.get(w.week_ordinal);
+        if (!base) {
+            return true;
+        }
+        return !weeksStructureEqual(w, base);
+    });
+}
+
 /** True when two multi-week drafts are structurally identical (D-PRES dirty gate). */
 export function weeklyStructureDraftsEqual(
     left: readonly WeeklyStructureWeekCreate[],

@@ -440,6 +440,7 @@ export const baseApi = createApi({
         "HabitInsights",
         "PlanPeriodBlock",
         "WeeklyStructure",
+        "SessionRecommendations",
         "TemplateProgram",
         "TemplateProgramBlock",
         "TemplateProgramSession",

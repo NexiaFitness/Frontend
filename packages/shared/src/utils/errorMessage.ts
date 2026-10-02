@@ -87,6 +87,24 @@ function localizeHttpDetail(detail: string, status?: number): string {
         return "El código ha caducado o no existe. Solicita uno nuevo.";
     }
 
+    if (
+        normalized.includes("week ordinal 1 not found in this block") ||
+        normalized.includes("week ordinal 1 not found")
+    ) {
+        return (
+            "Falta la semana tipo (semana 1) en este bloque. Abre «Gestionar semanas», " +
+            "restablece la semana tipo desde una semana existente o reinicia la estructura, e inténtalo de nuevo."
+        );
+    }
+
+    if (normalized.includes("template week must be ordinal 1")) {
+        return "La semana tipo debe ser la semana 1 del bloque.";
+    }
+
+    if (normalized.includes("invalid movement pattern")) {
+        return "Uno o más patrones de movimiento no son válidos. Recarga el catálogo e inténtalo de nuevo.";
+    }
+
     if (normalized === "invalid or expired refresh token") {
         return SESSION_AUTH_401_ES;
     }

@@ -132,6 +132,7 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
             }),
             providesTags: (_result, _error, { client_id, session_date }) => [
                 { type: 'TrainingSession', id: `REC_${client_id}_${session_date}` },
+                { type: 'SessionRecommendations', id: 'LIST' },
             ],
         }),
 

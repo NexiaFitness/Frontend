@@ -7,6 +7,8 @@
 export interface AthleteWeeklyAdherence {
     sessions_planned: number;
     sessions_completed: number;
+    /** Completed sessions outside the plan when has_active_plan (D10). */
+    sessions_extra_completed: number;
     adherence_rate: number;
     has_active_plan: boolean;
     plan_name: string | null;

@@ -27,6 +27,21 @@ import type {
     WeeklyStructureSyncRecurringOut,
 } from "../types/weeklyStructure";
 
+const SESSION_RECOMMENDATIONS_LIST_TAG = {
+    type: "SessionRecommendations" as const,
+    id: "LIST" as const,
+};
+
+function weeklyStructureMutationInvalidates(arg: {
+    planId: number;
+    blockId: number;
+}) {
+    return [
+        { type: "WeeklyStructure" as const, id: `${arg.planId}-${arg.blockId}` },
+        SESSION_RECOMMENDATIONS_LIST_TAG,
+    ];
+}
+
 export const weeklyStructureApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         // =====================================================================
@@ -61,9 +76,8 @@ export const weeklyStructureApi = baseApi.injectEndpoints({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: (_result, _error, arg) => [
-                { type: "WeeklyStructure", id: `${arg.planId}-${arg.blockId}` },
-            ],
+            invalidatesTags: (_result, _error, arg) =>
+                weeklyStructureMutationInvalidates(arg),
         }),
 
         /** Actualizar una semana existente (reemplazo completo de días y patrones). */
@@ -76,9 +90,8 @@ export const weeklyStructureApi = baseApi.injectEndpoints({
                 method: "PUT",
                 body,
             }),
-            invalidatesTags: (_result, _error, arg) => [
-                { type: "WeeklyStructure", id: `${arg.planId}-${arg.blockId}` },
-            ],
+            invalidatesTags: (_result, _error, arg) =>
+                weeklyStructureMutationInvalidates(arg),
         }),
 
         /** Eliminar una semana y todos sus días/patrones en cascada. */
@@ -90,9 +103,8 @@ export const weeklyStructureApi = baseApi.injectEndpoints({
                 url: `/training-plans/${planId}/period-blocks/${blockId}/weekly-structure/weeks/${weekId}`,
                 method: "DELETE",
             }),
-            invalidatesTags: (_result, _error, arg) => [
-                { type: "WeeklyStructure", id: `${arg.planId}-${arg.blockId}` },
-            ],
+            invalidatesTags: (_result, _error, arg) =>
+                weeklyStructureMutationInvalidates(arg),
         }),
 
         /** Repetir una semana (estructura + sesiones) en otras semanas del mismo bloque. */
@@ -111,7 +123,7 @@ export const weeklyStructureApi = baseApi.injectEndpoints({
                 body,
             }),
             invalidatesTags: (_result, _error, arg) => [
-                { type: "WeeklyStructure", id: `${arg.planId}-${arg.blockId}` },
+                ...weeklyStructureMutationInvalidates(arg),
                 { type: "TrainingSession", id: "LIST" },
             ],
         }),
@@ -130,9 +142,8 @@ export const weeklyStructureApi = baseApi.injectEndpoints({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: (_result, _error, arg) => [
-                { type: "WeeklyStructure", id: `${arg.planId}-${arg.blockId}` },
-            ],
+            invalidatesTags: (_result, _error, arg) =>
+                weeklyStructureMutationInvalidates(arg),
         }),
 
         /** Sync template week + inherited weeks atomically after edit save. */
@@ -149,9 +160,8 @@ export const weeklyStructureApi = baseApi.injectEndpoints({
                 method: "POST",
                 body,
             }),
-            invalidatesTags: (_result, _error, arg) => [
-                { type: "WeeklyStructure", id: `${arg.planId}-${arg.blockId}` },
-            ],
+            invalidatesTags: (_result, _error, arg) =>
+                weeklyStructureMutationInvalidates(arg),
         }),
     }),
     overrideExisting: false,

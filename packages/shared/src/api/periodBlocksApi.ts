@@ -66,6 +66,7 @@ export const periodBlocksApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { planId }) => [
         { type: "PlanPeriodBlock", id: `LIST-${planId}` },
+        { type: "SessionRecommendations", id: "LIST" },
       ],
     }),
 
@@ -83,11 +84,15 @@ export const periodBlocksApi = baseApi.injectEndpoints({
         const tags: Array<
           | { type: "PlanPeriodBlock"; id: number | string }
           | { type: "WeeklyStructure"; id: number | string }
-        > = [{ type: "PlanPeriodBlock", id: `LIST-${planId}` }];
+          | { type: "SessionRecommendations"; id: string }
+        > = [
+          { type: "PlanPeriodBlock", id: `LIST-${planId}` },
+          { type: "SessionRecommendations", id: "LIST" },
+        ];
         const blockId = result?.block?.id;
         if (blockId != null) {
           tags.push({ type: "PlanPeriodBlock", id: blockId });
-          tags.push({ type: "WeeklyStructure", id: blockId });
+          tags.push({ type: "WeeklyStructure", id: `${planId}-${blockId}` });
         }
         return tags;
       },
@@ -106,6 +111,8 @@ export const periodBlocksApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { planId, blockId }) => [
         { type: "PlanPeriodBlock", id: blockId },
         { type: "PlanPeriodBlock", id: `LIST-${planId}` },
+        { type: "WeeklyStructure", id: `${planId}-${blockId}` },
+        { type: "SessionRecommendations", id: "LIST" },
       ],
     }),
 

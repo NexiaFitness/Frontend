@@ -44,6 +44,7 @@ export function buildDeterministicWeeklyProse(
     const { adherence, personal_records, training_streak, feedback } = summary;
     const planned = adherence.sessions_planned;
     const completed = adherence.sessions_completed;
+    const extraCompleted = adherence.sessions_extra_completed ?? 0;
     const rate = adherence.adherence_rate;
     const hasActivePlan = adherence.has_active_plan;
     const parts: string[] = [];
@@ -56,10 +57,15 @@ export function buildDeterministicWeeklyProse(
         if (weekClosed && lowVolume) {
             parts.push(lowVolumeClosedLine(planned, pct, hasActivePlan));
         } else if (weekClosed) {
-            parts.push(
-                `Cerraste la semana con ${completed} de ${planned} sesiones (${pct}%). ` +
-                    "La adherencia al plan es el primer indicador que revisamos."
-            );
+            let line =
+                `Cerraste la semana con ${completed} de ${planned} sesiones del plan (${pct}%). `;
+            if (hasActivePlan && extraCompleted > 0) {
+                const extraWord =
+                    extraCompleted === 1 ? "sesión extra" : "sesiones extra";
+                line += `Además completaste ${extraCompleted} ${extraWord}. `;
+            }
+            line += "La adherencia al plan es el primer indicador que revisamos.";
+            parts.push(line);
         } else if (completed > 0) {
             parts.push(
                 `Llevas ${completed} de ${planned} sesiones esta semana (${pct}%). ` +

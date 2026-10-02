@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
     classifyWeeksByTemplate,
+    isWeeklyStructureDirty,
     weeksStructureEqual,
 } from "../weekStructureDiff";
 
@@ -29,6 +30,11 @@ describe("weekStructureDiff", () => {
             { day_of_week: 2, patterns: [{ movement_pattern_id: 99, sub_pattern: null }] },
         ],
     };
+
+    it("isWeeklyStructureDirty: baseline vacío confirmado vs draft con semanas", () => {
+        expect(isWeeklyStructureDirty([], [])).toBe(false);
+        expect(isWeeklyStructureDirty([template], [])).toBe(true);
+    });
 
     it("weeksStructureEqual ignora week_ordinal", () => {
         expect(weeksStructureEqual(template, copy)).toBe(true);

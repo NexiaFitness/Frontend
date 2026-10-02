@@ -50,7 +50,9 @@ export interface TrainingLoadSummary {
 export interface TrainingPlanSummaryStats {
     total_sessions_planned: number;
     sessions_completed: number;
+    sessions_extra_completed?: number;
     adherence_rate: number;  // Percentage 0-100
+    narrative?: string;
 }
 
 // ============================================================================
@@ -125,6 +127,15 @@ export interface PlannedVsActualComparison {
     planned_intensity: number;
     actual_intensity: number;
     intensity_status: "on_track" | "below_target";
+    actual_volume_estimated?: number;
+    actual_volume_plan?: number;
+    actual_volume_extra?: number;
+    actual_intensity_plan?: number;
+    actual_intensity_extra?: number;
+    load_index_plan_sum?: number;
+    load_index_extra_sum?: number;
+    extra_sessions_completed?: number;
+    extra_load_excess?: boolean;
     /** Siempre vacío hasta existir métrica honesta planificado vs ejecutado por cualidades. */
     qualities: TrainingPlanQualityAverage[];
     /** false: no comparar slugs planificados con session_type (métrica retirada). */
@@ -200,10 +211,21 @@ export interface WeeklySessionEntry {
     session_name: string;
     session_type: string | null;
     status: string;  // e.g., "completed", "planned", "cancelled"
+    is_extra?: boolean;
     planned_volume: number | null;
     planned_intensity: number | null;
     actual_volume: number | null;
     actual_intensity: number | null;
+    duration_minutes?: number | null;
+    perceived_effort?: number | null;
+    load_index?: number;
+    load_source?: string;
+    load_is_estimated?: boolean;
+    actual_volume_derivation?: string;
+    duration_is_estimated?: boolean;
+    intensity_index?: number;
+    intensity_source?: string;
+    intensity_is_estimated?: boolean;
 }
 
 /**

@@ -440,10 +440,19 @@ export {
 export {
     weeksStructureEqual,
     weeklyStructureDraftsEqual,
+    isWeeklyStructureDirty,
     classifyWeeksByTemplate,
     findTemplateWeek,
     type WeekStructureKind,
 } from "./utils/weekStructureDiff";
+export {
+    getWeekdaysPresentInBlockRange,
+    isWeekdayInBlockRange,
+    blockWeekdayUnavailableReason,
+    findStructureDaysOutsideBlockRange,
+    weekdayLabelEs,
+    isoDayOfWeekFromDateISO,
+} from "./utils/blockPeriodWeekdaysInRange";
 export {
     UI_BUCKET_ORDER,
     UI_BUCKET_LABELS,
