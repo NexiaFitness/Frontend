@@ -9,7 +9,7 @@ import { useCallback, useRef, useState } from "react";
 
 import {
     getMutationErrorMessage,
-    weeklyStructureDraftsEqual,
+    isWeeklyStructureDirty,
 } from "@nexia/shared";
 import type { WeeklyStructureWeek } from "@nexia/shared/types/weeklyStructure";
 import {
@@ -34,6 +34,7 @@ import {
     blockFieldsChanged,
     cloneWeeklyStructureDraft,
     persistBlockStructureEdit,
+    serverReflectsWeeklyStructureSave,
     toBlockCreateWithStructurePayload,
     toBlockPersistPayload,
     weeklyStructureToDraft,
@@ -208,22 +209,9 @@ export function useBlockAuthoringPersistence({
 
         const draftSnapshot = cloneWeeklyStructureDraft(form.weeklyStructure);
         const baselineSnapshot = cloneWeeklyStructureDraft(structureBaseline);
-        const structureDiffersFromBaseline =
-            draftSnapshot.length > 0 &&
-            baselineSnapshot.length > 0 &&
-            !weeklyStructureDraftsEqual(draftSnapshot, baselineSnapshot);
-        const structureIsDirty = structureReady && structureDiffersFromBaseline;
-
-        if (
+        const structureIsDirty =
             structureReady &&
-            draftSnapshot.length > 0 &&
-            baselineSnapshot.length === 0
-        ) {
-            showError(
-                "No se pudo determinar el estado persistido de la estructura semanal. Recarga la página e inténtalo de nuevo.",
-            );
-            return;
-        }
+            isWeeklyStructureDirty(draftSnapshot, baselineSnapshot);
 
         let updatedBlock: PlanPeriodBlock = persistedBlock;
         let blockFieldsPersisted = false;
@@ -287,7 +275,14 @@ export function useBlockAuthoringPersistence({
                 }
 
                 const synced = weeklyStructureToDraft(refetchResult.data.weeks);
-                if (!weeklyStructureDraftsEqual(synced, draftSnapshot)) {
+                const baselineWasEmpty = baselineSnapshot.length === 0;
+                if (
+                    !serverReflectsWeeklyStructureSave(
+                        synced,
+                        draftSnapshot,
+                        baselineWasEmpty,
+                    )
+                ) {
                     showError(
                         "El servidor no reflejó los cambios. Revisa la conexión e inténtalo de nuevo.",
                     );
@@ -296,7 +291,9 @@ export function useBlockAuthoringPersistence({
 
                 markPersisted(
                     updatedBlock,
-                    cloneWeeklyStructureDraft(synced),
+                    cloneWeeklyStructureDraft(
+                        baselineWasEmpty ? synced : draftSnapshot,
+                    ),
                 );
                 onStructureSynced?.(blockId, refetchResult.data.weeks);
                 showSuccess("Fase guardada correctamente.");
@@ -309,7 +306,7 @@ export function useBlockAuthoringPersistence({
                 return;
             }
 
-            if (structureDiffersFromBaseline) {
+            if (structureIsDirty) {
                 showError(
                     "No se pudo guardar la estructura semanal. Revisa la conexión e inténtalo de nuevo.",
                 );

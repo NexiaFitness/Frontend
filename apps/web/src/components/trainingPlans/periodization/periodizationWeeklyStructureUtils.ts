@@ -106,6 +106,39 @@ export function computeWeeklyStructureMetrics(
     };
 }
 
+/**
+ * Crea la semana tipo (ordinal 1) clonando otra semana existente.
+ * Recuperación cuando hay semanas huérfanas sin semana 1 (bootstrap policy b).
+ */
+export function promoteWeekOrdinalToTemplate(
+    draft: readonly WeeklyStructureWeekCreate[],
+    sourceWeekOrdinal: number,
+): WeeklyStructureWeekCreate[] {
+    const source = draft.find((w) => w.week_ordinal === sourceWeekOrdinal);
+    if (!source || sourceWeekOrdinal === 1) {
+        return draft.map((w) => ({
+            ...w,
+            days: w.days.map((d) => ({
+                ...d,
+                patterns: d.patterns.map((p) => ({ ...p })),
+            })),
+        }));
+    }
+    const week1: WeeklyStructureWeekCreate = {
+        week_ordinal: 1,
+        label: source.label ?? null,
+        days: source.days.map((d) => ({
+            day_of_week: d.day_of_week,
+            patterns: d.patterns.map((p) => ({
+                movement_pattern_id: p.movement_pattern_id,
+                sub_pattern: p.sub_pattern ?? null,
+            })),
+        })),
+    };
+    const withoutOne = draft.filter((w) => w.week_ordinal !== 1);
+    return [...withoutOne, week1].sort((a, b) => a.week_ordinal - b.week_ordinal);
+}
+
 /** Copia la estructura de la semana plantilla sobre otra semana del draft. */
 export function restoreWeekFromTemplate(
     draft: readonly WeeklyStructureWeekCreate[],

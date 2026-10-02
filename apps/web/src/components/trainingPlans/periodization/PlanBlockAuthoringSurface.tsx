@@ -16,9 +16,12 @@ import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import {
     buildStructureDriftToastMessage,
+    findStructureDaysOutsideBlockRange,
     formatLocalDateOnly,
+    isWeekdayInBlockRange,
     listStructureDriftPlannedSessionIds,
     resolveClientTrainingFrequency,
+    weekdayLabelEs,
 } from "@nexia/shared";
 import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { useGetMovementPatternsQuery } from "@nexia/shared/api/exercisesApi";
@@ -60,7 +63,9 @@ import {
     ensureWeek1FromTrainingDays,
     getActiveDaysFromWeek1,
     setActiveDaysOnWeek1,
+    trainingDaysToIsoSet,
 } from "./blockAuthoringDaysUtils";
+import { resolveBlockAuthorStepForWizardState } from "./blockAuthoringStepGuard";
 import { allActiveDaysHavePatterns } from "./blockAuthoringPatternsUtils";
 import { weeklyStructureToDraft } from "./periodBlockPersistence";
 import { getSyncRecurringConfirmOrdinals } from "./syncRecurringStructureConfirm";
@@ -126,7 +131,8 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         number[] | null
     >(null);
     const createInitializedRef = useRef(false);
-    const editBlockIdRef = useRef<number | null>(null);
+    const blockMetaLoadedIdRef = useRef<number | null>(null);
+    const structureHydratedForBlockRef = useRef<number | null>(null);
 
     const { data: existingStructure } = useGetWeeklyStructureQuery(
         { planId, blockId: blockId! },
@@ -137,7 +143,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     );
 
     const navigation = useBlockAuthoringNavigation(maxReachedStep);
-    const step = navigation.step;
+    const { step, goToStep: goToAuthorStep } = navigation;
 
     const confirmWeeklyStructureFromServer = useCallback(async () => {
         if (blockId == null) {
@@ -209,8 +215,9 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
 
     useEffect(() => {
         if (mode !== "edit" || blockId == null) return;
-        if (editBlockIdRef.current === blockId) return;
-        editBlockIdRef.current = blockId;
+        if (blockMetaLoadedIdRef.current === blockId) return;
+        blockMetaLoadedIdRef.current = blockId;
+        structureHydratedForBlockRef.current = null;
         const block = blocks.find((b) => b.id === blockId);
         if (block) {
             loadBlock(block);
@@ -220,6 +227,9 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
 
     useEffect(() => {
         if (mode !== "edit" || blockId == null || structureLoaded) {
+            return;
+        }
+        if (structureHydratedForBlockRef.current === blockId) {
             return;
         }
 
@@ -240,6 +250,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                 hydrateWeeklyStructure(
                     weeklyStructureToDraft(result.data.weeks ?? []),
                 );
+                structureHydratedForBlockRef.current = blockId;
                 setStructureLoaded(true);
             } catch {
                 if (!cancelled) {
@@ -266,6 +277,40 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         () => getActiveDaysFromWeek1(form.weeklyStructure),
         [form.weeklyStructure],
     );
+
+    const patternsComplete = useMemo(
+        () => allActiveDaysHavePatterns(form.weeklyStructure, activeDays),
+        [form.weeklyStructure, activeDays],
+    );
+
+    const structureReadyForWizard = mode === "create" || structureLoaded;
+
+    useEffect(() => {
+        const resolved = resolveBlockAuthorStepForWizardState(step, mode, {
+            structureReady: structureReadyForWizard,
+            activeDayCount: activeDays.length,
+            patternsComplete,
+        });
+        if (resolved !== step) {
+            goToAuthorStep(resolved);
+        }
+    }, [
+        step,
+        mode,
+        structureReadyForWizard,
+        activeDays.length,
+        patternsComplete,
+        goToAuthorStep,
+    ]);
+
+    const daysOutsideBlockRange = useMemo(() => {
+        if (!form.startDate || !form.endDate) return [];
+        return findStructureDaysOutsideBlockRange(
+            form.startDate,
+            form.endDate,
+            activeDays,
+        );
+    }, [form.startDate, form.endDate, activeDays]);
 
     const { data: clientTrainingSessions = [] } = useGetTrainingSessionsByClientQuery(
         clientId,
@@ -322,10 +367,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         isStructureDirty,
         canPersist: canPersistBlock,
         activeDayCount: activeDays.length,
-        patternsComplete: allActiveDaysHavePatterns(
-            form.weeklyStructure,
-            activeDays,
-        ),
+        patternsComplete,
         markPersisted,
         onCreateSuccess: (block) => {
             if (onCreateSuccess) onCreateSuccess(block);
@@ -351,6 +393,13 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
 
     const handleToggleDay = useCallback(
         (dayOfWeek: number) => {
+            if (
+                form.startDate &&
+                form.endDate &&
+                !isWeekdayInBlockRange(dayOfWeek, form.startDate, form.endDate)
+            ) {
+                return;
+            }
             const set = new Set(activeDays);
             if (set.has(dayOfWeek)) {
                 set.delete(dayOfWeek);
@@ -361,8 +410,40 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                 setActiveDaysOnWeek1([...set], prev, structureBaseline),
             );
         },
-        [activeDays, setWeeklyStructure, structureBaseline],
+        [
+            activeDays,
+            form.startDate,
+            form.endDate,
+            setWeeklyStructure,
+            structureBaseline,
+        ],
     );
+
+    const handleApplyHabitualDays = useCallback(() => {
+        const isoDays = trainingDaysToIsoSet(clientProfile?.training_days);
+        const inRange =
+            form.startDate && form.endDate
+                ? isoDays.filter((d) =>
+                      isWeekdayInBlockRange(d, form.startDate!, form.endDate!),
+                  )
+                : isoDays;
+        if (inRange.length === 0) {
+            showWarning(
+                "Ningún día habitual del cliente cae dentro del rango de este bloque.",
+            );
+            return;
+        }
+        setWeeklyStructure((prev) =>
+            setActiveDaysOnWeek1(inRange, prev, structureBaseline),
+        );
+    }, [
+        clientProfile?.training_days,
+        form.startDate,
+        form.endDate,
+        setWeeklyStructure,
+        structureBaseline,
+        showWarning,
+    ]);
 
     const handleSaveClick = useCallback(() => {
         if (mode === "edit" && structureLoaded) {
@@ -561,6 +642,15 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                     continuar.
                 </p>
             ) : null}
+            {daysOutsideBlockRange.length > 0 &&
+            (step === "days" || step === "patterns") ? (
+                <p className="text-sm text-warning" data-testid="authoring-days-outside-range">
+                    Hay días activos (
+                    {daysOutsideBlockRange.map(weekdayLabelEs).join(", ")}) que no caen
+                    dentro del rango del bloque. Quítalos o ajusta el rango antes de
+                    guardar.
+                </p>
+            ) : null}
             <div className={AUTHORING_WIZARD_FOOTER_ROW_CLASS}>
                 <Button
                     type="button"
@@ -670,8 +760,14 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                             <BlockAuthoringStepDays
                                 activeDays={activeDays}
                                 onToggleDay={handleToggleDay}
+                                startDate={form.startDate}
+                                endDate={form.endDate}
                                 periodUnit={periodUnit}
                                 hideIntro
+                                showApplyHabitualDays={
+                                    mode === "edit" && structureLoaded
+                                }
+                                onApplyHabitualDays={handleApplyHabitualDays}
                             />
                         ) : step === "patterns" ? (
                             <BlockAuthoringStepPatterns

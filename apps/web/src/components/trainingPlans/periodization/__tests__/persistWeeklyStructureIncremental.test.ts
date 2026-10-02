@@ -122,7 +122,9 @@ describe("persistWeeklyStructureIncremental", () => {
         expect(updateWeek).not.toHaveBeenCalled();
     });
 
-    it("requireBaselineDiff: no escribe si baseline vacío con draft dirty", async () => {
+    it("requireBaselineDiff: no escribe si baseline vacío (superficie sin bootstrap sync)", async () => {
+        // D-PRES: baseline [] tras GET = estructura vacía en servidor; el edit wizard usa
+        // persistBlockStructureEdit + sync-recurring, no incremental con requireBaselineDiff.
         const updateWeek = vi.fn(() => ({ unwrap: () => Promise.resolve({}) }));
         const createWeek = vi.fn();
 

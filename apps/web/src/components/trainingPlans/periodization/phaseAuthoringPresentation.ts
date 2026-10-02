@@ -140,12 +140,18 @@ export function periodUnitPhrase(unit: "fase" | "bloque"): string {
 export const AUTHORING_DAY_TOGGLE_TRACK_CLASS =
     "flex flex-wrap justify-center gap-2 sm:gap-3";
 
-export const authoringDayToggleClass = (active: boolean): string =>
+export const authoringDayToggleClass = (
+    active: boolean,
+    disabled = false,
+): string =>
     cn(
         "inline-flex h-11 w-11 items-center justify-center rounded-full border text-sm font-semibold transition-colors sm:h-12 sm:w-12",
-        active
-            ? "border-primary bg-primary/15 text-primary shadow-[0_0_20px_-8px_hsl(var(--primary)/0.55)]"
-            : "border-border/70 bg-surface-2/50 text-muted-foreground hover:border-primary/35 hover:text-foreground",
+        disabled &&
+            "cursor-not-allowed border-border/40 bg-muted/20 text-muted-foreground/45 opacity-60",
+        !disabled &&
+            (active
+                ? "border-primary bg-primary/15 text-primary shadow-[0_0_20px_-8px_hsl(var(--primary)/0.55)]"
+                : "border-border/70 bg-surface-2/50 text-muted-foreground hover:border-primary/35 hover:text-foreground"),
     );
 
 export const AUTHORING_PLACEHOLDER_CLASS =

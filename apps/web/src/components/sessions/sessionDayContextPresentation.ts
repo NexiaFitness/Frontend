@@ -42,6 +42,8 @@ export const SESSION_DAY_CONTEXT_COPY = {
         "La semana {week} del bloque aún no tiene días de entreno definidos. Configúrala para ver qué toca entrenar.",
     incompleteBlockHint:
         "El bloque tiene {configured} de {total} semanas con estructura definida.",
+    dayWithoutPatternsHint:
+        "Este día está en la estructura semanal pero aún no tiene patrones de movimiento. Configúralos para ver qué toca entrenar.",
 } as const;
 
 const METRIC_LABEL_CLASS =
@@ -170,6 +172,17 @@ export function buildStructureGapViewModel(
 
     if (patterns.length > 0) {
         return { show: false, message: "", configurePath };
+    }
+
+    if (
+        rec.current_week_has_structure === true &&
+        rec.current_day_has_patterns === false
+    ) {
+        return {
+            show: true,
+            message: SESSION_DAY_CONTEXT_COPY.dayWithoutPatternsHint,
+            configurePath,
+        };
     }
 
     if (rec.current_week_has_structure === false && weekOrdinal != null) {

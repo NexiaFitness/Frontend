@@ -1,7 +1,16 @@
+/**
+ * usePeriodBlockForm.ts — Estado del wizard D-PAP (rango, cualidades, estructura semanal).
+ *
+ * Contexto: draft editable + baseline persistido (D-PRES). Baseline vacío tras GET = sin estructura en servidor.
+ *
+ * @author Frontend Team
+ * @since v9.0.0
+ */
+
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import type { PlanPeriodBlock, PeriodBlockQualityInput } from "@nexia/shared/types/planningCargas";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
-import { weeksStructureEqual } from "@nexia/shared";
+import { isWeeklyStructureDirty } from "@nexia/shared";
 import { hasOverlap, isWithinPlanBounds } from "@nexia/shared/utils/periodBlockOverlap";
 import {
   canPersistBlock,
@@ -299,22 +308,11 @@ export function usePeriodBlockForm(
   const qualitiesComplete =
     form.qualities.length > 0 && qualitiesSum === 100;
 
-  const isStructureDirty = useMemo(() => {
-    if (structureBaseline.length === 0 && form.weeklyStructure.length === 0) {
-      return false;
-    }
-    if (structureBaseline.length !== form.weeklyStructure.length) {
-      return true;
-    }
-    const baselineByOrdinal = new Map(
-      structureBaseline.map((w) => [w.week_ordinal, w]),
-    );
-    return form.weeklyStructure.some((w) => {
-      const base = baselineByOrdinal.get(w.week_ordinal);
-      if (!base) return true;
-      return !weeksStructureEqual(w, base);
-    });
-  }, [form.weeklyStructure, structureBaseline]);
+  const isStructureDirty = useMemo(
+    () =>
+      isWeeklyStructureDirty(form.weeklyStructure, structureBaseline),
+    [form.weeklyStructure, structureBaseline],
+  );
 
   const isBlockFieldsDirty = useMemo(() => {
     const loaded = loadedBlockRef.current;

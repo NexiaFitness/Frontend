@@ -6,12 +6,17 @@
  *
  * Notas de mantenimiento: diff estructural vía weekStructureDiff de @nexia/shared;
  * edit con cambio de semana tipo usa POST sync-recurring (atómico BE).
+ * D-PRES: baseline vacío tras GET confirmado = sin estructura en servidor (bootstrap vía sync).
  *
  * @author Frontend Team
  * @since v9.0.0
  */
 
-import { classifyWeeksByTemplate, weeksStructureEqual } from "@nexia/shared";
+import {
+    classifyWeeksByTemplate,
+    weeklyStructureDraftsEqual,
+    weeksStructureEqual,
+} from "@nexia/shared";
 import { getBlockCalendarWeekCount } from "@nexia/shared";
 import type {
     PlanPeriodBlock,
@@ -153,6 +158,30 @@ type SyncRecurringFn = (args: {
 
 const TEMPLATE_WEEK_ORDINAL = 1;
 
+/**
+ * Tras bootstrap (baseline vacío), el servidor replica semana tipo a 2..N;
+ * solo exigimos paridad estructural en las semanas presentes en el draft local.
+ */
+export function serverReflectsWeeklyStructureSave(
+    synced: readonly WeeklyStructureWeekCreate[],
+    draftSnapshot: readonly WeeklyStructureWeekCreate[],
+    baselineWasEmpty: boolean,
+): boolean {
+    if (!baselineWasEmpty) {
+        return weeklyStructureDraftsEqual(synced, draftSnapshot);
+    }
+    const syncedByOrdinal = new Map(
+        synced.map((w) => [w.week_ordinal, w]),
+    );
+    return draftSnapshot.every((weekDraft) => {
+        const weekSynced = syncedByOrdinal.get(weekDraft.week_ordinal);
+        if (!weekSynced) {
+            return false;
+        }
+        return weeksStructureEqual(weekDraft, weekSynced);
+    });
+}
+
 /** Copia profunda de draft/baseline para evitar referencias compartidas draft↔baseline. */
 export function cloneWeeklyStructureDraft(
     weeks: readonly WeeklyStructureWeekCreate[],
@@ -190,7 +219,10 @@ export function weeklyStructureToDraft(
 }
 
 export interface PersistWeeklyStructureOptions {
-    /** Surfaces D-PRES: no caer al diff vs RTK cache cuando falta baseline local. */
+    /**
+     * Surfaces D-PRES: exige baseline local antes de escribir.
+     * No usar cuando baseline [] está confirmado por GET (estructura vacía en servidor).
+     */
     requireBaselineDiff?: boolean;
 }
 
@@ -262,8 +294,25 @@ export async function persistBlockStructureEdit(
     createWeek: CreateWeekFn,
     syncRecurring: SyncRecurringFn,
 ): Promise<boolean> {
-    if (draft.length === 0 || diffBaseline.length === 0) {
+    if (draft.length === 0) {
         return false;
+    }
+
+    if (diffBaseline.length === 0) {
+        const templateDraft = draft.find(
+            (w) => w.week_ordinal === TEMPLATE_WEEK_ORDINAL,
+        );
+        if (templateDraft == null) {
+            return false;
+        }
+        await syncRecurring({
+            planId,
+            blockId,
+            body: {
+                template_week: templateDraft,
+            },
+        }).unwrap();
+        return true;
     }
 
     const baselineByOrdinal = new Map(

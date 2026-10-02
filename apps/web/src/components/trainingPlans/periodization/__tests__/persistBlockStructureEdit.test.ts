@@ -185,4 +185,47 @@ describe("persistBlockStructureEdit", () => {
         );
         expect(syncRecurring).not.toHaveBeenCalled();
     });
+
+    it("sync-recurring bootstrap cuando baseline vacío (bloque sin estructura previa)", async () => {
+        const draft = [
+            {
+                week_ordinal: 1,
+                label: null,
+                days: [
+                    {
+                        day_of_week: 1,
+                        patterns: [{ movement_pattern_id: 3, sub_pattern: null }],
+                    },
+                ],
+            },
+        ];
+        const syncRecurring = vi.fn(() => ({
+            unwrap: () =>
+                Promise.resolve({
+                    applied_week_ordinals: [],
+                    preserved_week_ordinals: [],
+                    updated_personalized_ordinals: [],
+                }),
+        }));
+
+        const saved = await persistBlockStructureEdit(
+            526,
+            42,
+            "2026-09-22",
+            "2026-09-28",
+            draft,
+            [],
+            { plan_period_block_id: 42, weeks: [] },
+            vi.fn(),
+            vi.fn(),
+            syncRecurring,
+        );
+
+        expect(saved).toBe(true);
+        expect(syncRecurring).toHaveBeenCalledWith({
+            planId: 526,
+            blockId: 42,
+            body: { template_week: draft[0] },
+        });
+    });
 });
