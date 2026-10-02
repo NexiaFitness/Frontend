@@ -450,7 +450,7 @@ export const SessionReviewPage: React.FC = () => {
             return;
         }
         navigateDashboardBack(navigate, location.state, "/dashboard/sessions");
-    }, [navigate, location.state, sessionId]);
+    }, [navigate, location.state]);
 
     const handleViewSession = useCallback(() => {
         navigate(`/dashboard/session-programming/sessions/${sessionId}`, {

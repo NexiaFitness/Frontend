@@ -38,6 +38,7 @@ export interface WeeklyInsightStats {
     trainingStreak: number;
     sessionsCompleted: number;
     sessionsPlanned: number;
+    sessionsExtraCompleted: number;
 }
 
 export interface AthleteWeeklyInsightData {
@@ -124,6 +125,7 @@ export function useAthleteWeeklyInsight(
             trainingStreak: data.training_streak,
             sessionsCompleted: data.adherence.sessions_completed,
             sessionsPlanned: data.adherence.sessions_planned,
+            sessionsExtraCompleted: data.adherence.sessions_extra_completed ?? 0,
         };
 
         const daysUntilNextSession = nextSession?.session_date

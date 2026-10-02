@@ -20,7 +20,7 @@ describe("SessionCreateKindField", () => {
         expect(container).toBeEmptyDOMElement();
     });
 
-    it("segmented — tabs Programa y Sesión suelta", () => {
+    it("segmented — tabs Programa y Fuera del plan", () => {
         render(
             <SessionCreateKindField
                 ui={{ variant: "segmented" }}
@@ -29,7 +29,7 @@ describe("SessionCreateKindField", () => {
             />,
         );
         expect(screen.getByRole("tab", { name: "Programa" })).toBeInTheDocument();
-        expect(screen.getByRole("tab", { name: "Sesión suelta" })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: "Fuera del plan" })).toBeInTheDocument();
     });
 
     it("implicit_standalone — volver a programa", async () => {
