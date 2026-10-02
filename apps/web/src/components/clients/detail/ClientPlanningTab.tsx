@@ -36,8 +36,14 @@ import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import { LoadingSpinner, Alert, EmptyState, useToast } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
-import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
 import { PLATFORM_PAGE_WITH_FIXED_FOOTER } from "@/components/ui/surface/platformPremiumPresentation";
+import {
+    CLIENT_PLANNING_FOOTER_ACTIONS,
+    CLIENT_PLANNING_FOOTER_BTN,
+    CLIENT_PLANNING_FOOTER_PRIMARY,
+    CLIENT_PLANNING_FOOTER_ROW,
+    CLIENT_PLANNING_FOOTER_SECONDARY,
+} from "./clientPlanningPresentation";
 import { cn } from "@/lib/utils";
 import {
     PlanPeriodizationSection,
@@ -536,44 +542,48 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
 
             {!isPhaseAuthoring && !blockAuthorActive && (
                 <DashboardFixedFooter>
-                    <div className={PLATFORM_DASHBOARD_FOOTER_ROW}>
-                        {onPlanificar ? (
+                    {/*
+                      Footer partido §2.3 B. Sin «Planificar» aquí: con plan en vista
+                      el CTA duplica el hub (§2.6 / §5). Primary = Editar plan.
+                    */}
+                    <div className={CLIENT_PLANNING_FOOTER_ROW}>
+                        <div className="md:shrink-0">
+                            {!plan.was_converted_to_template ? (
+                                <Button
+                                    type="button"
+                                    variant="outline-primary"
+                                    size="sm"
+                                    className={CLIENT_PLANNING_FOOTER_SECONDARY}
+                                    onClick={() => setConvertModalOpen(true)}
+                                    data-testid="client-planning-convert-template"
+                                >
+                                    Convertir en plantilla
+                                </Button>
+                            ) : null}
+                        </div>
+                        <div className={CLIENT_PLANNING_FOOTER_ACTIONS}>
+                            <Button
+                                type="button"
+                                variant="outline-destructive"
+                                size="sm"
+                                className={CLIENT_PLANNING_FOOTER_BTN}
+                                onClick={() => setDeleteModalOpen(true)}
+                            >
+                                Eliminar plan
+                            </Button>
                             <Button
                                 type="button"
                                 variant="primary"
                                 size="sm"
-                                onClick={onPlanificar}
-                                data-testid="client-planning-planificar"
+                                className={CLIENT_PLANNING_FOOTER_PRIMARY}
+                                onClick={() =>
+                                    navigate(`/dashboard/training-plans/${plan.id}/edit`)
+                                }
+                                data-testid="client-planning-edit-plan"
                             >
-                                Planificar
+                                Editar plan
                             </Button>
-                        ) : null}
-                        {!plan.was_converted_to_template ? (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setConvertModalOpen(true)}
-                            >
-                                Convertir en plantilla
-                            </Button>
-                        ) : null}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/dashboard/training-plans/${plan.id}/edit`)}
-                        >
-                            Editar plan
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="outline-destructive"
-                            size="sm"
-                            onClick={() => setDeleteModalOpen(true)}
-                        >
-                            Eliminar plan
-                        </Button>
+                        </div>
                     </div>
                 </DashboardFixedFooter>
             )}

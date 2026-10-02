@@ -36,6 +36,21 @@ export const PLATFORM_PAGE_HEADER = cn(
 
 export const PLATFORM_PAGE_TITLE_WRAP = "min-w-0 flex-1";
 
+/**
+ * Stack breadcrumbs → título → meta (mobile-first, 375px).
+ * Gaps: breadcrumbs→título ≥16px; título→meta 4–8px.
+ */
+export const PLATFORM_PAGE_HEADING_STACK = "flex min-w-0 flex-col gap-1.5";
+
+export const PLATFORM_PAGE_BREADCRUMB = "mb-4";
+
+/**
+ * h1 de página trainer/admin — techo tipográfico atleta (no reducir en mobile).
+ * Importar vía clientHeaderPresentation / NEXIA_PORTAL_GREETING_H1 en consumidores
+ * que ya usan portal; este token es el alias de layout plataforma.
+ */
+export { NEXIA_PORTAL_GREETING_H1 as PLATFORM_PAGE_TITLE_H1 } from "@/components/athlete/account/athleteSettingsPresentation";
+
 export const PLATFORM_BACK_BUTTON = "shrink-0 self-end sm:self-start";
 
 /** Etiquetas de campo / sección (uppercase metadata). */

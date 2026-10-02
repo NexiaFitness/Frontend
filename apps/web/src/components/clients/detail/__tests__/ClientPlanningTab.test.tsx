@@ -183,7 +183,7 @@ describe("ClientPlanningTab", () => {
             ).not.toBeInTheDocument();
         });
 
-        it("muestra CTA Planificar en footer con plan vigente y llama onPlanificar", async () => {
+        it("con plan vigente: footer partido sin Planificar; primary Editar plan", async () => {
             server.use(
                 getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Maraton" }),
                 ...planPeriodizationDependenciesHandlers(10),
@@ -199,10 +199,13 @@ describe("ClientPlanningTab", () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByTestId("client-planning-planificar")).toBeInTheDocument();
+                expect(screen.getByTestId("client-planning-edit-plan")).toBeInTheDocument();
             });
-            await userEvent.click(screen.getByTestId("client-planning-planificar"));
-            expect(onPlanificar).toHaveBeenCalledTimes(1);
+            expect(
+                screen.queryByTestId("client-planning-planificar"),
+            ).not.toBeInTheDocument();
+            expect(screen.getByTestId("client-planning-convert-template")).toBeInTheDocument();
+            expect(screen.getByRole("button", { name: /eliminar plan/i })).toBeInTheDocument();
         });
 
         it("muestra historial de planes cuando hay más de un plan asignado", async () => {

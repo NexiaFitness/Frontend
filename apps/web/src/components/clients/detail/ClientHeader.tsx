@@ -26,6 +26,7 @@ import {
     CLIENT_HEADER_ACTION_BUTTON_MOBILE,
     CLIENT_HEADER_AVATAR_RING,
     CLIENT_HEADER_DESKTOP_ACTIONS_WRAP,
+    CLIENT_HEADER_HEADING_BLOCK,
     CLIENT_HEADER_HERO_OUTER,
     CLIENT_HEADER_IDENTITY_BLOCK,
     CLIENT_HEADER_META,
@@ -135,12 +136,19 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
         .filter(Boolean)
         .join(" · ");
 
+    const emptyPrefValues = new Set([
+        "",
+        "—",
+        "No definido",
+        "No especificada",
+        "No especificado",
+    ]);
     const preferences = [
         { label: "Objetivo", value: labelTrainingGoal(client.objetivo_entrenamiento) },
         { label: "Nivel de experiencia", value: labelClientExperience(client.experiencia) },
         { label: "Duración sesiones", value: labelSessionDuration(client.session_duration) },
         { label: "Días de entreno", value: formatTrainingDays(client.training_days) },
-    ];
+    ].filter((pref) => !emptyPrefValues.has(pref.value.trim()));
 
     const headerActions = (
         <>
@@ -166,56 +174,64 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
 
     return (
         <div className={CLIENT_HEADER_SHELL} data-testid="client-header">
-            {breadcrumbItems && breadcrumbItems.length > 0 && (
-                <Breadcrumbs items={breadcrumbItems} className="mb-0.5" />
-            )}
+            <div className={CLIENT_HEADER_HEADING_BLOCK}>
+                {breadcrumbItems && breadcrumbItems.length > 0 ? (
+                    <Breadcrumbs items={breadcrumbItems} />
+                ) : null}
 
-            <div className={CLIENT_HEADER_HERO_OUTER}>
-                <div className={CLIENT_HEADER_NAME_ROW}>
-                    <button
-                        type="button"
-                        onClick={goToClientHome}
-                        className={clientHeaderIdentityHomeClass(isAtClientHome)}
-                        aria-label={
-                            isAtClientHome
-                                ? `Resumen de ${clientDisplayName || "cliente"}`
-                                : `Ir al resumen de ${clientDisplayName || "cliente"}`
-                        }
-                        aria-current={isAtClientHome ? "page" : undefined}
-                    >
-                        <span className={CLIENT_HEADER_AVATAR_RING}>
-                            <ClientAvatar
-                                clientId={client.id}
-                                nombre={client.nombre}
-                                apellidos={client.apellidos}
-                                size="lg"
-                            />
-                        </span>
-                        <div className={CLIENT_HEADER_IDENTITY_BLOCK}>
-                            <h1 className={cn(CLIENT_HEADER_NAME, "min-w-0")}>
-                                <span className={NEXIA_PORTAL_GREETING_NAME}>{client.nombre}</span>
-                                {client.apellidos ? ` ${client.apellidos}` : ""}
-                            </h1>
+                <div className={CLIENT_HEADER_HERO_OUTER}>
+                    <div className={CLIENT_HEADER_NAME_ROW}>
+                        <button
+                            type="button"
+                            onClick={goToClientHome}
+                            className={clientHeaderIdentityHomeClass(isAtClientHome)}
+                            aria-label={
+                                isAtClientHome
+                                    ? `Resumen de ${clientDisplayName || "cliente"}`
+                                    : `Ir al resumen de ${clientDisplayName || "cliente"}`
+                            }
+                            aria-current={isAtClientHome ? "page" : undefined}
+                        >
+                            <span className={CLIENT_HEADER_AVATAR_RING}>
+                                <ClientAvatar
+                                    clientId={client.id}
+                                    nombre={client.nombre}
+                                    apellidos={client.apellidos}
+                                    size="lg"
+                                />
+                            </span>
+                            <div className={CLIENT_HEADER_IDENTITY_BLOCK}>
+                                <h1 className={cn(CLIENT_HEADER_NAME, "min-w-0")}>
+                                    <span className={NEXIA_PORTAL_GREETING_NAME}>
+                                        {client.nombre}
+                                    </span>
+                                    {client.apellidos ? ` ${client.apellidos}` : ""}
+                                </h1>
+                            </div>
+                        </button>
+                        <div className={CLIENT_HEADER_DESKTOP_ACTIONS_WRAP}>
+                            {headerActions}
                         </div>
-                    </button>
-                    <div className={CLIENT_HEADER_DESKTOP_ACTIONS_WRAP}>{headerActions}</div>
+                    </div>
+
+                    <p className={CLIENT_HEADER_META}>{metaLine}</p>
+
+                    <div className={CLIENT_HEADER_MOBILE_ACTIONS_WRAP}>{headerActions}</div>
                 </div>
-
-                <p className={CLIENT_HEADER_META}>{metaLine}</p>
-
-                <div className={CLIENT_HEADER_MOBILE_ACTIONS_WRAP}>{headerActions}</div>
             </div>
 
             <NexiaPremiumDivider className="w-full" />
 
-            <div className={CLIENT_HEADER_PREF_GRID}>
-                {preferences.map((pref) => (
-                    <div key={pref.label} className={CLIENT_HEADER_PREF_CELL}>
-                        <span className={CLIENT_HEADER_PREF_LABEL}>{pref.label}</span>
-                        <p className={CLIENT_HEADER_PREF_VALUE}>{pref.value}</p>
-                    </div>
-                ))}
-            </div>
+            {preferences.length > 0 ? (
+                <div className={CLIENT_HEADER_PREF_GRID}>
+                    {preferences.map((pref) => (
+                        <div key={pref.label} className={CLIENT_HEADER_PREF_CELL}>
+                            <span className={CLIENT_HEADER_PREF_LABEL}>{pref.label}</span>
+                            <p className={CLIENT_HEADER_PREF_VALUE}>{pref.value}</p>
+                        </div>
+                    ))}
+                </div>
+            ) : null}
 
             <div className={CLIENT_HEADER_OBS_SHELL}>
                 <NexiaGlassAccentRim />

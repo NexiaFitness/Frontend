@@ -23,7 +23,10 @@ import { LoadingSpinner } from "@/components/ui/feedback";
 import { ResourceQueryState } from "@/components/ui/feedback/ResourceQueryState";
 import { extractHttpStatus } from "@/components/ui/feedback/resourceQueryStateContract";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
-import { TYPOGRAPHY } from "@/utils/typography";
+import {
+    PLATFORM_PAGE_BREADCRUMB,
+    PLATFORM_PAGE_TITLE_H1,
+} from "@/components/ui/surface/platformPremiumPresentation";
 import {
     MilestonesTab,
     SessionsTab,
@@ -156,9 +159,12 @@ export const TrainingPlanDetailPanel: React.FC<TrainingPlanDetailPanelProps> = (
             {/* Header: breadcrumb + cerrar */}
             <div className="shrink-0 border-b border-border bg-card px-4 py-3 sm:px-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <Breadcrumbs items={breadcrumbItems} className="min-w-0" />
+                    <Breadcrumbs
+                        items={breadcrumbItems}
+                        className={`min-w-0 ${PLATFORM_PAGE_BREADCRUMB}`}
+                    />
                     <Button
-                        variant="outline"
+                        variant="ghost-primary"
                         size="sm"
                         onClick={onClose}
                         className="shrink-0"
@@ -168,7 +174,7 @@ export const TrainingPlanDetailPanel: React.FC<TrainingPlanDetailPanelProps> = (
                     </Button>
                 </div>
                 <h2
-                    className={`mt-2 ${TYPOGRAPHY.sectionTitle} text-foreground`}
+                    className={`mt-0 ${PLATFORM_PAGE_TITLE_H1}`}
                     id="plan-detail-panel-title"
                 >
                     {plan.name}

@@ -27,10 +27,19 @@ export {
     NEXIA_PORTAL_PAGE_EYEBROW,
 };
 
-export const CLIENT_HEADER_SHELL = "space-y-4 sm:space-y-5";
+/**
+ * Shell cabecera — mobile-first: aire superior + stack vertical.
+ * Bloques mayores (heading / prefs / obs) con gap-4.
+ */
+export const CLIENT_HEADER_SHELL = "flex flex-col gap-4 pt-1 sm:gap-5 sm:pt-0";
 
-/** Mobile: columna (identidad → meta → acciones). Desktop: fila avatar + bloque derecho. */
-export const CLIENT_HEADER_HERO_OUTER = "flex flex-col gap-3 sm:gap-4";
+/**
+ * Bloque breadcrumbs + hero — gap ≥16px (breadcrumb → título).
+ */
+export const CLIENT_HEADER_HEADING_BLOCK = "flex min-w-0 flex-col gap-4";
+
+/** Mobile: columna (identidad → meta → acciones). Título→meta 4–8px (gap-1.5). */
+export const CLIENT_HEADER_HERO_OUTER = "flex flex-col gap-1.5 sm:gap-3";
 
 /** Fila avatar + nombre — centrados en el eje vertical. */
 export const CLIENT_HEADER_NAME_ROW = "flex items-center gap-3 sm:gap-5";
@@ -42,14 +51,20 @@ export const CLIENT_HEADER_TITLE_ROW =
 /** Nombre + avatar en la misma fila (mobile y desktop). */
 export const CLIENT_HEADER_IDENTITY_BLOCK = "min-w-0 flex-1";
 
-/** Título — un poco más compacto en mobile para evitar saltos absurdos. */
+/**
+ * Título página (h1) — techo NEXIA_PORTAL en 375px; sm/lg solo escalan.
+ * No reducir bajo el techo atleta en mobile.
+ */
 export const CLIENT_HEADER_NAME = cn(
     NEXIA_PORTAL_GREETING_H1,
-    "text-xl leading-tight sm:text-[1.75rem] sm:leading-[1.15] lg:text-3xl",
+    "min-w-0 whitespace-normal break-words",
 );
 
-export const CLIENT_HEADER_META =
-    "text-xs leading-relaxed text-muted-foreground sm:text-sm sm:font-medium";
+/** Meta bajo título — 4–8px vía gap del hero; tipografía secundaria. */
+export const CLIENT_HEADER_META = cn(
+    NEXIA_PORTAL_GREETING_SUBTITLE,
+    "text-xs leading-relaxed sm:text-sm",
+);
 
 /** Barra de acciones — alinear items; flex solo con breakpoint (evitar anular hidden). */
 export const CLIENT_HEADER_ACTIONS_ALIGN = "items-center gap-2";

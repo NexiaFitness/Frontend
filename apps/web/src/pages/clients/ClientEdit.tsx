@@ -22,7 +22,6 @@ import { Button } from "@/components/ui/buttons";
 import { DeleteClientModal } from "@/components/clients/modals/DeleteClientModal";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { PageTitle } from "@/components/dashboard/shared/PageTitle";
-
 export const ClientEdit: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -88,12 +87,14 @@ export const ClientEdit: React.FC = () => {
     ];
 
     return (
-        <div className="space-y-8 pb-8">
-            <Breadcrumbs items={breadcrumbItems} />
-            <PageTitle
-                title="Editar perfil"
-                subtitle="Modifica los datos personales, métricas antropométricas, parámetros de entrenamiento y notas del cliente. También puedes desvincular el cliente de tu lista."
-            />
+        <div className="space-y-8 pb-8 pt-1">
+            <div className="flex min-w-0 flex-col gap-4">
+                <Breadcrumbs items={breadcrumbItems} />
+                <PageTitle
+                    title="Editar perfil"
+                    subtitle="Modifica los datos personales, métricas antropométricas, parámetros de entrenamiento y notas del cliente. También puedes desvincular el cliente de tu lista."
+                />
+            </div>
 
             <ClientEditForm client={client} onSuccess={handleSuccess} />
 

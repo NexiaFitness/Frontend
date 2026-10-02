@@ -23,6 +23,12 @@ import { Button } from "@/components/ui/buttons";
 import { Textarea } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
+import {
+    TRAINING_PLAN_HEADER_BREADCRUMB,
+    TRAINING_PLAN_HEADER_META,
+    TRAINING_PLAN_HEADER_SHELL,
+    TRAINING_PLAN_HEADER_TITLE,
+} from "./trainingPlanHeaderPresentation";
 
 interface TrainingPlanHeaderProps {
     plan: TrainingPlan;
@@ -120,13 +126,16 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
     ];
 
     return (
-        <div className="space-y-6">
-            {breadcrumbItems.length > 0 && (
-                <Breadcrumbs items={breadcrumbItems} className="mb-1" />
-            )}
+        <div className={TRAINING_PLAN_HEADER_SHELL}>
+            {breadcrumbItems.length > 0 ? (
+                <Breadcrumbs
+                    items={breadcrumbItems}
+                    className={TRAINING_PLAN_HEADER_BREADCRUMB}
+                />
+            ) : null}
 
             {/* Avatar + nombre + acciones */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-6">
                 <div className="flex-shrink-0">
                     {plan.client_id && (client || clientName) ? (
                         <ClientAvatar
@@ -144,9 +153,9 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                     )}
                 </div>
 
-                <div className="min-w-0 flex-1 space-y-1">
+                <div className="min-w-0 flex-1 space-y-1.5">
                     <div className="flex flex-wrap items-center gap-3 gap-y-2">
-                        <h1 className="text-2xl font-bold text-foreground">{plan.name}</h1>
+                        <h1 className={TRAINING_PLAN_HEADER_TITLE}>{plan.name}</h1>
                         <span
                             className={`inline-flex shrink-0 px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}
                         >
@@ -156,7 +165,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                         <div className="ml-auto flex shrink-0 flex-row flex-wrap items-center gap-2">
                             {volverAlClienteClientId != null && (
                                 <Button
-                                    variant="outline"
+                                    variant="ghost-primary"
                                     size="sm"
                                     onClick={() =>
                                         navigate(
@@ -165,7 +174,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                                     }
                                     aria-label="Volver al cliente"
                                 >
-                                    <ArrowLeft className="size-4" />
+                                    <ArrowLeft className="size-4" aria-hidden />
                                     Volver al cliente
                                 </Button>
                             )}
@@ -176,7 +185,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                             )}
                         </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">{subtitleParts.join(" · ")}</p>
+                    <p className={TRAINING_PLAN_HEADER_META}>{subtitleParts.join(" · ")}</p>
                 </div>
             </div>
 
