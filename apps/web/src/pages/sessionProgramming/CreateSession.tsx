@@ -70,7 +70,6 @@ import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingB
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import {
     applyExercisePickerSelection,
-    getConstructorPersistLines,
     ConstructorValidationProvider,
     formatConstructorValidationToast,
     emptySessionCreatedToast,
@@ -79,7 +78,6 @@ import { useConstructorValidation } from "@/hooks/useConstructorValidation";
 import { useScrollToConstructorValidationIssue } from "@/hooks/useScrollToConstructorValidationIssue";
 import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
-import { getPersistLinePlannedSets } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
 import { SaveAsTemplateModal } from "@/components/sessionProgramming/SaveAsTemplateModal";
 import { ArrowLeft, ClipboardList } from "lucide-react";
@@ -173,7 +171,7 @@ export interface CreateSessionProps {
 
 export const CreateSession: React.FC<CreateSessionProps> = ({
     clientIdProp,
-    returnToPath,
+    returnToPath: _returnToPath,
     backPath,
 }) => {
     const navigate = useNavigate();
@@ -707,28 +705,12 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             }
         }
 
-        const redirectTo =
-            returnToPath ??
-            `/dashboard/clients/${effectiveClientId}?tab=sessions`;
-
-        const convertPlannedReps = (repsStr: string): number | null => {
-            if (!repsStr?.trim()) return null;
-            const s = repsStr.trim();
-            if (s.includes("-")) {
-                const firstNum = parseInt(s.split("-")[0].trim(), 10);
-                return !isNaN(firstNum) ? firstNum : null;
-            }
-            const parsed = parseInt(s, 10);
-            return !isNaN(parsed) ? parsed : null;
-        };
-
         const resolvedSessionName = formData.sessionName.trim() || defaultSessionName;
 
         if (isPersistingSubmit) {
             return;
         }
         setIsPersistingSubmit(true);
-        let keepSubmitLoadingUntilRedirect = false;
         try {
             const sessionData: TrainingSessionCreate = {
                 training_plan_id: useStandaloneSession ? null : selectedPlanId!,
@@ -808,9 +790,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             const errorMessage = errorData?.detail || "Error al crear la sesión";
             showError(typeof errorMessage === 'string' ? errorMessage : "Error de validación en el servidor");
         } finally {
-            if (!keepSubmitLoadingUntilRedirect) {
-                setIsPersistingSubmit(false);
-            }
+            setIsPersistingSubmit(false);
         }
     };
 
