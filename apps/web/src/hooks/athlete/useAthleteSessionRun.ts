@@ -60,11 +60,10 @@ import {
     computeAmrapPartialTotal,
 } from "@nexia/shared/utils/athlete/amrapResult";
 import {
-    buildEmomFailureEntryDefaults,
     buildEmomSavePayloads,
     getEmomTemplateSlots,
     isEmomCompletionValid,
-    resizeEmomFailureEntries,
+    resolveEmomFailureState,
     type EmomFailureEntry,
 } from "@nexia/shared/utils/athlete/emomResult";
 import {
@@ -206,11 +205,9 @@ export function useAthleteSessionRun({
     const [forTimeTotalSeconds, setForTimeTotalSeconds] = useState(0);
     const [amrapRounds, setAmrapRounds] = useState(0);
     const [amrapPartialReps, setAmrapPartialReps] = useState<Record<string, number>>({});
-    const [amrapPartialOpen, setAmrapPartialOpen] = useState(false);
     const [amrapValidationVisible, setAmrapValidationVisible] = useState(false);
     const [emomAsPlanned, setEmomAsPlanned] = useState<boolean | null>(null);
-    const [emomFailedCount, setEmomFailedCount] = useState(0);
-    const [emomFailureEntries, setEmomFailureEntries] = useState<EmomFailureEntry[]>([]);
+    const [emomAthleteNote, setEmomAthleteNote] = useState("");
     const [saving, setSaving] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [prCelebration, setPrCelebration] = useState<AthletePrCelebration | null>(null);
@@ -228,11 +225,9 @@ export function useAthleteSessionRun({
         setRoundRpe(null);
         setAmrapRounds(0);
         setAmrapPartialReps({});
-        setAmrapPartialOpen(false);
         setAmrapValidationVisible(false);
         setEmomAsPlanned(null);
-        setEmomFailedCount(0);
-        setEmomFailureEntries([]);
+        setEmomAthleteNote("");
         setForTimeTotalSeconds(0);
     }, [sessionId]);
 
@@ -368,17 +363,14 @@ export function useAthleteSessionRun({
             setRoundRpe((prev) => (prev === null ? prev : null));
             setAmrapRounds((prev) => (prev === 0 ? prev : 0));
             setAmrapPartialReps((prev) => (Object.keys(prev).length === 0 ? prev : {}));
-            setAmrapPartialOpen((prev) => (prev === false ? prev : false));
             setEmomAsPlanned((prev) => (prev === null ? prev : null));
-            setEmomFailedCount((prev) => (prev === 0 ? prev : 0));
-            setEmomFailureEntries((prev) => (prev.length === 0 ? prev : []));
+            setEmomAthleteNote((prev) => (prev === "" ? prev : ""));
             return;
         }
 
         if (runStep.groupKind === "emom" && runStep.emomIntervals?.length) {
             setEmomAsPlanned((prev) => (prev === null ? prev : null));
-            setEmomFailedCount((prev) => (prev === 0 ? prev : 0));
-            setEmomFailureEntries((prev) => (prev.length === 0 ? prev : []));
+            setEmomAthleteNote((prev) => (prev === "" ? prev : ""));
         }
 
         if (!runStep.slots?.length) return;
@@ -431,7 +423,6 @@ export function useAthleteSessionRun({
             }
             return initialPartial;
         });
-        setAmrapPartialOpen((prev) => (prev === false ? prev : false));
         setAmrapValidationVisible((prev) => (prev === false ? prev : false));
     }, [currentStepKey]);
 
@@ -486,44 +477,26 @@ export function useAthleteSessionRun({
         [currentRunStep?.emomIntervals]
     );
 
-    const updateEmomFailureEntry = useCallback(
-        (entryIndex: number, stepKey: string, value: number) => {
-            setEmomFailureEntries((prev) => {
-                const next = [...prev];
-                const entry = { ...(next[entryIndex] ?? {}) };
-                entry[stepKey] = value;
-                next[entryIndex] = entry;
-                return next;
-            });
-        },
-        []
-    );
+    const handleEmomAsPlannedChange = useCallback((value: boolean) => {
+        setEmomAsPlanned(value);
+        if (value) {
+            setEmomAthleteNote("");
+        }
+    }, []);
 
-    const handleEmomAsPlannedChange = useCallback(
-        (value: boolean) => {
-            setEmomAsPlanned(value);
-            if (value) {
-                setEmomFailedCount(0);
-                setEmomFailureEntries([]);
-                return;
-            }
-            setEmomFailedCount(1);
-            setEmomFailureEntries([buildEmomFailureEntryDefaults(emomTemplateSlots)]);
-        },
-        [emomTemplateSlots]
-    );
-
-    const handleEmomFailedCountChange = useCallback(
-        (value: number) => {
-            const total = currentRunStep?.emomIntervals?.length ?? 1;
-            const nextCount = Math.max(1, Math.min(total, value));
-            setEmomFailedCount(nextCount);
-            setEmomFailureEntries((prev) =>
-                resizeEmomFailureEntries(prev, nextCount, emomTemplateSlots)
-            );
-        },
-        [currentRunStep?.emomIntervals?.length, emomTemplateSlots]
-    );
+    const convertAmrapPartialToFullRound = useCallback(() => {
+        if (!currentRunStep?.slots?.length) return;
+        setAmrapRounds((prev) => prev + 1);
+        setAmrapPartialReps(
+            buildInitialAmrapPartial(
+                currentRunStep.slots.map((slot) => ({
+                    stepKey: slot.stepKey,
+                    maxReps: slot.defaultReps,
+                }))
+            )
+        );
+        setAmrapValidationVisible(false);
+    }, [currentRunStep?.slots]);
 
     const getNextActualSets = useCallback((blockExerciseId: number, loggedSets = 0) => {
         const fromRef = loggedSetsRef.current.get(blockExerciseId) ?? 0;
@@ -544,6 +517,7 @@ export function useAthleteSessionRun({
                         weight,
                         reps,
                         rpe,
+                        durationSeconds: reps,
                     }, currentRunSuggestion)
                 ).unwrap();
                 loggedSetsRef.current.set(
@@ -559,6 +533,7 @@ export function useAthleteSessionRun({
                         weight,
                         reps,
                         rpe,
+                        durationSeconds: reps,
                     }, currentRunSuggestion)
                 );
                 loggedSetsRef.current.set(
@@ -699,11 +674,19 @@ export function useAthleteSessionRun({
             } else if (isEmom && currentRunStep.emomIntervals) {
                 if (emomAsPlanned === null) return;
 
+                const emomFailureState = emomAsPlanned
+                    ? { failedCount: 0, failureEntries: [] as EmomFailureEntry[] }
+                    : resolveEmomFailureState({
+                          intervals: currentRunStep.emomIntervals,
+                          templateSlots: emomTemplateSlots,
+                          asPlanned: false,
+                      });
+
                 const payloads = buildEmomSavePayloads({
                     intervals: currentRunStep.emomIntervals,
                     asPlanned: emomAsPlanned,
-                    failedCount: emomFailedCount,
-                    failureEntries: emomFailureEntries,
+                    failedCount: emomFailureState.failedCount,
+                    failureEntries: emomFailureState.failureEntries,
                     templateSlots: emomTemplateSlots,
                     roundRpe,
                 });
@@ -715,7 +698,8 @@ export function useAthleteSessionRun({
                             runStep: currentRunStep,
                             intervals: currentRunStep.emomIntervals,
                             asPlanned: emomAsPlanned,
-                            failedCount: emomFailedCount,
+                            failedCount: emomFailureState.failedCount,
+                            athleteNote: emomAthleteNote,
                         })
                     ).unwrap();
                 } else {
@@ -725,7 +709,8 @@ export function useAthleteSessionRun({
                             runStep: currentRunStep,
                             intervals: currentRunStep.emomIntervals,
                             asPlanned: emomAsPlanned,
-                            failedCount: emomFailedCount,
+                            failedCount: emomFailureState.failedCount,
+                            athleteNote: emomAthleteNote,
                         })
                     );
                 }
@@ -865,6 +850,7 @@ export function useAthleteSessionRun({
                             weight: log.weight,
                             reps: log.reps,
                             rpe: roundRpe,
+                            durationSeconds: log.durationSeconds ?? log.reps,
                         },
                         slotReferences[slot.stepKey]?.suggestion
                     );
@@ -898,8 +884,7 @@ export function useAthleteSessionRun({
         amrapRounds,
         currentRunStep,
         emomAsPlanned,
-        emomFailedCount,
-        emomFailureEntries,
+        emomAthleteNote,
         emomTemplateSlots,
         getNextActualSets,
         isGroupRound,
@@ -960,10 +945,7 @@ export function useAthleteSessionRun({
             if (isEmomBlock && currentRunStep.emomIntervals?.length) {
                 return isEmomCompletionValid({
                     asPlanned: emomAsPlanned,
-                    failedCount: emomFailedCount,
-                    failureEntries: emomFailureEntries,
                     intervals: currentRunStep.emomIntervals,
-                    templateSlots: emomTemplateSlots,
                 });
             }
 
@@ -981,20 +963,28 @@ export function useAthleteSessionRun({
                 const log = slotLogs[slot.stepKey] ?? {
                     weight: slot.defaultWeight,
                     reps: slot.defaultReps,
+                    durationSeconds: slot.defaultReps,
                 };
+                if (slot.inputMode === "duration") {
+                    return (log.durationSeconds ?? log.reps) > 0;
+                }
+                if (slot.inputMode === "reps_only") {
+                    return log.reps > 0;
+                }
                 return log.reps > 0 && log.weight >= 0;
             });
             return slotsValid;
         }
+        const inputMode = current?.inputMode ?? "weight_reps";
+        if (inputMode === "duration") return reps > 0;
+        if (inputMode === "reps_only") return reps > 0;
         return reps > 0 && weight >= 0;
     }, [
         amrapPartialTotal,
         amrapRounds,
+        current,
         currentRunStep,
         emomAsPlanned,
-        emomFailedCount,
-        emomFailureEntries,
-        emomTemplateSlots,
         isAmrapBlock,
         isEmomBlock,
         isForTimeBlock,
@@ -1080,7 +1070,11 @@ export function useAthleteSessionRun({
         });
 
         setWeight(defaults.weight);
-        setReps(defaults.reps);
+        const nextReps =
+            current.inputMode === "duration"
+                ? current.plannedDurationSeconds ?? current.defaultReps
+                : defaults.reps;
+        setReps(nextReps);
         setRpe(defaults.rpe);
         loggerDefaultsStepRef.current = defaultsKey;
     }, [restFlow.phase, current, isBatchStep, effectiveRunReference?.reference]);
@@ -1441,16 +1435,13 @@ export function useAthleteSessionRun({
         setAmrapRounds,
         amrapPartialReps,
         updateAmrapPartialReps,
-        amrapPartialOpen,
-        setAmrapPartialOpen,
         amrapValidationVisible,
         resetAmrapValidation: () => setAmrapValidationVisible(false),
         emomAsPlanned,
         setEmomAsPlanned: handleEmomAsPlannedChange,
-        emomFailedCount,
-        setEmomFailedCount: handleEmomFailedCountChange,
-        emomFailureEntries,
-        updateEmomFailureEntry,
+        emomAthleteNote,
+        setEmomAthleteNote,
+        convertAmrapPartialToFullRound,
         emomTemplateSlots,
         emomIntervalLabel: emomFlow.intervalLabel,
         emomTechniqueSlots,

@@ -109,24 +109,30 @@ export function formatEmomCompletionNotation(
 
 export function isEmomCompletionValid(input: {
     asPlanned: boolean | null;
-    failedCount: number;
-    failureEntries: readonly EmomFailureEntry[];
+    failedCount?: number;
+    failureEntries?: readonly EmomFailureEntry[];
     intervals: readonly AthleteEmomInterval[];
-    templateSlots: readonly AthleteRunRoundSlot[];
+    templateSlots?: readonly AthleteRunRoundSlot[];
 }): boolean {
     if (input.asPlanned === null) return false;
     if (input.asPlanned) return true;
+    return input.intervals.length > 0;
+}
 
-    const total = input.intervals.length;
-    if (total === 0 || input.templateSlots.length === 0) return false;
-    if (input.failedCount < 1 || input.failedCount > total) return false;
-    if (input.failureEntries.length !== input.failedCount) return false;
-
-    return input.failureEntries.every((entry) =>
-        input.templateSlots.every(
-            (slot) => entry[slot.stepKey] != null && entry[slot.stepKey] >= 0
-        )
-    );
+/** D6 — al marcar No, fallo agregado sin desglose por intervalo. */
+export function resolveEmomFailureState(input: {
+    intervals: readonly AthleteEmomInterval[];
+    templateSlots: readonly AthleteRunRoundSlot[];
+    asPlanned: boolean;
+}): { failedCount: number; failureEntries: EmomFailureEntry[] } {
+    if (input.asPlanned) {
+        return { failedCount: 0, failureEntries: [] };
+    }
+    const failedCount = input.intervals.length;
+    return {
+        failedCount,
+        failureEntries: resizeEmomFailureEntries([], failedCount, input.templateSlots),
+    };
 }
 
 export function buildEmomSavePayloads(input: {

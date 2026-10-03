@@ -7,6 +7,7 @@ import type {
     AthleteRunExecutionCreate,
     AthleteRunTimedResultCreate,
 } from "../types/athleteRunReference";
+import type { AthleteRunInputMode } from "../utils/athlete/buildAthleteRunSteps";
 
 export interface AthleteFlatExercise {
     /** ID estable para UI (puede repetir blockExerciseId en multi-serie legacy). */
@@ -23,6 +24,9 @@ export interface AthleteFlatExercise {
     plannedLabel: string;
     /** Peso planificado de esta serie (kg), null si no prescrito. */
     plannedWeight: number | null;
+    /** Segundos planificados (plancha, hold), null si no aplica. */
+    plannedDurationSeconds: number | null;
+    inputMode: AthleteRunInputMode;
     defaultWeight: number;
     defaultReps: number;
     restSeconds: number | null;

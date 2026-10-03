@@ -93,10 +93,7 @@ describe("emomResult", () => {
         expect(
             isEmomCompletionValid({
                 asPlanned: false,
-                failedCount: 1,
-                failureEntries: [entry],
                 intervals,
-                templateSlots,
             })
         ).toBe(true);
     });

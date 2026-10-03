@@ -65,16 +65,13 @@ export const AthleteSessionRunPage: React.FC = () => {
         setAmrapRounds,
         amrapPartialReps,
         updateAmrapPartialReps,
-        amrapPartialOpen,
-        setAmrapPartialOpen,
         amrapValidationVisible,
         resetAmrapValidation,
+        convertAmrapPartialToFullRound,
         emomAsPlanned,
         setEmomAsPlanned,
-        emomFailedCount,
-        setEmomFailedCount,
-        emomFailureEntries,
-        updateEmomFailureEntry,
+        emomAthleteNote,
+        setEmomAthleteNote,
         emomTemplateSlots,
         emomIntervalLabel,
         emomTechniqueSlots,
@@ -331,16 +328,13 @@ export const AthleteSessionRunPage: React.FC = () => {
                         onAmrapRoundsChange={setAmrapRounds}
                         amrapPartialReps={amrapPartialReps}
                         onAmrapPartialRepsChange={updateAmrapPartialReps}
-                        amrapPartialOpen={amrapPartialOpen}
-                        onAmrapPartialOpenChange={setAmrapPartialOpen}
                         amrapValidationVisible={amrapValidationVisible}
                         onAmrapValidationReset={resetAmrapValidation}
+                        onAmrapConvertPartialToFullRound={convertAmrapPartialToFullRound}
                         emomAsPlanned={emomAsPlanned}
                         onEmomAsPlannedChange={setEmomAsPlanned}
-                        emomFailedCount={emomFailedCount}
-                        onEmomFailedCountChange={setEmomFailedCount}
-                        emomFailureEntries={emomFailureEntries}
-                        onEmomFailureEntryChange={updateEmomFailureEntry}
+                        emomAthleteNote={emomAthleteNote}
+                        onEmomAthleteNoteChange={setEmomAthleteNote}
                         emomTemplateSlots={emomTemplateSlots}
                         emomIntervalLabel={emomIntervalLabel}
                         emomTechniqueSlots={emomTechniqueSlots}
@@ -388,6 +382,9 @@ export const AthleteSessionRunPage: React.FC = () => {
                         onWeightChange={setWeight}
                         onRepsChange={setReps}
                         onRpeChange={setRpe}
+                        inputMode={current.inputMode}
+                        plannedWeight={current.plannedWeight}
+                        referenceWeightKg={runReference?.reference?.weight_kg ?? null}
                         restPhase={restFlow.phase}
                         injuryConflict={
                             !isDesktop && desktopInjuryConflict

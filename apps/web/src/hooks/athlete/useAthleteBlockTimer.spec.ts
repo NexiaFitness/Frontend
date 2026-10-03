@@ -31,6 +31,7 @@ const COUNTUP_STEP: AthleteRunStep = {
     totalSetsInSlot: 1,
     timeCapMinutes: 10,
     intervalSeconds: null,
+    plannedDurationSeconds: null,
     timedMode: "countup",
 };
 

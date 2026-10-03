@@ -23,6 +23,8 @@ function step(
         totalSetsInSlot: 3,
         plannedLabel: "10 repeticiones",
         plannedWeight: null,
+        plannedDurationSeconds: null,
+        inputMode: "weight_reps",
         defaultWeight: 0,
         defaultReps: 10,
         restSeconds: 90,

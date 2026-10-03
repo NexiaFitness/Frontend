@@ -14,7 +14,8 @@ import {
     AthleteRunGroupContextCard,
     type GroupContextSlotMeta,
 } from "./AthleteRunGroupContextCard";
-import { AthleteSetLogger } from "./AthleteSetLogger";
+import { AthleteSetInputLogger } from "@/components/athlete/logging";
+import type { AthleteRunInputMode } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
 import { AthleteRunReferenceCard } from "./AthleteRunReferenceCard";
 import { AthleteRunLoggerChips } from "./AthleteRunLoggerChips";
 import { AthleteRunProgressHeader } from "./AthleteRunProgressHeader";
@@ -39,6 +40,9 @@ export interface ExerciseStepViewProps {
     weight: number;
     reps: number;
     rpe: number | null;
+    inputMode?: AthleteRunInputMode;
+    plannedWeight?: number | null;
+    referenceWeightKg?: number | null;
     onWeightChange: (value: number) => void;
     onRepsChange: (value: number) => void;
     onRpeChange: (value: number | null) => void;
@@ -64,6 +68,9 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
     weight,
     reps,
     rpe,
+    inputMode = "weight_reps",
+    plannedWeight = null,
+    referenceWeightKg = null,
     onWeightChange,
     onRepsChange,
     onRpeChange,
@@ -160,9 +167,13 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
                     <div className={ATHLETE_RUN_LOGGER_CARD}>
                         <NexiaGlassAccentRim />
                         <div className="relative z-[1]">
-                            <AthleteSetLogger
+                            <AthleteSetInputLogger
+                                inputMode={inputMode}
                                 weight={weight}
                                 reps={reps}
+                                durationSeconds={reps}
+                                plannedWeight={plannedWeight}
+                                referenceWeightKg={referenceWeightKg}
                                 rpe={rpe}
                                 onWeightChange={onWeightChange}
                                 onRepsChange={onRepsChange}

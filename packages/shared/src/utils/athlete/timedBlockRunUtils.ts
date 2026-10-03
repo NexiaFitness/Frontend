@@ -119,10 +119,12 @@ export function buildEmomTimedResultPayload(input: {
     intervals: readonly AthleteEmomInterval[];
     asPlanned: boolean;
     failedCount: number;
+    athleteNote?: string | null;
 }): AthleteRunTimedResultCreate {
     const intervalTotal = input.intervals.length;
     const failed = input.asPlanned ? 0 : input.failedCount;
     const completed = Math.max(0, intervalTotal - failed);
+    const note = input.athleteNote?.trim();
     return {
         training_session_id: input.sessionId,
         group_id: input.runStep.groupId,
@@ -134,6 +136,7 @@ export function buildEmomTimedResultPayload(input: {
         payload_json: JSON.stringify({
             interval_total: intervalTotal,
             as_planned: input.asPlanned,
+            ...(note ? { athlete_note: note } : {}),
         }),
     };
 }

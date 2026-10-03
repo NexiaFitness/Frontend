@@ -88,6 +88,7 @@ export interface AthleteRunStep {
     totalSetsInSlot: number;
     timeCapMinutes: number | null;
     intervalSeconds: number | null;
+    plannedDurationSeconds: number | null;
     /** B.2 — todos los slots de la ronda (superset / giant / dropset) */
     slots?: AthleteRunRoundSlot[];
     timedMode?: "countdown_block" | "countdown_interval" | "countup";
@@ -182,6 +183,7 @@ function buildStep(ctx: StepBuildContext): AthleteRunStep {
         totalSetsInSlot: slot.sets.length,
         timeCapMinutes: group.timeCapMinutes,
         intervalSeconds: group.intervalSeconds,
+        plannedDurationSeconds: set.plannedDuration ?? null,
     };
 }
 
@@ -243,6 +245,7 @@ function buildGroupRoundStep(
         totalSetsInSlot: roundSlots.length,
         timeCapMinutes: group.timeCapMinutes,
         intervalSeconds: group.intervalSeconds,
+        plannedDurationSeconds: firstSet?.plannedDuration ?? null,
         slots: roundSlots,
     };
 }
@@ -293,6 +296,7 @@ function buildTimedBlockStep(
         totalSetsInSlot: roundSlots.length,
         timeCapMinutes: group.timeCapMinutes,
         intervalSeconds: group.intervalSeconds,
+        plannedDurationSeconds: firstSet?.plannedDuration ?? null,
         slots: roundSlots,
         timedMode,
         minuteIndex,
@@ -659,6 +663,8 @@ export function flattenRunStepsToFlatExercises(steps: AthleteRunStep[]): Athlete
                     totalSetsInSlot: step.roundTotal ?? 1,
                     plannedLabel: slot.plannedLabel,
                     plannedWeight: null,
+                    plannedDurationSeconds: null,
+                    inputMode: slot.inputMode,
                     defaultWeight: slot.defaultWeight,
                     defaultReps: slot.defaultReps,
                     restSeconds: step.restAfterSeconds,
@@ -695,6 +701,8 @@ export function runStepToFlatExercise(step: AthleteRunStep): AthleteFlatExercise
         totalSetsInSlot: step.totalSetsInSlot,
         plannedLabel: step.plannedLabel,
         plannedWeight: step.plannedWeight,
+        plannedDurationSeconds: step.plannedDurationSeconds,
+        inputMode: step.inputMode,
         defaultWeight: step.defaultWeight,
         defaultReps: step.defaultReps,
         restSeconds: step.restAfterSeconds,

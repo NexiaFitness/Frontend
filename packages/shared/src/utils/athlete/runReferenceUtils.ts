@@ -12,9 +12,11 @@ import type {
 import type { AthleteRunSuggestion } from "../../types/athleteRunSuggestion";
 import { shouldShowRunSuggestion } from "../../types/athleteRunSuggestion";
 import type {
+    AthleteRunInputMode,
     AthleteRunRoundSlot,
     AthleteRunStep,
 } from "./buildAthleteRunSteps";
+import { resolveExecutionFieldsForInputMode } from "./athleteLoggingUtils";
 
 const DEFAULT_LOAD_STEP_KG = 2.5;
 
@@ -90,6 +92,8 @@ export function buildSlotFlatExercise(
         totalSetsInSlot: runStep.roundTotal ?? 1,
         plannedLabel: slot.plannedLabel,
         plannedWeight: null,
+        plannedDurationSeconds: null,
+        inputMode: slot.inputMode,
         defaultWeight: slot.defaultWeight,
         defaultReps: slot.defaultReps,
         restSeconds: runStep.restAfterSeconds,
@@ -117,7 +121,12 @@ export function buildAthleteRunExecutionPayloadFromSlot(
     sessionId: number,
     runStep: AthleteRunStep,
     slot: AthleteRunRoundSlot,
-    values: { weight: number; reps: number; rpe: number | null },
+    values: {
+        weight: number;
+        reps: number;
+        rpe: number | null;
+        durationSeconds?: number;
+    },
     suggestion?: AthleteRunSuggestion | null
 ): AthleteRunExecutionCreate {
     return buildAthleteRunExecutionPayload(
@@ -143,16 +152,28 @@ export function buildAthleteRunReferenceQuery(
         prescribed_reps: exercise.defaultReps > 0 ? exercise.defaultReps : undefined,
         prescribed_reps_max: exercise.defaultReps > 0 ? exercise.defaultReps : undefined,
         prescribed_rpe: exercise.defaultRpe ?? undefined,
-        input_mode: "weight_reps",
+        input_mode: exercise.inputMode ?? "weight_reps",
     };
 }
 
 export function buildAthleteRunExecutionPayload(
     sessionId: number,
     exercise: AthleteFlatExercise,
-    values: { weight: number; reps: number; rpe: number | null },
+    values: {
+        weight: number;
+        reps: number;
+        rpe: number | null;
+        durationSeconds?: number;
+    },
     suggestion?: AthleteRunSuggestion | null
 ): AthleteRunExecutionCreate {
+    const inputMode: AthleteRunInputMode = exercise.inputMode ?? "weight_reps";
+    const resolved = resolveExecutionFieldsForInputMode(inputMode, {
+        weightKg: values.weight,
+        reps: values.reps,
+        durationSeconds: values.durationSeconds ?? values.reps,
+    });
+
     const payload: AthleteRunExecutionCreate = {
         training_session_id: sessionId,
         step_key: exercise.stepKey,
@@ -163,9 +184,10 @@ export function buildAthleteRunExecutionPayload(
         slot_label: exercise.slotLabel ?? undefined,
         round_index: exercise.roundIndex ?? undefined,
         group_kind: exercise.groupKind ?? "single_set",
-        input_mode: "weight_reps",
-        weight_kg: values.weight,
-        reps: values.reps,
+        input_mode: resolved.input_mode,
+        weight_kg: resolved.weight_kg ?? undefined,
+        reps: resolved.reps ?? undefined,
+        duration_seconds: resolved.duration_seconds ?? undefined,
         rpe: values.rpe ?? undefined,
         source: "run_live",
     };

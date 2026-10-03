@@ -45,18 +45,15 @@ export interface TimedBlockStepViewProps {
     onAmrapRoundsChange: (value: number) => void;
     amrapPartialReps: Record<string, number>;
     onAmrapPartialRepsChange: (stepKey: string, value: number) => void;
-    amrapPartialOpen: boolean;
-    onAmrapPartialOpenChange: (open: boolean) => void;
+    onAmrapConvertPartialToFullRound?: () => void;
     /** Indica si se debe mostrar el error de validación AMRAP tras intentar guardar. */
     amrapValidationVisible?: boolean;
     /** Oculta el error de validación AMRAP cuando el usuario empieza a corregir. */
     onAmrapValidationReset?: () => void;
     emomAsPlanned: boolean | null;
     onEmomAsPlannedChange: (value: boolean) => void;
-    emomFailedCount: number;
-    onEmomFailedCountChange: (value: number) => void;
-    emomFailureEntries: readonly import("@nexia/shared/utils/athlete/emomResult").EmomFailureEntry[];
-    onEmomFailureEntryChange: (entryIndex: number, stepKey: string, value: number) => void;
+    emomAthleteNote: string;
+    onEmomAthleteNoteChange: (value: string) => void;
     emomTemplateSlots: import("@nexia/shared/utils/athlete/buildAthleteRunSteps").AthleteRunRoundSlot[];
     emomIntervalLabel: string | null;
     emomTechniqueSlots: import("@nexia/shared/utils/athlete/buildAthleteRunSteps").AthleteRunRoundSlot[];
@@ -92,17 +89,14 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
     onAmrapRoundsChange,
     amrapPartialReps,
     onAmrapPartialRepsChange,
-    amrapPartialOpen,
-    onAmrapPartialOpenChange,
+    onAmrapConvertPartialToFullRound,
     amrapValidationVisible,
     onAmrapValidationReset,
     emomAsPlanned,
     onEmomAsPlannedChange,
-    emomFailedCount,
-    onEmomFailedCountChange,
-    emomFailureEntries,
-    onEmomFailureEntryChange,
-    emomTemplateSlots,
+    emomAthleteNote,
+    onEmomAthleteNoteChange,
+    emomTemplateSlots: _emomTemplateSlots,
     emomIntervalLabel,
     emomTechniqueSlots,
     forTimeRoundLabel,
@@ -266,9 +260,8 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
                                 onFullRoundsChange={onAmrapRoundsChange}
                                 slots={runStep.slots}
                                 partialReps={amrapPartialReps}
-                                partialOpen={amrapPartialOpen}
-                                onPartialOpenChange={onAmrapPartialOpenChange}
                                 onPartialRepsChange={onAmrapPartialRepsChange}
+                                onConvertPartialToFullRound={onAmrapConvertPartialToFullRound}
                                 showValidationError={amrapValidationVisible}
                                 onValidationReset={onAmrapValidationReset}
                             />
@@ -283,14 +276,11 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
                     {isEmom && runStep.emomIntervals?.length ? (
                         <AthleteEmomCompletionReview
                             intervals={runStep.emomIntervals}
-                            templateSlots={emomTemplateSlots}
                             intervalSeconds={runStep.intervalSeconds}
                             asPlanned={emomAsPlanned}
                             onAsPlannedChange={onEmomAsPlannedChange}
-                            failedCount={emomFailedCount}
-                            onFailedCountChange={onEmomFailedCountChange}
-                            failureEntries={emomFailureEntries}
-                            onFailureEntryChange={onEmomFailureEntryChange}
+                            athleteNote={emomAthleteNote}
+                            onAthleteNoteChange={onEmomAthleteNoteChange}
                             roundRpe={roundRpe}
                             onRoundRpeChange={onRoundRpeChange}
                         />
