@@ -6,6 +6,7 @@
 import { cn } from "@/lib/utils";
 import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
 import {
+    ATHLETE_BOTTOM_NAV_OFFSET,
     ATHLETE_CHROME_BAR,
     ATHLETE_CHROME_BAR_TOP_DIVIDER,
 } from "@/components/athlete/layout/athleteLayoutClasses";
@@ -74,7 +75,7 @@ export const INSTALL_PROMPT_CHIP_BASE = cn(
 
 export const INSTALL_PROMPT_CHIP_DASHBOARD = cn(
     INSTALL_PROMPT_CHIP_BASE,
-    "bottom-16"
+    ATHLETE_BOTTOM_NAV_OFFSET
 );
 
 export const INSTALL_PROMPT_CHIP_LANDING = cn(

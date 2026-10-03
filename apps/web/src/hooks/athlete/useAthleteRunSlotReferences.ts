@@ -1,8 +1,12 @@
 /**
- * useAthleteRunSlotReferences — N queries paralelas por slot (F3e group_round).
+ * useAthleteRunSlotReferences.ts — N queries paralelas por slot (F3e group_round).
+ *
+ * Contexto: referencias A1/A2 en fase `doing` del guiado. La dependencia debe ser
+ * estable por stepKey (no el objeto runStep entero) para no re-disparar carga
+ * y dejar esqueletos en bucle / parpadeo.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { athleteApi } from "@nexia/shared/api/athleteApi";
 import type { AthleteRunReference } from "@nexia/shared/types/athleteRunReference";
@@ -25,32 +29,38 @@ export function useAthleteRunSlotReferences(
         {}
     );
     const [isLoading, setIsLoading] = useState(false);
-    const runStepKey = runStep?.stepKey;
+    const runStepKey = runStep?.stepKey ?? null;
     const slotCount = runStep?.slots?.length ?? 0;
+    const slotsSignature =
+        runStep?.slots?.map((slot) => `${slot.stepKey}:${slot.exerciseId}`).join("|") ?? "";
+    const runStepRef = useRef(runStep);
+    runStepRef.current = runStep;
 
     useEffect(() => {
+        const step = runStepRef.current;
         if (
             !enabled ||
             !sessionId ||
             !runStepKey ||
             slotCount === 0 ||
-            runStep?.kind !== "group_round"
+            step?.kind !== "group_round" ||
+            !step.slots?.length
         ) {
             setSlotReferences((prev) => (Object.keys(prev).length === 0 ? prev : {}));
-            setIsLoading((prev) => (prev ? false : prev));
+            setIsLoading(false);
             return;
         }
 
         let cancelled = false;
-        setIsLoading((prev) => (prev ? prev : true));
+        setIsLoading(true);
 
         const fetchAll = async () => {
             try {
                 const results = await Promise.all(
-                    runStep!.slots!.map((slot) => {
+                    step.slots!.map((slot) => {
                         const query = buildAthleteRunReferenceQueryFromSlot(
                             sessionId,
-                            runStep!,
+                            step,
                             slot
                         );
                         return dispatch(
@@ -62,7 +72,7 @@ export function useAthleteRunSlotReferences(
                 if (cancelled) return;
 
                 const next: Record<string, AthleteRunReference> = {};
-                runStep!.slots!.forEach((slot, index) => {
+                step.slots!.forEach((slot, index) => {
                     next[slot.stepKey] = results[index];
                 });
                 setSlotReferences(next);
@@ -71,7 +81,9 @@ export function useAthleteRunSlotReferences(
                     setSlotReferences((prev) => (Object.keys(prev).length === 0 ? prev : {}));
                 }
             } finally {
-                if (!cancelled) setIsLoading((prev) => (prev ? false : prev));
+                if (!cancelled) {
+                    setIsLoading(false);
+                }
             }
         };
 
@@ -80,7 +92,7 @@ export function useAthleteRunSlotReferences(
         return () => {
             cancelled = true;
         };
-    }, [dispatch, enabled, runStep, runStepKey, sessionId, slotCount]);
+    }, [dispatch, enabled, runStepKey, sessionId, slotCount, slotsSignature]);
 
     return { slotReferences, isLoading };
 }

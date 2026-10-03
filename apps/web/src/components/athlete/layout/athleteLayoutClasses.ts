@@ -50,8 +50,17 @@ export const ATHLETE_STICKY_FOOTER_SPACER: Record<AthleteStickyFooterSize, strin
         "min-h-[calc(4rem+9.25rem+2rem+env(safe-area-inset-bottom))] lg:min-h-0",
 };
 
+/**
+ * CTA sticky encima del bottom nav.
+ * El nav es h-16 + safe-area; bottom-16 solo (4rem) deja el CTA bajo el home
+ * indicator en iOS (z-nav 40 > z-cta 30 → tapos y clics al tab).
+ */
+export const ATHLETE_BOTTOM_NAV_OFFSET =
+    "bottom-[calc(4rem+env(safe-area-inset-bottom,0px))]";
+
 export const ATHLETE_STICKY_FOOTER_BAR = cn(
     ATHLETE_CHROME_BAR,
-    "fixed inset-x-0 bottom-16 z-30 space-y-2 p-4",
-    "lg:static lg:mt-8 lg:bg-transparent lg:p-0 lg:shadow-none lg:ring-0 lg:backdrop-blur-none"
+    "fixed inset-x-0 z-30 space-y-2 p-4",
+    ATHLETE_BOTTOM_NAV_OFFSET,
+    "lg:static lg:mt-8 lg:bottom-auto lg:bg-transparent lg:p-0 lg:shadow-none lg:ring-0 lg:backdrop-blur-none"
 );
