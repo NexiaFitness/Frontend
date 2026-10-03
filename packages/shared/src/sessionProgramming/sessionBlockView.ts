@@ -70,7 +70,22 @@ export interface SessionExerciseSlotView {
     exerciseId: number;
     exerciseName: string;
     notes: string | null;
+    /** Asistencia planificada (kg), si el entrenador la puso. */
+    plannedAssistanceKg: number | null;
+    /** Distancia planificada, si el entrenador la puso. */
+    plannedDistance: number | null;
     sets: SessionExerciseSetView[];
+}
+
+function slotMetaFromLine(line: SessionBlockExercise): Pick<
+    SessionExerciseSlotView,
+    "notes" | "plannedAssistanceKg" | "plannedDistance"
+> {
+    return {
+        notes: line.notes ?? null,
+        plannedAssistanceKg: line.planned_assistance_kg ?? null,
+        plannedDistance: line.planned_distance ?? null,
+    };
 }
 
 /** Un grupo dentro de un bloque (ej. un superset A). */
@@ -218,7 +233,7 @@ function buildSingleSetGroups(
             slotLabel: `S${sets.length}`,
             exerciseId: group.exerciseId,
             exerciseName: exerciseNameOf(nameMap, group.exerciseId),
-            notes: first.notes ?? null,
+            ...slotMetaFromLine(first),
             sets,
         };
 
@@ -269,7 +284,7 @@ function buildParallelSlotView(
         slotLabel: `A${slotIdx + 1}`,
         exerciseId: first.exercise_id,
         exerciseName: exerciseNameOf(nameMap, first.exercise_id),
-        notes: first.notes ?? null,
+        ...slotMetaFromLine(first),
         sets,
     };
 }
@@ -344,7 +359,7 @@ function buildDropsetGroups(
         slotLabel: "MAIN",
         exerciseId: mainLine.exercise_id,
         exerciseName: exerciseNameOf(nameMap, mainLine.exercise_id),
-        notes: mainLine.notes ?? null,
+        ...slotMetaFromLine(mainLine),
         sets: stepSets,
     };
 
@@ -388,7 +403,7 @@ function buildSequentialSlotView(
         slotLabel,
         exerciseId: first.exercise_id,
         exerciseName: exerciseNameOf(nameMap, first.exercise_id),
-        notes: first.notes ?? null,
+        ...slotMetaFromLine(first),
         sets,
     };
 }
@@ -420,7 +435,7 @@ function buildSequentialGroups(
             slotLabel: `${idx + 1}`,
             exerciseId: line.exercise_id,
             exerciseName: exerciseNameOf(nameMap, line.exercise_id),
-            notes: line.notes ?? null,
+            ...slotMetaFromLine(line),
             sets: [
                 setView(
                     {
@@ -486,7 +501,7 @@ function buildEmomGroups(
                 slotLabel: windowLabel,
                 exerciseId: line.exercise_id,
                 exerciseName: exerciseNameOf(nameMap, line.exercise_id),
-                notes: line.notes ?? null,
+                ...slotMetaFromLine(line),
                 sets: [setView(line, `${windowLabel}-${lineIdx + 1}`, line.order_in_block || lineIdx + 1)],
             });
         });

@@ -116,7 +116,25 @@ export const ATHLETE_SESSION_EXERCISE_ITEM_CAUTION = cn(
 export const ATHLETE_SESSION_EXERCISE_NAME =
     "min-w-0 flex-1 text-sm font-medium leading-snug text-foreground";
 
+/** @deprecated FE-1 — prefer ATHLETE_SESSION_EXERCISE_DETAIL (prescripción legible). */
 export const ATHLETE_SESSION_EXERCISE_SETS = cn(
     "shrink-0 rounded-md border border-border/50 bg-background/50 px-2 py-0.5",
     "text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
 );
+
+/** Prescripción principal (reps · kg · rondas). */
+export const ATHLETE_SESSION_EXERCISE_DETAIL =
+    "mt-0.5 text-sm leading-snug text-foreground/90";
+
+/** Línea secundaria gris (descanso, RIR/RPE, distancia, asistencia). */
+export const ATHLETE_SESSION_EXERCISE_SECONDARY =
+    "mt-0.5 text-xs leading-relaxed text-muted-foreground";
+
+/** Toggle nota del entrenador plegada. */
+export const ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE = cn(
+    "mt-1.5 min-h-8 text-left text-xs font-medium text-primary/90",
+    "underline-offset-2 hover:underline"
+);
+
+export const ATHLETE_SESSION_EXERCISE_NOTES_BODY =
+    "mt-1 whitespace-pre-line text-xs leading-relaxed text-muted-foreground";

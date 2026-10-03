@@ -1,16 +1,21 @@
 /**
- * AthleteSessionExerciseList.tsx — Lista ejercicios premium en preview (V04).
+ * AthleteSessionExerciseList.tsx — Lista ejercicios preview FE-1 (reps/kg/RIR/notas).
+ *
+ * Presentacional: filas de `buildAthletePreviewGroupRows`. Notas plegadas.
  */
 
-import React from "react";
-import { AlertTriangle } from "lucide-react";
+import React, { useState } from "react";
+import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { AthleteInjuryCallout } from "@/components/athlete/AthleteInjuryCallout";
 import {
+    ATHLETE_SESSION_EXERCISE_DETAIL,
     ATHLETE_SESSION_EXERCISE_ITEM,
     ATHLETE_SESSION_EXERCISE_ITEM_CAUTION,
     ATHLETE_SESSION_EXERCISE_NAME,
-    ATHLETE_SESSION_EXERCISE_SETS,
+    ATHLETE_SESSION_EXERCISE_NOTES_BODY,
+    ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE,
+    ATHLETE_SESSION_EXERCISE_SECONDARY,
     ATHLETE_SESSION_PREVIEW_BLOCK,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
 import type { SessionBlockView } from "@nexia/shared/sessionProgramming/sessionBlockView";
@@ -27,6 +32,30 @@ export interface AthleteSessionExerciseListProps {
     hasDangerConflict: boolean;
     onConsult: () => void;
 }
+
+const AthletePreviewNotes: React.FC<{ notes: string }> = ({ notes }) => {
+    const [open, setOpen] = useState(false);
+    return (
+        <div>
+            <button
+                type="button"
+                className={ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE}
+                aria-expanded={open}
+                onClick={() => setOpen((v) => !v)}
+            >
+                <span className="inline-flex items-center gap-1">
+                    {open ? "Ocultar nota" : "Ver nota del entrenador"}
+                    {open ? (
+                        <ChevronUp className="size-3.5" aria-hidden />
+                    ) : (
+                        <ChevronDown className="size-3.5" aria-hidden />
+                    )}
+                </span>
+            </button>
+            {open ? <p className={ATHLETE_SESSION_EXERCISE_NOTES_BODY}>{notes}</p> : null}
+        </div>
+    );
+};
 
 export const AthleteSessionExerciseList: React.FC<AthleteSessionExerciseListProps> = ({
     blocks,
@@ -79,7 +108,7 @@ export const AthleteSessionExerciseList: React.FC<AthleteSessionExerciseListProp
                                     >
                                         {hasConflict && (
                                             <AlertTriangle
-                                                className="size-4 shrink-0 text-warning"
+                                                className="mt-0.5 size-4 shrink-0 text-warning"
                                                 aria-label="Precaución por lesión activa"
                                             />
                                         )}
@@ -93,15 +122,17 @@ export const AthleteSessionExerciseList: React.FC<AthleteSessionExerciseListProp
                                             >
                                                 {row.title}
                                             </span>
-                                            <span
-                                                className={
-                                                    row.hasCompoundLayout
-                                                        ? "mt-0.5 block text-sm text-muted-foreground"
-                                                        : ATHLETE_SESSION_EXERCISE_SETS
-                                                }
-                                            >
+                                            <p className={ATHLETE_SESSION_EXERCISE_DETAIL}>
                                                 {row.detail}
-                                            </span>
+                                            </p>
+                                            {row.secondaryDetail ? (
+                                                <p className={ATHLETE_SESSION_EXERCISE_SECONDARY}>
+                                                    {row.secondaryDetail}
+                                                </p>
+                                            ) : null}
+                                            {row.notes?.trim() ? (
+                                                <AthletePreviewNotes notes={row.notes.trim()} />
+                                            ) : null}
                                         </div>
                                     </li>
                                 );
