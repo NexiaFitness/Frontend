@@ -23,6 +23,7 @@ import { ConstructorFieldAnchor } from "../primitives/ConstructorFieldAnchor";
 import { useConstructorFieldValidation } from "../primitives/useConstructorFieldValidation";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
+import { ExerciseNotesField } from "../primitives/ExerciseNotesField";
 import { isFilledConstructorExercise } from "../utils/supersetRow";
 import {
     CONSTRUCTOR_CARD_CLASS,
@@ -232,6 +233,20 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
                                                 seg
                                             </span>
                                         </div>
+                                        {index === 0 && hasExercise ? (
+                                            <ExerciseNotesField
+                                                exerciseId={exercise.id}
+                                                exerciseName={exercise.exerciseName}
+                                                notes={exercise.notes}
+                                                onNotesChange={(notes) =>
+                                                    onUpdate(normalized.id, {
+                                                        exercises: [
+                                                            { ...exercise, notes },
+                                                        ],
+                                                    })
+                                                }
+                                            />
+                                        ) : null}
                                     </div>
                                 </GroupedExerciseRow>
                             );

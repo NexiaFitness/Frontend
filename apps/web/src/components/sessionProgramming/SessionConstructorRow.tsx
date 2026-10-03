@@ -26,6 +26,10 @@ import {
     applyCaracterUpdateWithInheritance,
     hasCaracterChange,
 } from "./constructor/utils/exerciseCaracterInheritance";
+import {
+    CONSTRUCTOR_EXERCISE_NOTE_INPUT,
+    CONSTRUCTOR_EXERCISE_NOTE_LABEL,
+} from "./constructorExerciseNotesPresentation";
 
 const SET_TYPE_OPTIONS = Object.entries(SET_TYPE_LABELS).map(([value, label]) => ({
     value,
@@ -156,23 +160,41 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                 )}
             </div>
 
-            {/* EJERCICIOS */}
+            {/* EJERCICIOS + nota entrenador (persiste en SessionBlockExercise.notes) */}
             <div className="min-w-0">
                 <div className="space-y-1">
                     {row.exercises.map((ex) => (
                         <div
                             key={ex.id}
-                            className={`flex items-center gap-2 rounded-md bg-surface border border-border/60 px-2 py-1 text-xs ${INPUT_H}`}
+                            className="rounded-md border border-border/60 bg-surface px-2 py-1 text-xs"
                         >
-                            <span className="flex-1 truncate">{ex.exerciseName}</span>
-                            <button
-                                type="button"
-                                onClick={() => onRemoveExercise(row.id, ex.id)}
-                                className="text-muted-foreground hover:text-destructive shrink-0"
-                                aria-label="Quitar ejercicio"
-                            >
-                                <X className="h-3 w-3" aria-hidden />
-                            </button>
+                            <div className={`flex items-center gap-2 ${INPUT_H}`}>
+                                <span className="flex-1 truncate">{ex.exerciseName}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => onRemoveExercise(row.id, ex.id)}
+                                    className="text-muted-foreground hover:text-destructive shrink-0"
+                                    aria-label="Quitar ejercicio"
+                                >
+                                    <X className="h-3 w-3" aria-hidden />
+                                </button>
+                            </div>
+                            <label className={CONSTRUCTOR_EXERCISE_NOTE_LABEL} htmlFor={`note-${ex.id}`}>
+                                Nota del entrenador para {ex.exerciseName}
+                            </label>
+                            <input
+                                id={`note-${ex.id}`}
+                                type="text"
+                                value={ex.notes ?? ""}
+                                onChange={(e) =>
+                                    handleExerciseChange(ex.id, {
+                                        notes: e.target.value.length > 0 ? e.target.value : null,
+                                    })
+                                }
+                                placeholder="Nota para el atleta (opcional)"
+                                className={CONSTRUCTOR_EXERCISE_NOTE_INPUT}
+                                autoComplete="off"
+                            />
                         </div>
                     ))}
                     <button
@@ -286,19 +308,16 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                         handleExerciseChange(ex.id, {
                                             effortCharacter: EFFORT_CHARACTER.RPE,
                                             effortValue: ex.effortValue,
-                                            notes: null,
                                         });
                                     } else if (val === "rir") {
                                         handleExerciseChange(ex.id, {
                                             effortCharacter: EFFORT_CHARACTER.RIR,
                                             effortValue: ex.effortValue,
-                                            notes: null,
                                         });
                                     } else {
                                         handleExerciseChange(ex.id, {
                                             effortCharacter: EFFORT_CHARACTER.PCT_RM,
                                             effortValue: ex.effortValue,
-                                            notes: null,
                                         });
                                     }
                                 }}

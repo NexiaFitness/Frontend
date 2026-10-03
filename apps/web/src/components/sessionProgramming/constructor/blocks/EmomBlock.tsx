@@ -28,6 +28,7 @@ import { ConstructorFieldAnchor } from "../primitives/ConstructorFieldAnchor";
 import { useConstructorFieldValidation } from "../primitives/useConstructorFieldValidation";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
+import { ExerciseNotesField } from "../primitives/ExerciseNotesField";
 import {
     applyEmomWindowCaracterInheritance,
     hasCaracterChange,
@@ -260,6 +261,18 @@ export const EmomBlock: React.FC<EmomBlockProps> = ({
                                                                 window.id,
                                                                 ex.id,
                                                                 updates
+                                                            )
+                                                        }
+                                                    />
+                                                    <ExerciseNotesField
+                                                        exerciseId={ex.id}
+                                                        exerciseName={ex.exerciseName}
+                                                        notes={ex.notes}
+                                                        onNotesChange={(notes) =>
+                                                            handleExerciseChange(
+                                                                window.id,
+                                                                ex.id,
+                                                                { notes }
                                                             )
                                                         }
                                                     />

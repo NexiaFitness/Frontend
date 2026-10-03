@@ -49,7 +49,11 @@ export const AthleteDashboard: React.FC = () => {
         platform: pwaPlatform,
         promptInstall,
         showChip: showPwaChip,
-    } = useAthleteInstallPrompt({ isBlockingOverlayOpen });
+    } = useAthleteInstallPrompt({
+        isBlockingOverlayOpen,
+        // Install sheet (añadir a inicio), no aviso de SW: no auto-abrir sobre el CTA sticky.
+        suppressAutoOpen: true,
+    });
     const {
         userName,
         clientId,

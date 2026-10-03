@@ -27,6 +27,7 @@ import { ConstructorFieldAnchor } from "../primitives/ConstructorFieldAnchor";
 import { useConstructorFieldValidation } from "../primitives/useConstructorFieldValidation";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
+import { ExerciseNotesField } from "../primitives/ExerciseNotesField";
 import {
     applyCaracterUpdateWithInheritance,
     hasCaracterChange,
@@ -265,6 +266,16 @@ export const GiantSetBlock: React.FC<GiantSetBlockProps> = ({
                                             exercise={setView}
                                             onExerciseChange={(updates) =>
                                                 handleSetDataChange(index, updates)
+                                            }
+                                        />
+                                        <ExerciseNotesField
+                                            exerciseId={ex.id}
+                                            exerciseName={ex.exerciseName}
+                                            notes={ex.notes}
+                                            onNotesChange={(notes) =>
+                                                onUpdateExercise(normalized.id, ex.id, {
+                                                    notes,
+                                                })
                                             }
                                         />
                                     </div>

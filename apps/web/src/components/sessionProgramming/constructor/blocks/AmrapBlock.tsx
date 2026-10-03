@@ -22,6 +22,7 @@ import { GroupedExerciseRow } from "../primitives/GroupedExerciseRow";
 import { ValidatedExercisePickerField } from "../primitives/ValidatedExercisePickerField";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
+import { ExerciseNotesField } from "../primitives/ExerciseNotesField";
 import {
     applyCaracterUpdateWithInheritance,
     hasCaracterChange,
@@ -225,6 +226,16 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
                                         exercise={ex}
                                         onExerciseChange={(updates) =>
                                             handleExerciseChange(index, updates)
+                                        }
+                                    />
+                                    <ExerciseNotesField
+                                        exerciseId={ex.id}
+                                        exerciseName={ex.exerciseName}
+                                        notes={ex.notes}
+                                        onNotesChange={(notes) =>
+                                            onUpdateExercise(normalized.id, ex.id, {
+                                                notes,
+                                            })
                                         }
                                     />
                                 </div>

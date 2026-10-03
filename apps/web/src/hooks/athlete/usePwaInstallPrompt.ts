@@ -27,6 +27,12 @@ interface BeforeInstallPromptEvent extends Event {
 export interface UsePwaInstallPromptOptions {
     /** Otro sheet/drawer/modal abierto — bloquea el install sheet. */
     isBlockingOverlayOpen?: boolean;
+    /**
+     * No abrir el sheet de instalación solo al montar / por intervalo.
+     * El chip sigue disponible; el atleta abre el sheet a propósito.
+     * Evita tapar el CTA sticky «Ver sesión» en Home (QA-1B).
+     */
+    suppressAutoOpen?: boolean;
 }
 
 export interface UsePwaInstallPromptResult {
@@ -43,7 +49,7 @@ export interface UsePwaInstallPromptResult {
 export function usePwaInstallPrompt(
     options: UsePwaInstallPromptOptions = {}
 ): UsePwaInstallPromptResult {
-    const { isBlockingOverlayOpen = false } = options;
+    const { isBlockingOverlayOpen = false, suppressAutoOpen = false } = options;
     const isDesktop = useIsAthleteDesktopLayout();
 
     const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
@@ -106,19 +112,21 @@ export function usePwaInstallPrompt(
     }, [refreshInstallState]);
 
     useEffect(() => {
+        if (suppressAutoOpen) return;
         if (!isActive || hasOpenedOnMountRef.current) return;
         hasOpenedOnMountRef.current = true;
         tryOpenSheet("mount");
-    }, [isActive, tryOpenSheet]);
+    }, [isActive, suppressAutoOpen, tryOpenSheet]);
 
     useEffect(() => {
+        if (suppressAutoOpen) return;
         if (!isActive || isBlockingOverlayOpen) return;
         if (!pendingOpenRef.current) return;
         tryOpenSheet("mount");
-    }, [isActive, isBlockingOverlayOpen, tryOpenSheet]);
+    }, [isActive, isBlockingOverlayOpen, suppressAutoOpen, tryOpenSheet]);
 
     useEffect(() => {
-        if (!isActive) return;
+        if (!isActive || suppressAutoOpen) return;
 
         const intervalId = window.setInterval(() => {
             if (isSheetOpen || isBlockingOverlayOpen) return;
@@ -126,7 +134,13 @@ export function usePwaInstallPrompt(
         }, SHEET_RESHOW_INTERVAL_MS);
 
         return () => window.clearInterval(intervalId);
-    }, [isActive, isSheetOpen, isBlockingOverlayOpen, tryOpenSheet]);
+    }, [
+        isActive,
+        isSheetOpen,
+        isBlockingOverlayOpen,
+        suppressAutoOpen,
+        tryOpenSheet,
+    ]);
 
     const closeSheet = useCallback(() => {
         setIsSheetOpen(false);

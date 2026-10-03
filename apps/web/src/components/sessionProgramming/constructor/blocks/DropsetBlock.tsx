@@ -30,6 +30,7 @@ import { ConstructorFieldAnchor } from "../primitives/ConstructorFieldAnchor";
 import { useConstructorFieldValidation } from "../primitives/useConstructorFieldValidation";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
+import { ExerciseNotesField } from "../primitives/ExerciseNotesField";
 import { isFilledConstructorExercise } from "../utils/supersetRow";
 import {
     CONSTRUCTOR_DROPSET_CARD_CLASS,
@@ -248,6 +249,20 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
                                                 handleSetDataFieldChange(entry.id, updates)
                                             }
                                         />
+                                        {isMain && hasExercise ? (
+                                            <ExerciseNotesField
+                                                exerciseId={exercise.id}
+                                                exerciseName={exercise.exerciseName}
+                                                notes={exercise.notes}
+                                                onNotesChange={(notes) =>
+                                                    onUpdate(normalized.id, {
+                                                        exercises: [
+                                                            { ...exercise, notes },
+                                                        ],
+                                                    })
+                                                }
+                                            />
+                                        ) : null}
                                     </div>
                                 </DropStepRow>
                             );
