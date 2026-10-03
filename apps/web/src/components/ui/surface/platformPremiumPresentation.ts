@@ -51,7 +51,21 @@ export const PLATFORM_PAGE_BREADCRUMB = "mb-4";
  */
 export { NEXIA_PORTAL_GREETING_H1 as PLATFORM_PAGE_TITLE_H1 } from "@/components/athlete/account/athleteSettingsPresentation";
 
-export const PLATFORM_BACK_BUTTON = "shrink-0 self-end sm:self-start";
+/**
+ * «Volver» en cabeceras / ScreenState: outline en móvil; ghost-primary en lg+.
+ * Usar con `Button variant="outline-primary"` (o enlace tipográfico atleta).
+ */
+export const PLATFORM_BACK_OUTLINE_MOBILE = cn(
+    "border border-primary/30 bg-primary/20 text-primary",
+    "hover:border-primary/50 hover:bg-primary/30",
+    "md:border-transparent md:bg-transparent md:hover:bg-primary/10"
+);
+
+/** Cabecera Volver: layout + outline móvil / tipográfico lg+. */
+export const PLATFORM_BACK_BUTTON = cn(
+    "shrink-0 self-end sm:self-start",
+    PLATFORM_BACK_OUTLINE_MOBILE
+);
 
 /** Etiquetas de campo / sección (uppercase metadata). */
 export const PLATFORM_SECTION_LABEL =

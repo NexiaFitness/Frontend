@@ -11,6 +11,8 @@
 import React from "react";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
+import { cn } from "@/lib/utils";
+import { PLATFORM_BACK_OUTLINE_MOBILE } from "@/components/ui/surface/platformPremiumPresentation";
 import { ALERT_ACTION_ICON_CLASS } from "./alertPresentation";
 import { RESOURCE_QUERY_ACTION } from "./resourceQueryStatePresentation";
 
@@ -45,16 +47,16 @@ export const ScreenStateHomeButton: React.FC<ScreenStatePrimaryHomeProps> = ({
     </Button>
 );
 
-/** Secundario «Volver» con ArrowLeft (gap del Button; sin margen en el icono). */
+/** Secundario «Volver»: outline en móvil, ghost-primary en tablet/desktop. */
 export const ScreenStateBackButton: React.FC<ScreenStateBackProps> = ({
     onBack,
     label = RESOURCE_QUERY_ACTION.back,
 }) => (
     <Button
         type="button"
-        variant="ghost-primary"
+        variant="outline-primary"
         size="sm"
-        className="min-h-touch-athlete w-full"
+        className={cn("min-h-touch-athlete w-full", PLATFORM_BACK_OUTLINE_MOBILE)}
         onClick={onBack}
     >
         <ArrowLeft className={ALERT_ACTION_ICON_CLASS} aria-hidden />

@@ -224,7 +224,7 @@ export const EditScheduledSessionPage: React.FC = () => {
                 />
                 <Button
                     type="button"
-                    variant="ghost-primary"
+                    variant="outline-primary"
                     size="sm"
                     className={PLATFORM_BACK_BUTTON}
                     onClick={goCalendar}

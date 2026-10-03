@@ -418,7 +418,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
             <header className={cn(PLATFORM_PAGE_HEADER, TEMPLATE_EDITOR_HEADER)}>
                 <div className={TEMPLATE_EDITOR_TITLE_WRAP}>
                     <Button
-                        variant="ghost-primary"
+                        variant="outline-primary"
                         size="sm"
                         className={cn("mb-2 w-fit", PLATFORM_BACK_BUTTON)}
                         onClick={handleBack}

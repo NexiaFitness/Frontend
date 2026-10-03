@@ -51,10 +51,12 @@ export const NEXIA_PORTAL_CARD_DESCRIPTION = "text-sm text-muted-foreground";
 
 export const ATHLETE_DIVIDER = NEXIA_DIVIDER_SUBTLE;
 
-/** Enlace «Volver» — cyan visible en reposo (§6.7). */
+/** Enlace «Volver» — outline en móvil; tipográfico en lg+ (§6.7 + mobile outline). */
 export const ATHLETE_BACK_LINK = cn(
-    "inline-flex min-h-touch-athlete items-center gap-2 text-sm font-medium",
-    "text-primary/85 transition-colors hover:text-primary",
+    "inline-flex min-h-touch-athlete items-center gap-2 rounded-lg px-3 text-sm font-medium",
+    "border border-primary/30 bg-primary/20 text-primary transition-colors",
+    "hover:border-primary/50 hover:bg-primary/30",
+    "md:border-transparent md:bg-transparent md:px-0 md:text-primary/85 md:hover:bg-transparent md:hover:text-primary",
     "motion-safe:active:opacity-80 motion-reduce:active:opacity-100"
 );
 
