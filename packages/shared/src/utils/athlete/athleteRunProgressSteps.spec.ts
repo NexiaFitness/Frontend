@@ -70,7 +70,7 @@ function progressPartial(blockId: number, registered: string[], pending: string[
             total_seconds: null,
             emom_completed_count: null,
             emom_failed_count: null,
-            payload_json: null,
+            detail: null,
         })),
         blocks: [
             {
@@ -127,7 +127,7 @@ describe("findFirstPendingStepIndex", () => {
                     total_seconds: null,
                     emom_completed_count: null,
                     emom_failed_count: null,
-                    payload_json: null,
+                    detail: null,
                 },
             ],
             blocks: [],

@@ -11,7 +11,7 @@ import React, { useMemo } from "react";
 import { Timer } from "lucide-react";
 import { useGetClientTimedBlockResultsQuery } from "@nexia/shared/api/clientsApi";
 import { formatForTimeDuration } from "@nexia/shared/utils/athlete/forTimeResult";
-import { parseEmomAthleteNoteFromPayloadJson } from "@nexia/shared/utils/trainer/parseTimedBlockResultPayload";
+import { emomAthleteNoteFromDetail } from "@nexia/shared/types/timedBlockResultDetail";
 import { LoadingSpinner } from "@/components/ui/feedback";
 
 export interface SessionTimedAthleteResultsPanelProps {
@@ -92,9 +92,7 @@ export const SessionTimedAthleteResultsPanel: React.FC<SessionTimedAthleteResult
             <ul className="space-y-2">
                 {rows.map((row) => {
                     const athleteNote =
-                        row.timed_mode === "emom"
-                            ? parseEmomAthleteNoteFromPayloadJson(row.payload_json)
-                            : null;
+                        row.timed_mode === "emom" ? emomAthleteNoteFromDetail(row.detail) : null;
 
                     return (
                         <li

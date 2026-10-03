@@ -14,7 +14,7 @@ const runStep = {
 } as AthleteRunStep;
 
 describe("buildEmomTimedResultPayload", () => {
-    it("incluye athlete_note en payload_json cuando hay nota", () => {
+    it("incluye athlete_note en detail cuando hay nota", () => {
         const payload = buildEmomTimedResultPayload({
             sessionId: 4436,
             runStep,
@@ -23,12 +23,11 @@ describe("buildEmomTimedResultPayload", () => {
             failedCount: 1,
             athleteNote: "QA-1C fatiga",
         });
-        const parsed = JSON.parse(payload.payload_json ?? "{}") as {
-            athlete_note?: string;
-            as_planned?: boolean;
-        };
-        expect(parsed.athlete_note).toBe("QA-1C fatiga");
-        expect(parsed.as_planned).toBe(false);
+        expect(payload.detail?.kind).toBe("emom");
+        if (payload.detail?.kind === "emom") {
+            expect(payload.detail.athlete_note).toBe("QA-1C fatiga");
+            expect(payload.detail.as_planned).toBe(false);
+        }
         expect(payload.emom_completed_count).toBeNull();
         expect(payload.emom_failed_count).toBeNull();
     });

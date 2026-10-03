@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "description": "Claves canónicas buildAthleteRunSteps ↔ athlete_run_step_catalog. Copias sincronizadas: backend/tests/fixtures/ y frontend/packages/shared/src/fixtures/.",
+  "cases": [
+    {
+      "id": "single_set_planned_3",
+      "expected_keys": [
+        "block-10-single-0-r1-S3-S1-1",
+        "block-10-single-0-r2-S3-S2-2",
+        "block-10-single-0-r3-S3-S3-3"
+      ]
+    },
+    {
+      "id": "superset_2_rounds",
+      "expected_keys": [
+        "block-20-superset-1-r1-A1-R1-1",
+        "block-20-superset-1-r1-A2-R1-1",
+        "block-20-superset-1-r2-A1-R2-2",
+        "block-20-superset-1-r2-A2-R2-2"
+      ]
+    },
+    {
+      "id": "amrap_timed",
+      "expected_keys": ["block-30-amrap-timed-1"]
+    },
+    {
+      "id": "emom_timed",
+      "expected_keys": ["block-40-emom-timed-emom-block"]
+    },
+    {
+      "id": "for_time_timed",
+      "expected_keys": ["block-41-for_time-timed-for-time-block"]
+    },
+    {
+      "id": "dropset_two_exercises_r1",
+      "expected_keys": [
+        "block-50-dropset-r1-A1-MAIN-1",
+        "block-50-dropset-r1-A1-DROP 1-2"
+      ]
+    }
+  ]
+}

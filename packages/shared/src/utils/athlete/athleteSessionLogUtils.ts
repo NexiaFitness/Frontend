@@ -32,6 +32,10 @@ import {
     buildForTimeTimedResultPayload,
 } from "./timedBlockRunUtils";
 import { getEmomTemplateSlots, resolveEmomFailureState } from "./emomResult";
+import {
+    amrapPartialRepsFromDetail,
+    amrapPartialTotalFromDetail,
+} from "../../types/timedBlockResultDetail";
 
 export interface AthleteSessionLogSlotValues {
     weight: number;
@@ -111,49 +115,10 @@ function formatExecutionSummary(step: AthleteRunProgressStep, name?: string): st
     return label.trim() || "Registrado";
 }
 
-function amrapPartialTotalFromPayload(payloadJson: string | null | undefined): number {
-    if (!payloadJson) return 0;
-    try {
-        const data = JSON.parse(payloadJson) as { partial_total?: number };
-        return data.partial_total ?? 0;
-    } catch {
-        return 0;
-    }
-}
-
-function amrapPartialRepsFromPayload(
-    payloadJson: string | null | undefined,
-    slotStepKeys: readonly string[]
-): Record<string, number> {
-    const partial: Record<string, number> = {};
-    for (const key of slotStepKeys) {
-        partial[key] = 0;
-    }
-    if (!payloadJson || slotStepKeys.length === 0) {
-        return partial;
-    }
-    try {
-        const data = JSON.parse(payloadJson) as {
-            partial_by_slot?: Record<string, number>;
-            partial_total?: number;
-        };
-        if (data.partial_by_slot) {
-            for (const key of slotStepKeys) {
-                partial[key] = data.partial_by_slot[key] ?? 0;
-            }
-        } else if (data.partial_total != null && data.partial_total > 0 && slotStepKeys.length === 1) {
-            partial[slotStepKeys[0]] = data.partial_total;
-        }
-    } catch {
-        /* ignore malformed payload */
-    }
-    return partial;
-}
-
 function formatTimedSummary(step: AthleteRunProgressStep): string {
     if (step.status === "not_performed") return "No realizado";
     if (step.timed_mode === "amrap" && step.rounds_completed != null) {
-        const partialTotal = amrapPartialTotalFromPayload(step.payload_json);
+        const partialTotal = amrapPartialTotalFromDetail(step.detail);
         if (partialTotal > 0) {
             return `AMRAP ${step.rounds_completed} rondas + ${partialTotal} reps`;
         }
@@ -165,13 +130,8 @@ function formatTimedSummary(step: AthleteRunProgressStep): string {
         return `For Time ${m}:${String(s).padStart(2, "0")}`;
     }
     if (step.timed_mode === "emom") {
-        if (step.payload_json) {
-            try {
-                const data = JSON.parse(step.payload_json) as { as_planned?: boolean };
-                return data.as_planned ? "EMOM completado" : "EMOM no completado";
-            } catch {
-                return "EMOM registrado";
-            }
+        if (step.detail?.kind === "emom") {
+            return step.detail.as_planned ? "EMOM completado" : "EMOM no completado";
         }
         return "EMOM registrado";
     }
@@ -309,20 +269,12 @@ function defaultRoundDraft(
 function defaultTimedDraft(step: AthleteRunStep, saved?: AthleteRunProgressStep): AthleteSessionLogTimedDraft {
     let emomAsPlanned: boolean | null = null;
     let emomAthleteNote = "";
-    if (saved?.payload_json && step.groupKind === "emom") {
-        try {
-            const data = JSON.parse(saved.payload_json) as {
-                as_planned?: boolean;
-                athlete_note?: string;
-            };
-            emomAsPlanned = data.as_planned ?? null;
-            emomAthleteNote = data.athlete_note ?? "";
-        } catch {
-            emomAsPlanned = null;
-        }
+    if (saved?.detail?.kind === "emom" && step.groupKind === "emom") {
+        emomAsPlanned = saved.detail.as_planned;
+        emomAthleteNote = saved.detail.athlete_note ?? "";
     }
     const slotKeys = (step.slots ?? []).map((slot) => slot.stepKey);
-    const amrapPartialReps = amrapPartialRepsFromPayload(saved?.payload_json, slotKeys);
+    const amrapPartialReps = amrapPartialRepsFromDetail(saved?.detail, slotKeys);
 
     return {
         stepKey: step.stepKey,

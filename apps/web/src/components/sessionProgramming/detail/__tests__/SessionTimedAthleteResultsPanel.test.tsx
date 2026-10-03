@@ -17,7 +17,7 @@ describe("SessionTimedAthleteResultsPanel", () => {
         vi.clearAllMocks();
     });
 
-    it("muestra Nota del atleta solo en filas EMOM con payload_json", () => {
+    it("muestra Nota del atleta solo en filas EMOM con detail tipado", () => {
         mockQuery.mockReturnValue({
             isLoading: false,
             data: {
@@ -31,8 +31,12 @@ describe("SessionTimedAthleteResultsPanel", () => {
                         emom_completed_count: 4,
                         emom_failed_count: 2,
                         partial_total: null,
-                        payload_json:
-                            '{"as_planned":false,"athlete_note":"Nota teclado QA-1C D2"}',
+                        detail: {
+                            kind: "emom",
+                            interval_total: 6,
+                            as_planned: false,
+                            athlete_note: "Nota teclado QA-1C D2",
+                        },
                     },
                     {
                         id: 2,
@@ -43,7 +47,7 @@ describe("SessionTimedAthleteResultsPanel", () => {
                         emom_completed_count: null,
                         emom_failed_count: null,
                         partial_total: 19,
-                        payload_json: '{"partial_total":19}',
+                        detail: { kind: "amrap", partial_total: 19, partial_by_slot: {} },
                     },
                 ],
             },
@@ -60,7 +64,7 @@ describe("SessionTimedAthleteResultsPanel", () => {
         expect(screen.getByText("3 rondas + 19 reps")).toBeInTheDocument();
     });
 
-    it("no muestra bloque de nota si EMOM sin athlete_note en payload", () => {
+    it("no muestra bloque de nota si EMOM sin athlete_note en detail", () => {
         mockQuery.mockReturnValue({
             isLoading: false,
             data: {
@@ -74,7 +78,7 @@ describe("SessionTimedAthleteResultsPanel", () => {
                         emom_completed_count: 6,
                         emom_failed_count: 0,
                         partial_total: null,
-                        payload_json: '{"as_planned":true}',
+                        detail: { kind: "emom", interval_total: 6, as_planned: true },
                     },
                 ],
             },

@@ -2,6 +2,8 @@
  * athleteRunProgress.ts — BE-1 progress + BE-2 not performed (portal atleta FE-3).
  */
 
+import type { TimedBlockResultDetail } from "./timedBlockResultDetail";
+
 export type AthleteRunRecordStatus = "registered" | "not_performed";
 
 export type AthleteRunBlockStatus = "pending" | "registered" | "not_performed";
@@ -26,7 +28,7 @@ export interface AthleteRunProgressStep {
     total_seconds?: number | null;
     emom_completed_count?: number | null;
     emom_failed_count?: number | null;
-    payload_json?: string | null;
+    detail?: TimedBlockResultDetail | null;
 }
 
 export interface AthleteRunProgressBlock {

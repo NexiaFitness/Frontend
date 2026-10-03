@@ -121,7 +121,7 @@ describe("session log progress helpers", () => {
 });
 
 describe("buildInitialBlockDraft AMRAP", () => {
-    it("hidrata parcial desde payload_json.partial_by_slot", () => {
+    it("hidrata parcial desde detail.partial_by_slot", () => {
         const timedStep: AthleteRunStep = {
             stepKey: "block-193-amrap-timed-1",
             kind: "timed_block",
@@ -168,10 +168,11 @@ describe("buildInitialBlockDraft AMRAP", () => {
                     session_block_id: 193,
                     rounds_completed: 5,
                     timed_mode: "amrap",
-                    payload_json: JSON.stringify({
+                    detail: {
+                        kind: "amrap",
                         partial_total: 2,
                         partial_by_slot: { "block-193-amrap-r1-1-1-1": 2 },
-                    }),
+                    },
                 },
             ],
         });

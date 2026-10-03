@@ -106,10 +106,11 @@ export function buildAmrapTimedResultPayload(input: {
         timed_mode: "amrap",
         session_block_id: input.runStep.blockId,
         rounds_completed: input.fullRounds,
-        payload_json: JSON.stringify({
+        detail: {
+            kind: "amrap",
             partial_total: partialTotal,
             partial_by_slot: input.partialReps,
-        }),
+        },
     };
 }
 
@@ -143,12 +144,15 @@ export function buildEmomTimedResultPayload(input: {
         timed_mode: "emom",
         session_block_id: input.runStep.blockId,
         ...emomCounts,
-        payload_json: JSON.stringify({
+        detail: {
+            kind: "emom",
             interval_total: intervalTotal,
             as_planned: input.asPlanned,
-            ...(input.finishedEarly ? { finished_early: true, completed_interval_count: completed } : {}),
+            ...(input.finishedEarly
+                ? { finished_early: true, completed_interval_count: completed }
+                : {}),
             ...(note ? { athlete_note: note } : {}),
-        }),
+        },
     };
 }
 
@@ -165,8 +169,9 @@ export function buildForTimeTimedResultPayload(input: {
         timed_mode: "for_time",
         session_block_id: input.runStep.blockId,
         total_seconds: input.totalSeconds,
-        payload_json: JSON.stringify({
+        detail: {
+            kind: "for_time",
             cumulative_splits: [...input.cumulativeSplits],
-        }),
+        },
     };
 }

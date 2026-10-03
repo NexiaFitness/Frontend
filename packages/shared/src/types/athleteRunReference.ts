@@ -2,6 +2,8 @@
  * Athlete run context — reference, PR, suggestion (F3e / SPEC §9.1).
  */
 
+import type { TimedBlockResultDetail } from "./timedBlockResultDetail";
+
 import type { AthleteRunSuggestion } from "./athleteRunSuggestion";
 
 export interface AthleteRunReferencePoint {
@@ -97,25 +99,28 @@ export interface AthleteRunExecutionOut {
 export interface AthleteRunTimedResultCreate {
     training_session_id: number;
     group_id: string;
-    timed_mode: string;
+    timed_mode: "amrap" | "emom" | "for_time";
     step_key: string;
     session_block_id?: number | null;
     total_seconds?: number | null;
     rounds_completed?: number | null;
     emom_completed_count?: number | null;
     emom_failed_count?: number | null;
-    payload_json?: string | null;
+    detail?: TimedBlockResultDetail | null;
+    not_performed?: boolean;
 }
 
 export interface AthleteRunTimedResultOut {
     id: number;
     training_session_id: number;
     group_id: string;
+    step_key: string;
     timed_mode: string;
     total_seconds: number | null;
     rounds_completed: number | null;
     emom_completed_count: number | null;
     emom_failed_count: number | null;
+    detail: TimedBlockResultDetail | null;
 }
 
 export function hasAthleteRunReferencePoint(
