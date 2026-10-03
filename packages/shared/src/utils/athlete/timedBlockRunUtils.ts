@@ -120,11 +120,21 @@ export function buildEmomTimedResultPayload(input: {
     asPlanned: boolean;
     failedCount: number;
     athleteNote?: string | null;
+    /** Intervalos con reloj completado (incl. cierre anticipado P1-7). */
+    completedIntervalCount?: number;
+    finishedEarly?: boolean;
 }): AthleteRunTimedResultCreate {
     const intervalTotal = input.intervals.length;
+    const completed =
+        input.completedIntervalCount != null
+            ? Math.max(0, Math.min(intervalTotal, input.completedIntervalCount))
+            : intervalTotal;
     const note = input.athleteNote?.trim();
     const emomCounts = input.asPlanned
-        ? { emom_completed_count: intervalTotal, emom_failed_count: 0 }
+        ? {
+              emom_completed_count: completed,
+              emom_failed_count: 0,
+          }
         : { emom_completed_count: null, emom_failed_count: null };
     return {
         training_session_id: input.sessionId,
@@ -136,6 +146,7 @@ export function buildEmomTimedResultPayload(input: {
         payload_json: JSON.stringify({
             interval_total: intervalTotal,
             as_planned: input.asPlanned,
+            ...(input.finishedEarly ? { finished_early: true, completed_interval_count: completed } : {}),
             ...(note ? { athlete_note: note } : {}),
         }),
     };

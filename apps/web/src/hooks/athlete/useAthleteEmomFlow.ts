@@ -25,6 +25,11 @@ export interface UseAthleteEmomFlowResult {
     displaySeconds: number;
     totalSeconds: number;
     allIntervalsComplete: boolean;
+    /** Intervalos completados al 100 % (reloj) antes del cierre; P1-7 si finishEarly. */
+    completedIntervalCount: number;
+    finishedEarly: boolean;
+    /** P1-7: cerrar EMOM antes de que acabe el último intervalo. */
+    finishEarly: () => void;
 }
 
 export function useAthleteEmomFlow(
@@ -36,6 +41,7 @@ export function useAthleteEmomFlow(
     const [intervalIndex, setIntervalIndex] = useState(0);
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [allIntervalsComplete, setAllIntervalsComplete] = useState(false);
+    const [finishedEarly, setFinishedEarly] = useState(false);
     const intervalStartedAtRef = useRef<number | null>(null);
     const handledExpiryKeyRef = useRef<string | null>(null);
 
@@ -43,9 +49,17 @@ export function useAthleteEmomFlow(
         setIntervalIndex(0);
         setElapsedSeconds(0);
         setAllIntervalsComplete(false);
+        setFinishedEarly(false);
         intervalStartedAtRef.current = null;
         handledExpiryKeyRef.current = null;
     }, [stepKey]);
+
+    const finishEarly = useCallback(() => {
+        if (allIntervalsComplete || intervals.length === 0) return;
+        emomFlowHaptic(200);
+        setFinishedEarly(true);
+        setAllIntervalsComplete(true);
+    }, [allIntervalsComplete, intervals.length]);
 
     const totalSeconds = Math.max(1, intervalSeconds);
     const running = active && !allIntervalsComplete && intervals.length > 0;
@@ -105,6 +119,12 @@ export function useAthleteEmomFlow(
           )
         : null;
 
+    const completedIntervalCount = allIntervalsComplete
+        ? finishedEarly
+            ? Math.min(intervalIndex, intervals.length)
+            : intervals.length
+        : intervalIndex;
+
     return {
         currentInterval,
         intervalIndex,
@@ -113,5 +133,8 @@ export function useAthleteEmomFlow(
         displaySeconds,
         totalSeconds,
         allIntervalsComplete,
+        completedIntervalCount,
+        finishedEarly,
+        finishEarly,
     };
 }

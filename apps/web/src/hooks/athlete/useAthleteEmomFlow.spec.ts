@@ -79,4 +79,18 @@ describe("useAthleteEmomFlow", () => {
         expect(result.current.allIntervalsComplete).toBe(true);
         expect(result.current.displaySeconds).toBe(0);
     });
+
+    it("finishEarly (P1-7) cierra antes del último intervalo", () => {
+        const { result } = renderHook(() =>
+            useAthleteEmomFlow("emom-step", INTERVALS, 3, true)
+        );
+
+        act(() => {
+            result.current.finishEarly();
+        });
+
+        expect(result.current.allIntervalsComplete).toBe(true);
+        expect(result.current.finishedEarly).toBe(true);
+        expect(result.current.completedIntervalCount).toBe(0);
+    });
 });
