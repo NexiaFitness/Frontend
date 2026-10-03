@@ -46,6 +46,7 @@ import {
     type AthleteRunRoundSlot,
     type AthleteRunStep,
 } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
+import { collectProgressKeysForRunStep } from "@nexia/shared/utils/athlete/athleteRunProgressSteps";
 import {
     buildAthleteRunGroupContext,
     buildAthleteRunGroupContextFromForTimeRound,
@@ -366,10 +367,19 @@ export function useAthleteSessionRun({
     const currentRunSuggestion =
         effectiveRunReference?.suggestion ?? runReference?.suggestion ?? null;
 
+    const touchRunStepForPersist = useCallback((step: AthleteRunStep | undefined) => {
+        if (!step) return;
+        touchedWeightStepKeysRef.current.add(step.stepKey);
+        for (const key of collectProgressKeysForRunStep(step)) {
+            touchedWeightStepKeysRef.current.add(key);
+        }
+    }, []);
+
     const handleWeightChange = useCallback(
         (value: number) => {
             setWeight(value);
             if (!current) return;
+            touchRunStepForPersist(currentRunStep ?? undefined);
             touchedWeightStepKeysRef.current.add(current.stepKey);
             if (value > 0) {
                 seriesAutofillWeightRef.current.set(
@@ -378,7 +388,33 @@ export function useAthleteSessionRun({
                 );
             }
         },
-        [current]
+        [current, currentRunStep, touchRunStepForPersist]
+    );
+
+    const handleRepsChange = useCallback(
+        (value: number) => {
+            setReps(value);
+            touchRunStepForPersist(currentRunStep ?? undefined);
+            if (current) touchedWeightStepKeysRef.current.add(current.stepKey);
+        },
+        [current, currentRunStep, touchRunStepForPersist]
+    );
+
+    const handleRpeChange = useCallback(
+        (value: number | null) => {
+            setRpe(value);
+            touchRunStepForPersist(currentRunStep ?? undefined);
+            if (current) touchedWeightStepKeysRef.current.add(current.stepKey);
+        },
+        [current, currentRunStep, touchRunStepForPersist]
+    );
+
+    const handleRoundRpeChange = useCallback(
+        (value: number | null) => {
+            setRoundRpe(value);
+            touchRunStepForPersist(currentRunStep ?? undefined);
+        },
+        [currentRunStep, touchRunStepForPersist]
     );
 
     useEffect(() => {
@@ -478,16 +514,20 @@ export function useAthleteSessionRun({
         totalSeconds: 0,
     });
 
-    const updateSlotLog = useCallback((slotKey: string, patch: Partial<SlotLogValues>) => {
-        setSlotLogs((prev) => {
-            const current = prev[slotKey];
-            if (!current) return prev;
-            if (patch.weight != null) {
+    const updateSlotLog = useCallback(
+        (slotKey: string, patch: Partial<SlotLogValues>) => {
+            if (patch.weight != null || patch.reps != null) {
                 touchedWeightStepKeysRef.current.add(slotKey);
+                touchRunStepForPersist(currentRunStep ?? undefined);
             }
-            return { ...prev, [slotKey]: { ...current, ...patch } };
-        });
-    }, []);
+            setSlotLogs((prev) => {
+                const current = prev[slotKey];
+                if (!current) return prev;
+                return { ...prev, [slotKey]: { ...current, ...patch } };
+            });
+        },
+        [currentRunStep, touchRunStepForPersist]
+    );
 
     const updateAmrapPartialReps = useCallback(
         (stepKey: string, value: number) => {
@@ -1393,7 +1433,7 @@ export function useAthleteSessionRun({
         slotLogs,
         updateSlotLog,
         roundRpe,
-        setRoundRpe,
+        setRoundRpe: handleRoundRpeChange,
         amrapRounds,
         setAmrapRounds,
         amrapPartialReps,
@@ -1419,8 +1459,8 @@ export function useAthleteSessionRun({
         reps,
         rpe,
         setWeight: handleWeightChange,
-        setReps,
-        setRpe,
+        setReps: handleRepsChange,
+        setRpe: handleRpeChange,
         saving,
         completing,
         restFlow: restFlowUi,
