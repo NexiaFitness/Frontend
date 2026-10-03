@@ -32,6 +32,7 @@ import {
     buildAthleteRunTimedReferenceQuery,
     buildEmomTimedResultPayload,
     buildForTimeTimedResultPayload,
+    readEmomAthleteNoteForSave,
 } from "@nexia/shared/utils/athlete/timedBlockRunUtils";
 import { resolveLocalRunReference } from "@nexia/shared/utils/athlete/localRunReferenceUtils";
 import { useAthleteRunSlotReferences } from "@/hooks/athlete/useAthleteRunSlotReferences";
@@ -214,12 +215,16 @@ export function useAthleteSessionRun({
 
     const loggedSetsRef = useRef<Map<number, number>>(new Map());
     const completedStepKeysRef = useRef<Set<string>>(new Set());
+    const touchedWeightStepKeysRef = useRef<Set<string>>(new Set());
+    const seriesAutofillWeightRef = useRef<Map<number, number>>(new Map());
     const [savedStepKeys, setSavedStepKeys] = useState<ReadonlySet<string>>(() => new Set());
 
     useEffect(() => {
         setStep(0);
         loggedSetsRef.current = new Map();
         completedStepKeysRef.current = new Set();
+        touchedWeightStepKeysRef.current = new Set();
+        seriesAutofillWeightRef.current = new Map();
         setSavedStepKeys(new Set());
         setSlotLogs({});
         setRoundRpe(null);
@@ -350,6 +355,18 @@ export function useAthleteSessionRun({
     const currentRunSuggestion =
         effectiveRunReference?.suggestion ?? runReference?.suggestion ?? null;
 
+    const handleWeightChange = useCallback(
+        (value: number) => {
+            setWeight(value);
+            if (!current) return;
+            touchedWeightStepKeysRef.current.add(current.stepKey);
+            if (current.setIndex === 1 && value > 0) {
+                seriesAutofillWeightRef.current.set(current.blockExerciseId, value);
+            }
+        },
+        [current]
+    );
+
     useEffect(() => {
         setPrCelebration(null);
     }, [currentStepKey]);
@@ -451,6 +468,9 @@ export function useAthleteSessionRun({
         setSlotLogs((prev) => {
             const current = prev[slotKey];
             if (!current) return prev;
+            if (patch.weight != null) {
+                touchedWeightStepKeysRef.current.add(slotKey);
+            }
             return { ...prev, [slotKey]: { ...current, ...patch } };
         });
     }, []);
@@ -691,28 +711,20 @@ export function useAthleteSessionRun({
                     roundRpe,
                 });
 
+                const emomNoteForSave = readEmomAthleteNoteForSave(emomAthleteNote);
+                const emomTimedPayload = buildEmomTimedResultPayload({
+                    sessionId,
+                    runStep: currentRunStep,
+                    intervals: currentRunStep.emomIntervals,
+                    asPlanned: emomAsPlanned,
+                    failedCount: emomFailureState.failedCount,
+                    athleteNote: emomNoteForSave,
+                });
+
                 if (isOnline) {
-                    await postTimedResult(
-                        buildEmomTimedResultPayload({
-                            sessionId,
-                            runStep: currentRunStep,
-                            intervals: currentRunStep.emomIntervals,
-                            asPlanned: emomAsPlanned,
-                            failedCount: emomFailureState.failedCount,
-                            athleteNote: emomAthleteNote,
-                        })
-                    ).unwrap();
+                    await postTimedResult(emomTimedPayload).unwrap();
                 } else {
-                    lastResult = await logTimedResult(
-                        buildEmomTimedResultPayload({
-                            sessionId,
-                            runStep: currentRunStep,
-                            intervals: currentRunStep.emomIntervals,
-                            asPlanned: emomAsPlanned,
-                            failedCount: emomFailureState.failedCount,
-                            athleteNote: emomAthleteNote,
-                        })
-                    );
+                    lastResult = await logTimedResult(emomTimedPayload);
                 }
 
                 for (const payload of payloads) {
@@ -1069,7 +1081,17 @@ export function useAthleteSessionRun({
             reference: effectiveRunReference?.reference,
         });
 
-        setWeight(defaults.weight);
+        let nextWeight = defaults.weight;
+        if (
+            current.setIndex > 1 &&
+            !touchedWeightStepKeysRef.current.has(current.stepKey)
+        ) {
+            const autofill = seriesAutofillWeightRef.current.get(current.blockExerciseId);
+            if (autofill != null && autofill > 0) {
+                nextWeight = autofill;
+            }
+        }
+        setWeight(nextWeight);
         const nextReps =
             current.inputMode === "duration"
                 ? current.plannedDurationSeconds ?? current.defaultReps
@@ -1455,7 +1477,7 @@ export function useAthleteSessionRun({
         weight,
         reps,
         rpe,
-        setWeight,
+        setWeight: handleWeightChange,
         setReps,
         setRpe,
         saving,

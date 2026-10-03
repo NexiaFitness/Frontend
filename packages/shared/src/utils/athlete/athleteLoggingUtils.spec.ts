@@ -7,6 +7,7 @@ import {
     distributeAmrapPartialReps,
     formatAmrapIncompleteRoundBreakdown,
     resolveWeightIncrementStepKg,
+    shouldCommitNumericDraftOnChange,
 } from "./athleteLoggingUtils";
 
 describe("resolveWeightIncrementStepKg", () => {
@@ -50,5 +51,19 @@ describe("formatAmrapIncompleteRoundBreakdown", () => {
             { a: 10, b: 2 }
         );
         expect(text).toBe("= 10 sentadillas + 2 dominadas");
+    });
+});
+
+describe("shouldCommitNumericDraftOnChange", () => {
+    it("confirma enteros completos", () => {
+        expect(shouldCommitNumericDraftOnChange("12", false)).toBe(true);
+        expect(shouldCommitNumericDraftOnChange("12a", false)).toBe(false);
+    });
+
+    it("confirma decimales completos y rechaza borrador con coma/punto final", () => {
+        expect(shouldCommitNumericDraftOnChange("12.5", true)).toBe(true);
+        expect(shouldCommitNumericDraftOnChange("12,5", true)).toBe(true);
+        expect(shouldCommitNumericDraftOnChange("12.", true)).toBe(false);
+        expect(shouldCommitNumericDraftOnChange("12,", true)).toBe(false);
     });
 });

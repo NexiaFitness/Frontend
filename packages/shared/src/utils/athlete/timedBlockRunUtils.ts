@@ -113,6 +113,13 @@ export function buildAmrapTimedResultPayload(input: {
     };
 }
 
+/** Lee nota EMOM del DOM si el textarea está montado (p. ej. antes de guardar). */
+export function readEmomAthleteNoteForSave(stateNote: string): string {
+    if (typeof document === "undefined") return stateNote.trim();
+    const el = document.getElementById("emom-athlete-note") as HTMLTextAreaElement | null;
+    return (el?.value ?? stateNote).trim();
+}
+
 export function buildEmomTimedResultPayload(input: {
     sessionId: number;
     runStep: AthleteRunStep;

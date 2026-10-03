@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import {
     clampWeightKg,
     parseDecimalInput,
+    shouldCommitNumericDraftOnChange,
 } from "@nexia/shared/utils/athlete/athleteLoggingUtils";
 import {
     ATHLETE_RUN_FIELD_LABEL,
@@ -112,10 +113,12 @@ export const AthleteLoggingNumericField: React.FC<AthleteLoggingNumericFieldProp
                     value={draft}
                     onChange={(event) => {
                         const raw = event.target.value;
-                        if (allowDecimal) {
-                            setDraft(raw.replace(",", "."));
-                        } else {
-                            setDraft(raw.replace(/\D/g, ""));
+                        const normalized = allowDecimal
+                            ? raw.replace(",", ".")
+                            : raw.replace(/\D/g, "");
+                        setDraft(normalized);
+                        if (shouldCommitNumericDraftOnChange(normalized, allowDecimal)) {
+                            commitDraft(normalized);
                         }
                     }}
                     onFocus={() => setFocused(true)}

@@ -45,6 +45,18 @@ export function parseDecimalInput(raw: string): number | null {
     return Number.isFinite(parsed) ? parsed : null;
 }
 
+/** True when a draft string is complete enough to sync parent state (avoid blur-only commits). */
+export function shouldCommitNumericDraftOnChange(
+    raw: string,
+    allowDecimal: boolean
+): boolean {
+    const normalized = raw.replace(",", ".").trim();
+    if (normalized === "") return false;
+    if (!allowDecimal) return /^\d+$/.test(normalized);
+    if (normalized.endsWith(".") || raw.trim().endsWith(",")) return false;
+    return parseDecimalInput(normalized) != null;
+}
+
 /** Reparte reps parciales en orden de ronda (Opción B / 04 §2). */
 export function distributeAmrapPartialReps(
     slots: readonly AmrapPartialSlotShape[],
