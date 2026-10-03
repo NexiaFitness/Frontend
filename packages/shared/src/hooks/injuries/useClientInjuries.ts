@@ -46,7 +46,11 @@ export const useClientInjuries = ({
         isLoading,
     } = useGetClientInjuriesQuery(
         { clientId, activeOnly: false },
-        { refetchOnFocus: true, refetchOnReconnect: true }
+        {
+            skip: !clientId || clientId <= 0,
+            refetchOnFocus: true,
+            refetchOnReconnect: true,
+        }
     );
 
     const { data: musclesData } = useGetMusclesQuery();
