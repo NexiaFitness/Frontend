@@ -10,9 +10,11 @@ import {
     isSessionLogReadyToComplete,
     validateBlockDraft,
     buildBlockSavePayloads,
+    buildInitialBlockDraft,
     type AthleteSessionLogBlockModel,
     type AthleteSessionLogBlockDraft,
 } from "./athleteSessionLogUtils";
+import type { AthleteRunStep } from "../../types/athleteRunSteps";
 
 function progress(partial: Partial<AthleteRunProgress>): AthleteRunProgress {
     return {
@@ -97,6 +99,67 @@ describe("session log progress helpers", () => {
         });
         expect(isSessionLogReadyToComplete(p)).toBe(true);
         expect(hasPartialSessionLogProgress(p)).toBe(false);
+    });
+});
+
+describe("buildInitialBlockDraft AMRAP", () => {
+    it("hidrata parcial desde payload_json.partial_by_slot", () => {
+        const timedStep: AthleteRunStep = {
+            stepKey: "block-193-amrap-timed-1",
+            kind: "timed_block",
+            groupKind: "amrap",
+            blockId: 193,
+            blockName: "Hipertrofia",
+            groupId: "block-193-amrap",
+            badgeLabel: "AMRAP",
+            roundIndex: 1,
+            roundTotal: 1,
+            slotLabel: "",
+            exerciseId: 11,
+            exerciseName: "Sentadilla",
+            setLabel: "",
+            setIndex: 1,
+            instruction: "",
+            plannedLabel: "",
+            restAfterSeconds: null,
+            inputMode: "rounds_reps",
+            blockExerciseId: 1,
+            defaultWeight: 0,
+            defaultReps: 8,
+            defaultRpe: null,
+            loggedSets: 0,
+            slots: [{ stepKey: "block-193-amrap-r1-1-1-1", slotLabel: "1", setIndex: 1, exerciseId: 11, exerciseName: "Sentadilla", setLabel: "1", plannedLabel: "8", blockExerciseId: 1, inputMode: "rounds_reps", defaultWeight: 0, defaultReps: 8, defaultRpe: null, loggedSets: 0 }],
+        };
+        const block: AthleteSessionLogBlockModel = {
+            sessionBlockId: 193,
+            blockTypeName: "Hipertrofia",
+            setType: "amrap",
+            status: "registered",
+            expectedStepKeys: [timedStep.stepKey],
+            steps: [timedStep],
+            summaryLine: null,
+            isPendingHighlight: false,
+            hasRegisterableSteps: true,
+        };
+        const p = progress({
+            steps: [
+                {
+                    step_key: timedStep.stepKey,
+                    status: "registered",
+                    kind: "timed",
+                    session_block_id: 193,
+                    rounds_completed: 5,
+                    timed_mode: "amrap",
+                    payload_json: JSON.stringify({
+                        partial_total: 2,
+                        partial_by_slot: { "block-193-amrap-r1-1-1-1": 2 },
+                    }),
+                },
+            ],
+        });
+        const draft = buildInitialBlockDraft(block, p);
+        expect(draft.timed?.amrapRounds).toBe(5);
+        expect(draft.timed?.amrapPartialReps["block-193-amrap-r1-1-1-1"]).toBe(2);
     });
 });
 

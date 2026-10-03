@@ -110,9 +110,52 @@ function formatExecutionSummary(step: AthleteRunProgressStep, name?: string): st
     return label.trim() || "Registrado";
 }
 
+function amrapPartialTotalFromPayload(payloadJson: string | null | undefined): number {
+    if (!payloadJson) return 0;
+    try {
+        const data = JSON.parse(payloadJson) as { partial_total?: number };
+        return data.partial_total ?? 0;
+    } catch {
+        return 0;
+    }
+}
+
+function amrapPartialRepsFromPayload(
+    payloadJson: string | null | undefined,
+    slotStepKeys: readonly string[]
+): Record<string, number> {
+    const partial: Record<string, number> = {};
+    for (const key of slotStepKeys) {
+        partial[key] = 0;
+    }
+    if (!payloadJson || slotStepKeys.length === 0) {
+        return partial;
+    }
+    try {
+        const data = JSON.parse(payloadJson) as {
+            partial_by_slot?: Record<string, number>;
+            partial_total?: number;
+        };
+        if (data.partial_by_slot) {
+            for (const key of slotStepKeys) {
+                partial[key] = data.partial_by_slot[key] ?? 0;
+            }
+        } else if (data.partial_total != null && data.partial_total > 0 && slotStepKeys.length === 1) {
+            partial[slotStepKeys[0]] = data.partial_total;
+        }
+    } catch {
+        /* ignore malformed payload */
+    }
+    return partial;
+}
+
 function formatTimedSummary(step: AthleteRunProgressStep): string {
     if (step.status === "not_performed") return "No realizado";
     if (step.timed_mode === "amrap" && step.rounds_completed != null) {
+        const partialTotal = amrapPartialTotalFromPayload(step.payload_json);
+        if (partialTotal > 0) {
+            return `AMRAP ${step.rounds_completed} rondas + ${partialTotal} reps`;
+        }
         return `AMRAP ${step.rounds_completed} rondas`;
     }
     if (step.timed_mode === "for_time" && step.total_seconds != null) {
@@ -270,16 +313,14 @@ function defaultTimedDraft(step: AthleteRunStep, saved?: AthleteRunProgressStep)
             emomAsPlanned = null;
         }
     }
-    const partial: Record<string, number> = {};
-    for (const slot of step.slots ?? []) {
-        partial[slot.stepKey] = 0;
-    }
+    const slotKeys = (step.slots ?? []).map((slot) => slot.stepKey);
+    const amrapPartialReps = amrapPartialRepsFromPayload(saved?.payload_json, slotKeys);
 
     return {
         stepKey: step.stepKey,
         groupKind: step.groupKind ?? "amrap",
         amrapRounds: saved?.rounds_completed ?? 0,
-        amrapPartialReps: partial,
+        amrapPartialReps,
         emomAsPlanned,
         emomAthleteNote,
         forTimeTotalSeconds: saved?.total_seconds ?? 0,
