@@ -26,7 +26,7 @@ export interface SessionTodayCardProps {
     hero: SessionHeroCopy;
     planProgressPercent: number | null;
     onCta: (action: SessionHeroCtaAction, sessionId: number | null) => void;
-    /** Móvil: el footer sticky ya muestra «Empezar sesión» — evitar CTA duplicado en card. */
+    /** Móvil: el footer sticky ya muestra el CTA primario — evitar duplicado en card. */
     hideStartCtaOnMobile?: boolean;
     /** D10 — sesiones adicionales hoy (mixto). */
     extraTodaySessionCount?: number;
@@ -58,8 +58,9 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
         session &&
         (session.planned_duration != null || session.session_type);
 
-    const suppressStartCtaMobile =
-        hideStartCtaOnMobile && hero.cta?.action === "start";
+    const suppressPrimaryCtaMobile =
+        hideStartCtaOnMobile &&
+        (hero.cta?.action === "preview" || hero.cta?.action === "start");
 
     return (
         <div
@@ -67,7 +68,7 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
                 "relative overflow-hidden rounded-xl border p-4",
                 style.container,
                 hero.cta
-                    ? cn("space-y-4", suppressStartCtaMobile && "max-lg:space-y-3")
+                    ? cn("space-y-4", suppressPrimaryCtaMobile && "max-lg:space-y-3")
                     : "space-y-2"
             )}
         >
@@ -163,12 +164,12 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
                         style.ctaVariant === "primary"
                             ? ATHLETE_PRIMARY_CTA
                             : cn("min-h-touch-athlete", style.ctaClass),
-                        suppressStartCtaMobile && "max-lg:hidden"
+                        suppressPrimaryCtaMobile && "max-lg:hidden"
                     )}
                     onClick={handleCta}
                 >
                     {hero.cta.label}
-                    {hero.cta.action === "start" && (
+                    {(hero.cta.action === "preview" || hero.cta.action === "start") && (
                         <ArrowRight className="size-4 shrink-0" aria-hidden />
                     )}
                 </Button>

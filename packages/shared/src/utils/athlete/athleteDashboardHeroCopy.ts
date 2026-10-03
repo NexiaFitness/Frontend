@@ -272,7 +272,7 @@ export function buildSessionHeroCopy(ctx: AthleteDashboardCopyContext): SessionH
         const name = todaySession.session_name?.trim() || "Sesión de hoy";
         const detailLine = buildSessionDetailLine(todaySession);
         return {
-            badge: "Hecho",
+            badge: "Entrenamiento completado",
             headline: pickFromPool("hero_train_done", seed),
             subline: detailLine || name,
             variant: "completed",
@@ -292,7 +292,9 @@ export function buildSessionHeroCopy(ctx: AthleteDashboardCopyContext): SessionH
             subline: pickFromPool("hero_train_today", seed),
             variant: "training",
             tone: "active",
-            cta: { label: "Empezar sesión", action: "start" },
+            // N2 / FE-2: Home abre la vista de sesión; el guiado empieza desde ahí.
+            // «Completar registro (N)» espera BE-1 (pendientes reales); no inventar N.
+            cta: { label: "Ver sesión", action: "preview" },
             targetSessionId: todaySession.id,
             meta: buildSessionMeta(todaySession, 0),
         };

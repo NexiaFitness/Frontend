@@ -94,10 +94,6 @@ export const AthleteDashboard: React.FC = () => {
     );
     const refetchWeeklyInsight = weeklyInsight.refetch;
 
-    const handleStart = (sessionId: number) => {
-        navigate(`/dashboard/sessions/${sessionId}`);
-    };
-
     const handleHeroCta = useCallback(
         (action: SessionHeroCtaAction, sessionId: number | null) => {
             switch (action) {
@@ -284,9 +280,9 @@ export const AthleteDashboard: React.FC = () => {
                         <Button
                             variant="primary"
                             className={ATHLETE_PRIMARY_CTA}
-                            onClick={() => handleStart(todaySession.id)}
+                            onClick={() => handleHeroCta("preview", todaySession.id)}
                         >
-                            Empezar sesión
+                            Ver sesión
                         </Button>
                     </AthleteFixedFooter>
                 </div>
