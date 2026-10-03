@@ -76,6 +76,24 @@ describe("session log progress helpers", () => {
         expect(isSessionLogReadyToComplete(p)).toBe(false);
     });
 
+    it("hasPartialSessionLogProgress con bloque pending pero series ya guardadas (4438)", () => {
+        const p = progress({
+            pending_count: 2,
+            blocks: [
+                {
+                    session_block_id: 190,
+                    status: "pending",
+                    expected_step_keys: ["s1", "s2", "s3"],
+                    registered_step_keys: ["s1"],
+                    not_performed_step_keys: [],
+                    pending_step_keys: ["s2", "s3"],
+                },
+            ],
+        });
+        expect(hasPartialSessionLogProgress(p)).toBe(true);
+        expect(countPendingProgressBlocks(p)).toBe(1);
+    });
+
     it("isSessionLogReadyToComplete cuando todos los bloques registrables resueltos", () => {
         const p = progress({
             blocks: [
@@ -239,8 +257,14 @@ describe("buildBlockSavePayloads skipped steps", () => {
             timed: null,
             mobilityDone: null,
         };
-        const { executions, notPerformedStepKeys } = buildBlockSavePayloads(99, block, draft);
+        const { executions, notPerformedStepKeys, notPerformedSteps } = buildBlockSavePayloads(
+            99,
+            block,
+            draft
+        );
         expect(executions).toHaveLength(0);
         expect(notPerformedStepKeys).toEqual(["blk-1-ex-1-set-1"]);
+        expect(notPerformedSteps[0]?.exercise_id).toBe(1);
+        expect(notPerformedSteps[0]?.session_block_id).toBe(10);
     });
 });

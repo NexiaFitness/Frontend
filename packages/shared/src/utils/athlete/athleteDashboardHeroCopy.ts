@@ -9,7 +9,6 @@ import type { AthleteDashboardMode } from "./athleteDashboardMode";
 import {
     countPendingProgressBlocks,
     hasPartialSessionLogProgress,
-    isSessionLogReadyToComplete,
 } from "./athleteSessionLogUtils";
 import { dailyCopySeed, pickFromPool } from "./athleteCopyPools";
 import {
@@ -297,9 +296,7 @@ export function buildSessionHeroCopy(ctx: AthleteDashboardCopyContext): SessionH
         const detailLine = buildSessionDetailLine(todaySession, 0);
         const progress = ctx.todaySessionLogProgress ?? undefined;
         const pendingBlocks = countPendingProgressBlocks(progress);
-        const resumeLog =
-            hasPartialSessionLogProgress(progress) ||
-            isSessionLogReadyToComplete(progress);
+        const resumeLog = hasPartialSessionLogProgress(progress);
         const cta = resumeLog
             ? {
                   label:

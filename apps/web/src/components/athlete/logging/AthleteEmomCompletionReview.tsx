@@ -52,7 +52,7 @@ export const AthleteEmomCompletionReview: React.FC<AthleteEmomCompletionReviewPr
                 ? ` · ${intervalSeconds} s por intervalo`
                 : "";
         return `No como previsto · ${intervalTotal} intervalos${failedLabel}`;
-    }, [asPlanned, intervalSeconds, intervalTotal, intervals]);
+    }, [asPlanned, intervalSeconds, intervalTotal]);
 
     return (
         <div className={`space-y-3 ${ATHLETE_RUN_LOGGER_REVEAL}`}>

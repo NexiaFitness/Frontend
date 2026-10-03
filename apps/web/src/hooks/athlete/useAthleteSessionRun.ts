@@ -1359,6 +1359,7 @@ export function useAthleteSessionRun({
         isForTimeBlock,
         isTimedBlock,
         restFlowForUi,
+        restFlow.phase,
         showStepActions,
         timedGroupKind,
     ]);

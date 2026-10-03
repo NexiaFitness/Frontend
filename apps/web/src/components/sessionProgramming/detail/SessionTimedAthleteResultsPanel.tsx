@@ -36,12 +36,16 @@ function formatTimedRow(
     totalSeconds: number | null,
     rounds: number | null,
     emomCompleted: number | null,
-    emomFailed: number | null
+    emomFailed: number | null,
+    partialTotal: number | null
 ): string {
     if (mode === "for_time" && totalSeconds != null) {
         return formatForTimeDuration(totalSeconds);
     }
     if (mode === "amrap" && rounds != null) {
+        if (partialTotal != null && partialTotal > 0) {
+            return `${rounds} rondas + ${partialTotal} reps`;
+        }
         return `${rounds} rondas`;
     }
     if (mode === "emom") {
@@ -107,7 +111,8 @@ export const SessionTimedAthleteResultsPanel: React.FC<SessionTimedAthleteResult
                                         row.total_seconds,
                                         row.rounds_completed,
                                         row.emom_completed_count,
-                                        row.emom_failed_count
+                                        row.emom_failed_count,
+                                        row.partial_total
                                     )}
                                 </span>
                             </div>

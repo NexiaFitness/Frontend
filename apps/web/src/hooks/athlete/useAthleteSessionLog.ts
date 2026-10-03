@@ -194,11 +194,8 @@ export function useAthleteSessionLog({
         setIsSavingBlock(true);
         setSaveError(null);
         try {
-            const { executions, timed, notPerformedStepKeys } = buildBlockSavePayloads(
-                sessionId,
-                activeBlock,
-                blockDraft
-            );
+            const { executions, timed, notPerformedStepKeys, notPerformedSteps } =
+                buildBlockSavePayloads(sessionId, activeBlock, blockDraft);
 
             for (const payload of executions) {
                 if (isOnline) {
@@ -228,12 +225,8 @@ export function useAthleteSessionLog({
             }
 
             if (isOnline) {
-                for (const stepKey of notPerformedStepKeys) {
-                    await postNotPerformed({
-                        training_session_id: sessionId,
-                        scope: "step",
-                        step_key: stepKey,
-                    }).unwrap();
+                for (const payload of notPerformedSteps) {
+                    await postNotPerformed(payload).unwrap();
                 }
 
                 if (

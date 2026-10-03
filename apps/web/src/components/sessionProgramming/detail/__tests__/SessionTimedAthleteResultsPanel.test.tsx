@@ -57,7 +57,7 @@ describe("SessionTimedAthleteResultsPanel", () => {
         expect(screen.getByText("Nota del atleta")).toBeInTheDocument();
         expect(screen.getByText("Nota teclado QA-1C D2")).toBeInTheDocument();
         expect(screen.getByText("4/6 intervalos")).toBeInTheDocument();
-        expect(screen.getByText("3 rondas")).toBeInTheDocument();
+        expect(screen.getByText("3 rondas + 19 reps")).toBeInTheDocument();
     });
 
     it("no muestra bloque de nota si EMOM sin athlete_note en payload", () => {

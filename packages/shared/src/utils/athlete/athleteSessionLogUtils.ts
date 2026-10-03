@@ -11,6 +11,7 @@ import type {
 } from "../../types/athleteRunReference";
 import type {
     AthleteRunBlockStatus,
+    AthleteRunNotPerformedCreate,
     AthleteRunProgress,
     AthleteRunProgressStep,
 } from "../../types/athleteRunProgress";
@@ -247,13 +248,20 @@ export function countPendingProgressBlocks(progress?: AthleteRunProgress | null)
 }
 
 /** Hay al menos un bloque/step guardado y quedan pendientes (Home «Completar registro»). */
+function blockHasResolvedSteps(block: AthleteRunProgress["blocks"][number]): boolean {
+    if (block.status === "registered" || block.status === "not_performed") {
+        return true;
+    }
+    return (
+        block.registered_step_keys.length > 0 || block.not_performed_step_keys.length > 0
+    );
+}
+
 export function hasPartialSessionLogProgress(progress?: AthleteRunProgress | null): boolean {
     if (!progress) return false;
     const registerable = progress.blocks.filter((b) => b.expected_step_keys.length > 0);
     if (registerable.length === 0) return false;
-    const anySaved = registerable.some(
-        (b) => b.status === "registered" || b.status === "not_performed"
-    );
+    const anySaved = registerable.some(blockHasResolvedSteps);
     const anyPending = registerable.some((b) => b.status === "pending");
     return anySaved && anyPending;
 }
@@ -370,7 +378,46 @@ export function buildInitialBlockDraft(
 export interface BlockSavePayloads {
     executions: AthleteRunExecutionCreate[];
     timed: AthleteRunTimedResultCreate | null;
+    /** @deprecated use notPerformedSteps — keys only kept for tests */
     notPerformedStepKeys: string[];
+    notPerformedSteps: AthleteRunNotPerformedCreate[];
+}
+
+export function buildAthleteRunNotPerformedStepPayload(
+    sessionId: number,
+    block: AthleteSessionLogBlockModel,
+    stepKey: string
+): AthleteRunNotPerformedCreate {
+    const step = block.steps.find((s) => s.stepKey === stepKey);
+    if (!step) {
+        throw new Error(`step_key ${stepKey} not in block ${block.sessionBlockId}`);
+    }
+    if (step.kind === "timed_block") {
+        return {
+            training_session_id: sessionId,
+            scope: "step",
+            step_key: stepKey,
+            session_block_id: block.sessionBlockId,
+            group_id: step.groupId,
+            timed_mode: step.groupKind ?? undefined,
+            block_exercise_id: step.blockExerciseId ?? undefined,
+            exercise_id: step.exerciseId,
+        };
+    }
+    const flat = runStepToFlatExercise(step);
+    return {
+        training_session_id: sessionId,
+        scope: "step",
+        step_key: stepKey,
+        session_block_id: block.sessionBlockId,
+        exercise_id: flat.exerciseId,
+        block_exercise_id: flat.blockExerciseId,
+        group_kind: flat.groupKind ?? undefined,
+        round_index: flat.roundIndex ?? undefined,
+        set_index: flat.setIndex,
+        slot_label: flat.slotLabel ?? undefined,
+        set_label: flat.setLabel,
+    };
 }
 
 export function buildBlockSavePayloads(
@@ -380,16 +427,24 @@ export function buildBlockSavePayloads(
 ): BlockSavePayloads {
     const executions: AthleteRunExecutionCreate[] = [];
     const notPerformedStepKeys: string[] = [];
+    const notPerformedSteps: AthleteRunNotPerformedCreate[] = [];
+
+    const markNotPerformed = (stepKey: string) => {
+        notPerformedStepKeys.push(stepKey);
+        notPerformedSteps.push(
+            buildAthleteRunNotPerformedStepPayload(sessionId, block, stepKey)
+        );
+    };
 
     if (!block.hasRegisterableSteps) {
-        return { executions, timed: null, notPerformedStepKeys };
+        return { executions, timed: null, notPerformedStepKeys, notPerformedSteps };
     }
 
     for (const setDraft of draft.singleSets) {
         const step = block.steps.find((s) => s.stepKey === setDraft.stepKey);
         if (!step) continue;
         if (setDraft.skipped) {
-            notPerformedStepKeys.push(setDraft.stepKey);
+            markNotPerformed(setDraft.stepKey);
             continue;
         }
         const flat = runStepToFlatExercise(step);
@@ -405,7 +460,7 @@ export function buildBlockSavePayloads(
 
     const pushRound = (round: AthleteSessionLogRoundDraft, step: AthleteRunStep) => {
         if (round.skipped) {
-            notPerformedStepKeys.push(round.stepKey);
+            markNotPerformed(round.stepKey);
             return;
         }
         for (const slot of step.slots ?? []) {
@@ -435,7 +490,7 @@ export function buildBlockSavePayloads(
     if (draft.timed) {
         const step = block.steps.find((s) => s.stepKey === draft.timed?.stepKey);
         if (draft.timed.skipped) {
-            notPerformedStepKeys.push(draft.timed.stepKey);
+            markNotPerformed(draft.timed.stepKey);
         } else if (step) {
             if (step.groupKind === "amrap") {
                 timed = buildAmrapTimedResultPayload({
@@ -472,7 +527,7 @@ export function buildBlockSavePayloads(
         }
     }
 
-    return { executions, timed, notPerformedStepKeys };
+    return { executions, timed, notPerformedStepKeys, notPerformedSteps };
 }
 
 export function validateBlockDraft(
