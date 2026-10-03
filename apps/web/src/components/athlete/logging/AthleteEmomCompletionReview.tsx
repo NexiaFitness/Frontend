@@ -8,7 +8,6 @@
 import React, { useMemo } from "react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import type { AthleteEmomInterval } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
-import { formatEmomCompletionNotation } from "@nexia/shared/utils/athlete/emomResult";
 import { AthleteRoundEffortSection } from "@/components/athlete/execution/AthleteRoundEffortSection";
 import {
     ATHLETE_RUN_AMRAP_HINT,
@@ -52,7 +51,7 @@ export const AthleteEmomCompletionReview: React.FC<AthleteEmomCompletionReviewPr
             intervalSeconds != null && intervalSeconds > 0
                 ? ` · ${intervalSeconds} s por intervalo`
                 : "";
-        return `${formatEmomCompletionNotation(intervals, false, intervalTotal)}/${intervalTotal} intervalos${failedLabel}`;
+        return `No como previsto · ${intervalTotal} intervalos${failedLabel}`;
     }, [asPlanned, intervalSeconds, intervalTotal, intervals]);
 
     return (

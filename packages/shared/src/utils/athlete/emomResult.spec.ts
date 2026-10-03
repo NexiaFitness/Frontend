@@ -8,6 +8,7 @@ import {
     formatEmomIntervalLabel,
     isEmomCompletionValid,
     resizeEmomFailureEntries,
+    resolveEmomFailureState,
     resolveEmomSlotReps,
 } from "./emomResult";
 
@@ -101,6 +102,17 @@ describe("emomResult", () => {
     it("resizeEmomFailureEntries", () => {
         const templateSlots = [{ ...SLOT }];
         expect(resizeEmomFailureEntries([], 2, templateSlots)).toHaveLength(2);
+    });
+
+    it("resolveEmomFailureState — D6 No sin contador de intervalos", () => {
+        const intervals = [interval(1, "i1"), interval(2, "i2")];
+        const state = resolveEmomFailureState({
+            intervals,
+            templateSlots: intervals[0].slots,
+            asPlanned: false,
+        });
+        expect(state.failedCount).toBe(0);
+        expect(state.failureEntries).toEqual([]);
     });
 
     it("buildEmomSavePayloads — reps en fallos sin notes (B10 → timed_block_results)", () => {

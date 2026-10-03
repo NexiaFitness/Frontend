@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import {
     distributeAmrapPartialReps,
     formatAmrapIncompleteRoundBreakdown,
+    resolveSeriesWeightAutofillKey,
     resolveWeightIncrementStepKg,
     shouldCommitNumericDraftOnChange,
 } from "./athleteLoggingUtils";
@@ -65,5 +66,31 @@ describe("shouldCommitNumericDraftOnChange", () => {
         expect(shouldCommitNumericDraftOnChange("12,5", true)).toBe(true);
         expect(shouldCommitNumericDraftOnChange("12.", true)).toBe(false);
         expect(shouldCommitNumericDraftOnChange("12,", true)).toBe(false);
+    });
+});
+
+describe("resolveSeriesWeightAutofillKey", () => {
+    it("usa groupId+exerciseId en single_set (cada serie tiene distinto blockExerciseId)", () => {
+        const scope = {
+            groupKind: "single_set",
+            groupId: "g-1",
+            exerciseId: 42,
+            blockExerciseId: 100,
+        };
+        expect(resolveSeriesWeightAutofillKey(scope)).toBe("single:g-1:42");
+        expect(
+            resolveSeriesWeightAutofillKey({ ...scope, blockExerciseId: 101 })
+        ).toBe("single:g-1:42");
+    });
+
+    it("usa blockExerciseId en group_round / superset", () => {
+        expect(
+            resolveSeriesWeightAutofillKey({
+                groupKind: "superset",
+                groupId: "g-2",
+                exerciseId: 7,
+                blockExerciseId: 55,
+            })
+        ).toBe("block:55");
     });
 });

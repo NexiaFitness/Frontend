@@ -32,7 +32,6 @@ import {
     buildAthleteRunTimedReferenceQuery,
     buildEmomTimedResultPayload,
     buildForTimeTimedResultPayload,
-    readEmomAthleteNoteForSave,
 } from "@nexia/shared/utils/athlete/timedBlockRunUtils";
 import { resolveLocalRunReference } from "@nexia/shared/utils/athlete/localRunReferenceUtils";
 import { useAthleteRunSlotReferences } from "@/hooks/athlete/useAthleteRunSlotReferences";
@@ -40,6 +39,7 @@ import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext
 import { useOfflineSessionLog } from "@nexia/shared/hooks/offline";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
 import { flattenAthleteExercises } from "@nexia/shared/utils/athlete/athleteSessionUtils";
+import { resolveSeriesWeightAutofillKey } from "@nexia/shared/utils/athlete/athleteLoggingUtils";
 import {
     buildAthleteRunSteps,
     resolveRestAfterCompletingRunStep,
@@ -216,7 +216,7 @@ export function useAthleteSessionRun({
     const loggedSetsRef = useRef<Map<number, number>>(new Map());
     const completedStepKeysRef = useRef<Set<string>>(new Set());
     const touchedWeightStepKeysRef = useRef<Set<string>>(new Set());
-    const seriesAutofillWeightRef = useRef<Map<number, number>>(new Map());
+    const seriesAutofillWeightRef = useRef<Map<string, number>>(new Map());
     const [savedStepKeys, setSavedStepKeys] = useState<ReadonlySet<string>>(() => new Set());
 
     useEffect(() => {
@@ -360,8 +360,11 @@ export function useAthleteSessionRun({
             setWeight(value);
             if (!current) return;
             touchedWeightStepKeysRef.current.add(current.stepKey);
-            if (current.setIndex === 1 && value > 0) {
-                seriesAutofillWeightRef.current.set(current.blockExerciseId, value);
+            if (value > 0) {
+                seriesAutofillWeightRef.current.set(
+                    resolveSeriesWeightAutofillKey(current),
+                    value
+                );
             }
         },
         [current]
@@ -527,6 +530,10 @@ export function useAthleteSessionRun({
         if (!current) return;
         if (completedStepKeysRef.current.has(current.stepKey)) return;
 
+        const payloadWeight = weight;
+        const payloadReps = reps;
+        const payloadRpe = rpe;
+
         setSaving(true);
         try {
             let result: "synced" | "queued" | "offline";
@@ -534,10 +541,10 @@ export function useAthleteSessionRun({
             if (isOnline) {
                 await postRunExecution(
                     buildAthleteRunExecutionPayload(sessionId, current, {
-                        weight,
-                        reps,
-                        rpe,
-                        durationSeconds: reps,
+                        weight: payloadWeight,
+                        reps: payloadReps,
+                        rpe: payloadRpe,
+                        durationSeconds: payloadReps,
                     }, currentRunSuggestion)
                 ).unwrap();
                 loggedSetsRef.current.set(
@@ -550,10 +557,10 @@ export function useAthleteSessionRun({
             } else {
                 result = await logExecution(
                     buildAthleteRunExecutionPayload(sessionId, current, {
-                        weight,
-                        reps,
-                        rpe,
-                        durationSeconds: reps,
+                        weight: payloadWeight,
+                        reps: payloadReps,
+                        rpe: payloadRpe,
+                        durationSeconds: payloadReps,
                     }, currentRunSuggestion)
                 );
                 loggedSetsRef.current.set(
@@ -567,11 +574,18 @@ export function useAthleteSessionRun({
             completedStepKeysRef.current.add(current.stepKey);
             setSavedStepKeys(new Set(completedStepKeysRef.current));
 
-            const prResult = evaluatePr(weight);
+            if (payloadWeight > 0) {
+                seriesAutofillWeightRef.current.set(
+                    resolveSeriesWeightAutofillKey(current),
+                    payloadWeight
+                );
+            }
+
+            const prResult = evaluatePr(payloadWeight);
             if (prResult.isPr) {
                 setPrCelebration({
                     exerciseName: current.name,
-                    weight,
+                    weight: payloadWeight,
                     previousMaxWeight: prResult.previousMaxWeight,
                 });
             }
@@ -711,14 +725,13 @@ export function useAthleteSessionRun({
                     roundRpe,
                 });
 
-                const emomNoteForSave = readEmomAthleteNoteForSave(emomAthleteNote);
                 const emomTimedPayload = buildEmomTimedResultPayload({
                     sessionId,
                     runStep: currentRunStep,
                     intervals: currentRunStep.emomIntervals,
                     asPlanned: emomAsPlanned,
                     failedCount: emomFailureState.failedCount,
-                    athleteNote: emomNoteForSave,
+                    athleteNote: emomAthleteNote,
                 });
 
                 if (isOnline) {
@@ -1069,7 +1082,7 @@ export function useAthleteSessionRun({
 
     useEffect(() => {
         if (restFlow.phase !== "logging_rest" || !current || isBatchStep) return;
-        const defaultsKey = `${current.stepKey}:${effectiveRunReference?.reference?.weight_kg ?? "pending"}`;
+        const defaultsKey = current.stepKey;
         if (loggerDefaultsStepRef.current === defaultsKey) return;
 
         const defaults = resolveRunLoggerDefaults({
@@ -1081,12 +1094,15 @@ export function useAthleteSessionRun({
             reference: effectiveRunReference?.reference,
         });
 
+        const seriesPosition = Math.max(current.setIndex, current.roundIndex ?? 1);
         let nextWeight = defaults.weight;
         if (
-            current.setIndex > 1 &&
+            seriesPosition > 1 &&
             !touchedWeightStepKeysRef.current.has(current.stepKey)
         ) {
-            const autofill = seriesAutofillWeightRef.current.get(current.blockExerciseId);
+            const autofill = seriesAutofillWeightRef.current.get(
+                resolveSeriesWeightAutofillKey(current)
+            );
             if (autofill != null && autofill > 0) {
                 nextWeight = autofill;
             }
@@ -1288,13 +1304,25 @@ export function useAthleteSessionRun({
 
     const timedGroupKind = currentRunStep?.groupKind ?? "";
 
+    const beginLoggingRest = useCallback(() => {
+        if (currentStepKey) {
+            touchedWeightStepKeysRef.current.delete(currentStepKey);
+        }
+        restFlow.startRest();
+    }, [currentStepKey, restFlow]);
+
+    const restFlowForUi = useMemo(
+        () => ({ ...restFlow, startRest: beginLoggingRest }),
+        [beginLoggingRest, restFlow]
+    );
+
     const restFlowUi = useMemo(() => {
         if (!isTimedBlock || !showStepActions || restFlow.phase !== "doing") {
-            return restFlow;
+            return restFlowForUi;
         }
         if (blockWork.isReady) {
             return {
-                ...restFlow,
+                ...restFlowForUi,
                 stickyPrimaryLabel: getAthleteBlockStartLabel(timedGroupKind),
                 stickyPrimaryAction: blockWork.start,
                 stickyPrimaryDisabled: false,
@@ -1303,7 +1331,7 @@ export function useAthleteSessionRun({
         }
         if (isEmomBlock && blockWork.isRunning && !emomFlow.allIntervalsComplete) {
             return {
-                ...restFlow,
+                ...restFlowForUi,
                 stickyPrimaryLabel: undefined,
                 stickyPrimaryAction: undefined,
                 stickyPrimaryDisabled: true,
@@ -1312,14 +1340,14 @@ export function useAthleteSessionRun({
         }
         if (isForTimeBlock && blockWork.isRunning && !forTimeFlow.allRoundsComplete) {
             return {
-                ...restFlow,
+                ...restFlowForUi,
                 stickyPrimaryLabel: "Terminar",
                 stickyPrimaryAction: forTimeFlow.finishBlock,
                 stickyPrimaryDisabled: false,
                 stickyPrimaryLoading: false,
             };
         }
-        return restFlow;
+        return restFlowForUi;
     }, [
         blockWork.isReady,
         blockWork.isRunning,
@@ -1330,13 +1358,13 @@ export function useAthleteSessionRun({
         isEmomBlock,
         isForTimeBlock,
         isTimedBlock,
-        restFlow,
+        restFlowForUi,
         showStepActions,
         timedGroupKind,
     ]);
 
-    const startRestRef = useRef(restFlow.startRest);
-    startRestRef.current = restFlow.startRest;
+    const startRestRef = useRef(beginLoggingRest);
+    startRestRef.current = beginLoggingRest;
 
     useEffect(() => {
         if (isEmomBlock || isForTimeBlock) return;

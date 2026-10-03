@@ -29,5 +29,22 @@ describe("buildEmomTimedResultPayload", () => {
         };
         expect(parsed.athlete_note).toBe("QA-1C fatiga");
         expect(parsed.as_planned).toBe(false);
+        expect(payload.emom_completed_count).toBeNull();
+        expect(payload.emom_failed_count).toBeNull();
+    });
+
+    it("Sí → contadores 6/0 explícitos", () => {
+        const payload = buildEmomTimedResultPayload({
+            sessionId: 4436,
+            runStep,
+            intervals: [
+                { intervalKey: "i1", minuteIndex: 1, minuteTotal: 2, slots: [] },
+                { intervalKey: "i2", minuteIndex: 2, minuteTotal: 2, slots: [] },
+            ],
+            asPlanned: true,
+            failedCount: 0,
+        });
+        expect(payload.emom_completed_count).toBe(2);
+        expect(payload.emom_failed_count).toBe(0);
     });
 });

@@ -38,6 +38,24 @@ export function clampWeightKg(value: number): number {
     return Math.max(0, Math.round(value * 100) / 100);
 }
 
+export interface SeriesWeightAutofillScope {
+    groupKind?: string | null;
+    groupId?: string;
+    exerciseId: number;
+    blockExerciseId: number;
+}
+
+/**
+ * N6 — clave estable para heredar peso entre series/rondas del mismo slot.
+ * En `single_set` cada serie tiene un `blockExerciseId` distinto (línea de programación).
+ */
+export function resolveSeriesWeightAutofillKey(scope: SeriesWeightAutofillScope): string {
+    if (scope.groupKind === "single_set" && scope.groupId) {
+        return `single:${scope.groupId}:${scope.exerciseId}`;
+    }
+    return `block:${scope.blockExerciseId}`;
+}
+
 export function parseDecimalInput(raw: string): number | null {
     const normalized = raw.replace(",", ".").trim();
     if (normalized === "") return null;

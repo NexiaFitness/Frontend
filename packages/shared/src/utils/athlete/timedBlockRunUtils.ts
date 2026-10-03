@@ -113,13 +113,6 @@ export function buildAmrapTimedResultPayload(input: {
     };
 }
 
-/** Lee nota EMOM del DOM si el textarea está montado (p. ej. antes de guardar). */
-export function readEmomAthleteNoteForSave(stateNote: string): string {
-    if (typeof document === "undefined") return stateNote.trim();
-    const el = document.getElementById("emom-athlete-note") as HTMLTextAreaElement | null;
-    return (el?.value ?? stateNote).trim();
-}
-
 export function buildEmomTimedResultPayload(input: {
     sessionId: number;
     runStep: AthleteRunStep;
@@ -129,17 +122,17 @@ export function buildEmomTimedResultPayload(input: {
     athleteNote?: string | null;
 }): AthleteRunTimedResultCreate {
     const intervalTotal = input.intervals.length;
-    const failed = input.asPlanned ? 0 : input.failedCount;
-    const completed = Math.max(0, intervalTotal - failed);
     const note = input.athleteNote?.trim();
+    const emomCounts = input.asPlanned
+        ? { emom_completed_count: intervalTotal, emom_failed_count: 0 }
+        : { emom_completed_count: null, emom_failed_count: null };
     return {
         training_session_id: input.sessionId,
         group_id: input.runStep.groupId,
         step_key: input.runStep.stepKey,
         timed_mode: "emom",
         session_block_id: input.runStep.blockId,
-        emom_completed_count: completed,
-        emom_failed_count: failed,
+        ...emomCounts,
         payload_json: JSON.stringify({
             interval_total: intervalTotal,
             as_planned: input.asPlanned,

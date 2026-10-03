@@ -119,7 +119,7 @@ export function isEmomCompletionValid(input: {
     return input.intervals.length > 0;
 }
 
-/** D6 — al marcar No, fallo agregado sin desglose por intervalo. */
+/** D6 — al marcar No, sin contador de intervalos fallidos (solo as_planned + nota). */
 export function resolveEmomFailureState(input: {
     intervals: readonly AthleteEmomInterval[];
     templateSlots: readonly AthleteRunRoundSlot[];
@@ -128,11 +128,7 @@ export function resolveEmomFailureState(input: {
     if (input.asPlanned) {
         return { failedCount: 0, failureEntries: [] };
     }
-    const failedCount = input.intervals.length;
-    return {
-        failedCount,
-        failureEntries: resizeEmomFailureEntries([], failedCount, input.templateSlots),
-    };
+    return { failedCount: 0, failureEntries: [] };
 }
 
 export function buildEmomSavePayloads(input: {
