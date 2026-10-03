@@ -81,6 +81,15 @@ export function resolveDashboardMode(input: ResolveDashboardModeInput): AthleteD
         return "week_recovery";
     }
 
+    // Sesión de hoy (plan o extra) manda sobre «semana cerrada»: si hay algo
+    // pendiente o hecho hoy, la Home no debe ocultarlo tras el cierre del plan.
+    if (todaySession) {
+        if (todaySession.status === "completed") {
+            return "train_today_done";
+        }
+        return "train_today";
+    }
+
     if (
         planned != null &&
         completed != null &&
@@ -88,13 +97,6 @@ export function resolveDashboardMode(input: ResolveDashboardModeInput): AthleteD
         completed >= planned
     ) {
         return "week_done";
-    }
-
-    if (todaySession) {
-        if (todaySession.status === "completed") {
-            return "train_today_done";
-        }
-        return "train_today";
     }
 
     return resolveRestMode(input.nextSession, today, planned, completed);

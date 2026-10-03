@@ -19,6 +19,8 @@ import type {
     SessionHeroCopy,
     SessionHeroCtaAction,
 } from "@nexia/shared/utils/athlete/athleteDashboardHeroCopy";
+import { formatClientWorkoutSessionCountShort } from "@nexia/shared/training/clientSessionsOnDate";
+import { getTrainingGoalLabel } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import { SESSION_HERO_TONE_STYLES } from "@/components/athlete/sessionHeroPresentation";
 
 export interface SessionTodayCardProps {
@@ -103,8 +105,8 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
                         onClick={onOpenExtraTodaySessions}
                         className="text-left text-sm font-medium text-primary underline-offset-2 hover:underline"
                     >
-                        +{extraTodaySessionCount} sesión
-                        {extraTodaySessionCount === 1 ? "" : "es"} más hoy
+                        +{formatClientWorkoutSessionCountShort(extraTodaySessionCount)}{" "}
+                        más hoy
                     </button>
                 ) : null}
                 <h2
@@ -137,7 +139,7 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
                     )}
                     <span className="inline-flex items-center gap-1">
                         <Dumbbell className="size-4 text-primary" aria-hidden />
-                        {session.session_type}
+                        {getTrainingGoalLabel(session.session_type)}
                     </span>
                 </div>
             )}

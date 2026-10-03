@@ -35,4 +35,40 @@ describe("resolveDashboardMode D10", () => {
             })
         ).toBe("no_plan");
     });
+
+    it("plan 4/4 pero sesión extra pendiente hoy → train_today (no week_done)", () => {
+        expect(
+            resolveDashboardMode({
+                hasActivePlan: true,
+                todaySession: baseSession({
+                    status: "planned",
+                    session_name: "QA SUPERSET",
+                    training_plan_id: null,
+                }),
+                sessionsPlanned: 4,
+                sessionsCompleted: 4,
+            })
+        ).toBe("train_today");
+    });
+
+    it("plan 4/4 y sesión de hoy completada → train_today_done", () => {
+        expect(
+            resolveDashboardMode({
+                hasActivePlan: true,
+                todaySession: baseSession({ status: "completed" }),
+                sessionsPlanned: 4,
+                sessionsCompleted: 4,
+            })
+        ).toBe("train_today_done");
+    });
+
+    it("plan 4/4 sin sesión hoy → week_done", () => {
+        expect(
+            resolveDashboardMode({
+                hasActivePlan: true,
+                sessionsPlanned: 4,
+                sessionsCompleted: 4,
+            })
+        ).toBe("week_done");
+    });
 });
