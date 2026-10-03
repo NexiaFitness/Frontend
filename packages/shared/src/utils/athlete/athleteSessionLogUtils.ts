@@ -1,0 +1,489 @@
+/**
+ * athleteSessionLogUtils.ts — Registro al final FE-3 (bloques, step_key, resúmenes).
+ * Contexto: misma función buildAthleteRunSteps que el guiado; estado desde BE-1.
+ * @author Frontend Team
+ * @since v8.3.0
+ */
+
+import type {
+    AthleteRunExecutionCreate,
+    AthleteRunTimedResultCreate,
+} from "../../types/athleteRunReference";
+import type {
+    AthleteRunBlockStatus,
+    AthleteRunProgress,
+    AthleteRunProgressStep,
+} from "../../types/athleteRunProgress";
+import type { SessionStructureView } from "../../sessionProgramming/sessionBlockView";
+import { getBlockDisplayName } from "../../sessionProgramming/sessionBlockView";
+import {
+    buildAthleteRunSteps,
+    runStepToFlatExercise,
+    type AthleteRunStep,
+} from "./buildAthleteRunSteps";
+import {
+    buildAthleteRunExecutionPayload,
+    buildAthleteRunExecutionPayloadFromSlot,
+} from "./runReferenceUtils";
+import {
+    buildAmrapTimedResultPayload,
+    buildEmomTimedResultPayload,
+    buildForTimeTimedResultPayload,
+} from "./timedBlockRunUtils";
+import { getEmomTemplateSlots, resolveEmomFailureState } from "./emomResult";
+
+export interface AthleteSessionLogSlotValues {
+    weight: number;
+    reps: number;
+    durationSeconds?: number;
+}
+
+export interface AthleteSessionLogBlockModel {
+    sessionBlockId: number;
+    blockTypeName: string;
+    setType: string | null;
+    status: AthleteRunBlockStatus;
+    expectedStepKeys: string[];
+    steps: AthleteRunStep[];
+    summaryLine: string | null;
+    isPendingHighlight: boolean;
+    hasRegisterableSteps: boolean;
+}
+
+export interface AthleteSessionLogSetDraft {
+    stepKey: string;
+    weight: number;
+    reps: number;
+    skipped: boolean;
+}
+
+export interface AthleteSessionLogRoundDraft {
+    stepKey: string;
+    slotLogs: Record<string, AthleteSessionLogSlotValues>;
+    skipped: boolean;
+}
+
+export interface AthleteSessionLogTimedDraft {
+    stepKey: string;
+    groupKind: string;
+    amrapRounds: number;
+    amrapPartialReps: Record<string, number>;
+    emomAsPlanned: boolean | null;
+    emomAthleteNote: string;
+    forTimeTotalSeconds: number;
+    skipped: boolean;
+}
+
+export interface AthleteSessionLogBlockDraft {
+    sessionBlockId: number;
+    singleSets: AthleteSessionLogSetDraft[];
+    groupRounds: AthleteSessionLogRoundDraft[];
+    dropsetRounds: AthleteSessionLogRoundDraft[];
+    timed: AthleteSessionLogTimedDraft | null;
+    mobilityDone: boolean | null;
+}
+
+const END_LOG_SOURCE = "run_live" as const;
+
+function progressStepMap(progress?: AthleteRunProgress | null): Map<string, AthleteRunProgressStep> {
+    const map = new Map<string, AthleteRunProgressStep>();
+    for (const step of progress?.steps ?? []) {
+        map.set(step.step_key, step);
+    }
+    return map;
+}
+
+function formatExecutionSummary(step: AthleteRunProgressStep, name?: string): string {
+    const label = name ? `${name} ` : "";
+    if (step.status === "not_performed") {
+        return `${label}(no realizado)`.trim();
+    }
+    if (step.weight_kg != null && step.weight_kg > 0 && step.reps != null) {
+        return `${label}${step.weight_kg} kg × ${step.reps}`.trim();
+    }
+    if (step.reps != null && step.reps > 0) {
+        return `${label}${step.reps} reps`.trim();
+    }
+    if (step.duration_seconds != null && step.duration_seconds > 0) {
+        return `${label}${step.duration_seconds} s`.trim();
+    }
+    return label.trim() || "Registrado";
+}
+
+function formatTimedSummary(step: AthleteRunProgressStep): string {
+    if (step.status === "not_performed") return "No realizado";
+    if (step.timed_mode === "amrap" && step.rounds_completed != null) {
+        return `AMRAP ${step.rounds_completed} rondas`;
+    }
+    if (step.timed_mode === "for_time" && step.total_seconds != null) {
+        const m = Math.floor(step.total_seconds / 60);
+        const s = step.total_seconds % 60;
+        return `For Time ${m}:${String(s).padStart(2, "0")}`;
+    }
+    if (step.timed_mode === "emom") {
+        if (step.payload_json) {
+            try {
+                const data = JSON.parse(step.payload_json) as { as_planned?: boolean };
+                return data.as_planned ? "EMOM completado" : "EMOM no completado";
+            } catch {
+                return "EMOM registrado";
+            }
+        }
+        return "EMOM registrado";
+    }
+    return "Bloque registrado";
+}
+
+export function buildBlockSummaryLine(
+    steps: AthleteRunStep[],
+    progress?: AthleteRunProgress | null
+): string | null {
+    const byKey = progressStepMap(progress);
+    const parts: string[] = [];
+    for (const step of steps) {
+        const saved = byKey.get(step.stepKey);
+        if (!saved) continue;
+        if (step.kind === "timed_block") {
+            parts.push(formatTimedSummary(saved));
+            break;
+        }
+        if (step.kind === "group_round") {
+            parts.push(step.exerciseName ?? step.slotLabel ?? "Ronda");
+            break;
+        }
+        parts.push(formatExecutionSummary(saved, step.exerciseName));
+    }
+    if (parts.length === 0) return null;
+    return parts.slice(0, 2).join(" · ");
+}
+
+export function buildSessionLogBlocks(
+    view: SessionStructureView,
+    progress?: AthleteRunProgress | null
+): AthleteSessionLogBlockModel[] {
+    const runSteps = buildAthleteRunSteps(view);
+    const blockProgress = new Map(
+        (progress?.blocks ?? []).map((b) => [b.session_block_id, b])
+    );
+
+    return view.blocks.map((block) => {
+        const steps = runSteps.filter((s) => s.blockId === block.blockId);
+        const prog = blockProgress.get(block.blockId);
+        const status: AthleteRunBlockStatus = prog?.status ?? "pending";
+        const expectedStepKeys = prog?.expected_step_keys ?? steps.map((s) => s.stepKey);
+        const hasRegisterableSteps = expectedStepKeys.length > 0;
+
+        return {
+            sessionBlockId: block.blockId,
+            blockTypeName: getBlockDisplayName(block.blockTypeName),
+            setType: block.groups[0]?.kind ?? null,
+            status,
+            expectedStepKeys,
+            steps,
+            summaryLine: buildBlockSummaryLine(steps, progress),
+            isPendingHighlight: status === "pending" && hasRegisterableSteps,
+            hasRegisterableSteps,
+        };
+    });
+}
+
+export function countPendingLogBlocks(blocks: AthleteSessionLogBlockModel[]): number {
+    return blocks.filter((b) => b.hasRegisterableSteps && b.status === "pending").length;
+}
+
+export function countPendingLogSteps(progress?: AthleteRunProgress | null): number {
+    return progress?.pending_count ?? 0;
+}
+
+/** Bloques registrables aún en pending (desde BE-1, sin estructura de sesión). */
+export function countPendingProgressBlocks(progress?: AthleteRunProgress | null): number {
+    if (!progress) return 0;
+    return progress.blocks.filter(
+        (b) => b.expected_step_keys.length > 0 && b.status === "pending"
+    ).length;
+}
+
+/** Hay al menos un bloque/step guardado y quedan pendientes (Home «Completar registro»). */
+export function hasPartialSessionLogProgress(progress?: AthleteRunProgress | null): boolean {
+    if (!progress) return false;
+    const registerable = progress.blocks.filter((b) => b.expected_step_keys.length > 0);
+    if (registerable.length === 0) return false;
+    const anySaved = registerable.some(
+        (b) => b.status === "registered" || b.status === "not_performed"
+    );
+    const anyPending = registerable.some((b) => b.status === "pending");
+    return anySaved && anyPending;
+}
+
+/** Todos los bloques registrables resueltos pero la sesión sigue abierta. */
+export function isSessionLogReadyToComplete(progress?: AthleteRunProgress | null): boolean {
+    if (!progress) return false;
+    const registerable = progress.blocks.filter((b) => b.expected_step_keys.length > 0);
+    if (registerable.length === 0) return false;
+    return registerable.every(
+        (b) => b.status === "registered" || b.status === "not_performed"
+    );
+}
+
+function defaultSetDraft(step: AthleteRunStep, saved?: AthleteRunProgressStep): AthleteSessionLogSetDraft {
+    return {
+        stepKey: step.stepKey,
+        weight: saved?.weight_kg ?? step.defaultWeight ?? 0,
+        reps: saved?.reps ?? step.defaultReps ?? 8,
+        skipped: saved?.status === "not_performed",
+    };
+}
+
+function defaultRoundDraft(
+    step: AthleteRunStep,
+    saved?: AthleteRunProgressStep,
+    progressByKey?: Map<string, AthleteRunProgressStep>
+): AthleteSessionLogRoundDraft {
+    const slotLogs: Record<string, AthleteSessionLogSlotValues> = {};
+    for (const slot of step.slots ?? []) {
+        const slotSaved = progressByKey?.get(slot.stepKey);
+        slotLogs[slot.stepKey] = {
+            weight: slotSaved?.weight_kg ?? slot.defaultWeight,
+            reps: slotSaved?.reps ?? slot.defaultReps,
+            durationSeconds: slotSaved?.duration_seconds ?? slot.defaultReps,
+        };
+    }
+    return {
+        stepKey: step.stepKey,
+        slotLogs,
+        skipped: saved?.status === "not_performed",
+    };
+}
+
+function defaultTimedDraft(step: AthleteRunStep, saved?: AthleteRunProgressStep): AthleteSessionLogTimedDraft {
+    let emomAsPlanned: boolean | null = null;
+    let emomAthleteNote = "";
+    if (saved?.payload_json && step.groupKind === "emom") {
+        try {
+            const data = JSON.parse(saved.payload_json) as {
+                as_planned?: boolean;
+                athlete_note?: string;
+            };
+            emomAsPlanned = data.as_planned ?? null;
+            emomAthleteNote = data.athlete_note ?? "";
+        } catch {
+            emomAsPlanned = null;
+        }
+    }
+    const partial: Record<string, number> = {};
+    for (const slot of step.slots ?? []) {
+        partial[slot.stepKey] = 0;
+    }
+
+    return {
+        stepKey: step.stepKey,
+        groupKind: step.groupKind ?? "amrap",
+        amrapRounds: saved?.rounds_completed ?? 0,
+        amrapPartialReps: partial,
+        emomAsPlanned,
+        emomAthleteNote,
+        forTimeTotalSeconds: saved?.total_seconds ?? 0,
+        skipped: saved?.status === "not_performed",
+    };
+}
+
+/** Borrador inicial del sheet a partir de steps del bloque + progress BE-1. */
+export function buildInitialBlockDraft(
+    block: AthleteSessionLogBlockModel,
+    progress?: AthleteRunProgress | null
+): AthleteSessionLogBlockDraft {
+    const byKey = progressStepMap(progress);
+    const singleSets: AthleteSessionLogSetDraft[] = [];
+    const groupRounds: AthleteSessionLogRoundDraft[] = [];
+    const dropsetRounds: AthleteSessionLogRoundDraft[] = [];
+    let timed: AthleteSessionLogTimedDraft | null = null;
+
+    for (const step of block.steps) {
+        const saved = byKey.get(step.stepKey);
+        if (step.kind === "timed_block") {
+            timed = defaultTimedDraft(step, saved);
+            continue;
+        }
+        if (step.kind === "group_round") {
+            if (step.groupKind === "dropset") {
+                dropsetRounds.push(defaultRoundDraft(step, saved, byKey));
+            } else {
+                groupRounds.push(defaultRoundDraft(step, saved, byKey));
+            }
+            continue;
+        }
+        singleSets.push(defaultSetDraft(step, saved));
+    }
+
+    return {
+        sessionBlockId: block.sessionBlockId,
+        singleSets,
+        groupRounds,
+        dropsetRounds,
+        timed,
+        mobilityDone:
+            !block.hasRegisterableSteps && block.status === "registered" ? true : null,
+    };
+}
+
+export interface BlockSavePayloads {
+    executions: AthleteRunExecutionCreate[];
+    timed: AthleteRunTimedResultCreate | null;
+    notPerformedStepKeys: string[];
+}
+
+export function buildBlockSavePayloads(
+    sessionId: number,
+    block: AthleteSessionLogBlockModel,
+    draft: AthleteSessionLogBlockDraft
+): BlockSavePayloads {
+    const executions: AthleteRunExecutionCreate[] = [];
+    const notPerformedStepKeys: string[] = [];
+
+    if (!block.hasRegisterableSteps) {
+        return { executions, timed: null, notPerformedStepKeys };
+    }
+
+    for (const setDraft of draft.singleSets) {
+        const step = block.steps.find((s) => s.stepKey === setDraft.stepKey);
+        if (!step) continue;
+        if (setDraft.skipped) {
+            notPerformedStepKeys.push(setDraft.stepKey);
+            continue;
+        }
+        const flat = runStepToFlatExercise(step);
+        executions.push(
+            buildAthleteRunExecutionPayload(sessionId, flat, {
+                weight: setDraft.weight,
+                reps: setDraft.reps,
+                rpe: null,
+                durationSeconds: setDraft.reps,
+            })
+        );
+    }
+
+    const pushRound = (round: AthleteSessionLogRoundDraft, step: AthleteRunStep) => {
+        if (round.skipped) {
+            notPerformedStepKeys.push(round.stepKey);
+            return;
+        }
+        for (const slot of step.slots ?? []) {
+            const log = round.slotLogs[slot.stepKey];
+            if (!log) continue;
+            executions.push(
+                buildAthleteRunExecutionPayloadFromSlot(sessionId, step, slot, {
+                    weight: log.weight,
+                    reps: log.reps,
+                    rpe: null,
+                    durationSeconds: log.durationSeconds ?? log.reps,
+                })
+            );
+        }
+    };
+
+    for (const round of draft.groupRounds) {
+        const step = block.steps.find((s) => s.stepKey === round.stepKey);
+        if (step) pushRound(round, step);
+    }
+    for (const round of draft.dropsetRounds) {
+        const step = block.steps.find((s) => s.stepKey === round.stepKey);
+        if (step) pushRound(round, step);
+    }
+
+    let timed: AthleteRunTimedResultCreate | null = null;
+    if (draft.timed) {
+        const step = block.steps.find((s) => s.stepKey === draft.timed?.stepKey);
+        if (draft.timed.skipped) {
+            notPerformedStepKeys.push(draft.timed.stepKey);
+        } else if (step) {
+            if (step.groupKind === "amrap") {
+                timed = buildAmrapTimedResultPayload({
+                    sessionId,
+                    runStep: step,
+                    fullRounds: draft.timed.amrapRounds,
+                    slots: step.slots ?? [],
+                    partialReps: draft.timed.amrapPartialReps,
+                });
+            } else if (step.groupKind === "emom") {
+                const asPlanned = draft.timed.emomAsPlanned === true;
+                const intervals = step.emomIntervals ?? [];
+                const { failedCount } = resolveEmomFailureState({
+                    intervals,
+                    templateSlots: getEmomTemplateSlots(intervals),
+                    asPlanned,
+                });
+                timed = buildEmomTimedResultPayload({
+                    sessionId,
+                    runStep: step,
+                    intervals: step.emomIntervals ?? [],
+                    asPlanned,
+                    failedCount,
+                    athleteNote: draft.timed.emomAthleteNote,
+                });
+            } else if (step.groupKind === "for_time") {
+                timed = buildForTimeTimedResultPayload({
+                    sessionId,
+                    runStep: step,
+                    totalSeconds: draft.timed.forTimeTotalSeconds,
+                    cumulativeSplits: [],
+                });
+            }
+        }
+    }
+
+    return { executions, timed, notPerformedStepKeys };
+}
+
+export function validateBlockDraft(
+    block: AthleteSessionLogBlockModel,
+    draft: AthleteSessionLogBlockDraft
+): string | null {
+    if (!block.hasRegisterableSteps) {
+        if (draft.mobilityDone == null) {
+            return "Indica si completaste este bloque.";
+        }
+        return null;
+    }
+
+    if (draft.timed && !draft.timed.skipped) {
+        if (draft.timed.groupKind === "emom" && draft.timed.emomAsPlanned == null) {
+            return "Indica si completaste el EMOM.";
+        }
+        if (draft.timed.groupKind === "for_time" && draft.timed.forTimeTotalSeconds <= 0) {
+            return "Introduce un tiempo total válido.";
+        }
+        if (
+            draft.timed.groupKind === "amrap" &&
+            draft.timed.amrapRounds <= 0 &&
+            Object.values(draft.timed.amrapPartialReps).every((v) => v <= 0)
+        ) {
+            return "Registra al menos una ronda o repeticiones parciales.";
+        }
+    }
+
+    const hasSingle = draft.singleSets.some(
+        (s) => !s.skipped && (s.weight > 0 || s.reps > 0)
+    );
+    const hasRound = [...draft.groupRounds, ...draft.dropsetRounds].some(
+        (r) => !r.skipped && Object.values(r.slotLogs).some((l) => l.reps > 0 || l.weight > 0)
+    );
+    const hasTimed =
+        draft.timed &&
+        !draft.timed.skipped &&
+        (draft.timed.groupKind !== "for_time" || draft.timed.forTimeTotalSeconds > 0);
+
+    if (!hasSingle && !hasRound && !hasTimed) {
+        const anySkipped =
+            draft.singleSets.some((s) => s.skipped) ||
+            draft.groupRounds.some((r) => r.skipped) ||
+            draft.dropsetRounds.some((r) => r.skipped) ||
+            draft.timed?.skipped;
+        if (!anySkipped) {
+            return "Registra al menos un dato o marca «No lo hice».";
+        }
+    }
+
+    return null;
+}
+
+export { END_LOG_SOURCE };

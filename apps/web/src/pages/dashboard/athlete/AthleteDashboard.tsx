@@ -107,6 +107,11 @@ export const AthleteDashboard: React.FC = () => {
                         navigate(`/dashboard/sessions/${sessionId}`);
                     }
                     break;
+                case "log":
+                    if (sessionId != null) {
+                        navigate(`/dashboard/sessions/${sessionId}?mode=log`);
+                    }
+                    break;
                 case "summary":
                     if (sessionId != null) {
                         navigate(`/dashboard/sessions/${sessionId}/summary`);
@@ -284,9 +289,14 @@ export const AthleteDashboard: React.FC = () => {
                         <Button
                             variant="primary"
                             className={ATHLETE_PRIMARY_CTA}
-                            onClick={() => handleHeroCta("preview", todaySession.id)}
+                            onClick={() =>
+                                handleHeroCta(
+                                    sessionHero.cta?.action ?? "preview",
+                                    todaySession.id
+                                )
+                            }
                         >
-                            Ver sesión
+                            {sessionHero.cta?.label ?? "Ver sesión"}
                         </Button>
                     </AthleteFixedFooter>
                 </div>

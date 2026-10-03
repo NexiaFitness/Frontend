@@ -4,7 +4,13 @@
  */
 
 import type { TrainingSession } from "../../types/trainingSessions";
+import type { AthleteRunProgress } from "../../types/athleteRunProgress";
 import type { AthleteDashboardMode } from "./athleteDashboardMode";
+import {
+    countPendingProgressBlocks,
+    hasPartialSessionLogProgress,
+    isSessionLogReadyToComplete,
+} from "./athleteSessionLogUtils";
 import { dailyCopySeed, pickFromPool } from "./athleteCopyPools";
 import {
     computeDaysUntilSession,
@@ -22,6 +28,8 @@ export interface AthleteDashboardCopyContext {
     hasActivePlan: boolean;
     copySeed?: string;
     clientId?: number;
+    /** BE-1 — registro al final FE-3 (Home «Completar registro (N)»). */
+    todaySessionLogProgress?: AthleteRunProgress | null;
 }
 
 export interface DashboardHeaderCopy {
@@ -42,6 +50,7 @@ export type SessionHeroTone =
 export type SessionHeroCtaAction =
     | "start"
     | "preview"
+    | "log"
     | "summary"
     | "progress"
     | "account"
@@ -286,15 +295,27 @@ export function buildSessionHeroCopy(ctx: AthleteDashboardCopyContext): SessionH
     if (ctx.mode === "train_today" && todaySession) {
         const name = todaySession.session_name?.trim() || "Sesión de hoy";
         const detailLine = buildSessionDetailLine(todaySession, 0);
+        const progress = ctx.todaySessionLogProgress ?? undefined;
+        const pendingBlocks = countPendingProgressBlocks(progress);
+        const resumeLog =
+            hasPartialSessionLogProgress(progress) ||
+            isSessionLogReadyToComplete(progress);
+        const cta = resumeLog
+            ? {
+                  label:
+                      pendingBlocks > 0
+                          ? `Completar registro (${pendingBlocks})`
+                          : "Completar registro",
+                  action: "log" as const,
+              }
+            : { label: "Ver sesión", action: "preview" as const };
         return {
             badge: "Hoy",
             headline: name,
             subline: pickFromPool("hero_train_today", seed),
             variant: "training",
             tone: "active",
-            // N2 / FE-2: Home abre la vista de sesión; el guiado empieza desde ahí.
-            // «Completar registro (N)» espera BE-1 (pendientes reales); no inventar N.
-            cta: { label: "Ver sesión", action: "preview" },
+            cta,
             targetSessionId: todaySession.id,
             meta: buildSessionMeta(todaySession, 0),
         };

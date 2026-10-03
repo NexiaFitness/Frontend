@@ -1,0 +1,341 @@
+/**
+ * useAthleteSessionLog.ts — Registro al final FE-3 (sheet por bloque, BE-1/BE-2, offline).
+ * @author Frontend Team
+ * @since v8.3.0
+ */
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { AthleteRunBlockStatus } from "@nexia/shared/types/athleteRunProgress";
+import {
+    useGetAthleteRunProgressQuery,
+    usePostAthleteRunNotPerformedMutation,
+    usePostAthleteRunExecutionMutation,
+    usePostAthleteRunTimedResultMutation,
+} from "@nexia/shared/api/athleteApi";
+import { useUpdateTrainingSessionMutation } from "@nexia/shared/api/trainingSessionsApi";
+import type { AthleteRunExecutionCreate, AthleteRunTimedResultCreate } from "@nexia/shared/types/athleteRunReference";
+import type { SessionBlockExerciseUpdate } from "@nexia/shared/types/sessionProgramming";
+import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
+import { useOfflineSessionLog } from "@nexia/shared/hooks/offline";
+import type { SessionStructureView } from "@nexia/shared/sessionProgramming/sessionBlockView";
+import {
+    buildBlockSavePayloads,
+    buildInitialBlockDraft,
+    buildSessionLogBlocks,
+    countPendingLogBlocks,
+    validateBlockDraft,
+    type AthleteSessionLogBlockDraft,
+    type AthleteSessionLogBlockModel,
+} from "@nexia/shared/utils/athlete/athleteSessionLogUtils";
+import { flattenRunStepsToFlatExercises, buildAthleteRunSteps } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
+import { flattenAthleteExercises } from "@nexia/shared/utils/athlete/athleteSessionUtils";
+
+export interface UseAthleteSessionLogOptions {
+    sessionId: number;
+    view: SessionStructureView;
+    sessionName: string;
+    enabled?: boolean;
+}
+
+export function useAthleteSessionLog({
+    sessionId,
+    view,
+    sessionName,
+    enabled = true,
+}: UseAthleteSessionLogOptions) {
+    const { clientId } = useAthleteContext();
+    const [logMode, setLogMode] = useState(false);
+    const [activeBlockId, setActiveBlockId] = useState<number | null>(null);
+    const [blockDraft, setBlockDraft] = useState<AthleteSessionLogBlockDraft | null>(null);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [isSavingBlock, setIsSavingBlock] = useState(false);
+    const [optimisticBlockStatus, setOptimisticBlockStatus] = useState<
+        Map<number, AthleteRunBlockStatus>
+    >(() => new Map());
+
+    const {
+        data: progress,
+        isLoading: isProgressLoading,
+        isFetching: isProgressFetching,
+        refetch: refetchProgress,
+    } = useGetAthleteRunProgressQuery(sessionId, {
+        skip: !sessionId || !enabled,
+    });
+
+    const [postExecution] = usePostAthleteRunExecutionMutation();
+    const [postTimedResult] = usePostAthleteRunTimedResultMutation();
+    const [postNotPerformed] = usePostAthleteRunNotPerformedMutation();
+    const [updateSession] = useUpdateTrainingSessionMutation();
+
+    const runSteps = useMemo(() => buildAthleteRunSteps(view), [view]);
+    const flatExercises = useMemo(
+        () =>
+            flattenAthleteExercises(view).length > 0
+                ? flattenAthleteExercises(view)
+                : flattenRunStepsToFlatExercises(runSteps),
+        [view, runSteps]
+    );
+
+    const offlineAdapter = useMemo(
+        () => ({
+            updateExercise: async (
+                _blockExerciseId: number,
+                _data: SessionBlockExerciseUpdate
+            ) => {
+                /* registro al final no usa legacy agregado */
+            },
+            completeSession: async (sid: number) => {
+                await updateSession({ id: sid, body: { status: "completed" } }).unwrap();
+            },
+            postExecution: async (payload: AthleteRunExecutionCreate) => {
+                await postExecution(payload).unwrap();
+            },
+            postTimedResult: async (payload: AthleteRunTimedResultCreate) => {
+                await postTimedResult(payload).unwrap();
+            },
+        }),
+        [postExecution, postTimedResult, updateSession]
+    );
+
+    const {
+        isOnline,
+        pendingCount: syncPendingCount,
+        logExecution,
+        logTimedResult,
+        finishSession,
+        refreshPendingCount,
+    } = useOfflineSessionLog({
+        sessionId,
+        clientId,
+        sessionName,
+        flatExercises,
+        adapter: offlineAdapter,
+        onSynced: () => {
+            void refetchProgress();
+            setOptimisticBlockStatus(new Map());
+        },
+    });
+
+    const baseLogBlocks = useMemo(
+        () => buildSessionLogBlocks(view, progress),
+        [view, progress]
+    );
+
+    const logBlocks = useMemo(
+        () =>
+            baseLogBlocks.map((block) => {
+                const override = optimisticBlockStatus.get(block.sessionBlockId);
+                if (!override || override === block.status) return block;
+                return {
+                    ...block,
+                    status: override,
+                    isPendingHighlight:
+                        override === "pending" && block.hasRegisterableSteps,
+                    summaryLine:
+                        override === "registered" && !block.summaryLine
+                            ? "Guardado · pendiente de sincronizar"
+                            : block.summaryLine,
+                };
+            }),
+        [baseLogBlocks, optimisticBlockStatus]
+    );
+
+    const pendingBlockCount = useMemo(() => countPendingLogBlocks(logBlocks), [logBlocks]);
+
+    useEffect(() => {
+        if (!progress?.blocks.length) return;
+        setOptimisticBlockStatus((prev) => {
+            if (prev.size === 0) return prev;
+            const next = new Map(prev);
+            for (const [blockId, status] of prev) {
+                const server = progress.blocks.find((b) => b.session_block_id === blockId);
+                if (server && server.status === status) {
+                    next.delete(blockId);
+                }
+            }
+            return next.size === prev.size ? prev : next;
+        });
+    }, [progress]);
+
+    const activeBlock = useMemo(
+        () => logBlocks.find((b) => b.sessionBlockId === activeBlockId) ?? null,
+        [activeBlockId, logBlocks]
+    );
+
+    const openBlock = useCallback(
+        (block: AthleteSessionLogBlockModel) => {
+            setSaveError(null);
+            setActiveBlockId(block.sessionBlockId);
+            setBlockDraft(buildInitialBlockDraft(block, progress));
+        },
+        [progress]
+    );
+
+    const closeBlock = useCallback(() => {
+        setActiveBlockId(null);
+        setBlockDraft(null);
+        setSaveError(null);
+    }, []);
+
+    const enterLogMode = useCallback(() => setLogMode(true), []);
+    const exitLogMode = useCallback(() => {
+        setLogMode(false);
+        closeBlock();
+    }, [closeBlock]);
+
+    const saveActiveBlock = useCallback(async () => {
+        if (!activeBlock || !blockDraft) return;
+        const validation = validateBlockDraft(activeBlock, blockDraft);
+        if (validation) {
+            setSaveError(validation);
+            return;
+        }
+
+        setIsSavingBlock(true);
+        setSaveError(null);
+        try {
+            const { executions, timed, notPerformedStepKeys } = buildBlockSavePayloads(
+                sessionId,
+                activeBlock,
+                blockDraft
+            );
+
+            for (const payload of executions) {
+                if (isOnline) {
+                    await postExecution(payload).unwrap();
+                } else {
+                    await logExecution(payload);
+                }
+            }
+
+            if (timed) {
+                if (isOnline) {
+                    await postTimedResult(timed).unwrap();
+                } else {
+                    await logTimedResult(timed);
+                }
+            }
+
+            if (isOnline) {
+                for (const stepKey of notPerformedStepKeys) {
+                    await postNotPerformed({
+                        training_session_id: sessionId,
+                        scope: "step",
+                        step_key: stepKey,
+                    }).unwrap();
+                }
+
+                if (
+                    !activeBlock.hasRegisterableSteps &&
+                    blockDraft.mobilityDone === false
+                ) {
+                    await postNotPerformed({
+                        training_session_id: sessionId,
+                        scope: "block",
+                        session_block_id: activeBlock.sessionBlockId,
+                    }).unwrap();
+                }
+            }
+
+            const savedOffline =
+                !isOnline &&
+                (executions.length > 0 || timed != null || notPerformedStepKeys.length > 0);
+            if (savedOffline) {
+                setOptimisticBlockStatus((prev) => {
+                    const next = new Map(prev);
+                    next.set(
+                        activeBlock.sessionBlockId,
+                        notPerformedStepKeys.length > 0 &&
+                            executions.length === 0 &&
+                            !timed
+                            ? "not_performed"
+                            : "registered"
+                    );
+                    return next;
+                });
+            }
+
+            if (isOnline) {
+                await refetchProgress();
+            }
+            await refreshPendingCount();
+            closeBlock();
+        } catch {
+            setSaveError("No se pudo guardar el bloque. Revisa la conexión e inténtalo de nuevo.");
+        } finally {
+            setIsSavingBlock(false);
+        }
+    }, [
+        activeBlock,
+        blockDraft,
+        closeBlock,
+        isOnline,
+        logExecution,
+        logTimedResult,
+        postExecution,
+        postNotPerformed,
+        postTimedResult,
+        refreshPendingCount,
+        refetchProgress,
+        sessionId,
+    ]);
+
+    const markBlockNotPerformed = useCallback(async () => {
+        if (!activeBlock) return;
+        setIsSavingBlock(true);
+        setSaveError(null);
+        try {
+            await postNotPerformed({
+                training_session_id: sessionId,
+                scope: "block",
+                session_block_id: activeBlock.sessionBlockId,
+            }).unwrap();
+            await refetchProgress();
+            closeBlock();
+        } catch {
+            setSaveError("No se pudo marcar el bloque.");
+        } finally {
+            setIsSavingBlock(false);
+        }
+    }, [activeBlock, closeBlock, postNotPerformed, refetchProgress, sessionId]);
+
+    const completeSessionIfReady = useCallback(async () => {
+        if (pendingBlockCount > 0 || syncPendingCount > 0) return false;
+        if (isOnline) {
+            await updateSession({ id: sessionId, body: { status: "completed" } }).unwrap();
+        } else {
+            await finishSession();
+        }
+        return true;
+    }, [
+        finishSession,
+        isOnline,
+        pendingBlockCount,
+        sessionId,
+        syncPendingCount,
+        updateSession,
+    ]);
+
+    return {
+        logMode,
+        enterLogMode,
+        exitLogMode,
+        logBlocks,
+        pendingBlockCount,
+        progressPendingStepCount: progress?.pending_count ?? 0,
+        isProgressLoading: isProgressLoading || isProgressFetching,
+        isOnline,
+        syncPendingCount,
+        activeBlock,
+        blockDraft,
+        setBlockDraft,
+        openBlock,
+        closeBlock,
+        saveActiveBlock,
+        markBlockNotPerformed,
+        saveError,
+        isSavingBlock,
+        completeSessionIfReady,
+        refetchProgress,
+    };
+}

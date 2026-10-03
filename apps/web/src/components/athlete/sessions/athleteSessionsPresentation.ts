@@ -92,6 +92,29 @@ export const ATHLETE_SESSION_PREVIEW_BLOCK = cn(
     "backdrop-blur-md shadow-[0_12px_40px_-16px] shadow-black/40"
 );
 
+/** Bloque pendiente — registro al final (FE-3, rim cyan). */
+export const ATHLETE_SESSION_LOG_BLOCK_PENDING = cn(
+    ATHLETE_SESSION_PREVIEW_BLOCK,
+    "cursor-pointer border-primary/45 ring-1 ring-primary/25 transition-colors",
+    "hover:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+);
+
+export const ATHLETE_SESSION_LOG_BLOCK_REGISTERED = cn(
+    ATHLETE_SESSION_PREVIEW_BLOCK,
+    "cursor-pointer border-emerald-500/35 bg-emerald-500/5"
+);
+
+export const ATHLETE_SESSION_LOG_BLOCK_SKIPPED = cn(
+    ATHLETE_SESSION_PREVIEW_BLOCK,
+    "border-muted-foreground/30 opacity-90"
+);
+
+export const ATHLETE_SESSION_LOG_BLOCK_HINT =
+    "text-xs font-medium text-primary/90";
+
+export const ATHLETE_SESSION_LOG_BLOCK_SUMMARY =
+    "text-sm text-muted-foreground";
+
 export const ATHLETE_SESSION_EXERCISE_ROW = cn(
     "flex items-start gap-2 rounded-md py-1.5 text-sm",
     "text-muted-foreground"

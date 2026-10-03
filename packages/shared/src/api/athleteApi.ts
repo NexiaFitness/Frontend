@@ -19,6 +19,11 @@ import type {
     AthleteRunTimedResultCreate,
     AthleteRunTimedResultOut,
 } from "../types/athleteRunReference";
+import type {
+    AthleteRunNotPerformedCreate,
+    AthleteRunNotPerformedOut,
+    AthleteRunProgress,
+} from "../types/athleteRunProgress";
 
 export const athleteApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -71,6 +76,14 @@ export const athleteApi = baseApi.injectEndpoints({
             ],
         }),
 
+        getAthleteRunProgress: builder.query<AthleteRunProgress, number>({
+            query: (trainingSessionId) =>
+                `/athlete/run-context/sessions/${trainingSessionId}/progress`,
+            providesTags: (_result, _error, trainingSessionId) => [
+                { type: "AthleteRunProgress" as const, id: trainingSessionId },
+            ],
+        }),
+
         postAthleteRunExecution: builder.mutation<
             AthleteRunExecutionOut,
             AthleteRunExecutionCreate
@@ -84,6 +97,10 @@ export const athleteApi = baseApi.injectEndpoints({
                 {
                     type: "AthleteRunReference" as const,
                     id: `${arg.training_session_id}:${arg.step_key}`,
+                },
+                {
+                    type: "AthleteRunProgress" as const,
+                    id: arg.training_session_id,
                 },
             ],
         }),
@@ -102,6 +119,27 @@ export const athleteApi = baseApi.injectEndpoints({
                     type: "AthleteRunReference" as const,
                     id: `${arg.training_session_id}:${arg.step_key}`,
                 },
+                {
+                    type: "AthleteRunProgress" as const,
+                    id: arg.training_session_id,
+                },
+            ],
+        }),
+
+        postAthleteRunNotPerformed: builder.mutation<
+            AthleteRunNotPerformedOut,
+            AthleteRunNotPerformedCreate
+        >({
+            query: (body) => ({
+                url: "/athlete/run-context/not-performed",
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: (_result, _error, arg) => [
+                {
+                    type: "AthleteRunProgress" as const,
+                    id: arg.training_session_id,
+                },
             ],
         }),
 
@@ -119,7 +157,9 @@ export const athleteApi = baseApi.injectEndpoints({
 export const {
     useGetAthleteWeeklySummaryQuery,
     useGetAthleteRunReferenceQuery,
+    useGetAthleteRunProgressQuery,
     usePostAthleteRunExecutionMutation,
     usePostAthleteRunTimedResultMutation,
+    usePostAthleteRunNotPerformedMutation,
     usePostAiWeeklySummaryMutation,
 } = athleteApi;

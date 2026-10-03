@@ -33,6 +33,7 @@ export interface AthleteRunRoundSlot {
     exerciseId: number;
     exerciseName: string;
     setLabel: string;
+    setIndex?: number;
     plannedLabel: string;
     blockExerciseId: number;
     inputMode: AthleteRunInputMode;
@@ -136,8 +137,12 @@ function makeStepKey(
     groupId: string,
     roundIndex: number,
     slot: SessionExerciseSlotView,
-    set: SessionExerciseSetView
+    set: SessionExerciseSetView,
+    groupKind: SessionGroupKind
 ): string {
+    if (groupKind === "dropset") {
+        return `${groupId}-r${roundIndex}-A1-${set.label}-${set.index}`;
+    }
     return `${groupId}-r${roundIndex}-${slot.slotLabel}-${set.label}-${set.index}`;
 }
 
@@ -156,7 +161,7 @@ interface StepBuildContext {
 function buildStep(ctx: StepBuildContext): AthleteRunStep {
     const { group, slot, set, roundIndex, roundTotal } = ctx;
     return {
-        stepKey: makeStepKey(group.groupId, roundIndex, slot, set),
+        stepKey: makeStepKey(group.groupId, roundIndex, slot, set, group.kind),
         kind: ctx.kind,
         groupKind: group.kind,
         blockId: ctx.blockId,
@@ -192,8 +197,9 @@ function buildRoundSlot(ctx: StepBuildContext): AthleteRunRoundSlot {
     const slotLabel = group.kind === "dropset" ? set.label : slot.slotLabel;
 
     return {
-        stepKey: makeStepKey(ctx.group.groupId, ctx.roundIndex, slot, set),
+        stepKey: makeStepKey(ctx.group.groupId, ctx.roundIndex, slot, set, ctx.group.kind),
         slotLabel,
+        setIndex: set.index,
         exerciseId: slot.exerciseId,
         exerciseName: slot.exerciseName,
         setLabel: set.label,

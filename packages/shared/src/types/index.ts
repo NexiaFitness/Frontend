@@ -102,6 +102,7 @@ export * from "./weeklyStructure";
 export * from "./sessionValidation";
 export * from "./athleteRunSuggestion";
 export * from "./athleteRunReference";
+export * from "./athleteRunProgress";
 export * from "./clientLoadInsights";
 export * from "./trainerSetExecutions";
 

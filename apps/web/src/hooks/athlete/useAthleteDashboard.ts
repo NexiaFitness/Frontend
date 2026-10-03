@@ -19,7 +19,10 @@ function athleteSessionsDateWindow(): { dateFrom: string; dateTo: string } {
     return { dateFrom: formatLocalIsoDate(from), dateTo: formatLocalIsoDate(to) };
 }
 import { useSelector } from "react-redux";
-import { useGetAthleteWeeklySummaryQuery } from "@nexia/shared/api/athleteApi";
+import {
+    useGetAthleteRunProgressQuery,
+    useGetAthleteWeeklySummaryQuery,
+} from "@nexia/shared/api/athleteApi";
 import {
     useGetClientFeedbackQuery,
     useGetClientTrainingPlanSummaryQuery,
@@ -125,6 +128,16 @@ export function useAthleteDashboard(): AthleteDashboardData {
     );
 
     const todaySession = useMemo(() => findTodayPrimarySession(sessions), [sessions]);
+
+    const { data: todaySessionLogProgress } = useGetAthleteRunProgressQuery(
+        todaySession?.id ?? 0,
+        {
+            skip:
+                !todaySession?.id ||
+                todaySession.status === "completed" ||
+                !clientId,
+        }
+    );
     const extraTodaySessionCount = useMemo(
         () => countAdditionalTodaySessions(sessions, todaySession),
         [sessions, todaySession]
@@ -182,8 +195,16 @@ export function useAthleteDashboard(): AthleteDashboardData {
             nextSession,
             hasActivePlan,
             clientId: clientId ?? undefined,
+            todaySessionLogProgress: todaySessionLogProgress ?? null,
         }),
-        [dashboardMode, todaySession, nextSession, hasActivePlan, clientId]
+        [
+            dashboardMode,
+            todaySession,
+            nextSession,
+            hasActivePlan,
+            clientId,
+            todaySessionLogProgress,
+        ]
     );
 
     const heroSubtitle = useMemo(

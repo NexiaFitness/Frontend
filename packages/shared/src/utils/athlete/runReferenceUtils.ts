@@ -88,7 +88,7 @@ export function buildSlotFlatExercise(
         blockName: runStep.blockName,
         groupKind: runStep.groupKind,
         setLabel: slot.setLabel,
-        setIndex: runStep.roundIndex,
+        setIndex: slot.setIndex ?? runStep.setIndex,
         totalSetsInSlot: runStep.roundTotal ?? 1,
         plannedLabel: slot.plannedLabel,
         plannedWeight: null,

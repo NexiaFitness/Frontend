@@ -2,8 +2,8 @@
  * AthleteSessionPreviewPage.tsx — Vista previa sesión atleta (F1 / F3b-FE-01).
  */
 
-import React, { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { Alert, useToast } from "@/components/ui/feedback";
@@ -33,6 +33,9 @@ import {
 } from "@/components/athlete/account/athleteSettingsPresentation";
 import { AthleteSessionPreviewHeader, AthleteSessionExercisesLabel } from "@/components/athlete/sessions/AthleteSessionPreviewHeader";
 import { AthleteSessionExerciseList } from "@/components/athlete/sessions/AthleteSessionExerciseList";
+import { AthleteSessionLogBlockList } from "@/components/athlete/sessions/AthleteSessionLogBlockList";
+import { AthleteSessionLogBlockSheet } from "@/components/athlete/sessions/AthleteSessionLogBlockSheet";
+import { useAthleteSessionLog } from "@/hooks/athlete/useAthleteSessionLog";
 import { AthleteSessionLoadsPanel } from "@/components/athlete/sessions/AthleteSessionLoadsPanel";
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
 import {
@@ -51,6 +54,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const sessionId = Number(id);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { showToast } = useToast();
     const [wellbeingOpen, setWellbeingOpen] = useState(false);
     const [injurySheetOpen, setInjurySheetOpen] = useState(false);
@@ -67,6 +71,21 @@ export const AthleteSessionPreviewPage: React.FC = () => {
         session?.status === "completed" ? session.session_date : null
     );
     const { view, isLoading: loadingStructure } = useSessionStructureView(sessionId);
+
+    const sessionLog = useAthleteSessionLog({
+        sessionId,
+        view,
+        sessionName: session?.session_name ?? "Sesión",
+        enabled: Boolean(sessionId && session?.status !== "completed"),
+    });
+
+    const enterLogModeRef = React.useRef(sessionLog.enterLogMode);
+    enterLogModeRef.current = sessionLog.enterLogMode;
+    useEffect(() => {
+        if (searchParams.get("mode") === "log") {
+            enterLogModeRef.current();
+        }
+    }, [searchParams]);
 
     const { data: feedbackList = [] } = useGetClientFeedbackQuery(
         { clientId: clientId ?? 0, limit: 50 },
@@ -100,8 +119,18 @@ export const AthleteSessionPreviewPage: React.FC = () => {
             ? formatTrainerNoteForAthlete(session.notes)
             : null;
 
-    const isLoading = loadingSession || loadingStructure || loadingInjuries;
+    const isLoading =
+        loadingSession || loadingStructure || loadingInjuries || sessionLog.isProgressLoading;
     const canStart = session?.status !== "completed" && view.totalExercises > 0;
+    const hasPartialLogProgress = useMemo(
+        () =>
+            sessionLog.logBlocks.some((b) => b.status === "registered") &&
+            sessionLog.logBlocks.some((b) => b.status === "pending"),
+        [sessionLog.logBlocks]
+    );
+    const showLogFooter =
+        session?.status !== "completed" &&
+        (sessionLog.logMode || hasPartialLogProgress);
 
     const handleOpenInjurySheet = () => {
         setInjurySheetOpen(true);
@@ -206,18 +235,33 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                     </div>
                 )}
 
+                {!isDesktop && (sessionLog.syncPendingCount > 0 || !sessionLog.isOnline) ? (
+                    <AthleteContextStrip
+                        isOnline={sessionLog.isOnline}
+                        pendingCount={sessionLog.syncPendingCount}
+                        injuries={activeInjuries}
+                    />
+                ) : null}
+
                 {view.blocks.length > 0 ? (
                     <div className="space-y-3">
                         <AthleteSessionExercisesLabel />
-                        <AthleteSessionExerciseList
-                            blocks={view.blocks}
-                            conflictByExerciseId={conflictByExerciseId}
-                            conflictCount={conflictCount}
-                            showConflictSummary={showMobileConflictSummary}
-                            mobileConflictSummary={mobileConflictSummary}
-                            hasDangerConflict={hasDangerConflict}
-                            onConsult={handleOpenInjurySheet}
-                        />
+                        {sessionLog.logMode ? (
+                            <AthleteSessionLogBlockList
+                                blocks={sessionLog.logBlocks}
+                                onBlockPress={sessionLog.openBlock}
+                            />
+                        ) : (
+                            <AthleteSessionExerciseList
+                                blocks={view.blocks}
+                                conflictByExerciseId={conflictByExerciseId}
+                                conflictCount={conflictCount}
+                                showConflictSummary={showMobileConflictSummary}
+                                mobileConflictSummary={mobileConflictSummary}
+                                hasDangerConflict={hasDangerConflict}
+                                onConsult={handleOpenInjurySheet}
+                            />
+                        )}
                     </div>
                 ) : (
                     <Alert
@@ -250,17 +294,83 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                     >
                         {hasSessionFeedback ? "Ver lo que enviaste" : "Enviar feedback"}
                     </Button>
+                ) : showLogFooter ? (
+                    <div className="flex w-full flex-col gap-2">
+                        <Button
+                            variant="primary"
+                            className={ATHLETE_PRIMARY_CTA}
+                            onClick={() => {
+                                if (!sessionLog.logMode) sessionLog.enterLogMode();
+                                else if (sessionLog.pendingBlockCount === 0) {
+                                    void sessionLog
+                                        .completeSessionIfReady()
+                                        .then((ok) => {
+                                            if (ok) {
+                                                navigate(
+                                                    `/dashboard/sessions/${sessionId}/feedback`
+                                                );
+                                            }
+                                        });
+                                }
+                            }}
+                        >
+                            {sessionLog.logMode && sessionLog.pendingBlockCount === 0
+                                ? "Ir al feedback"
+                                : `Completar registro (${sessionLog.pendingBlockCount})`}
+                        </Button>
+                        {!sessionLog.logMode ? (
+                            <Button
+                                variant="secondary"
+                                className="min-h-touch-athlete w-full"
+                                disabled={!canStart}
+                                onClick={handleStartClick}
+                            >
+                                Empezar entrenamiento
+                            </Button>
+                        ) : (
+                            <Button
+                                variant="ghost"
+                                className="min-h-touch-athlete w-full text-muted-foreground"
+                                onClick={sessionLog.exitLogMode}
+                            >
+                                Ver detalle de la sesión
+                            </Button>
+                        )}
+                    </div>
                 ) : (
-                    <Button
-                        variant="primary"
-                        className={ATHLETE_PRIMARY_CTA}
-                        disabled={!canStart}
-                        onClick={handleStartClick}
-                    >
-                        Empezar entrenamiento
-                    </Button>
+                    <div className="flex w-full flex-col gap-2">
+                        <Button
+                            variant="primary"
+                            className={ATHLETE_PRIMARY_CTA}
+                            disabled={!canStart}
+                            onClick={handleStartClick}
+                        >
+                            Empezar entrenamiento
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            className="min-h-touch-athlete w-full"
+                            disabled={!canStart}
+                            onClick={sessionLog.enterLogMode}
+                        >
+                            Registrar al terminar
+                        </Button>
+                    </div>
                 )}
             </AthleteFixedFooter>
+
+            <AthleteSessionLogBlockSheet
+                isOpen={sessionLog.activeBlock != null}
+                block={sessionLog.activeBlock}
+                draft={sessionLog.blockDraft}
+                onDraftChange={sessionLog.setBlockDraft}
+                onClose={sessionLog.closeBlock}
+                onSave={() => void sessionLog.saveActiveBlock()}
+                onMarkNotPerformed={() => void sessionLog.markBlockNotPerformed()}
+                isSaving={sessionLog.isSavingBlock}
+                errorMessage={sessionLog.saveError}
+                isOnline={sessionLog.isOnline}
+            />
 
             <WellbeingCheckInSheet
                 isOpen={wellbeingOpen}
