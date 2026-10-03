@@ -135,6 +135,7 @@ export function useAthleteWeeklyInsight(
         const kpiStrip = buildAthleteKpiStripData({
             sessionsPlanned: stats.sessionsPlanned,
             sessionsCompleted: stats.sessionsCompleted,
+            sessionsExtraCompleted: stats.sessionsExtraCompleted,
             adherencePercent: stats.adherencePercent,
             trainingStreak: stats.trainingStreak,
             daysUntilNextSession,

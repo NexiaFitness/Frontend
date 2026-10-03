@@ -14,38 +14,50 @@ export interface AthleteKpiStripData {
 export interface KpiStripInput {
     sessionsPlanned: number;
     sessionsCompleted: number;
+    /** D10: completed extras outside the plan (optional). */
+    sessionsExtraCompleted?: number;
     adherencePercent: number | null;
     trainingStreak: number;
     daysUntilNextSession?: number | null;
+}
+
+function extrasLabelSuffix(extra: number): string {
+    if (extra <= 0) return "";
+    return extra === 1 ? " · +1 extra" : ` · +${extra} extras`;
 }
 
 export function buildAthleteKpiStripData(input: KpiStripInput): AthleteKpiStripData {
     const {
         sessionsPlanned,
         sessionsCompleted,
+        sessionsExtraCompleted = 0,
         adherencePercent,
         trainingStreak,
         daysUntilNextSession,
     } = input;
+    const extraSuffix = extrasLabelSuffix(sessionsExtraCompleted);
 
     let adherencePrimary: string;
     let adherenceLabel: string;
 
     if (sessionsPlanned <= 0) {
         adherencePrimary = "—";
-        adherenceLabel = "Semana de descanso";
+        adherenceLabel =
+            sessionsExtraCompleted > 0
+                ? `${sessionsExtraCompleted === 1 ? "1 sesión extra" : `${sessionsExtraCompleted} sesiones extra`}`
+                : "Semana de descanso";
     } else if (sessionsPlanned === 1) {
         adherencePrimary = `${sessionsCompleted}/1`;
         adherenceLabel =
             sessionsCompleted === 1
-                ? "Sesión hecha esta semana"
+                ? `Sesión del plan hecha${extraSuffix}`
                 : "Te queda 1 sesión";
     } else {
         adherencePrimary =
             adherencePercent != null
                 ? `${adherencePercent}%`
                 : `${sessionsCompleted}/${sessionsPlanned}`;
-        adherenceLabel = `${sessionsCompleted}/${sessionsPlanned} sesiones`;
+        adherenceLabel = `${sessionsCompleted}/${sessionsPlanned} del plan${extraSuffix}`;
     }
 
     let streakPrimary: string;

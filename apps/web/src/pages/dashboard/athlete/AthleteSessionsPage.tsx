@@ -6,6 +6,7 @@
  */
 
 import React, { useCallback, useState } from "react";
+import { useGetAthleteWeeklySummaryQuery } from "@nexia/shared/api/athleteApi";
 import { useGetClientTrainingPlanSummaryQuery } from "@nexia/shared/api/clientsApi";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -47,7 +48,14 @@ export const AthleteSessionsPage: React.FC = () => {
         { clientId: clientId ?? 0, year: currentYear },
         { skip: !clientId }
     );
-    const hasActivePlan = planSummary?.has_active_plan ?? false;
+    const { data: weeklySummary } = useGetAthleteWeeklySummaryQuery(undefined, {
+        skip: !clientId,
+    });
+    // Prefer weekly adherence (current plan window); yearly Jan-1 lookup was false for mid-year plans.
+    const hasActivePlan =
+        weeklySummary?.adherence.has_active_plan ??
+        planSummary?.has_active_plan ??
+        false;
 
     const { sessions, filter, setFilter, isLoading, isError, refreshSessions } =
         useAthleteSessionsList();

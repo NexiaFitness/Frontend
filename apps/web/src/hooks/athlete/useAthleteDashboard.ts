@@ -139,7 +139,10 @@ export function useAthleteDashboard(): AthleteDashboardData {
     const planProgressPercent = planSummary?.summary?.adherence_rate ?? null;
     const planName = planSummary?.plan_name ?? null;
     const planGoal = planSummary?.plan_goal ?? null;
-    const hasActivePlan = planSummary?.has_active_plan ?? false;
+    const hasActivePlan =
+        weeklySummary?.adherence.has_active_plan ??
+        planSummary?.has_active_plan ??
+        false;
     const trainerNote = useMemo(() => findLatestTrainerSessionNote(sessions), [sessions]);
     const [feedbackBadgeTick, setFeedbackBadgeTick] = useState(0);
     const [showFeedbackBadge, setShowFeedbackBadge] = useState(false);

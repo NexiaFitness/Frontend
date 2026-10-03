@@ -37,13 +37,14 @@ export function countWeekStripStats(days: WeekDayStripItem[]): {
     done: number;
     planned: number;
 } {
+    /** Session counts (not days) — D10: same-day plan+extra must not collapse to 1/1. */
     let done = 0;
     let planned = 0;
     for (const day of days) {
-        const state = dotStateForDay(day.sessions);
-        if (state === "empty") continue;
-        planned += 1;
-        if (state === "done") done += 1;
+        const active = day.sessions.filter((s) => s.status !== "cancelled");
+        if (active.length === 0) continue;
+        planned += active.length;
+        done += active.filter((s) => s.status === "completed").length;
     }
     return { done, planned };
 }

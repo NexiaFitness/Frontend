@@ -191,14 +191,16 @@ function buildModeAwareHeadline(ctx: WeeklyInsightCopyContext): string | null {
     const seed = ctx.copySeed ?? dailyCopySeed(today, ctx.clientId);
 
     switch (ctx.mode) {
-        case "train_today_done":
+        case "train_today_done": {
+            const extra = extraCompletedSuffix(adherence);
             if (planned === 1) {
-                return "Semana cerrada. Buen trabajo.";
+                return `Semana del plan cerrada.${extra} Buen trabajo.`;
             }
             if (completed >= planned) {
-                return `Buena semana: ${completed} de ${planned}.`;
+                return `Buena semana: ${completed} de ${planned}.${extra}`;
             }
             return remainingSessionsPhrase(planned - completed);
+        }
 
         case "train_today":
             if (planned === 1) {
@@ -219,11 +221,13 @@ function buildModeAwareHeadline(ctx: WeeklyInsightCopyContext): string | null {
             }
             break;
 
-        case "week_done":
+        case "week_done": {
+            const extra = extraCompletedSuffix(adherence);
             if (planned === 1) {
-                return "Sesión hecha. Semana cerrada.";
+                return `Sesión hecha. Semana del plan cerrada.${extra}`;
             }
-            return `Buena semana: ${completed} de ${planned}. Mantén el ritmo.`;
+            return `Buena semana: ${completed} de ${planned}.${extra} Mantén el ritmo.`;
+        }
 
         case "week_recovery":
             return "Semana de recuperación. Aprovecha para recargar.";
