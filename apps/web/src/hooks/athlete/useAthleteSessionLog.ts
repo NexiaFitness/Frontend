@@ -216,6 +216,17 @@ export function useAthleteSessionLog({
                 }
             }
 
+            const needsNotPerformedOnline =
+                notPerformedStepKeys.length > 0 ||
+                (!activeBlock.hasRegisterableSteps && blockDraft.mobilityDone === false);
+
+            if (!isOnline && needsNotPerformedOnline) {
+                setSaveError(
+                    "«No realizado» necesita conexión. Guarda cargas offline y márcalo al reconectar."
+                );
+                return;
+            }
+
             if (isOnline) {
                 for (const stepKey of notPerformedStepKeys) {
                     await postNotPerformed({
@@ -239,7 +250,7 @@ export function useAthleteSessionLog({
 
             const savedOffline =
                 !isOnline &&
-                (executions.length > 0 || timed != null || notPerformedStepKeys.length > 0);
+                (executions.length > 0 || timed != null);
             if (savedOffline) {
                 setOptimisticBlockStatus((prev) => {
                     const next = new Map(prev);
@@ -282,6 +293,12 @@ export function useAthleteSessionLog({
 
     const markBlockNotPerformed = useCallback(async () => {
         if (!activeBlock) return;
+        if (!isOnline) {
+            setSaveError(
+                "Marcar el bloque como «No realizado» requiere conexión. Inténtalo al reconectar."
+            );
+            return;
+        }
         setIsSavingBlock(true);
         setSaveError(null);
         try {
@@ -297,7 +314,28 @@ export function useAthleteSessionLog({
         } finally {
             setIsSavingBlock(false);
         }
-    }, [activeBlock, closeBlock, postNotPerformed, refetchProgress, sessionId]);
+    }, [activeBlock, closeBlock, isOnline, postNotPerformed, refetchProgress, sessionId]);
+
+    const forceCompleteSession = useCallback(async () => {
+        if (syncPendingCount > 0) {
+            setSaveError(
+                "Hay datos guardados en el móvil sin enviar. Conéctate y espera la sincronización."
+            );
+            return false;
+        }
+        setSaveError(null);
+        try {
+            if (isOnline) {
+                await updateSession({ id: sessionId, body: { status: "completed" } }).unwrap();
+            } else {
+                await finishSession();
+            }
+            return true;
+        } catch {
+            setSaveError("No se pudo cerrar la sesión. Revisa la conexión e inténtalo de nuevo.");
+            return false;
+        }
+    }, [finishSession, isOnline, sessionId, syncPendingCount, updateSession]);
 
     const completeSessionIfReady = useCallback(async () => {
         if (pendingBlockCount > 0 || syncPendingCount > 0) return false;
@@ -336,6 +374,7 @@ export function useAthleteSessionLog({
         saveError,
         isSavingBlock,
         completeSessionIfReady,
+        forceCompleteSession,
         refetchProgress,
     };
 }

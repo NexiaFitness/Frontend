@@ -11,6 +11,7 @@ import React, { useMemo } from "react";
 import { Timer } from "lucide-react";
 import { useGetClientTimedBlockResultsQuery } from "@nexia/shared/api/clientsApi";
 import { formatForTimeDuration } from "@nexia/shared/utils/athlete/forTimeResult";
+import { parseEmomAthleteNoteFromPayloadJson } from "@nexia/shared/utils/trainer/parseTimedBlockResultPayload";
 import { LoadingSpinner } from "@/components/ui/feedback";
 
 export interface SessionTimedAthleteResultsPanelProps {
@@ -85,25 +86,44 @@ export const SessionTimedAthleteResultsPanel: React.FC<SessionTimedAthleteResult
                 Bloques cronometrados (For Time, AMRAP, EMOM). Separado de las indicaciones del entrenador en cada ejercicio.
             </p>
             <ul className="space-y-2">
-                {rows.map((row) => (
-                    <li
-                        key={row.id}
-                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 text-sm"
-                    >
-                        <span className="font-medium uppercase tracking-wide text-primary/80">
-                            {row.timed_mode.replace("_", " ")}
-                        </span>
-                        <span className="tabular-nums text-foreground">
-                            {formatTimedRow(
-                                row.timed_mode,
-                                row.total_seconds,
-                                row.rounds_completed,
-                                row.emom_completed_count,
-                                row.emom_failed_count
-                            )}
-                        </span>
-                    </li>
-                ))}
+                {rows.map((row) => {
+                    const athleteNote =
+                        row.timed_mode === "emom"
+                            ? parseEmomAthleteNoteFromPayloadJson(row.payload_json)
+                            : null;
+
+                    return (
+                        <li
+                            key={row.id}
+                            className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2 text-sm space-y-2"
+                        >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span className="font-medium uppercase tracking-wide text-primary/80">
+                                    {row.timed_mode.replace("_", " ")}
+                                </span>
+                                <span className="tabular-nums text-foreground">
+                                    {formatTimedRow(
+                                        row.timed_mode,
+                                        row.total_seconds,
+                                        row.rounds_completed,
+                                        row.emom_completed_count,
+                                        row.emom_failed_count
+                                    )}
+                                </span>
+                            </div>
+                            {athleteNote ? (
+                                <div className="border-t border-border/50 pt-2">
+                                    <p className="text-xs font-medium text-muted-foreground">
+                                        Nota del atleta
+                                    </p>
+                                    <p className="mt-0.5 text-sm leading-snug text-foreground whitespace-pre-wrap">
+                                        {athleteNote}
+                                    </p>
+                                </div>
+                            ) : null}
+                        </li>
+                    );
+                })}
             </ul>
         </section>
     );

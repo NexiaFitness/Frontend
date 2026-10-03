@@ -48,6 +48,7 @@ import { useWellbeingCheckIn } from "@/hooks/athlete/useWellbeingCheckIn";
 import { useAthleteInjuries } from "@/hooks/athlete/useAthleteInjuries";
 import { useAthleteSessionInjuryAlerts } from "@/hooks/athlete/useAthleteSessionInjuryAlerts";
 import { useAthleteSessionLoads } from "@/hooks/athlete/useAthleteSessionLoads";
+import { BottomSheet } from "@/components/ui/layout/BottomSheet";
 import { cn } from "@/lib/utils";
 
 export const AthleteSessionPreviewPage: React.FC = () => {
@@ -58,6 +59,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     const { showToast } = useToast();
     const [wellbeingOpen, setWellbeingOpen] = useState(false);
     const [injurySheetOpen, setInjurySheetOpen] = useState(false);
+    const [terminateConfirmOpen, setTerminateConfirmOpen] = useState(false);
     const { submit, isLoading: submittingWellbeing } = useWellbeingCheckIn(sessionId);
     const { clientId } = useAthleteContext();
     const { activeInjuries, isLoading: loadingInjuries } = useAthleteInjuries();
@@ -336,6 +338,15 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                                 Ver detalle de la sesión
                             </Button>
                         )}
+                        {sessionLog.logMode && sessionLog.pendingBlockCount > 0 ? (
+                            <Button
+                                variant="ghost"
+                                className="min-h-touch-athlete w-full text-muted-foreground"
+                                onClick={() => setTerminateConfirmOpen(true)}
+                            >
+                                Terminar sesión
+                            </Button>
+                        ) : null}
                     </div>
                 ) : (
                     <div className="flex w-full flex-col gap-2">
@@ -371,6 +382,46 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                 errorMessage={sessionLog.saveError}
                 isOnline={sessionLog.isOnline}
             />
+
+            <BottomSheet
+                isOpen={terminateConfirmOpen}
+                onClose={() => setTerminateConfirmOpen(false)}
+                title="¿Terminar igualmente?"
+                subtitle={
+                    sessionLog.pendingBlockCount === 1
+                        ? "Queda 1 bloque sin registrar. Los bloques pendientes seguirán marcados como no registrados."
+                        : `Quedan ${sessionLog.pendingBlockCount} bloques sin registrar. Los bloques pendientes seguirán marcados como no registrados.`
+                }
+                footer={
+                    <div className="flex flex-col gap-2">
+                        <Button
+                            variant="primary"
+                            className={ATHLETE_PRIMARY_CTA}
+                            onClick={() => {
+                                void sessionLog.forceCompleteSession().then((ok) => {
+                                    if (ok) {
+                                        setTerminateConfirmOpen(false);
+                                        navigate(`/dashboard/sessions/${sessionId}/feedback`);
+                                    }
+                                });
+                            }}
+                        >
+                            Terminar e ir al feedback
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            className="min-h-touch-athlete w-full"
+                            onClick={() => setTerminateConfirmOpen(false)}
+                        >
+                            Seguir registrando
+                        </Button>
+                    </div>
+                }
+            >
+                <p className="text-sm text-muted-foreground px-1">
+                    Podrás volver más tarde desde «Mis sesiones» para completar el registro.
+                </p>
+            </BottomSheet>
 
             <WellbeingCheckInSheet
                 isOpen={wellbeingOpen}

@@ -104,6 +104,7 @@ export interface ClientTimedBlockResultRow {
     emom_completed_count: number | null;
     emom_failed_count: number | null;
     partial_total: number | null;
+    payload_json?: string | null;
 }
 
 export interface ClientTimedBlockResultsPage {

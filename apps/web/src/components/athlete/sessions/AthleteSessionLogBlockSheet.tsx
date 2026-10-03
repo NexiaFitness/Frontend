@@ -24,6 +24,7 @@ import type {
 import { runStepToFlatExercise } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
 import { resolveSeriesWeightAutofillKey } from "@nexia/shared/utils/athlete/athleteLoggingUtils";
 import { useRef, useCallback } from "react";
+import { cn } from "@/lib/utils";
 
 export interface AthleteSessionLogBlockSheetProps {
     isOpen: boolean;
@@ -160,25 +161,54 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                             : row.weight;
 
                     return (
-                        <div key={row.stepKey} className="space-y-2 rounded-xl border border-border/60 p-3">
-                            <p className="text-sm font-medium text-foreground">
-                                {step.exerciseName} · {step.setLabel}
-                            </p>
-                            <AthleteSetInputLogger
-                                inputMode={step.inputMode}
-                                weight={weight}
-                                reps={row.reps}
-                                onWeightChange={(v) => handleWeightChange(row.stepKey, flat, v)}
-                                onRepsChange={(reps) =>
-                                    onDraftChange({
-                                        ...draft,
-                                        singleSets: draft.singleSets.map((s) =>
-                                            s.stepKey === row.stepKey ? { ...s, reps } : s
-                                        ),
-                                    })
-                                }
-                                showRpe={false}
-                            />
+                        <div
+                            key={row.stepKey}
+                            className={cn(
+                                "space-y-2 rounded-xl border border-border/60 p-3",
+                                row.skipped && "opacity-70 bg-muted/30"
+                            )}
+                        >
+                            <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-medium text-foreground">
+                                    {step.exerciseName} · {step.setLabel}
+                                </p>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="h-auto min-h-0 shrink-0 px-2 py-1 text-xs text-muted-foreground"
+                                    onClick={() =>
+                                        onDraftChange({
+                                            ...draft,
+                                            singleSets: draft.singleSets.map((s) =>
+                                                s.stepKey === row.stepKey
+                                                    ? { ...s, skipped: !s.skipped }
+                                                    : s
+                                            ),
+                                        })
+                                    }
+                                >
+                                    {row.skipped ? "Deshacer" : "No lo hice"}
+                                </Button>
+                            </div>
+                            {!row.skipped ? (
+                                <AthleteSetInputLogger
+                                    inputMode={step.inputMode}
+                                    weight={weight}
+                                    reps={row.reps}
+                                    onWeightChange={(v) => handleWeightChange(row.stepKey, flat, v)}
+                                    onRepsChange={(reps) =>
+                                        onDraftChange({
+                                            ...draft,
+                                            singleSets: draft.singleSets.map((s) =>
+                                                s.stepKey === row.stepKey ? { ...s, reps } : s
+                                            ),
+                                        })
+                                    }
+                                    showRpe={false}
+                                />
+                            ) : (
+                                <p className="text-xs text-muted-foreground">Marcado como no realizado.</p>
+                            )}
                         </div>
                     );
                 })}
@@ -188,32 +218,62 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                     if (!step?.slots?.length) return null;
                     const slotLogs = round.slotLogs as Record<string, SlotLogValues>;
                     return (
-                        <AthleteMultiSlotLogger
+                        <div
                             key={round.stepKey}
-                            slots={step.slots}
-                            slotLogs={slotLogs}
-                            onSlotChange={(slotKey, patch) =>
-                                onDraftChange({
-                                    ...draft,
-                                    groupRounds: draft.groupRounds.map((r) =>
-                                        r.stepKey === round.stepKey
-                                            ? {
-                                                  ...r,
-                                                  slotLogs: {
-                                                      ...r.slotLogs,
-                                                      [slotKey]: {
-                                                          ...r.slotLogs[slotKey],
-                                                          ...patch,
-                                                      },
-                                                  },
-                                              }
-                                            : r
-                                    ),
-                                })
-                            }
-                            roundRpe={null}
-                            onRoundRpeChange={() => undefined}
-                        />
+                            className={cn(
+                                "space-y-2 rounded-xl border border-border/60 p-3",
+                                round.skipped && "opacity-70 bg-muted/30"
+                            )}
+                        >
+                            <div className="flex justify-end">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="h-auto min-h-0 px-2 py-1 text-xs text-muted-foreground"
+                                    onClick={() =>
+                                        onDraftChange({
+                                            ...draft,
+                                            groupRounds: draft.groupRounds.map((r) =>
+                                                r.stepKey === round.stepKey
+                                                    ? { ...r, skipped: !r.skipped }
+                                                    : r
+                                            ),
+                                        })
+                                    }
+                                >
+                                    {round.skipped ? "Deshacer" : "No lo hice (ronda)"}
+                                </Button>
+                            </div>
+                            {!round.skipped ? (
+                                <AthleteMultiSlotLogger
+                                    slots={step.slots}
+                                    slotLogs={slotLogs}
+                                    onSlotChange={(slotKey, patch) =>
+                                        onDraftChange({
+                                            ...draft,
+                                            groupRounds: draft.groupRounds.map((r) =>
+                                                r.stepKey === round.stepKey
+                                                    ? {
+                                                          ...r,
+                                                          slotLogs: {
+                                                              ...r.slotLogs,
+                                                              [slotKey]: {
+                                                                  ...r.slotLogs[slotKey],
+                                                                  ...patch,
+                                                              },
+                                                          },
+                                                      }
+                                                    : r
+                                            ),
+                                        })
+                                    }
+                                    roundRpe={null}
+                                    onRoundRpeChange={() => undefined}
+                                />
+                            ) : (
+                                <p className="text-xs text-muted-foreground">Ronda no realizada.</p>
+                            )}
+                        </div>
                     );
                 })}
 
@@ -221,32 +281,62 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                     const step = block.steps.find((s) => s.stepKey === round.stepKey);
                     if (!step?.slots?.length) return null;
                     return (
-                        <AthleteDropsetBatchLogger
+                        <div
                             key={round.stepKey}
-                            slots={step.slots}
-                            slotLogs={round.slotLogs as Record<string, SlotLogValues>}
-                            onSlotChange={(slotKey, patch) =>
-                                onDraftChange({
-                                    ...draft,
-                                    dropsetRounds: draft.dropsetRounds.map((r) =>
-                                        r.stepKey === round.stepKey
-                                            ? {
-                                                  ...r,
-                                                  slotLogs: {
-                                                      ...r.slotLogs,
-                                                      [slotKey]: {
-                                                          ...r.slotLogs[slotKey],
-                                                          ...patch,
-                                                      },
-                                                  },
-                                              }
-                                            : r
-                                    ),
-                                })
-                            }
-                            roundRpe={null}
-                            onRoundRpeChange={() => undefined}
-                        />
+                            className={cn(
+                                "space-y-2 rounded-xl border border-border/60 p-3",
+                                round.skipped && "opacity-70 bg-muted/30"
+                            )}
+                        >
+                            <div className="flex justify-end">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="h-auto min-h-0 px-2 py-1 text-xs text-muted-foreground"
+                                    onClick={() =>
+                                        onDraftChange({
+                                            ...draft,
+                                            dropsetRounds: draft.dropsetRounds.map((r) =>
+                                                r.stepKey === round.stepKey
+                                                    ? { ...r, skipped: !r.skipped }
+                                                    : r
+                                            ),
+                                        })
+                                    }
+                                >
+                                    {round.skipped ? "Deshacer" : "No lo hice (ronda)"}
+                                </Button>
+                            </div>
+                            {!round.skipped ? (
+                                <AthleteDropsetBatchLogger
+                                    slots={step.slots}
+                                    slotLogs={round.slotLogs as Record<string, SlotLogValues>}
+                                    onSlotChange={(slotKey, patch) =>
+                                        onDraftChange({
+                                            ...draft,
+                                            dropsetRounds: draft.dropsetRounds.map((r) =>
+                                                r.stepKey === round.stepKey
+                                                    ? {
+                                                          ...r,
+                                                          slotLogs: {
+                                                              ...r.slotLogs,
+                                                              [slotKey]: {
+                                                                  ...r.slotLogs[slotKey],
+                                                                  ...patch,
+                                                              },
+                                                          },
+                                                      }
+                                                    : r
+                                            ),
+                                        })
+                                    }
+                                    roundRpe={null}
+                                    onRoundRpeChange={() => undefined}
+                                />
+                            ) : (
+                                <p className="text-xs text-muted-foreground">Ronda no realizada.</p>
+                            )}
+                        </div>
                     );
                 })}
 

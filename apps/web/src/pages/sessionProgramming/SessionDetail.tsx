@@ -314,19 +314,19 @@ export const SessionDetail: React.FC = () => {
                 legacyInjuryNote={legacyInjuryNote}
             />
 
+            {session.client_id ? (
+                <SessionTimedAthleteResultsPanel
+                    clientId={session.client_id}
+                    sessionId={session.id}
+                />
+            ) : null}
+
             {showExecutionSummary && session.client_id ? (
-                <>
-                    <SessionTimedAthleteResultsPanel
-                        clientId={session.client_id}
-                        sessionId={session.id}
-                        enabled={showExecutionSummary}
-                    />
-                    <SessionExecutionSummary
-                        sessionId={session.id}
-                        clientId={session.client_id}
-                        enabled={showExecutionSummary}
-                    />
-                </>
+                <SessionExecutionSummary
+                    sessionId={session.id}
+                    clientId={session.client_id}
+                    enabled={showExecutionSummary}
+                />
             ) : null}
 
             <div>
