@@ -1,5 +1,12 @@
 /**
  * athleteRunProgress.ts — BE-1 progress + BE-2 not performed (portal atleta FE-3).
+ *
+ * Propósito: tipos RTK GET progress / registration-meta (FE-3, FE-9).
+ * Contexto: athleteApi + hooks atleta.
+ * Notas de mantenimiento: alinear con OpenAPI athlete_run_context.
+ *
+ * @author Frontend Team
+ * @since v8.3.0
  */
 
 import type { TimedBlockResultDetail } from "./timedBlockResultDetail";

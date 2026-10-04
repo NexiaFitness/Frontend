@@ -1,5 +1,12 @@
 /**
  * useAthleteRunSessionMenu.ts — Menú ⋯ en /run: registro manual y terminar sesión (FE-5).
+ *
+ * Propósito: acciones secundarias del guiado sin inflar la página.
+ * Contexto: AthleteSessionRunPage.
+ * Notas de mantenimiento: navegación a ?mode=log vive en preview/lista (FE-9).
+ *
+ * @author Frontend Team
+ * @since v8.3.0
  */
 
 import { useCallback, useState } from "react";

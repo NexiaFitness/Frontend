@@ -6,8 +6,10 @@ import { describe, expect, it } from "vitest";
 import type { AthleteRunProgress } from "../../types/athleteRunProgress";
 import type { AthleteRunStep } from "./buildAthleteRunSteps";
 import {
+    canPersistRunStepAfterLocalComplete,
     collectProgressKeysForRunStep,
     findFirstPendingStepIndex,
+    isRunStepSavedForUi,
     isRunStepResolved,
     shouldSkipRunStepPersist,
     touchRunStepKeysForPersist,
@@ -178,6 +180,45 @@ describe("shouldSkipRunStepPersist (M9)", () => {
         const p = progressPartial(194, [step.stepKey], []);
         expect(shouldSkipRunStepPersist(step, p, new Set())).toBe(true);
         expect(shouldSkipRunStepPersist(step, p, new Set([step.stepKey]))).toBe(false);
+    });
+});
+
+describe("B2 — persistencia tras edición en mismo paso", () => {
+    it("canPersistRunStepAfterLocalComplete permite re-POST tras tocar reps", () => {
+        const step = singleStep("block-194-single-0-r1-S1-S1-1");
+        const completed = new Set([step.stepKey]);
+        const touched = new Set<string>();
+        expect(
+            canPersistRunStepAfterLocalComplete(
+                step.stepKey,
+                step,
+                completed,
+                touched
+            )
+        ).toBe(false);
+        touchRunStepKeysForPersist(touched, step);
+        expect(
+            canPersistRunStepAfterLocalComplete(
+                step.stepKey,
+                step,
+                completed,
+                touched
+            )
+        ).toBe(true);
+    });
+
+    it("isRunStepSavedForUi oculta acciones hasta editar de nuevo", () => {
+        const step = singleStep("block-194-single-0-r1-S1-S1-1");
+        const saved = new Set([step.stepKey]);
+        const touched = new Set<string>();
+        const progress = progressPartial(194, [step.stepKey], []);
+        expect(
+            isRunStepSavedForUi(step, step.stepKey, saved, progress, touched)
+        ).toBe(true);
+        touchRunStepKeysForPersist(touched, step);
+        expect(
+            isRunStepSavedForUi(step, step.stepKey, saved, progress, touched)
+        ).toBe(false);
     });
 });
 

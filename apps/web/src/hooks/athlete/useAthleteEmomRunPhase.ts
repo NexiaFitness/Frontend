@@ -1,5 +1,12 @@
 /**
  * useAthleteEmomRunPhase.ts — EMOM en guiado: timer, sticky P1-7, persistencia (extracción FE-4/bridge).
+ *
+ * Propósito: fase EMOM aislada de useAthleteSessionRun (§7.1).
+ * Contexto: AthleteSessionRunPage + restFlow.
+ * Notas de mantenimiento: no crecer; nuevos modos timed → hooks dedicados.
+ *
+ * @author Frontend Team
+ * @since v8.2.0
  */
 
 import { useCallback, useEffect, useMemo, useRef, type MutableRefObject } from "react";

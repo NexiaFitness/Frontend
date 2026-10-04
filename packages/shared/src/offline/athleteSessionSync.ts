@@ -232,6 +232,20 @@ function isConflictError(error: unknown): boolean {
     return status === 409;
 }
 
+/** FE-9: 403 cuando la ventana D5 cerró — descartar ítem, no reintentar en bucle. */
+export function isRegistrationWindowClosedSyncError(error: unknown): boolean {
+    const status =
+        (error as { status?: number })?.status ??
+        (error as { originalStatus?: number })?.originalStatus;
+    if (status !== 403) return false;
+    const data = (error as { data?: { detail?: unknown } })?.data;
+    const detail =
+        typeof data?.detail === "string"
+            ? data.detail
+            : String((error as { message?: string })?.message ?? "");
+    return /plazo de registro|registration/i.test(detail);
+}
+
 function wrapAdapterError(error: unknown): never {
     if (isConflictError(error)) {
         throw new AthleteSyncConflictError();
@@ -245,6 +259,7 @@ export interface FlushResult {
     syncedTimedResults: number;
     syncedCompletes: number;
     conflict: boolean;
+    registrationWindowClosed: boolean;
 }
 
 /** Sincroniza cola pendiente con el backend. */
@@ -259,10 +274,12 @@ export async function flushPendingSessionSync(
             syncedTimedResults: 0,
             syncedCompletes: 0,
             conflict: false,
+            registrationWindowClosed: false,
         };
     }
 
     let conflict = false;
+    let registrationWindowClosed = false;
     let syncedExecutions = 0;
     let syncedTimedResults = 0;
 
@@ -275,6 +292,11 @@ export async function flushPendingSessionSync(
             await removePendingExecution(log.id);
             syncedExecutions += 1;
         } catch (error) {
+            if (isRegistrationWindowClosedSyncError(error)) {
+                await removePendingExecution(log.id);
+                registrationWindowClosed = true;
+                continue;
+            }
             if (isConflictError(error)) {
                 conflict = true;
                 break;
@@ -290,6 +312,7 @@ export async function flushPendingSessionSync(
             syncedTimedResults: 0,
             syncedCompletes: 0,
             conflict: true,
+            registrationWindowClosed,
         };
     }
 
@@ -302,6 +325,11 @@ export async function flushPendingSessionSync(
             await removePendingTimedResult(log.id);
             syncedTimedResults += 1;
         } catch (error) {
+            if (isRegistrationWindowClosedSyncError(error)) {
+                await removePendingTimedResult(log.id);
+                registrationWindowClosed = true;
+                continue;
+            }
             if (isConflictError(error)) {
                 conflict = true;
                 break;
@@ -317,6 +345,7 @@ export async function flushPendingSessionSync(
             syncedTimedResults,
             syncedCompletes: 0,
             conflict: true,
+            registrationWindowClosed,
         };
     }
 
@@ -345,6 +374,7 @@ export async function flushPendingSessionSync(
             syncedTimedResults,
             syncedCompletes: 0,
             conflict: true,
+            registrationWindowClosed,
         };
     }
 
@@ -356,6 +386,11 @@ export async function flushPendingSessionSync(
             await removePendingComplete(entry.sessionId);
             syncedCompletes += 1;
         } catch (error) {
+            if (isRegistrationWindowClosedSyncError(error)) {
+                await removePendingComplete(entry.sessionId);
+                registrationWindowClosed = true;
+                continue;
+            }
             wrapAdapterError(error);
         }
     }
@@ -383,6 +418,7 @@ export async function flushPendingSessionSync(
         syncedTimedResults,
         syncedCompletes,
         conflict: false,
+        registrationWindowClosed,
     };
 }
 

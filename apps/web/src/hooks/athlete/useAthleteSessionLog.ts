@@ -16,7 +16,10 @@ import { useUpdateTrainingSessionMutation } from "@nexia/shared/api/trainingSess
 import type { AthleteRunExecutionCreate, AthleteRunTimedResultCreate } from "@nexia/shared/types/athleteRunReference";
 import type { SessionBlockExerciseUpdate } from "@nexia/shared/types/sessionProgramming";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
-import { useOfflineSessionLog } from "@nexia/shared/hooks/offline";
+import {
+    REGISTRATION_WINDOW_SYNC_MESSAGE,
+    useOfflineSessionLog,
+} from "@nexia/shared/hooks/offline";
 import type { SessionStructureView } from "@nexia/shared/sessionProgramming/sessionBlockView";
 import {
     buildBlockSavePayloads,
@@ -100,6 +103,7 @@ export function useAthleteSessionLog({
     const {
         isOnline,
         pendingCount: syncPendingCount,
+        registrationSyncBlocked,
         logExecution,
         logTimedResult,
         finishSession,
@@ -115,6 +119,12 @@ export function useAthleteSessionLog({
             setOptimisticBlockStatus(new Map());
         },
     });
+
+    useEffect(() => {
+        if (registrationSyncBlocked) {
+            setSaveError(REGISTRATION_WINDOW_SYNC_MESSAGE);
+        }
+    }, [registrationSyncBlocked]);
 
     const baseLogBlocks = useMemo(
         () => buildSessionLogBlocks(view, progress),
@@ -213,6 +223,17 @@ export function useAthleteSessionLog({
             const { executions, timed, notPerformedStepKeys, notPerformedSteps } =
                 buildBlockSavePayloads(sessionId, activeBlock, blockDraft);
 
+            const needsNotPerformedOnline =
+                notPerformedStepKeys.length > 0 ||
+                (!activeBlock.hasRegisterableSteps && blockDraft.mobilityDone === false);
+
+            if (!isOnline && needsNotPerformedOnline) {
+                setSaveError(
+                    "«No realizado» necesita conexión. Guarda cargas offline y márcalo al reconectar."
+                );
+                return;
+            }
+
             for (const payload of executions) {
                 if (isOnline) {
                     await postExecution(payload).unwrap();
@@ -227,17 +248,6 @@ export function useAthleteSessionLog({
                 } else {
                     await logTimedResult(timed);
                 }
-            }
-
-            const needsNotPerformedOnline =
-                notPerformedStepKeys.length > 0 ||
-                (!activeBlock.hasRegisterableSteps && blockDraft.mobilityDone === false);
-
-            if (!isOnline && needsNotPerformedOnline) {
-                setSaveError(
-                    "«No realizado» necesita conexión. Guarda cargas offline y márcalo al reconectar."
-                );
-                return;
             }
 
             if (isOnline) {
@@ -349,16 +359,29 @@ export function useAthleteSessionLog({
 
     const completeSessionIfReady = useCallback(async () => {
         if (pendingBlockCount > 0 || syncPendingCount > 0) return false;
-        if (isOnline) {
-            await updateSession({ id: sessionId, body: { status: "completed" } }).unwrap();
-        } else {
-            await finishSession();
+        if (!registrationEditable) {
+            setSaveError(
+                "El plazo para registrar o editar esta sesión ha cerrado (máximo 7 días después)."
+            );
+            return false;
         }
-        return true;
+        setSaveError(null);
+        try {
+            if (isOnline) {
+                await updateSession({ id: sessionId, body: { status: "completed" } }).unwrap();
+            } else {
+                await finishSession();
+            }
+            return true;
+        } catch {
+            setSaveError("No se pudo cerrar la sesión. Revisa la conexión e inténtalo de nuevo.");
+            return false;
+        }
     }, [
         finishSession,
         isOnline,
         pendingBlockCount,
+        registrationEditable,
         sessionId,
         syncPendingCount,
         updateSession,

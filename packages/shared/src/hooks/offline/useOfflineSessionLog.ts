@@ -46,9 +46,13 @@ export interface UseOfflineSessionLogOptions {
     onConflict?: () => void;
 }
 
+export const REGISTRATION_WINDOW_SYNC_MESSAGE =
+    "El plazo para registrar o editar esta sesión ha cerrado. Se descartaron envíos pendientes sin conexión.";
+
 export interface UseOfflineSessionLogResult {
     isOnline: boolean;
     pendingCount: number;
+    registrationSyncBlocked: boolean;
     cachedSnapshot: AthleteSessionSnapshot | null;
     localExecutions: LocalSetExecution[];
     isUsingCache: boolean;
@@ -81,6 +85,7 @@ export function useOfflineSessionLog(
 
     const isOnline = useOnlineStatus();
     const [pendingCount, setPendingCount] = useState(0);
+    const [registrationSyncBlocked, setRegistrationSyncBlocked] = useState(false);
     const [cachedSnapshot, setCachedSnapshot] = useState<AthleteSessionSnapshot | null>(null);
     const flushingRef = useRef(false);
 
@@ -127,6 +132,9 @@ export function useOfflineSessionLog(
             const result = await flushPendingSessionSync(sessionId, adapter);
             await refreshPendingCount();
             await reloadSnapshot();
+            if (result.registrationWindowClosed) {
+                setRegistrationSyncBlocked(true);
+            }
             if (result.conflict) {
                 onConflict?.();
                 return;
@@ -253,6 +261,7 @@ export function useOfflineSessionLog(
     return {
         isOnline,
         pendingCount,
+        registrationSyncBlocked,
         cachedSnapshot,
         localExecutions,
         isUsingCache,

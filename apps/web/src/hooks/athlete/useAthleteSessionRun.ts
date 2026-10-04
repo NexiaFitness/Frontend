@@ -25,7 +25,6 @@ import {
     buildAthleteRunExecutionPayload,
     buildAthleteRunExecutionPayloadFromSlot,
     buildAthleteRunReferenceQuery,
-    resolveRunLoggerDefaults,
 } from "@nexia/shared/utils/athlete/runReferenceUtils";
 import {
     buildAmrapTimedResultPayload,
@@ -46,7 +45,11 @@ import {
     type AthleteRunRoundSlot,
     type AthleteRunStep,
 } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
-import { touchRunStepKeysForPersist } from "@nexia/shared/utils/athlete/athleteRunProgressSteps";
+import {
+    canPersistRunStepAfterLocalComplete,
+    isRunStepSavedForUi,
+    touchRunStepKeysForPersist,
+} from "@nexia/shared/utils/athlete/athleteRunProgressSteps";
 import {
     buildAthleteRunGroupContext,
     buildAthleteRunGroupContextFromForTimeRound,
@@ -74,6 +77,7 @@ import { useAthleteBlockWorkPhase } from "@/hooks/athlete/useAthleteBlockWorkPha
 import { useAthleteForTimeFlow } from "@/hooks/athlete/useAthleteForTimeFlow";
 import { useAthleteEmomRunPhase } from "@/hooks/athlete/useAthleteEmomRunPhase";
 import { useAthleteRunProgressResume } from "@/hooks/athlete/useAthleteRunProgressResume";
+import { useAthleteRunLoggerDefaultEffects } from "@/hooks/athlete/useAthleteRunLoggerDefaultEffects";
 import { getAthleteBlockStartLabel } from "@/components/athlete/execution/athleteRunPresentation";
 
 export interface AthletePrCelebration {
@@ -212,6 +216,7 @@ export function useAthleteSessionRun({
     const touchedWeightStepKeysRef = useRef<Set<string>>(new Set());
     const seriesAutofillWeightRef = useRef<Map<string, number>>(new Map());
     const [savedStepKeys, setSavedStepKeys] = useState<ReadonlySet<string>>(() => new Set());
+    const [, setPersistTouchEpoch] = useState(0);
 
     useEffect(() => {
         setStep(0);
@@ -233,7 +238,6 @@ export function useAthleteSessionRun({
     const {
         runProgress,
         skipPersistForCurrentStep,
-        isStepSavedOnServer,
         findNextPendingStepIndex,
     } = useAthleteRunProgressResume({
         sessionId,
@@ -370,6 +374,7 @@ export function useAthleteSessionRun({
 
     const touchRunStepForPersist = useCallback((step: AthleteRunStep | undefined) => {
         touchRunStepKeysForPersist(touchedWeightStepKeysRef.current, step);
+        setPersistTouchEpoch((n) => n + 1);
     }, []);
 
     const handleWeightChange = useCallback(
@@ -561,7 +566,16 @@ export function useAthleteSessionRun({
 
     const handleSaveSet = useCallback(async () => {
         if (!current) return;
-        if (completedStepKeysRef.current.has(current.stepKey)) return;
+        if (
+            !canPersistRunStepAfterLocalComplete(
+                current.stepKey,
+                currentRunStep,
+                completedStepKeysRef.current,
+                touchedWeightStepKeysRef.current
+            )
+        ) {
+            return;
+        }
         if (currentRunStep && skipPersistForCurrentStep(currentRunStep)) {
             completedStepKeysRef.current.add(current.stepKey);
             setSavedStepKeys(new Set(completedStepKeysRef.current));
@@ -666,7 +680,16 @@ export function useAthleteSessionRun({
         if (currentRunStep.kind !== "group_round" && currentRunStep.kind !== "timed_block") {
             return;
         }
-        if (completedStepKeysRef.current.has(currentRunStep.stepKey)) return;
+        if (
+            !canPersistRunStepAfterLocalComplete(
+                currentRunStep.stepKey,
+                currentRunStep,
+                completedStepKeysRef.current,
+                touchedWeightStepKeysRef.current
+            )
+        ) {
+            return;
+        }
         if (skipPersistForCurrentStep(currentRunStep)) {
             completedStepKeysRef.current.add(currentRunStep.stepKey);
             setSavedStepKeys(new Set(completedStepKeysRef.current));
@@ -1003,10 +1026,13 @@ export function useAthleteSessionRun({
     ]);
 
     const isLastStep = step === runSteps.length - 1;
-    const isCurrentStepSaved = currentStepKey
-        ? savedStepKeys.has(currentStepKey) ||
-          isStepSavedOnServer(currentRunStep)
-        : false;
+    const isCurrentStepSaved = isRunStepSavedForUi(
+        currentRunStep,
+        currentStepKey,
+        savedStepKeys,
+        runProgress,
+        touchedWeightStepKeysRef.current
+    );
     const showStepActions = Boolean(currentRunStep) && !isCurrentStepSaved;
 
     const handleForTimeTotalSecondsChange = useCallback(
@@ -1061,123 +1087,25 @@ export function useAthleteSessionRun({
                   : "Empezar descanso",
     });
 
-    const loggerDefaultsStepRef = useRef<string | null>(null);
-
-    useEffect(() => {
-        loggerDefaultsStepRef.current = null;
-    }, [currentStepKey]);
-
-    useEffect(() => {
-        if (!restFlow.showLogger || !current || isBatchStep) return;
-        const defaultsKey = current.stepKey;
-        if (loggerDefaultsStepRef.current === defaultsKey) return;
-
-        const defaults = resolveRunLoggerDefaults({
-            setIndex: current.setIndex,
-            prescribedReps: current.defaultReps,
-            prescribedRpe: current.defaultRpe,
-            plannedWeight: current.plannedWeight,
-            defaultWeight: current.defaultWeight,
-            reference: effectiveRunReference?.reference,
-        });
-
-        const seriesPosition = Math.max(current.setIndex, current.roundIndex ?? 1);
-        let nextWeight = defaults.weight;
-        if (
-            seriesPosition > 1 &&
-            !touchedWeightStepKeysRef.current.has(current.stepKey)
-        ) {
-            const autofill = seriesAutofillWeightRef.current.get(
-                resolveSeriesWeightAutofillKey(current)
-            );
-            if (autofill != null && autofill > 0) {
-                nextWeight = autofill;
-            }
-        }
-        setWeight(nextWeight);
-        const nextReps =
-            current.inputMode === "duration"
-                ? current.plannedDurationSeconds ?? current.defaultReps
-                : defaults.reps;
-        setReps(nextReps);
-        setRpe(defaults.rpe);
-        loggerDefaultsStepRef.current = defaultsKey;
-    }, [restFlow.showLogger, current, isBatchStep, effectiveRunReference?.reference]);
-
-    useEffect(() => {
-        if (
-            restFlow.phase !== "logging_rest" ||
-            !isGroupRound ||
-            !currentRunStep?.slots?.length
-        ) {
-            return;
-        }
-
-        const refFingerprint = currentRunStep.slots
-            .map((slot) => {
-                const apiRef = slotReferences[slot.stepKey]?.reference;
-                const localRef = resolveLocalRunReference({
-                    exerciseId: slot.exerciseId,
-                    roundIndex: currentRunStep.roundIndex,
-                    slotLabel: slot.slotLabel,
-                    groupKind: currentRunStep.groupKind,
-                    localExecutions,
-                });
-                const weight = apiRef?.weight_kg ?? localRef?.weight_kg ?? "pending";
-                return `${slot.stepKey}:${weight}`;
-            })
-            .join("|");
-        const defaultsKey = `${currentRunStep.stepKey}:${refFingerprint}`;
-        if (loggerDefaultsStepRef.current === defaultsKey) return;
-
-        setSlotLogs((prev) => {
-            const next = { ...prev };
-            for (const slot of currentRunStep.slots!) {
-                const reference =
-                    slotReferences[slot.stepKey]?.reference ??
-                    resolveLocalRunReference({
-                        exerciseId: slot.exerciseId,
-                        roundIndex: currentRunStep.roundIndex,
-                        slotLabel: slot.slotLabel,
-                        groupKind: currentRunStep.groupKind,
-                        localExecutions,
-                    });
-                const defaults = resolveRunLoggerDefaults({
-                    setIndex: currentRunStep.roundIndex,
-                    prescribedReps: slot.defaultReps,
-                    prescribedRpe: slot.defaultRpe,
-                    plannedWeight: null,
-                    defaultWeight: slot.defaultWeight,
-                    reference,
-                });
-                next[slot.stepKey] = {
-                    weight: defaults.weight,
-                    reps: defaults.reps,
-                };
-            }
-            return next;
-        });
-
-        const prescribedRpe =
-            currentRunStep.slots.find((slot) => slot.defaultRpe != null)?.defaultRpe ??
-            null;
-        const refRpe = currentRunStep.slots
-            .map((slot) => slotReferences[slot.stepKey]?.reference?.rpe)
-            .find((value) => value != null);
-        if (currentRunStep.roundIndex > 1 && refRpe != null) {
-            setRoundRpe(refRpe);
-        } else if (prescribedRpe != null) {
-            setRoundRpe(prescribedRpe);
-        }
-
-        loggerDefaultsStepRef.current = defaultsKey;
-    }, [
-        restFlow.phase,
+    useAthleteRunLoggerDefaultEffects({
+        currentStepKey,
+        current,
+        isBatchStep,
+        restShowLogger: restFlow.showLogger,
+        restPhase: restFlow.phase,
         isGroupRound,
         currentRunStep,
+        effectiveRunReference,
         slotReferences,
         localExecutions,
-    ]);
+        touchedWeightStepKeysRef,
+        seriesAutofillWeightRef,
+        setWeight,
+        setReps,
+        setRpe,
+        setSlotLogs,
+        setRoundRpe: handleRoundRpeChange,
+    });
 
     const blockWork = useAthleteBlockWorkPhase(
         currentStepKey,

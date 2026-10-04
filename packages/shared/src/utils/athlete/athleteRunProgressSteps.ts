@@ -1,5 +1,12 @@
 /**
  * athleteRunProgressSteps.ts — Alineación run steps (buildAthleteRunSteps) con BE-1 progress.
+ *
+ * Propósito: mapas de progress, skip M9 y estado UI de paso guardado vs editado.
+ * Contexto: portal atleta guiado (FE-4/FE-5) y registro al final (FE-3).
+ * Notas de mantenimiento: claves canónicas solo vía catálogo/fixture v1; no persistir `-round-*`.
+ *
+ * @author Frontend Team
+ * @since v8.3.0
  */
 
 import type { AthleteRunProgress, AthleteRunRecordStatus } from "../../types/athleteRunProgress";
@@ -140,4 +147,31 @@ export function shouldSkipRunStepPersist(
     if (!progress) return false;
     if (!isRunStepResolved(step, progress)) return false;
     return !isRunStepTouchedForProgress(step, touchedKeys);
+}
+
+/** UI guiado: paso considerado guardado solo si no hay edición pendiente (B2 / M9). */
+export function isRunStepSavedForUi(
+    step: AthleteRunStep | undefined,
+    stepKey: string | undefined,
+    savedStepKeys: ReadonlySet<string>,
+    progress: AthleteRunProgress | null | undefined,
+    touchedKeys: ReadonlySet<string>
+): boolean {
+    if (!stepKey || !step) return false;
+    if (isRunStepTouchedForProgress(step, touchedKeys)) return false;
+    if (savedStepKeys.has(stepKey)) return true;
+    if (!progress || !isRunStepResolved(step, progress)) return false;
+    return !isRunStepTouchedForProgress(step, touchedKeys);
+}
+
+/** Permite re-guardar tras confirmación local si el atleta editó reps/RPE/tiempo (B2). */
+export function canPersistRunStepAfterLocalComplete(
+    flatStepKey: string,
+    runStep: AthleteRunStep | undefined,
+    completedStepKeys: ReadonlySet<string>,
+    touchedKeys: ReadonlySet<string>
+): boolean {
+    if (!completedStepKeys.has(flatStepKey)) return true;
+    if (!runStep) return false;
+    return isRunStepTouchedForProgress(runStep, touchedKeys);
 }

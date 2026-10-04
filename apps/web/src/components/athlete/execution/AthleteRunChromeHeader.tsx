@@ -1,5 +1,12 @@
 /**
  * AthleteRunChromeHeader.tsx — Top bar /run (P1-8): salida, progreso, menú ⋯.
+ *
+ * Propósito: chrome fijo del guiado atleta (375×812).
+ * Contexto: AthleteSessionRunPage.
+ * Notas de mantenimiento: mantener aria-labels en controles icon-only.
+ *
+ * @author Frontend Team
+ * @since v8.3.0
  */
 
 import React from "react";

@@ -91,9 +91,12 @@ vi.mock("@nexia/shared/utils/athlete/athleteSessionLogUtils", async (importOrigi
         }),
         validateBlockDraft: () => null,
         buildBlockSavePayloads: () => ({
-            executions: [],
+            executions: [{ training_session_id: 99, step_key: "k1", exercise_id: 1, reps: 5, weight_kg: 0 }],
             timed: null,
-            notPerformedStepKeys: ["k1"],
+            notPerformedStepKeys: ["k2"],
+            notPerformedSteps: [
+                { training_session_id: 99, scope: "step", step_key: "k2", exercise_id: 2 },
+            ],
         }),
     };
 });
@@ -177,7 +180,7 @@ describe("useAthleteSessionLog", () => {
         });
     });
 
-    it("offline: encola executions y refresca pending count", async () => {
+    it("offline con not_performed: no encola executions (B1)", async () => {
         isOnline = false;
         const { result } = renderHook(
             () =>
@@ -189,7 +192,69 @@ describe("useAthleteSessionLog", () => {
             { wrapper }
         );
 
-        expect(result.current.isOnline).toBe(false);
+        await act(async () => {
+            result.current.openBlock({
+                sessionBlockId: 10,
+                blockTypeName: "Fuerza",
+                setType: null,
+                status: "pending",
+                expectedStepKeys: [],
+                steps: [],
+                summaryLine: null,
+                isPendingHighlight: true,
+                hasRegisterableSteps: true,
+            });
+        });
+
+        await act(async () => {
+            await result.current.saveActiveBlock();
+        });
+
         expect(logExecution).not.toHaveBeenCalled();
+        await waitFor(() => {
+            expect(result.current.saveError).toMatch(/No realizado.*conexión/i);
+        });
+    });
+
+    it("offline solo executions: encola vía saveActiveBlock (I7)", async () => {
+        isOnline = false;
+        const utils = await import("@nexia/shared/utils/athlete/athleteSessionLogUtils");
+        vi.spyOn(utils, "buildBlockSavePayloads").mockReturnValue({
+            executions: [{ training_session_id: 99, step_key: "k1", exercise_id: 1, reps: 5, weight_kg: 10 }],
+            timed: null,
+            notPerformedStepKeys: [],
+            notPerformedSteps: [],
+        });
+
+        const { result } = renderHook(
+            () =>
+                useAthleteSessionLog({
+                    sessionId: 99,
+                    view: emptyView,
+                    sessionName: "QA",
+                }),
+            { wrapper }
+        );
+
+        await act(async () => {
+            result.current.openBlock({
+                sessionBlockId: 10,
+                blockTypeName: "Fuerza",
+                setType: null,
+                status: "pending",
+                expectedStepKeys: [],
+                steps: [],
+                summaryLine: null,
+                isPendingHighlight: true,
+                hasRegisterableSteps: true,
+            });
+        });
+
+        await act(async () => {
+            await result.current.saveActiveBlock();
+        });
+
+        expect(logExecution).toHaveBeenCalled();
+        vi.restoreAllMocks();
     });
 });
