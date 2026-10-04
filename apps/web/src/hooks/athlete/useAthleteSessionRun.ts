@@ -46,7 +46,7 @@ import {
     type AthleteRunRoundSlot,
     type AthleteRunStep,
 } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
-import { collectProgressKeysForRunStep } from "@nexia/shared/utils/athlete/athleteRunProgressSteps";
+import { touchRunStepKeysForPersist } from "@nexia/shared/utils/athlete/athleteRunProgressSteps";
 import {
     buildAthleteRunGroupContext,
     buildAthleteRunGroupContextFromForTimeRound,
@@ -368,11 +368,7 @@ export function useAthleteSessionRun({
         effectiveRunReference?.suggestion ?? runReference?.suggestion ?? null;
 
     const touchRunStepForPersist = useCallback((step: AthleteRunStep | undefined) => {
-        if (!step) return;
-        touchedWeightStepKeysRef.current.add(step.stepKey);
-        for (const key of collectProgressKeysForRunStep(step)) {
-            touchedWeightStepKeysRef.current.add(key);
-        }
+        touchRunStepKeysForPersist(touchedWeightStepKeysRef.current, step);
     }, []);
 
     const handleWeightChange = useCallback(
@@ -1012,11 +1008,15 @@ export function useAthleteSessionRun({
         : false;
     const showStepActions = Boolean(currentRunStep) && !isCurrentStepSaved;
 
-    const handleForTimeTotalSecondsChange = useCallback((seconds: number) => {
-        const clamped = clampForTimeTotalSeconds(seconds);
-        setForTimeTotalSeconds(clamped);
-        forTimeDataRef.current.totalSeconds = clamped;
-    }, []);
+    const handleForTimeTotalSecondsChange = useCallback(
+        (seconds: number) => {
+            const clamped = clampForTimeTotalSeconds(seconds);
+            setForTimeTotalSeconds(clamped);
+            forTimeDataRef.current.totalSeconds = clamped;
+            touchRunStepForPersist(currentRunStep ?? undefined);
+        },
+        [currentRunStep, touchRunStepForPersist]
+    );
 
     const onConfirm = useCallback(async (): Promise<boolean> => {
         if (isAmrapBlock) {

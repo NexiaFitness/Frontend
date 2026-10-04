@@ -120,6 +120,18 @@ export function isRunStepTouchedForProgress(
     return collectProgressKeysForRunStep(step).some((key) => touchedKeys.has(key));
 }
 
+/** Marca paso guiado (y claves de progress) como editado — evita skip M9 solo-peso. */
+export function touchRunStepKeysForPersist(
+    touchedKeys: Set<string>,
+    step: AthleteRunStep | undefined
+): void {
+    if (!step) return;
+    touchedKeys.add(step.stepKey);
+    for (const key of collectProgressKeysForRunStep(step)) {
+        touchedKeys.add(key);
+    }
+}
+
 export function shouldSkipRunStepPersist(
     step: AthleteRunStep,
     progress: AthleteRunProgress | null | undefined,

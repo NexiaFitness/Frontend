@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "description": "Casos canónicos detail timed-results (POST/GET). D6: as_planned=false → completed_interval_count null salvo finished_early=true (P1-7).",
+  "cases": [
+    {
+      "id": "amrap_partial",
+      "timed_mode": "amrap",
+      "detail": {
+        "kind": "amrap",
+        "partial_total": 5,
+        "partial_by_slot": { "slot-a": 3, "slot-b": 2 }
+      }
+    },
+    {
+      "id": "emom_yes_d6",
+      "timed_mode": "emom",
+      "detail": {
+        "kind": "emom",
+        "interval_total": 6,
+        "as_planned": true,
+        "finished_early": false,
+        "completed_interval_count": null,
+        "athlete_note": null
+      },
+      "top_level": {
+        "emom_completed_count": 6,
+        "emom_failed_count": 0
+      }
+    },
+    {
+      "id": "emom_no_d6",
+      "timed_mode": "emom",
+      "detail": {
+        "kind": "emom",
+        "interval_total": 6,
+        "as_planned": false,
+        "finished_early": false,
+        "completed_interval_count": null,
+        "athlete_note": "Nota teclado QA"
+      },
+      "top_level": {
+        "emom_completed_count": null,
+        "emom_failed_count": null
+      }
+    },
+    {
+      "id": "emom_finish_early_p1_7",
+      "timed_mode": "emom",
+      "detail": {
+        "kind": "emom",
+        "interval_total": 3,
+        "as_planned": false,
+        "finished_early": true,
+        "completed_interval_count": 0,
+        "athlete_note": "Terminé antes"
+      },
+      "top_level": {
+        "emom_completed_count": null,
+        "emom_failed_count": null
+      }
+    },
+    {
+      "id": "for_time_splits",
+      "timed_mode": "for_time",
+      "detail": {
+        "kind": "for_time",
+        "cumulative_splits": [60, 120, 180, 272]
+      },
+      "top_level": {
+        "total_seconds": 272
+      }
+    }
+  ]
+}

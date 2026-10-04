@@ -10,6 +10,7 @@ import {
     findFirstPendingStepIndex,
     isRunStepResolved,
     shouldSkipRunStepPersist,
+    touchRunStepKeysForPersist,
 } from "./athleteRunProgressSteps";
 
 function singleStep(stepKey: string): AthleteRunStep {
@@ -177,5 +178,39 @@ describe("shouldSkipRunStepPersist (M9)", () => {
         const p = progressPartial(194, [step.stepKey], []);
         expect(shouldSkipRunStepPersist(step, p, new Set())).toBe(true);
         expect(shouldSkipRunStepPersist(step, p, new Set([step.stepKey]))).toBe(false);
+    });
+});
+
+describe("touchRunStepKeysForPersist (M9 edición guiado)", () => {
+    it("reps: marca claves y permite re-POST tras cambio solo repeticiones", () => {
+        const step = singleStep("block-194-single-0-r1-S1-S1-1");
+        const p = progressPartial(194, [step.stepKey], []);
+        const touched = new Set<string>();
+        expect(shouldSkipRunStepPersist(step, p, touched)).toBe(true);
+        touchRunStepKeysForPersist(touched, step);
+        expect(shouldSkipRunStepPersist(step, p, touched)).toBe(false);
+    });
+
+    it("RPE: misma semántica que reps (paso single_set)", () => {
+        const step = singleStep("block-194-single-0-r1-S1-S1-1");
+        step.defaultRpe = 8;
+        const p = progressPartial(194, [step.stepKey], []);
+        const touched = new Set<string>();
+        touchRunStepKeysForPersist(touched, step);
+        expect(shouldSkipRunStepPersist(step, p, touched)).toBe(false);
+    });
+
+    it("tiempo (for_time): marca paso timed_block para re-persistir total", () => {
+        const step: AthleteRunStep = {
+            ...singleStep("block-195-timed-for_time-block"),
+            kind: "timed_block",
+            groupKind: "for_time",
+            forTimeRounds: [{ roundIndex: 1, roundTotal: 4, slots: [] }],
+        };
+        const p = progressPartial(195, [step.stepKey], []);
+        const touched = new Set<string>();
+        expect(shouldSkipRunStepPersist(step, p, touched)).toBe(true);
+        touchRunStepKeysForPersist(touched, step);
+        expect(shouldSkipRunStepPersist(step, p, touched)).toBe(false);
     });
 });
