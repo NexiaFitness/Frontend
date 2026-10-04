@@ -14,7 +14,12 @@ import {
     ATHLETE_SESSION_STATUS_BADGE,
     resolveAthleteSessionStatusBadge,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
+import type { AthleteRunSessionRegistrationMetaRow } from "@nexia/shared/types/athleteRunProgress";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
+import {
+    athleteSessionListRegistrationLabel,
+    resolveAthleteSessionListRegistrationCue,
+} from "@nexia/shared/utils/athlete/athleteSessionRegistrationPolicy";
 import {
     formatAthleteDate,
     getCompletedSessionCompletionPercent,
@@ -27,6 +32,7 @@ import {
 export interface AthleteSessionListItemProps {
     session: TrainingSession;
     onSelect: (sessionId: number) => void;
+    registrationMeta?: AthleteRunSessionRegistrationMetaRow;
     hasActivePlan?: boolean;
 }
 
@@ -47,8 +53,14 @@ function completionTone(
 export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
     session,
     onSelect,
+    registrationMeta,
     hasActivePlan = false,
 }) => {
+    const registrationCue = resolveAthleteSessionListRegistrationCue(
+        session,
+        registrationMeta
+    );
+    const registrationLabel = athleteSessionListRegistrationLabel(registrationCue);
     const statusLabel = getSessionStatusLabel(session);
     const completion = getCompletedSessionCompletionPercent(session);
     const isPartial = isPartiallyClosedSession(session);
@@ -93,6 +105,20 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
                 <p className="truncate text-left font-semibold leading-snug text-foreground">
                     {session.session_name}
                 </p>
+
+                {registrationLabel ? (
+                    <p
+                        className={cn(
+                            "text-left text-sm font-medium",
+                            registrationCue === "register_now" ||
+                                registrationCue === "complete_registration"
+                                ? "text-primary"
+                                : "text-muted-foreground"
+                        )}
+                    >
+                        {registrationLabel}
+                    </p>
+                ) : null}
 
                 {session.planned_duration != null && (
                     <p className="flex items-center gap-1.5 text-caption text-muted-foreground">

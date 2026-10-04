@@ -282,7 +282,7 @@ export function getSessionStatusLabel(session: TrainingSession, today = new Date
         const sessionDay = parseSessionDateLocal(session.session_date);
         const todayStart = new Date(today);
         todayStart.setHours(0, 0, 0, 0);
-        if (sessionDay < todayStart) return "No realizada";
+        if (sessionDay < todayStart) return "Pendiente de registro";
     }
     return "Programada";
 }

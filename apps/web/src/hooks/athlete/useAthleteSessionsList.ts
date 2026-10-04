@@ -6,8 +6,10 @@
  */
 
 import { useMemo, useState, useCallback } from "react";
+import { useGetAthleteSessionsRegistrationMetaQuery } from "@nexia/shared/api/athleteApi";
 import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
+import type { AthleteRunSessionRegistrationMetaRow } from "@nexia/shared/types/athleteRunProgress";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import {
     filterAthleteSessions,
@@ -31,6 +33,7 @@ function athleteSessionsDateWindow(): { dateFrom: string; dateTo: string } {
 
 export interface UseAthleteSessionsListResult {
     sessions: TrainingSession[];
+    registrationMetaBySessionId: Map<number, AthleteRunSessionRegistrationMetaRow>;
     filter: AthleteSessionFilter;
     setFilter: (filter: AthleteSessionFilter) => void;
     isLoading: boolean;
@@ -40,7 +43,7 @@ export interface UseAthleteSessionsListResult {
 
 export function useAthleteSessionsList(): UseAthleteSessionsListResult {
     const { clientId } = useAthleteContext();
-    const [filter, setFilter] = useState<AthleteSessionFilter>("all");
+    const [filter, setFilter] = useState<AthleteSessionFilter>("upcoming");
 
     const dateWindow = useMemo(() => athleteSessionsDateWindow(), []);
 
@@ -63,9 +66,26 @@ export function useAthleteSessionsList(): UseAthleteSessionsListResult {
         }
     );
 
+    const { data: registrationMetaPage, refetch: refetchMeta } =
+        useGetAthleteSessionsRegistrationMetaQuery(
+            {
+                dateFrom: dateWindow.dateFrom,
+                dateTo: dateWindow.dateTo,
+            },
+            { skip: !clientId }
+        );
+
+    const registrationMetaBySessionId = useMemo(() => {
+        const map = new Map<number, AthleteRunSessionRegistrationMetaRow>();
+        for (const row of registrationMetaPage?.items ?? []) {
+            map.set(row.training_session_id, row);
+        }
+        return map;
+    }, [registrationMetaPage?.items]);
+
     const refreshSessions = useCallback(async () => {
-        await refetch();
-    }, [refetch]);
+        await Promise.all([refetch(), refetchMeta()]);
+    }, [refetch, refetchMeta]);
 
     const sessions = useMemo(
         () => filterAthleteSessions(allSessions, filter),
@@ -74,6 +94,7 @@ export function useAthleteSessionsList(): UseAthleteSessionsListResult {
 
     return {
         sessions,
+        registrationMetaBySessionId,
         filter,
         setFilter,
         isLoading,

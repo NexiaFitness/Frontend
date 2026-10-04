@@ -84,10 +84,10 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     const enterLogModeRef = React.useRef(sessionLog.enterLogMode);
     enterLogModeRef.current = sessionLog.enterLogMode;
     useEffect(() => {
-        if (searchParams.get("mode") === "log") {
+        if (searchParams.get("mode") === "log" && sessionLog.registrationEditable) {
             enterLogModeRef.current();
         }
-    }, [searchParams]);
+    }, [searchParams, sessionLog.registrationEditable]);
 
     const { data: feedbackList = [] } = useGetClientFeedbackQuery(
         { clientId: clientId ?? 0, limit: 50 },
@@ -132,6 +132,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     );
     const showLogFooter =
         session?.status !== "completed" &&
+        sessionLog.registrationEditable &&
         (sessionLog.logMode || hasPartialLogProgress);
 
     const handleOpenInjurySheet = () => {
@@ -203,6 +204,18 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                     exerciseCount={view.totalExercises}
                     setCount={view.totalSets}
                 />
+
+                {session.status !== "completed" && !sessionLog.registrationEditable ? (
+                    <Alert
+                        variant="warning"
+                        title="Plazo de registro cerrado"
+                        description="Solo puedes registrar o editar una sesión hasta 7 días después de su fecha."
+                    />
+                ) : null}
+
+                {sessionLog.saveError && !sessionLog.activeBlock ? (
+                    <Alert variant="error" title="Registro" description={sessionLog.saveError} />
+                ) : null}
 
                 {!loadingInjuries &&
                     (isDesktop ? (
@@ -358,14 +371,16 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                         >
                             Empezar entrenamiento
                         </Button>
-                        <Button
-                            variant="secondary"
-                            className="min-h-touch-athlete w-full"
-                            disabled={!canStart}
-                            onClick={sessionLog.enterLogMode}
-                        >
-                            Registrar al terminar
-                        </Button>
+                        {sessionLog.registrationEditable ? (
+                            <Button
+                                variant="secondary"
+                                className="min-h-touch-athlete w-full"
+                                disabled={!canStart}
+                                onClick={sessionLog.enterLogMode}
+                            >
+                                Registrar al terminar
+                            </Button>
+                        ) : null}
                     </div>
                 )}
             </AthleteFixedFooter>

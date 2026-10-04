@@ -29,6 +29,10 @@ import {
     useSwipePeekGuard,
 } from "@/hooks/athlete/useAthleteSessionSwipePeek";
 import { useAthleteSessionsList } from "@/hooks/athlete/useAthleteSessionsList";
+import {
+    resolveAthleteSessionListRegistrationCue,
+    shouldOpenSessionInLogMode,
+} from "@nexia/shared/utils/athlete/athleteSessionRegistrationPolicy";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
 import { ATHLETE_PAGE } from "@/components/athlete/layout/athleteLayoutClasses";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
@@ -57,8 +61,15 @@ export const AthleteSessionsPage: React.FC = () => {
         planSummary?.has_active_plan ??
         false;
 
-    const { sessions, filter, setFilter, isLoading, isError, refreshSessions } =
-        useAthleteSessionsList();
+    const {
+        sessions,
+        registrationMetaBySessionId,
+        filter,
+        setFilter,
+        isLoading,
+        isError,
+        refreshSessions,
+    } = useAthleteSessionsList();
 
     const handleSwipePeek = useCallback(
         (session: TrainingSession) => {
@@ -77,9 +88,18 @@ export const AthleteSessionsPage: React.FC = () => {
     const handleSelectSession = useCallback(
         (sessionId: number) => {
             if (shouldBlockTap()) return;
+            const session = sessions.find((s) => s.id === sessionId);
+            const meta = registrationMetaBySessionId.get(sessionId);
+            const cue = session
+                ? resolveAthleteSessionListRegistrationCue(session, meta)
+                : "none";
+            if (shouldOpenSessionInLogMode(cue)) {
+                navigate(`/dashboard/sessions/${sessionId}?mode=log`);
+                return;
+            }
             navigate(`/dashboard/sessions/${sessionId}`);
         },
-        [navigate, shouldBlockTap]
+        [navigate, registrationMetaBySessionId, sessions, shouldBlockTap]
     );
 
     if (isLoading) {
@@ -136,6 +156,9 @@ export const AthleteSessionsPage: React.FC = () => {
                                     {isDesktop ? (
                                         <AthleteSessionListItem
                                             session={session}
+                                            registrationMeta={registrationMetaBySessionId.get(
+                                                session.id
+                                            )}
                                             onSelect={handleSelectSession}
                                             hasActivePlan={hasActivePlan}
                                         />
@@ -143,6 +166,9 @@ export const AthleteSessionsPage: React.FC = () => {
                                         <div {...getSwipeHandlers(session)}>
                                             <AthleteSessionListItem
                                                 session={session}
+                                                registrationMeta={registrationMetaBySessionId.get(
+                                                    session.id
+                                                )}
                                                 onSelect={handleSelectSession}
                                                 hasActivePlan={hasActivePlan}
                                             />

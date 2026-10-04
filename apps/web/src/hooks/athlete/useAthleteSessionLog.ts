@@ -177,7 +177,17 @@ export function useAthleteSessionLog({
         setSaveError(null);
     }, []);
 
-    const enterLogMode = useCallback(() => setLogMode(true), []);
+    const registrationEditable = progress?.registration_editable !== false;
+
+    const enterLogMode = useCallback(() => {
+        if (!registrationEditable) {
+            setSaveError(
+                "El plazo para registrar o editar esta sesión ha cerrado (máximo 7 días después)."
+            );
+            return;
+        }
+        setLogMode(true);
+    }, [registrationEditable]);
     const exitLogMode = useCallback(() => {
         setLogMode(false);
         closeBlock();
@@ -185,6 +195,12 @@ export function useAthleteSessionLog({
 
     const saveActiveBlock = useCallback(async () => {
         if (!activeBlock || !blockDraft) return;
+        if (!registrationEditable) {
+            setSaveError(
+                "El plazo para registrar o editar esta sesión ha cerrado (máximo 7 días después)."
+            );
+            return;
+        }
         const validation = validateBlockDraft(activeBlock, blockDraft);
         if (validation) {
             setSaveError(validation);
@@ -281,6 +297,7 @@ export function useAthleteSessionLog({
         postTimedResult,
         refreshPendingCount,
         refetchProgress,
+        registrationEditable,
         sessionId,
     ]);
 
@@ -366,6 +383,7 @@ export function useAthleteSessionLog({
         markBlockNotPerformed,
         saveError,
         isSavingBlock,
+        registrationEditable,
         completeSessionIfReady,
         forceCompleteSession,
         refetchProgress,

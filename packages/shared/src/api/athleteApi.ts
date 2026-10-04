@@ -23,6 +23,8 @@ import type {
     AthleteRunNotPerformedCreate,
     AthleteRunNotPerformedOut,
     AthleteRunProgress,
+    AthleteRunSessionRegistrationMetaPage,
+    GetAthleteSessionsRegistrationMetaArg,
 } from "../types/athleteRunProgress";
 
 export const athleteApi = baseApi.injectEndpoints({
@@ -84,6 +86,15 @@ export const athleteApi = baseApi.injectEndpoints({
             ],
         }),
 
+        getAthleteSessionsRegistrationMeta: builder.query<
+            AthleteRunSessionRegistrationMetaPage,
+            GetAthleteSessionsRegistrationMetaArg
+        >({
+            query: ({ dateFrom, dateTo }) =>
+                `/athlete/run-context/sessions/registration-meta?date_from=${dateFrom}&date_to=${dateTo}`,
+            providesTags: [{ type: "AthleteRunProgress" as const, id: "REGISTRATION_META" }],
+        }),
+
         postAthleteRunExecution: builder.mutation<
             AthleteRunExecutionOut,
             AthleteRunExecutionCreate
@@ -102,6 +113,7 @@ export const athleteApi = baseApi.injectEndpoints({
                     type: "AthleteRunProgress" as const,
                     id: arg.training_session_id,
                 },
+                { type: "AthleteRunProgress" as const, id: "REGISTRATION_META" },
             ],
         }),
 
@@ -123,6 +135,7 @@ export const athleteApi = baseApi.injectEndpoints({
                     type: "AthleteRunProgress" as const,
                     id: arg.training_session_id,
                 },
+                { type: "AthleteRunProgress" as const, id: "REGISTRATION_META" },
             ],
         }),
 
@@ -140,6 +153,7 @@ export const athleteApi = baseApi.injectEndpoints({
                     type: "AthleteRunProgress" as const,
                     id: arg.training_session_id,
                 },
+                { type: "AthleteRunProgress" as const, id: "REGISTRATION_META" },
             ],
         }),
 
@@ -158,6 +172,7 @@ export const {
     useGetAthleteWeeklySummaryQuery,
     useGetAthleteRunReferenceQuery,
     useGetAthleteRunProgressQuery,
+    useGetAthleteSessionsRegistrationMetaQuery,
     usePostAthleteRunExecutionMutation,
     usePostAthleteRunTimedResultMutation,
     usePostAthleteRunNotPerformedMutation,

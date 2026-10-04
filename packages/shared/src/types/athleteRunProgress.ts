@@ -47,6 +47,27 @@ export interface AthleteRunProgress {
     blocks: AthleteRunProgressBlock[];
     pending_count: number;
     first_pending_step_key?: string | null;
+    registration_editable?: boolean;
+    registration_edit_days?: number;
+}
+
+export interface AthleteRunSessionRegistrationMetaRow {
+    training_session_id: number;
+    session_status: string;
+    pending_count: number;
+    expected_count: number;
+    registered_count: number;
+    registration_editable: boolean;
+    registration_edit_days: number;
+}
+
+export interface AthleteRunSessionRegistrationMetaPage {
+    items: AthleteRunSessionRegistrationMetaRow[];
+}
+
+export interface GetAthleteSessionsRegistrationMetaArg {
+    dateFrom: string;
+    dateTo: string;
 }
 
 export interface AthleteRunNotPerformedCreate {
