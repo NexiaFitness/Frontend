@@ -70,7 +70,8 @@ import {
 } from "@nexia/shared/utils/athlete/forTimeResult";
 import type { SlotLogValues } from "@/components/athlete/execution/AthleteMultiSlotLogger";
 import { useAthleteExercisePr } from "@/hooks/athlete/useAthleteExercisePr";
-import { useAthleteRunRestFlow } from "@/hooks/athlete/useAthleteRunRestFlow";
+import { useAthleteRunRestConfirm } from "@/hooks/athlete/useAthleteRunRestConfirm";
+import { usePutAthleteExerciseNoteMutation } from "@nexia/shared/api/athleteApi";
 import { useAthleteBlockTimer } from "@/hooks/athlete/useAthleteBlockTimer";
 import { useAthleteRunWakeLock } from "@/hooks/athlete/useAthleteRunWakeLock";
 import { useAthleteBlockWorkPhase } from "@/hooks/athlete/useAthleteBlockWorkPhase";
@@ -78,8 +79,6 @@ import { useAthleteForTimeFlow } from "@/hooks/athlete/useAthleteForTimeFlow";
 import { useAthleteEmomRunPhase } from "@/hooks/athlete/useAthleteEmomRunPhase";
 import { useAthleteRunProgressResume } from "@/hooks/athlete/useAthleteRunProgressResume";
 import { useAthleteRunLoggerDefaultEffects } from "@/hooks/athlete/useAthleteRunLoggerDefaultEffects";
-import { getAthleteBlockStartLabel } from "@/components/athlete/execution/athleteRunPresentation";
-
 export interface AthletePrCelebration {
     exerciseName: string;
     weight: number;
@@ -99,6 +98,8 @@ export interface UseAthleteSessionRunOptions {
     onSyncSuccess?: () => void;
     onConflict?: () => void;
     onError?: (message: string) => void;
+    /** D6 — tras guardar serie/ronda en confirm (notas por slot). */
+    afterStepConfirm?: () => Promise<void>;
 }
 
 export function useAthleteSessionRun({
@@ -108,6 +109,7 @@ export function useAthleteSessionRun({
     onSyncSuccess,
     onConflict,
     onError,
+    afterStepConfirm,
 }: UseAthleteSessionRunOptions) {
     const navigate = useNavigate();
     const { clientId } = useAthleteContext();
@@ -122,6 +124,7 @@ export function useAthleteSessionRun({
     const [updateSession] = useUpdateTrainingSessionMutation();
     const [postRunExecution] = usePostAthleteRunExecutionMutation();
     const [postTimedResult] = usePostAthleteRunTimedResultMutation();
+    const [putExerciseNote] = usePutAthleteExerciseNoteMutation();
 
     const runSteps = useMemo(() => buildAthleteRunSteps(view), [view]);
     const flatExercisesFromApi = useMemo(() => flattenAthleteExercises(view), [view]);
@@ -155,8 +158,20 @@ export function useAthleteSessionRun({
             postTimedResult: async (payload: AthleteRunTimedResultCreate) => {
                 await postTimedResult(payload).unwrap();
             },
+            putExerciseNote: async (payload) => {
+                await putExerciseNote(payload).unwrap();
+            },
         }),
-        [structureSource, updateBlockExercise, updateSessionExercise, updateSession, clientId, postRunExecution, postTimedResult]
+        [
+            structureSource,
+            updateBlockExercise,
+            updateSessionExercise,
+            updateSession,
+            clientId,
+            postRunExecution,
+            postTimedResult,
+            putExerciseNote,
+        ]
     );
 
     const {
@@ -1045,46 +1060,24 @@ export function useAthleteSessionRun({
         [currentRunStep, touchRunStepForPersist]
     );
 
-    const onConfirm = useCallback(async (): Promise<boolean> => {
-        if (isAmrapBlock) {
-            if (amrapRounds === 0 && amrapPartialTotal === 0) {
-                setAmrapValidationVisible(true);
-                return false;
-            }
-            setAmrapValidationVisible(false);
-        }
-        if (isBatchStep) {
-            await handleSaveBatch();
-        } else {
-            await handleSaveSet();
-        }
-        return true;
-    }, [
-        amrapPartialTotal,
-        amrapRounds,
-        handleSaveBatch,
-        handleSaveSet,
-        isAmrapBlock,
-        isBatchStep,
-    ]);
-
-    const restFlow = useAthleteRunRestFlow({
+    const { restFlow } = useAthleteRunRestConfirm({
         restAfterSeconds,
         confirmLabel,
-        stepKey: currentStepKey,
-        onConfirm,
-        onRestComplete: advanceAfterRest,
-        isConfirmValid: isAmrapBlock ? true : isConfirmValid,
-        requireStartBeforeLog: isDropsetRound || isTimedBlock,
-        startRestLabel: isDropsetRound
-            ? "Registrar dropset"
-            : isAmrapBlock
-              ? "Registrar AMRAP"
-              : isEmomBlock
-                ? getAthleteBlockStartLabel("emom")
-                : isForTimeBlock
-                  ? getAthleteBlockStartLabel("for_time")
-                  : "Empezar descanso",
+        currentStepKey,
+        isAmrapBlock,
+        amrapRounds,
+        amrapPartialTotal,
+        setAmrapValidationVisible,
+        isBatchStep,
+        handleSaveBatch,
+        handleSaveSet,
+        advanceAfterRest,
+        isConfirmValid,
+        isDropsetRound,
+        isTimedBlock,
+        isEmomBlock,
+        isForTimeBlock,
+        afterStepConfirm,
     });
 
     useAthleteRunLoggerDefaultEffects({

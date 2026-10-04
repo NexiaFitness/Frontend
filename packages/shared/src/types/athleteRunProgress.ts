@@ -48,10 +48,18 @@ export interface AthleteRunProgressBlock {
     pending_step_keys: string[];
 }
 
+export interface AthleteExerciseNoteProgressRow {
+    block_exercise_id: number;
+    exercise_id: number;
+    session_block_id: number;
+    athlete_note: string;
+}
+
 export interface AthleteRunProgress {
     training_session_id: number;
     steps: AthleteRunProgressStep[];
     blocks: AthleteRunProgressBlock[];
+    exercise_notes?: AthleteExerciseNoteProgressRow[];
     pending_count: number;
     first_pending_step_key?: string | null;
     registration_editable?: boolean;

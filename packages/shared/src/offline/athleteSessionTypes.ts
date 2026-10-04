@@ -91,6 +91,16 @@ export interface PendingExecutionLog {
     retryCount: number;
 }
 
+/** Cola D6 — PUT run-context/exercise-notes por block_exercise_id. */
+export interface PendingAthleteExerciseNoteLog {
+    id: string;
+    sessionId: number;
+    blockExerciseId: number;
+    athleteNote: string | null;
+    ts: number;
+    retryCount: number;
+}
+
 /** Cola F4 — POST run-context/timed-results por group_id / step_key. */
 export interface PendingTimedResultLog {
     id: string;
@@ -112,6 +122,7 @@ export interface AthleteSessionSyncAdapter {
     completeSession: (sessionId: number) => Promise<void>;
     postExecution: (payload: AthleteRunExecutionCreate) => Promise<void>;
     postTimedResult: (payload: AthleteRunTimedResultCreate) => Promise<void>;
+    putExerciseNote: (payload: import("../utils/athlete/athleteExerciseNoteUtils").AthleteExerciseNoteUpsert) => Promise<void>;
 }
 
 export class AthleteSyncConflictError extends Error {

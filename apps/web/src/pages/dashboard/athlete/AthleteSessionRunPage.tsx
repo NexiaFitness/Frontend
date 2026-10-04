@@ -2,7 +2,7 @@
  * AthleteSessionRunPage.tsx — Ejecución sesión atleta (F1 100%, DESIGN §7.4, §5a/B.2 rest).
  */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AthleteExerciseInjuryAlert } from "@/components/athlete/AthleteExerciseInjuryAlert";
 import { AthleteInjuryConsultSheet } from "@/components/athlete/AthleteInjuryConsultSheet";
@@ -23,6 +23,10 @@ import { AthleteRunChromeHeader } from "@/components/athlete/execution/AthleteRu
 import { useAthleteInjuries } from "@/hooks/athlete/useAthleteInjuries";
 import { useAthleteSessionInjuryAlerts } from "@/hooks/athlete/useAthleteSessionInjuryAlerts";
 import { useAthleteSessionRun } from "@/hooks/athlete/useAthleteSessionRun";
+import { useAthleteRunExerciseNotes } from "@/hooks/athlete/useAthleteRunExerciseNotes";
+import { useGetAthleteRunProgressQuery } from "@nexia/shared/api/athleteApi";
+import { useOnlineStatus } from "@nexia/shared/hooks/offline/useOnlineStatus";
+import { blockExerciseIdsForRunStep } from "@nexia/shared/utils/athlete/resolveRunStepBlockExerciseIds";
 import { useAthleteRunSessionMenu } from "@/hooks/athlete/useAthleteRunSessionMenu";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
@@ -44,6 +48,21 @@ export const AthleteSessionRunPage: React.FC = () => {
     const [techniqueTarget, setTechniqueTarget] = useState<AthleteExerciseTechniqueTarget | null>(
         null
     );
+
+    const { data: runProgressForNotes } = useGetAthleteRunProgressQuery(sessionId, {
+        skip: !sessionId,
+    });
+    const isOnlineStatus = useOnlineStatus();
+    const exerciseNotes = useAthleteRunExerciseNotes({
+        sessionId,
+        progress: runProgressForNotes,
+        registrationEditable: runProgressForNotes?.registration_editable !== false,
+        isOnline: isOnlineStatus,
+    });
+    const persistNoteSlotIdsRef = useRef<number[]>([]);
+    const afterStepConfirm = useCallback(async () => {
+        await exerciseNotes.persistSlots(persistNoteSlotIdsRef.current);
+    }, [exerciseNotes.persistSlots]);
 
     const {
         isOnline,
@@ -108,6 +127,7 @@ export const AthleteSessionRunPage: React.FC = () => {
         finishSession,
     } = useAthleteSessionRun({
         sessionId,
+        afterStepConfirm,
         onSetSaved: (result, { isGroupRound, isTimedBlock, groupKind }) => {
             if (typeof navigator !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
                 navigator.vibrate?.(20);
@@ -174,6 +194,16 @@ export const AthleteSessionRunPage: React.FC = () => {
             showToast("error", "Conflicto al sincronizar. Revisa la sesión con tu entrenador."),
         onError: (message) => showToast("error", message),
     });
+
+    useEffect(() => {
+        persistNoteSlotIdsRef.current = blockExerciseIdsForRunStep(currentRunStep, current);
+    }, [currentRunStep, current]);
+
+    const noteSlotIds = useMemo(
+        () => blockExerciseIdsForRunStep(currentRunStep, current),
+        [currentRunStep, current]
+    );
+    const exerciseNoteDisabled = !exerciseNotes.registrationEditable;
 
     const runMenu = useAthleteRunSessionMenu({
         sessionId,
@@ -367,6 +397,10 @@ export const AthleteSessionRunPage: React.FC = () => {
                         sessionReadyToFinish={showFinishSession}
                         runReference={timedRunReference}
                         isRunReferenceLoading={isTimedRunReferenceLoading}
+                        exerciseNoteSlotIds={noteSlotIds}
+                        getExerciseNote={exerciseNotes.getDraftForSlot}
+                        onExerciseNoteChange={exerciseNotes.setDraftForSlot}
+                        exerciseNoteDisabled={exerciseNoteDisabled}
                     />
                 ) : isGroupRound && groupContext ? (
                     <GroupRoundStepView
@@ -385,6 +419,10 @@ export const AthleteSessionRunPage: React.FC = () => {
                         sessionReadyToFinish={showFinishSession}
                         slotReferences={slotReferences}
                         isSlotReferencesLoading={isSlotReferencesLoading}
+                        exerciseNoteSlotIds={noteSlotIds}
+                        getExerciseNote={exerciseNotes.getDraftForSlot}
+                        onExerciseNoteChange={exerciseNotes.setDraftForSlot}
+                        exerciseNoteDisabled={exerciseNoteDisabled}
                     />
                 ) : current ? (
                     <ExerciseStepView
@@ -417,6 +455,17 @@ export const AthleteSessionRunPage: React.FC = () => {
                         showLogger={restFlow.showLogger}
                         onViewTechnique={setTechniqueTarget}
                         sessionReadyToFinish={showFinishSession}
+                        exerciseNote={
+                            noteSlotIds[0] != null
+                                ? exerciseNotes.getDraftForSlot(noteSlotIds[0])
+                                : ""
+                        }
+                        onExerciseNoteChange={
+                            noteSlotIds[0] != null
+                                ? (value) => exerciseNotes.setDraftForSlot(noteSlotIds[0], value)
+                                : undefined
+                        }
+                        exerciseNoteDisabled={exerciseNoteDisabled}
                     />
                 ) : null}
             </AthleteRunStepShell>

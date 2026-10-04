@@ -81,6 +81,15 @@ export interface SessionExecutionExercise {
     executions: ClientSetExecutionRow[];
 }
 
+export interface SessionExecutionExerciseNote {
+    block_exercise_id: number;
+    exercise_id: number;
+    exercise_name: string;
+    session_block_id: number;
+    athlete_note: string;
+    trainer_notes: string | null;
+}
+
 export interface SessionExecutionSummary {
     training_session_id: number;
     client_id: number;
@@ -92,6 +101,7 @@ export interface SessionExecutionSummary {
     rpe_adherence_pct: number | null;
     has_executions: boolean;
     exercises: SessionExecutionExercise[];
+    exercise_notes?: SessionExecutionExerciseNote[];
 }
 
 export interface ClientTimedBlockResultRow {

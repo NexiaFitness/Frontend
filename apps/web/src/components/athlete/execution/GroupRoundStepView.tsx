@@ -26,6 +26,7 @@ import { AthleteRunProgressHeader } from "./AthleteRunProgressHeader";
 import { AthleteRunLoggingSummary } from "./AthleteRunLoggingSummary";
 import type { AthleteExerciseTechniqueTarget } from "./athleteExerciseTechniqueUtils";
 import { ATHLETE_RUN_LOGGER_REVEAL, ATHLETE_RUN_LOGGER_SECTION_LABEL } from "./athleteRunPresentation";
+import { AthleteRunExerciseNoteField } from "./AthleteRunExerciseNoteField";
 
 export interface GroupRoundStepViewProps {
     runStep: AthleteRunStep;
@@ -46,6 +47,10 @@ export interface GroupRoundStepViewProps {
     sessionReadyToFinish?: boolean;
     slotReferences?: Record<string, AthleteRunReference | undefined>;
     isSlotReferencesLoading?: boolean;
+    exerciseNoteSlotIds?: number[];
+    getExerciseNote?: (blockExerciseId: number) => string;
+    onExerciseNoteChange?: (blockExerciseId: number, value: string) => void;
+    exerciseNoteDisabled?: boolean;
 }
 
 export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
@@ -64,6 +69,10 @@ export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
     sessionReadyToFinish = false,
     slotReferences = {},
     isSlotReferencesLoading = false,
+    exerciseNoteSlotIds = [],
+    getExerciseNote,
+    onExerciseNoteChange,
+    exerciseNoteDisabled = false,
 }) => {
     const isDoingPhase = restPhase === "doing";
     const isLoggingRest = restPhase === "logging_rest";
@@ -204,6 +213,16 @@ export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
                             onRoundRpeChange={onRoundRpeChange}
                         />
                     )}
+                    {getExerciseNote && onExerciseNoteChange
+                        ? exerciseNoteSlotIds.map((slotId) => (
+                              <AthleteRunExerciseNoteField
+                                  key={slotId}
+                                  value={getExerciseNote(slotId)}
+                                  onChange={(value) => onExerciseNoteChange(slotId, value)}
+                                  disabled={exerciseNoteDisabled}
+                              />
+                          ))
+                        : null}
                 </div>
             ) : null}
         </div>

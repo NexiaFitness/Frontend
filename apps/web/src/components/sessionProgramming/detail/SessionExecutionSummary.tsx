@@ -72,6 +72,27 @@ export const SessionExecutionSummary: React.FC<SessionExecutionSummaryProps> = (
                 </div>
             </div>
 
+            {data.exercise_notes && data.exercise_notes.length > 0 ? (
+                <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                    <h3 className="text-sm font-semibold text-foreground">Notas del atleta</h3>
+                    <ul className="space-y-3">
+                        {data.exercise_notes.map((row) => (
+                            <li key={row.block_exercise_id} className="text-sm">
+                                <p className="font-medium text-foreground">{row.exercise_name}</p>
+                                {row.trainer_notes ? (
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Indicación: {row.trainer_notes}
+                                    </p>
+                                ) : null}
+                                <p className="mt-1 whitespace-pre-wrap text-foreground/90">
+                                    {row.athlete_note}
+                                </p>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ) : null}
+
             <div className="space-y-4">
                 {data.exercises.map((exercise) => (
                     <div

@@ -32,6 +32,7 @@ import {
     ATHLETE_RUN_LOGGER_REVEAL,
     ATHLETE_RUN_LOGGER_SECTION_LABEL,
 } from "./athleteRunPresentation";
+import { AthleteRunExerciseNoteField } from "./AthleteRunExerciseNoteField";
 
 export interface ExerciseStepViewProps {
     exercise: AthleteFlatExercise;
@@ -59,6 +60,9 @@ export interface ExerciseStepViewProps {
     showLogger?: boolean;
     onViewTechnique?: (target: AthleteExerciseTechniqueTarget) => void;
     sessionReadyToFinish?: boolean;
+    exerciseNote?: string;
+    onExerciseNoteChange?: (value: string) => void;
+    exerciseNoteDisabled?: boolean;
 }
 
 export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
@@ -84,6 +88,9 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
     showLogger = true,
     onViewTechnique,
     sessionReadyToFinish = false,
+    exerciseNote = "",
+    onExerciseNoteChange,
+    exerciseNoteDisabled = false,
 }) => {
     const isDoingPhase = restPhase === "doing";
     const isLoggingRest = restPhase === "logging_rest";
@@ -181,6 +188,13 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
                             />
                         </div>
                     </div>
+                    {onExerciseNoteChange ? (
+                        <AthleteRunExerciseNoteField
+                            value={exerciseNote}
+                            onChange={onExerciseNoteChange}
+                            disabled={exerciseNoteDisabled}
+                        />
+                    ) : null}
                 </div>
             ) : null}
         </div>

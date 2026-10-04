@@ -8,17 +8,20 @@ import type { SessionBlockExerciseUpdate } from "../types/sessionProgramming";
 import {
     addPendingComplete,
     addPendingExecution,
+    addPendingExerciseNote,
     addPendingLog,
     addPendingTimedResult,
     clearSessionOfflineData,
     getPendingCompletes,
     getPendingExecutions,
+    getPendingExerciseNotes,
     getPendingLogs,
     getPendingTimedResults,
     getSessionSnapshot,
     isIndexedDbAvailable,
     removePendingComplete,
     removePendingExecution,
+    removePendingExerciseNote,
     removePendingLog,
     removePendingTimedResult,
     saveSessionSnapshot,
@@ -28,10 +31,12 @@ import type {
     AthleteSessionSnapshot,
     AthleteSessionSyncAdapter,
     LocalSetExecution,
+    PendingAthleteExerciseNoteLog,
     PendingExecutionLog,
     PendingExerciseLog,
     PendingTimedResultLog,
 } from "./athleteSessionTypes";
+import type { AthleteExerciseNoteUpsert } from "../utils/athlete/athleteExerciseNoteUtils";
 import { AthleteSyncConflictError } from "./athleteSessionTypes";
 
 const SNAPSHOT_TTL_MS = 24 * 60 * 60 * 1000;
@@ -66,6 +71,18 @@ export function dedupePendingExecutions(
 }
 
 /** Last-write-wins por (sessionId, stepKey) en timed results. */
+/** Last-write-wins por (sessionId, blockExerciseId) — D6. */
+export function dedupePendingExerciseNotes(
+    logs: PendingAthleteExerciseNoteLog[]
+): PendingAthleteExerciseNoteLog[] {
+    const sorted = [...logs].sort((a, b) => a.ts - b.ts);
+    const bySlot = new Map<string, PendingAthleteExerciseNoteLog>();
+    for (const log of sorted) {
+        bySlot.set(`${log.sessionId}:${log.blockExerciseId}`, log);
+    }
+    return [...bySlot.values()].sort((a, b) => a.ts - b.ts);
+}
+
 export function dedupePendingTimedResults(
     logs: PendingTimedResultLog[]
 ): PendingTimedResultLog[] {
@@ -200,6 +217,25 @@ export async function queueExecutionLog(input: {
     return entry;
 }
 
+export async function queueExerciseNoteLog(input: {
+    sessionId: number;
+    blockExerciseId: number;
+    payload: AthleteExerciseNoteUpsert;
+}): Promise<PendingAthleteExerciseNoteLog> {
+    const entry: PendingAthleteExerciseNoteLog = {
+        id: createLogId(),
+        sessionId: input.sessionId,
+        blockExerciseId: input.blockExerciseId,
+        athleteNote: input.payload.athlete_note,
+        ts: Date.now(),
+        retryCount: 0,
+    };
+    if (isIndexedDbAvailable()) {
+        await addPendingExerciseNote(entry);
+    }
+    return entry;
+}
+
 export async function queueTimedResultLog(input: {
     sessionId: number;
     stepKey: string;
@@ -257,6 +293,7 @@ export interface FlushResult {
     syncedLogs: number;
     syncedExecutions: number;
     syncedTimedResults: number;
+    syncedExerciseNotes: number;
     syncedCompletes: number;
     conflict: boolean;
     registrationWindowClosed: boolean;
@@ -272,6 +309,7 @@ export async function flushPendingSessionSync(
             syncedLogs: 0,
             syncedExecutions: 0,
             syncedTimedResults: 0,
+            syncedExerciseNotes: 0,
             syncedCompletes: 0,
             conflict: false,
             registrationWindowClosed: false,
@@ -282,6 +320,7 @@ export async function flushPendingSessionSync(
     let registrationWindowClosed = false;
     let syncedExecutions = 0;
     let syncedTimedResults = 0;
+    let syncedExerciseNotes = 0;
 
     const rawExecutions = await getPendingExecutions(sessionId);
     const executions = dedupePendingExecutions(rawExecutions);
@@ -310,6 +349,7 @@ export async function flushPendingSessionSync(
             syncedLogs: 0,
             syncedExecutions,
             syncedTimedResults: 0,
+            syncedExerciseNotes: 0,
             syncedCompletes: 0,
             conflict: true,
             registrationWindowClosed,
@@ -343,6 +383,45 @@ export async function flushPendingSessionSync(
             syncedLogs: 0,
             syncedExecutions,
             syncedTimedResults,
+            syncedExerciseNotes: 0,
+            syncedCompletes: 0,
+            conflict: true,
+            registrationWindowClosed,
+        };
+    }
+
+    const rawNotes = await getPendingExerciseNotes(sessionId);
+    const exerciseNotes = dedupePendingExerciseNotes(rawNotes);
+
+    for (const log of exerciseNotes) {
+        try {
+            await adapter.putExerciseNote({
+                training_session_id: log.sessionId,
+                block_exercise_id: log.blockExerciseId,
+                athlete_note: log.athleteNote,
+            });
+            await removePendingExerciseNote(log.id);
+            syncedExerciseNotes += 1;
+        } catch (error) {
+            if (isRegistrationWindowClosedSyncError(error)) {
+                await removePendingExerciseNote(log.id);
+                registrationWindowClosed = true;
+                continue;
+            }
+            if (isConflictError(error)) {
+                conflict = true;
+                break;
+            }
+            throw error;
+        }
+    }
+
+    if (conflict) {
+        return {
+            syncedLogs: 0,
+            syncedExecutions,
+            syncedTimedResults,
+            syncedExerciseNotes,
             syncedCompletes: 0,
             conflict: true,
             registrationWindowClosed,
@@ -372,6 +451,7 @@ export async function flushPendingSessionSync(
             syncedLogs,
             syncedExecutions,
             syncedTimedResults,
+            syncedExerciseNotes,
             syncedCompletes: 0,
             conflict: true,
             registrationWindowClosed,
@@ -395,10 +475,17 @@ export async function flushPendingSessionSync(
         }
     }
 
-    if (syncedLogs > 0 || syncedExecutions > 0 || syncedTimedResults > 0 || syncedCompletes > 0) {
+    if (
+        syncedLogs > 0 ||
+        syncedExecutions > 0 ||
+        syncedTimedResults > 0 ||
+        syncedExerciseNotes > 0 ||
+        syncedCompletes > 0
+    ) {
         const remainingLogs = await getPendingLogs(sessionId);
         const remainingExecutions = await getPendingExecutions(sessionId);
         const remainingTimed = await getPendingTimedResults(sessionId);
+        const remainingNotes = await getPendingExerciseNotes(sessionId);
         const remainingCompletes = (await getPendingCompletes()).filter(
             (c) => c.sessionId === sessionId
         );
@@ -406,6 +493,7 @@ export async function flushPendingSessionSync(
             remainingLogs.length === 0 &&
             remainingExecutions.length === 0 &&
             remainingTimed.length === 0 &&
+            remainingNotes.length === 0 &&
             remainingCompletes.length === 0
         ) {
             await clearSessionOfflineData(sessionId);
@@ -416,6 +504,7 @@ export async function flushPendingSessionSync(
         syncedLogs,
         syncedExecutions,
         syncedTimedResults,
+        syncedExerciseNotes,
         syncedCompletes,
         conflict: false,
         registrationWindowClosed,
@@ -433,6 +522,7 @@ export async function finishOnlineSession(
     await pruneSupersededLogs(sessionId);
     await pruneSupersededExecutions(sessionId);
     await pruneSupersededTimedResults(sessionId);
+    await pruneSupersededExerciseNotes(sessionId);
     const flushResult = await flushPendingSessionSync(sessionId, adapter);
 
     if (flushResult.conflict) {
@@ -476,6 +566,17 @@ export async function pruneSupersededTimedResults(sessionId: number): Promise<vo
     for (const log of raw) {
         if (!winners.has(log.id)) {
             await removePendingTimedResult(log.id);
+        }
+    }
+}
+
+export async function pruneSupersededExerciseNotes(sessionId: number): Promise<void> {
+    if (!isIndexedDbAvailable()) return;
+    const raw = await getPendingExerciseNotes(sessionId);
+    const winners = new Set(dedupePendingExerciseNotes(raw).map((l) => l.id));
+    for (const log of raw) {
+        if (!winners.has(log.id)) {
+            await removePendingExerciseNote(log.id);
         }
     }
 }

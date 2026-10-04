@@ -23,6 +23,11 @@ import {
     type AthleteRunStep,
 } from "./buildAthleteRunSteps";
 import {
+    buildExerciseNoteUpsertPayload,
+    exerciseNotesMapFromProgress,
+    type AthleteExerciseNoteUpsert,
+} from "./athleteExerciseNoteUtils";
+import {
     buildAthleteRunExecutionPayload,
     buildAthleteRunExecutionPayloadFromSlot,
 } from "./runReferenceUtils";
@@ -86,6 +91,8 @@ export interface AthleteSessionLogBlockDraft {
     dropsetRounds: AthleteSessionLogRoundDraft[];
     timed: AthleteSessionLogTimedDraft | null;
     mobilityDone: boolean | null;
+    /** D6 — nota por block_exercise_id (compartida entre series del mismo slot). */
+    exerciseNotes: Record<number, string>;
 }
 
 const END_LOG_SOURCE = "run_live" as const;
@@ -331,6 +338,21 @@ export function buildInitialBlockDraft(
         singleSets.push(defaultSetDraft(step, saved));
     }
 
+    const noteMap = exerciseNotesMapFromProgress(progress);
+    const exerciseNotes: Record<number, string> = {};
+    for (const step of block.steps) {
+        if (step.groupKind === "emom") continue;
+        const ids = new Set<number>();
+        if (step.blockExerciseId) ids.add(step.blockExerciseId);
+        for (const slot of step.slots ?? []) {
+            if (slot.blockExerciseId) ids.add(slot.blockExerciseId);
+        }
+        for (const id of ids) {
+            const saved = noteMap.get(id);
+            if (saved) exerciseNotes[id] = saved;
+        }
+    }
+
     return {
         sessionBlockId: block.sessionBlockId,
         singleSets,
@@ -339,12 +361,14 @@ export function buildInitialBlockDraft(
         timed,
         mobilityDone:
             !block.hasRegisterableSteps && block.status === "registered" ? true : null,
+        exerciseNotes,
     };
 }
 
 export interface BlockSavePayloads {
     executions: AthleteRunExecutionCreate[];
     timed: AthleteRunTimedResultCreate | null;
+    exerciseNotes: AthleteExerciseNoteUpsert[];
     /** @deprecated use notPerformedSteps — keys only kept for tests */
     notPerformedStepKeys: string[];
     notPerformedSteps: AthleteRunNotPerformedCreate[];
@@ -404,7 +428,13 @@ export function buildBlockSavePayloads(
     };
 
     if (!block.hasRegisterableSteps) {
-        return { executions, timed: null, notPerformedStepKeys, notPerformedSteps };
+        return {
+            executions,
+            timed: null,
+            exerciseNotes: [],
+            notPerformedStepKeys,
+            notPerformedSteps,
+        };
     }
 
     for (const setDraft of draft.singleSets) {
@@ -496,7 +526,16 @@ export function buildBlockSavePayloads(
         }
     }
 
-    return { executions, timed, notPerformedStepKeys, notPerformedSteps };
+    const exerciseNotes: AthleteExerciseNoteUpsert[] = [];
+    for (const [blockExerciseIdRaw, text] of Object.entries(draft.exerciseNotes ?? {})) {
+        const blockExerciseId = Number(blockExerciseIdRaw);
+        if (!Number.isFinite(blockExerciseId)) continue;
+        exerciseNotes.push(
+            buildExerciseNoteUpsertPayload(sessionId, blockExerciseId, text ?? null)
+        );
+    }
+
+    return { executions, timed, exerciseNotes, notPerformedStepKeys, notPerformedSteps };
 }
 
 export function validateBlockDraft(

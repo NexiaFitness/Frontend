@@ -11,7 +11,9 @@ import {
     usePostAthleteRunNotPerformedMutation,
     usePostAthleteRunExecutionMutation,
     usePostAthleteRunTimedResultMutation,
+    usePutAthleteExerciseNoteMutation,
 } from "@nexia/shared/api/athleteApi";
+import { queueExerciseNoteLog } from "@nexia/shared/offline/athleteSessionSync";
 import { useUpdateTrainingSessionMutation } from "@nexia/shared/api/trainingSessionsApi";
 import type { AthleteRunExecutionCreate, AthleteRunTimedResultCreate } from "@nexia/shared/types/athleteRunReference";
 import type { SessionBlockExerciseUpdate } from "@nexia/shared/types/sessionProgramming";
@@ -68,6 +70,7 @@ export function useAthleteSessionLog({
     const [postExecution] = usePostAthleteRunExecutionMutation();
     const [postTimedResult] = usePostAthleteRunTimedResultMutation();
     const [postNotPerformed] = usePostAthleteRunNotPerformedMutation();
+    const [putExerciseNote] = usePutAthleteExerciseNoteMutation();
     const [updateSession] = useUpdateTrainingSessionMutation();
 
     const runSteps = useMemo(() => buildAthleteRunSteps(view), [view]);
@@ -96,8 +99,11 @@ export function useAthleteSessionLog({
             postTimedResult: async (payload: AthleteRunTimedResultCreate) => {
                 await postTimedResult(payload).unwrap();
             },
+            putExerciseNote: async (payload) => {
+                await putExerciseNote(payload).unwrap();
+            },
         }),
-        [postExecution, postTimedResult, updateSession]
+        [postExecution, postTimedResult, putExerciseNote, updateSession]
     );
 
     const {
@@ -220,7 +226,7 @@ export function useAthleteSessionLog({
         setIsSavingBlock(true);
         setSaveError(null);
         try {
-            const { executions, timed, notPerformedStepKeys, notPerformedSteps } =
+            const { executions, timed, exerciseNotes, notPerformedStepKeys, notPerformedSteps } =
                 buildBlockSavePayloads(sessionId, activeBlock, blockDraft);
 
             const needsNotPerformedOnline =
@@ -239,6 +245,18 @@ export function useAthleteSessionLog({
                     await postExecution(payload).unwrap();
                 } else {
                     await logExecution(payload);
+                }
+            }
+
+            for (const notePayload of exerciseNotes) {
+                if (isOnline) {
+                    await putExerciseNote(notePayload).unwrap();
+                } else {
+                    await queueExerciseNoteLog({
+                        sessionId,
+                        blockExerciseId: notePayload.block_exercise_id,
+                        payload: notePayload,
+                    });
                 }
             }
 
@@ -269,7 +287,7 @@ export function useAthleteSessionLog({
 
             const savedOffline =
                 !isOnline &&
-                (executions.length > 0 || timed != null);
+                (executions.length > 0 || timed != null || exerciseNotes.length > 0);
             if (savedOffline) {
                 setOptimisticBlockStatus((prev) => {
                     const next = new Map(prev);
@@ -305,6 +323,7 @@ export function useAthleteSessionLog({
         postExecution,
         postNotPerformed,
         postTimedResult,
+        putExerciseNote,
         refreshPendingCount,
         refetchProgress,
         registrationEditable,

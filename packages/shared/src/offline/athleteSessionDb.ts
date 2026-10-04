@@ -4,6 +4,7 @@
 
 import type {
     AthleteSessionSnapshot,
+    PendingAthleteExerciseNoteLog,
     PendingExecutionLog,
     PendingExerciseLog,
     PendingSessionComplete,
@@ -11,12 +12,13 @@ import type {
 } from "./athleteSessionTypes";
 
 const DB_NAME = "nexia-athlete-offline";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const STORE_SNAPSHOTS = "sessionSnapshots";
 const STORE_PENDING_LOGS = "pendingLogs";
 const STORE_PENDING_EXECUTIONS = "pendingExecutions";
 const STORE_PENDING_TIMED = "pendingTimedResults";
+const STORE_PENDING_EXERCISE_NOTES = "pendingExerciseNotes";
 const STORE_PENDING_COMPLETES = "pendingCompletes";
 
 export function isIndexedDbAvailable(): boolean {
@@ -55,6 +57,15 @@ function openDb(): Promise<IDBDatabase> {
             }
             if (!db.objectStoreNames.contains(STORE_PENDING_COMPLETES)) {
                 db.createObjectStore(STORE_PENDING_COMPLETES, { keyPath: "sessionId" });
+            }
+            if (!db.objectStoreNames.contains(STORE_PENDING_EXERCISE_NOTES)) {
+                const store = db.createObjectStore(STORE_PENDING_EXERCISE_NOTES, {
+                    keyPath: "id",
+                });
+                store.createIndex("sessionId", "sessionId", { unique: false });
+                store.createIndex("sessionSlot", ["sessionId", "blockExerciseId"], {
+                    unique: false,
+                });
             }
         };
     });
@@ -166,6 +177,34 @@ export async function removePendingTimedResult(id: string): Promise<void> {
     db.close();
 }
 
+export async function addPendingExerciseNote(log: PendingAthleteExerciseNoteLog): Promise<void> {
+    const db = await openDb();
+    const tx = db.transaction(STORE_PENDING_EXERCISE_NOTES, "readwrite");
+    await requestToPromise(tx.objectStore(STORE_PENDING_EXERCISE_NOTES).put(log));
+    db.close();
+}
+
+export async function getPendingExerciseNotes(
+    sessionId?: number
+): Promise<PendingAthleteExerciseNoteLog[]> {
+    const db = await openDb();
+    const tx = db.transaction(STORE_PENDING_EXERCISE_NOTES, "readonly");
+    const store = tx.objectStore(STORE_PENDING_EXERCISE_NOTES);
+    const result =
+        sessionId != null
+            ? await requestToPromise(store.index("sessionId").getAll(sessionId))
+            : await requestToPromise(store.getAll());
+    db.close();
+    return (result as PendingAthleteExerciseNoteLog[]) ?? [];
+}
+
+export async function removePendingExerciseNote(id: string): Promise<void> {
+    const db = await openDb();
+    const tx = db.transaction(STORE_PENDING_EXERCISE_NOTES, "readwrite");
+    await requestToPromise(tx.objectStore(STORE_PENDING_EXERCISE_NOTES).delete(id));
+    db.close();
+}
+
 export async function addPendingComplete(entry: PendingSessionComplete): Promise<void> {
     const db = await openDb();
     const tx = db.transaction(STORE_PENDING_COMPLETES, "readwrite");
@@ -196,6 +235,7 @@ export async function clearSessionOfflineData(sessionId: number): Promise<void> 
             STORE_PENDING_LOGS,
             STORE_PENDING_EXECUTIONS,
             STORE_PENDING_TIMED,
+            STORE_PENDING_EXERCISE_NOTES,
             STORE_PENDING_COMPLETES,
         ],
         "readwrite"
@@ -207,6 +247,7 @@ export async function clearSessionOfflineData(sessionId: number): Promise<void> 
         STORE_PENDING_LOGS,
         STORE_PENDING_EXECUTIONS,
         STORE_PENDING_TIMED,
+        STORE_PENDING_EXERCISE_NOTES,
     ]) {
         const logStore = tx.objectStore(storeName);
         const index = logStore.index("sessionId");
@@ -236,7 +277,8 @@ export async function countPendingForSession(sessionId: number): Promise<number>
     const logs = await getPendingLogs(sessionId);
     const executions = await getPendingExecutions(sessionId);
     const timed = await getPendingTimedResults(sessionId);
+    const notes = await getPendingExerciseNotes(sessionId);
     const completes = await getPendingCompletes();
     const hasComplete = completes.some((c) => c.sessionId === sessionId);
-    return logs.length + executions.length + timed.length + (hasComplete ? 1 : 0);
+    return logs.length + executions.length + timed.length + notes.length + (hasComplete ? 1 : 0);
 }

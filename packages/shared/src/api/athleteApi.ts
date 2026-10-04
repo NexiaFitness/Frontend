@@ -26,6 +26,15 @@ import type {
     AthleteRunSessionRegistrationMetaPage,
     GetAthleteSessionsRegistrationMetaArg,
 } from "../types/athleteRunProgress";
+import type { AthleteExerciseNoteUpsert } from "../utils/athlete/athleteExerciseNoteUtils";
+
+export interface AthleteExerciseNoteUpsertOut {
+    training_session_id: number;
+    block_exercise_id: number;
+    exercise_id: number;
+    athlete_note: string | null;
+    updated_at: string | null;
+}
 
 export const athleteApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -139,6 +148,23 @@ export const athleteApi = baseApi.injectEndpoints({
             ],
         }),
 
+        putAthleteExerciseNote: builder.mutation<
+            AthleteExerciseNoteUpsertOut,
+            AthleteExerciseNoteUpsert
+        >({
+            query: (body) => ({
+                url: "/athlete/run-context/exercise-notes",
+                method: "PUT",
+                body,
+            }),
+            invalidatesTags: (_result, _error, arg) => [
+                {
+                    type: "AthleteRunProgress" as const,
+                    id: arg.training_session_id,
+                },
+            ],
+        }),
+
         postAthleteRunNotPerformed: builder.mutation<
             AthleteRunNotPerformedOut,
             AthleteRunNotPerformedCreate
@@ -176,5 +202,6 @@ export const {
     usePostAthleteRunExecutionMutation,
     usePostAthleteRunTimedResultMutation,
     usePostAthleteRunNotPerformedMutation,
+    usePutAthleteExerciseNoteMutation,
     usePostAiWeeklySummaryMutation,
 } = athleteApi;

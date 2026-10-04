@@ -25,6 +25,7 @@ import { runStepToFlatExercise } from "@nexia/shared/utils/athlete/buildAthleteR
 import { resolveSeriesWeightAutofillKey } from "@nexia/shared/utils/athlete/athleteLoggingUtils";
 import { useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { AthleteRunExerciseNoteField } from "@/components/athlete/execution/AthleteRunExerciseNoteField";
 
 export interface AthleteSessionLogBlockSheetProps {
     isOpen: boolean;
@@ -59,6 +60,19 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
         () => block?.steps.find((s) => s.kind === "timed_block") ?? null,
         [block?.steps]
     );
+
+    const noteSlotIds = useMemo(() => {
+        if (!block) return [];
+        const ids = new Set<number>();
+        for (const step of block.steps) {
+            if (step.groupKind === "emom") continue;
+            if (step.blockExerciseId) ids.add(step.blockExerciseId);
+            for (const slot of step.slots ?? []) {
+                ids.add(slot.blockExerciseId);
+            }
+        }
+        return [...ids];
+    }, [block]);
 
     const handleWeightChange = useCallback(
         (stepKey: string, exerciseScope: ReturnType<typeof runStepToFlatExercise>, value: number) => {
@@ -411,6 +425,26 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                             />
                         ) : null}
                     </>
+                ) : null}
+
+                {draft && noteSlotIds.length > 0 ? (
+                    <div className="space-y-3 border-t border-border/60 pt-4">
+                        {noteSlotIds.map((slotId) => (
+                            <AthleteRunExerciseNoteField
+                                key={slotId}
+                                value={draft.exerciseNotes?.[slotId] ?? ""}
+                                onChange={(value) =>
+                                    onDraftChange({
+                                        ...draft,
+                                        exerciseNotes: {
+                                            ...(draft.exerciseNotes ?? {}),
+                                            [slotId]: value,
+                                        },
+                                    })
+                                }
+                            />
+                        ))}
+                    </div>
                 ) : null}
             </div>
         </BottomSheet>

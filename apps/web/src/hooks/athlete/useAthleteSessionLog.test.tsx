@@ -12,6 +12,7 @@ import type { SessionStructureView } from "@nexia/shared/sessionProgramming/sess
 const postExecution = vi.fn(() => ({ unwrap: () => Promise.resolve({}) }));
 const postTimedResult = vi.fn(() => ({ unwrap: () => Promise.resolve({}) }));
 const postNotPerformed = vi.fn(() => ({ unwrap: () => Promise.resolve({}) }));
+const putExerciseNote = vi.fn(() => ({ unwrap: () => Promise.resolve({}) }));
 const updateSession = vi.fn(() => ({ unwrap: () => Promise.resolve({}) }));
 const refetchProgress = vi.fn(() => Promise.resolve({}));
 
@@ -41,6 +42,7 @@ vi.mock("@nexia/shared/api/athleteApi", () => ({
     usePostAthleteRunExecutionMutation: () => [postExecution],
     usePostAthleteRunTimedResultMutation: () => [postTimedResult],
     usePostAthleteRunNotPerformedMutation: () => [postNotPerformed],
+    usePutAthleteExerciseNoteMutation: () => [putExerciseNote],
 }));
 
 vi.mock("@nexia/shared/api/trainingSessionsApi", () => ({
@@ -91,6 +93,7 @@ vi.mock("@nexia/shared/utils/athlete/athleteSessionLogUtils", async (importOrigi
         }),
         validateBlockDraft: () => null,
         buildBlockSavePayloads: () => ({
+            exerciseNotes: [],
             executions: [{ training_session_id: 99, step_key: "k1", exercise_id: 1, reps: 5, weight_kg: 0 }],
             timed: null,
             notPerformedStepKeys: ["k2"],
@@ -222,6 +225,7 @@ describe("useAthleteSessionLog", () => {
         vi.spyOn(utils, "buildBlockSavePayloads").mockReturnValue({
             executions: [{ training_session_id: 99, step_key: "k1", exercise_id: 1, reps: 5, weight_kg: 10 }],
             timed: null,
+            exerciseNotes: [],
             notPerformedStepKeys: [],
             notPerformedSteps: [],
         });
