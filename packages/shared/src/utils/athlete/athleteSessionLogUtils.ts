@@ -236,10 +236,25 @@ export function isSessionLogReadyToComplete(progress?: AthleteRunProgress | null
     );
 }
 
+/**
+ * Peso inicial / efectivo en registro al final: prioriza guardado BE-1, luego actualWeight
+ * (defaultWeight), luego carga programada (plannedWeight). Sin esto el sheet muestra «50 kg»
+ * en preview pero el borrador enviaba weight_kg=0 al guardar sin tocar el input.
+ */
+export function resolveLogDraftSetWeight(
+    step: Pick<AthleteRunStep, "defaultWeight" | "plannedWeight">,
+    saved?: AthleteRunProgressStep
+): number {
+    if (saved?.weight_kg != null) return saved.weight_kg;
+    if (step.defaultWeight != null && step.defaultWeight > 0) return step.defaultWeight;
+    if (step.plannedWeight != null && step.plannedWeight > 0) return step.plannedWeight;
+    return 0;
+}
+
 function defaultSetDraft(step: AthleteRunStep, saved?: AthleteRunProgressStep): AthleteSessionLogSetDraft {
     return {
         stepKey: step.stepKey,
-        weight: saved?.weight_kg ?? step.defaultWeight ?? 0,
+        weight: resolveLogDraftSetWeight(step, saved),
         reps: saved?.reps ?? step.defaultReps ?? 8,
         skipped: saved?.status === "not_performed",
     };
@@ -400,9 +415,11 @@ export function buildBlockSavePayloads(
             continue;
         }
         const flat = runStepToFlatExercise(step);
+        const weight =
+            setDraft.weight > 0 ? setDraft.weight : resolveLogDraftSetWeight(step);
         executions.push(
             buildAthleteRunExecutionPayload(sessionId, flat, {
-                weight: setDraft.weight,
+                weight,
                 reps: setDraft.reps,
                 rpe: null,
                 durationSeconds: setDraft.reps,

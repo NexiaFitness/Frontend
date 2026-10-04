@@ -194,6 +194,7 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                                 <AthleteSetInputLogger
                                     inputMode={step.inputMode}
                                     weight={weight}
+                                    plannedWeight={step.plannedWeight}
                                     reps={row.reps}
                                     onWeightChange={(v) => handleWeightChange(row.stepKey, flat, v)}
                                     onRepsChange={(reps) =>

@@ -11,6 +11,7 @@ import {
     validateBlockDraft,
     buildBlockSavePayloads,
     buildInitialBlockDraft,
+    resolveLogDraftSetWeight,
     type AthleteSessionLogBlockModel,
     type AthleteSessionLogBlockDraft,
 } from "./athleteSessionLogUtils";
@@ -205,6 +206,113 @@ describe("validateBlockDraft", () => {
             mobilityDone: null,
         };
         expect(validateBlockDraft(block, draft)).toMatch(/Registra/);
+    });
+});
+
+function singleSetStep(overrides: Partial<AthleteRunStep> = {}): AthleteRunStep {
+    return {
+        stepKey: "block-208-single-0-r1-S1-S1-1",
+        kind: "single_set",
+        groupKind: "single_set",
+        blockId: 208,
+        blockName: "Fuerza máxima",
+        groupId: "block-208-single-0",
+        badgeLabel: "S1",
+        roundIndex: 1,
+        roundTotal: 1,
+        slotLabel: "S1",
+        exerciseId: 11,
+        exerciseName: "Sentadilla trasera",
+        setLabel: "S1",
+        setIndex: 1,
+        instruction: "",
+        plannedLabel: "8 reps · 50 kg",
+        restAfterSeconds: 60,
+        inputMode: "weight_reps",
+        blockExerciseId: 883,
+        plannedWeight: 50,
+        defaultWeight: 0,
+        defaultReps: 8,
+        defaultRpe: null,
+        loggedSets: 0,
+        totalSetsInSlot: 1,
+        timeCapMinutes: null,
+        intervalSeconds: null,
+        plannedDurationSeconds: null,
+        ...overrides,
+    };
+}
+
+describe("resolveLogDraftSetWeight (registro al final · carga programada)", () => {
+    it("usa plannedWeight cuando defaultWeight es 0 (4453)", () => {
+        const step = singleSetStep();
+        expect(resolveLogDraftSetWeight(step)).toBe(50);
+        const draft = buildInitialBlockDraft(
+            {
+                sessionBlockId: 208,
+                blockTypeName: "Fuerza máxima",
+                setType: "straight",
+                status: "pending",
+                expectedStepKeys: [step.stepKey],
+                steps: [step],
+                summaryLine: null,
+                isPendingHighlight: true,
+                hasRegisterableSteps: true,
+            },
+            null
+        );
+        expect(draft.singleSets[0]?.weight).toBe(50);
+    });
+
+    it("buildBlockSavePayloads persiste plannedWeight si el borrador aún tiene 0", () => {
+        const step = singleSetStep();
+        const block: AthleteSessionLogBlockModel = {
+            sessionBlockId: 208,
+            blockTypeName: "Fuerza máxima",
+            setType: "straight",
+            status: "pending",
+            expectedStepKeys: [step.stepKey],
+            steps: [step],
+            summaryLine: null,
+            isPendingHighlight: true,
+            hasRegisterableSteps: true,
+        };
+        const draft: AthleteSessionLogBlockDraft = {
+            sessionBlockId: 208,
+            singleSets: [{ stepKey: step.stepKey, weight: 0, reps: 8, skipped: false }],
+            groupRounds: [],
+            dropsetRounds: [],
+            timed: null,
+            mobilityDone: null,
+        };
+        const { executions } = buildBlockSavePayloads(4453, block, draft);
+        expect(executions).toHaveLength(1);
+        expect(executions[0]?.weight_kg).toBe(50);
+    });
+
+    it("prioriza peso escrito a mano sobre plannedWeight", () => {
+        const step = singleSetStep();
+        const block: AthleteSessionLogBlockModel = {
+            sessionBlockId: 208,
+            blockTypeName: "Fuerza máxima",
+            setType: "straight",
+            status: "pending",
+            expectedStepKeys: [step.stepKey],
+            steps: [step],
+            summaryLine: null,
+            isPendingHighlight: true,
+            hasRegisterableSteps: true,
+        };
+        const draft: AthleteSessionLogBlockDraft = {
+            sessionBlockId: 208,
+            singleSets: [{ stepKey: step.stepKey, weight: 55, reps: 8, skipped: false }],
+            groupRounds: [],
+            dropsetRounds: [],
+            timed: null,
+            mobilityDone: null,
+        };
+        const { executions } = buildBlockSavePayloads(4453, block, draft);
+        expect(executions[0]?.weight_kg).toBe(55);
     });
 });
 
