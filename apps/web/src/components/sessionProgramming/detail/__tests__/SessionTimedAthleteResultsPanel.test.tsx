@@ -60,7 +60,7 @@ describe("SessionTimedAthleteResultsPanel", () => {
         expect(screen.getByRole("heading", { name: "Registro del atleta" })).toBeInTheDocument();
         expect(screen.getByText("Nota del atleta")).toBeInTheDocument();
         expect(screen.getByText("Nota teclado QA-1C D2")).toBeInTheDocument();
-        expect(screen.getByText("4/6 intervalos")).toBeInTheDocument();
+        expect(screen.getByText("EMOM no completado")).toBeInTheDocument();
         expect(screen.getByText("3 rondas + 19 reps")).toBeInTheDocument();
     });
 
@@ -89,5 +89,6 @@ describe("SessionTimedAthleteResultsPanel", () => {
         );
 
         expect(screen.queryByText("Nota del atleta")).not.toBeInTheDocument();
+        expect(screen.getByText("6/6 intervalos")).toBeInTheDocument();
     });
 });

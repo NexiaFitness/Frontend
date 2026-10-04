@@ -12,6 +12,7 @@ import { Timer } from "lucide-react";
 import { useGetClientTimedBlockResultsQuery } from "@nexia/shared/api/clientsApi";
 import { formatForTimeDuration } from "@nexia/shared/utils/athlete/forTimeResult";
 import { emomAthleteNoteFromDetail } from "@nexia/shared/types/timedBlockResultDetail";
+import { formatTrainerTimedEmomScore } from "@nexia/shared/utils/trainer/formatTrainerTimedEmomScore";
 import { LoadingSpinner } from "@/components/ui/feedback";
 
 export interface SessionTimedAthleteResultsPanelProps {
@@ -20,25 +21,18 @@ export interface SessionTimedAthleteResultsPanelProps {
     enabled?: boolean;
 }
 
-function formatEmomIntervalScore(
-    completed: number | null,
-    failed: number | null
-): string {
-    const done = completed ?? 0;
-    const fail = failed ?? 0;
-    const total = done + fail;
-    if (total <= 0) return "—";
-    return `${done}/${total} intervalos`;
-}
-
 function formatTimedRow(
     mode: string,
     totalSeconds: number | null,
     rounds: number | null,
     emomCompleted: number | null,
     emomFailed: number | null,
-    partialTotal: number | null
+    partialTotal: number | null,
+    detail: import("@nexia/shared/types/timedBlockResultDetail").TimedBlockResultDetail | null | undefined
 ): string {
+    if (detail?.kind === "not_performed") {
+        return "No realizado";
+    }
     if (mode === "for_time" && totalSeconds != null) {
         return formatForTimeDuration(totalSeconds);
     }
@@ -49,7 +43,7 @@ function formatTimedRow(
         return `${rounds} rondas`;
     }
     if (mode === "emom") {
-        return formatEmomIntervalScore(emomCompleted, emomFailed);
+        return formatTrainerTimedEmomScore(emomCompleted, emomFailed, detail);
     }
     return totalSeconds != null ? formatForTimeDuration(totalSeconds) : "—";
 }
@@ -110,7 +104,8 @@ export const SessionTimedAthleteResultsPanel: React.FC<SessionTimedAthleteResult
                                         row.rounds_completed,
                                         row.emom_completed_count,
                                         row.emom_failed_count,
-                                        row.partial_total
+                                        row.partial_total,
+                                        row.detail
                                     )}
                                 </span>
                             </div>

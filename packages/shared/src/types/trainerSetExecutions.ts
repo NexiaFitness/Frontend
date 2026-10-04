@@ -30,7 +30,9 @@ export interface ClientSetExecutionRow {
     reps: number | null;
     rpe: number | null;
     prescribed_rpe: number | null;
-    performed_at: string;
+    failure_reason?: string | null;
+    record_status?: "registered" | "not_performed" | "pending";
+    performed_at: string | null;
 }
 
 export interface ClientSetExecutionsPage {

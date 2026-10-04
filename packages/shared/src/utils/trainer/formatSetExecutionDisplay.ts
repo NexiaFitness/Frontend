@@ -33,9 +33,27 @@ export function formatSetExecutionLabel(row: ClientSetExecutionRow): string {
 }
 
 export function formatSetExecutionLine(row: ClientSetExecutionRow): string {
+    const status = row.record_status;
+    if (status === "pending") {
+        return "Pendiente";
+    }
+    if (
+        status === "not_performed" ||
+        row.failure_reason === "not_performed"
+    ) {
+        return "No realizado";
+    }
+
     const parts: string[] = [];
-    if (row.weight_kg != null) parts.push(`${row.weight_kg} kg`);
-    if (row.reps != null) parts.push(`× ${row.reps}`);
+    if (row.weight_kg != null) {
+        parts.push(`${row.weight_kg} kg`);
+        if (row.reps != null) parts.push(`× ${row.reps}`);
+    } else if (row.reps != null) {
+        parts.push(`${row.reps} reps`);
+    }
     if (row.rpe != null) parts.push(`RPE ${row.rpe}`);
-    return parts.join("  ") || "—";
+    if (parts.length > 0) {
+        return parts.join("  ");
+    }
+    return "Registrado";
 }

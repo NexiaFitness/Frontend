@@ -232,7 +232,8 @@ export const SessionDetail: React.FC = () => {
     const typeVariant: BadgeVariant = TYPE_BADGE_VARIANT[sessionTypeKey] ?? "subtle-secondary";
     const clientName = client ? `${client.nombre} ${client.apellidos}` : "Cliente";
 
-    const showExecutionSummary =
+    const showAthleteRegistrationPanels = Boolean(session.client_id);
+    const showPrescriptionSectionLabel =
         session.status === "completed" || session.status === "in_progress";
 
     const embeddedCoherence = session.coherence ?? null;
@@ -321,11 +322,11 @@ export const SessionDetail: React.FC = () => {
                 />
             ) : null}
 
-            {showExecutionSummary && session.client_id ? (
+            {showAthleteRegistrationPanels ? (
                 <SessionExecutionSummary
                     sessionId={session.id}
-                    clientId={session.client_id}
-                    enabled={showExecutionSummary}
+                    clientId={session.client_id!}
+                    enabled={showAthleteRegistrationPanels}
                 />
             ) : null}
 
@@ -335,7 +336,7 @@ export const SessionDetail: React.FC = () => {
                         <Dumbbell className="h-4 w-4" aria-hidden />
                     </div>
                     <h2 className="text-lg font-semibold">
-                        {showExecutionSummary ? "Prescripción" : "Ejercicios"}
+                        {showPrescriptionSectionLabel ? "Prescripción" : "Ejercicios"}
                     </h2>
                     <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-semibold text-primary">
                         {sessionStructure.totalExercises}
