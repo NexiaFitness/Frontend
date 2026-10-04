@@ -10,6 +10,8 @@ import { ATHLETE_RUN_STICKY_GLOW } from "./athleteRunPresentation";
 import { cn } from "@/lib/utils";
 
 export interface AthleteRunStepShellProps {
+    /** P1-8 — /run móvil sin bottom nav. */
+    dockStickyToScreenBottom?: boolean;
     children: React.ReactNode;
     showRestChip?: boolean;
     remainingSeconds?: number;
@@ -26,6 +28,7 @@ export interface AthleteRunStepShellProps {
 }
 
 export const AthleteRunStepShell: React.FC<AthleteRunStepShellProps> = ({
+    dockStickyToScreenBottom = false,
     children,
     showRestChip = false,
     remainingSeconds = 0,
@@ -45,6 +48,7 @@ export const AthleteRunStepShell: React.FC<AthleteRunStepShellProps> = ({
             <div className="flex-1">{children}</div>
 
             <AthleteStickyActionBar
+                dockToScreenBottom={dockStickyToScreenBottom}
                 footerAccessory={
                     showRestChip ? (
                         <AthleteRestTimerChip

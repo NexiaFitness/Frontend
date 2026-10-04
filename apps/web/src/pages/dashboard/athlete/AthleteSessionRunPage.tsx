@@ -4,7 +4,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AthleteContextStrip } from "@/components/athlete/AthleteContextStrip";
 import { AthleteExerciseInjuryAlert } from "@/components/athlete/AthleteExerciseInjuryAlert";
 import { AthleteInjuryConsultSheet } from "@/components/athlete/AthleteInjuryConsultSheet";
 import { AthletePrBanner } from "@/components/athlete/AthletePrBanner";
@@ -17,16 +16,20 @@ import { AthleteExerciseTechniqueSheet } from "@/components/athlete/execution/At
 import type { AthleteExerciseTechniqueTarget } from "@/components/athlete/execution/athleteExerciseTechniqueUtils";
 import { RestTimerOverlay } from "@/components/athlete/execution/RestTimerOverlay";
 import { Button } from "@/components/ui/buttons";
+import { BottomSheet } from "@/components/ui/layout/BottomSheet";
 import { useToast } from "@/components/ui/feedback";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
+import { AthleteRunChromeHeader } from "@/components/athlete/execution/AthleteRunChromeHeader";
 import { useAthleteInjuries } from "@/hooks/athlete/useAthleteInjuries";
 import { useAthleteSessionInjuryAlerts } from "@/hooks/athlete/useAthleteSessionInjuryAlerts";
 import { useAthleteSessionRun } from "@/hooks/athlete/useAthleteSessionRun";
+import { useAthleteRunSessionMenu } from "@/hooks/athlete/useAthleteRunSessionMenu";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
+import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
 import {
     ATHLETE_PAGE_X,
-    ATHLETE_STICKY_FOOTER_CONTENT_PB,
+    ATHLETE_RUN_STICKY_FOOTER_CONTENT_PB,
 } from "@/components/athlete/layout/athleteLayoutClasses";
 
 export const AthleteSessionRunPage: React.FC = () => {
@@ -100,6 +103,9 @@ export const AthleteSessionRunPage: React.FC = () => {
         isSlotReferencesLoading,
         applyReferenceValues,
         applySuggestionValues,
+        progressPendingStepCount,
+        sessionName,
+        finishSession,
     } = useAthleteSessionRun({
         sessionId,
         onSetSaved: (result, { isGroupRound, isTimedBlock, groupKind }) => {
@@ -169,6 +175,24 @@ export const AthleteSessionRunPage: React.FC = () => {
         onError: (message) => showToast("error", message),
     });
 
+    const runMenu = useAthleteRunSessionMenu({
+        sessionId,
+        isOnline,
+        syncPendingCount: pendingCount,
+        progressPendingStepCount,
+        finishSession,
+        onFinishNavigate: (result) => {
+            if (result === "offline" || result === "queued") {
+                showToast("info", "Sesión guardada localmente. Se sincronizará al reconectar.");
+            }
+        },
+        onError: (message) => showToast("error", message),
+    });
+
+    const pageBottomPadding = isDesktop
+        ? "lg:pb-8"
+        : ATHLETE_RUN_STICKY_FOOTER_CONTENT_PB;
+
     useEffect(() => {
         if (!prCelebration || isDesktop) return;
         const prev =
@@ -233,15 +257,7 @@ export const AthleteSessionRunPage: React.FC = () => {
     if (runSteps.length === 0) {
         return (
             <div className="space-y-4 px-4 pb-24 pt-4">
-                {isDesktop ? (
-                    <OfflineSessionBadge isOnline={isOnline} pendingCount={pendingCount} />
-                ) : (
-                    <AthleteContextStrip
-                        isOnline={isOnline}
-                        pendingCount={pendingCount}
-                        injuries={activeInjuries}
-                    />
-                )}
+                <OfflineSessionBadge isOnline={isOnline} pendingCount={pendingCount} />
                 <p className="text-sm text-muted-foreground">
                     {isOnline
                         ? "Esta sesión no tiene ejercicios configurados todavía."
@@ -260,19 +276,17 @@ export const AthleteSessionRunPage: React.FC = () => {
 
     const showFinishSession = isLastStep && isCurrentStepSaved;
 
-    const contextStripInjuries: typeof activeInjuries = [];
-
     return (
-        <div
-            className={`flex min-h-full flex-col ${ATHLETE_PAGE_X} pt-4 ${ATHLETE_STICKY_FOOTER_CONTENT_PB} lg:pb-8`}
-        >
+        <div className={`flex min-h-full flex-col ${ATHLETE_PAGE_X} pt-4 ${pageBottomPadding}`}>
             {isDesktop ? (
                 <OfflineSessionBadge isOnline={isOnline} pendingCount={pendingCount} />
             ) : (
-                <AthleteContextStrip
-                    isOnline={isOnline}
-                    pendingCount={pendingCount}
-                    injuries={contextStripInjuries}
+                <AthleteRunChromeHeader
+                    sessionName={sessionName}
+                    step={step}
+                    totalSteps={runSteps.length}
+                    onExit={runMenu.exitToSessionPreview}
+                    onOpenMenu={() => runMenu.setMenuOpen(true)}
                 />
             )}
 
@@ -293,6 +307,7 @@ export const AthleteSessionRunPage: React.FC = () => {
             )}
 
             <AthleteRunStepShell
+                dockStickyToScreenBottom={!isDesktop}
                 showRestChip={restFlow.showRestChip}
                 remainingSeconds={restFlow.remainingSeconds}
                 onSkipRest={restFlow.showRestChip ? restFlow.skipRest : undefined}
@@ -428,6 +443,63 @@ export const AthleteSessionRunPage: React.FC = () => {
                 target={techniqueTarget}
                 onClose={() => setTechniqueTarget(null)}
             />
+
+            <BottomSheet
+                isOpen={runMenu.menuOpen}
+                onClose={() => runMenu.setMenuOpen(false)}
+                title="Opciones de sesión"
+            >
+                <div className="flex flex-col gap-2 px-1 pb-2">
+                    <Button
+                        variant="secondary"
+                        className="min-h-touch-athlete w-full justify-start"
+                        onClick={runMenu.switchToManualLog}
+                    >
+                        Pasar a registro manual
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        className="min-h-touch-athlete w-full justify-start text-destructive"
+                        onClick={runMenu.requestTerminateSession}
+                    >
+                        Terminar sesión
+                    </Button>
+                </div>
+            </BottomSheet>
+
+            <BottomSheet
+                isOpen={runMenu.terminateConfirmOpen}
+                onClose={() => runMenu.setTerminateConfirmOpen(false)}
+                title="¿Terminar igualmente?"
+                subtitle={
+                    runMenu.pendingStepCount === 1
+                        ? "Queda 1 paso sin registrar en esta sesión."
+                        : `Quedan ${runMenu.pendingStepCount} pasos sin registrar en esta sesión.`
+                }
+                footer={
+                    <div className="flex flex-col gap-2">
+                        <Button
+                            variant="primary"
+                            className={ATHLETE_PRIMARY_CTA}
+                            disabled={runMenu.isFinishing}
+                            onClick={() => void runMenu.confirmTerminateSession()}
+                        >
+                            {runMenu.isFinishing ? "Finalizando…" : "Terminar e ir al feedback"}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            className="min-h-touch-athlete w-full"
+                            onClick={() => runMenu.setTerminateConfirmOpen(false)}
+                        >
+                            Seguir entrenando
+                        </Button>
+                    </div>
+                }
+            >
+                <p className="px-1 text-sm text-muted-foreground">
+                    Podrás completar lo pendiente desde la vista de la sesión en modo registrar.
+                </p>
+            </BottomSheet>
         </div>
     );
 };

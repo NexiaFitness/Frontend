@@ -9,6 +9,8 @@ import { AthleteFixedFooter } from "./AthleteFixedFooter";
 import type { AthleteStickyFooterSize } from "./athleteLayoutClasses";
 
 export interface AthleteStickyActionBarProps {
+    /** P1-8 — anclar CTA al borde inferior (sin offset de bottom nav). */
+    dockToScreenBottom?: boolean;
     primaryLabel?: string;
     primaryDisabled?: boolean;
     primaryLoading?: boolean;
@@ -23,6 +25,7 @@ export interface AthleteStickyActionBarProps {
 }
 
 export const AthleteStickyActionBar: React.FC<AthleteStickyActionBarProps> = ({
+    dockToScreenBottom = false,
     primaryLabel,
     primaryDisabled,
     primaryLoading,
@@ -46,7 +49,7 @@ export const AthleteStickyActionBar: React.FC<AthleteStickyActionBarProps> = ({
               : "single";
 
     return (
-        <AthleteFixedFooter size={size}>
+        <AthleteFixedFooter size={size} dockToScreenBottom={dockToScreenBottom}>
             {footerAccessory ? (
                 <div className="flex justify-center pb-1">{footerAccessory}</div>
             ) : null}

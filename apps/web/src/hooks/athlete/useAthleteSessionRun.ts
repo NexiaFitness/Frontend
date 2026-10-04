@@ -213,24 +213,6 @@ export function useAthleteSessionRun({
     const seriesAutofillWeightRef = useRef<Map<string, number>>(new Map());
     const [savedStepKeys, setSavedStepKeys] = useState<ReadonlySet<string>>(() => new Set());
 
-    const {
-        skipPersistForCurrentStep,
-        isStepSavedOnServer,
-        findNextPendingStepIndex,
-    } = useAthleteRunProgressResume({
-        sessionId,
-        runSteps,
-        isOnline,
-        completedStepKeysRef,
-        touchedWeightStepKeysRef,
-        setSavedStepKeys,
-        setStep,
-    });
-
-    const saveEmomBlockRef = useRef<
-        () => Promise<"synced" | "queued" | "offline">
-    >(async () => "synced");
-
     useEffect(() => {
         setStep(0);
         loggedSetsRef.current = new Map();
@@ -247,6 +229,25 @@ export function useAthleteSessionRun({
         setEmomAthleteNote("");
         setForTimeTotalSeconds(0);
     }, [sessionId]);
+
+    const {
+        runProgress,
+        skipPersistForCurrentStep,
+        isStepSavedOnServer,
+        findNextPendingStepIndex,
+    } = useAthleteRunProgressResume({
+        sessionId,
+        runSteps,
+        isOnline,
+        completedStepKeysRef,
+        touchedWeightStepKeysRef,
+        setSavedStepKeys,
+        setStep,
+    });
+
+    const saveEmomBlockRef = useRef<
+        () => Promise<"synced" | "queued" | "offline">
+    >(async () => "synced");
 
     const currentRunStep: AthleteRunStep | undefined = runSteps[step];
     const currentStepKey = currentRunStep?.stepKey ?? null;
@@ -1067,7 +1068,7 @@ export function useAthleteSessionRun({
     }, [currentStepKey]);
 
     useEffect(() => {
-        if (restFlow.phase !== "logging_rest" || !current || isBatchStep) return;
+        if (!restFlow.showLogger || !current || isBatchStep) return;
         const defaultsKey = current.stepKey;
         if (loggerDefaultsStepRef.current === defaultsKey) return;
 
@@ -1101,7 +1102,7 @@ export function useAthleteSessionRun({
         setReps(nextReps);
         setRpe(defaults.rpe);
         loggerDefaultsStepRef.current = defaultsKey;
-    }, [restFlow.phase, current, isBatchStep, effectiveRunReference?.reference]);
+    }, [restFlow.showLogger, current, isBatchStep, effectiveRunReference?.reference]);
 
     useEffect(() => {
         if (
@@ -1478,5 +1479,9 @@ export function useAthleteSessionRun({
         isSlotReferencesLoading,
         applyReferenceValues,
         applySuggestionValues,
+        runProgress,
+        progressPendingStepCount: runProgress?.pending_count ?? 0,
+        sessionName: session?.session_name ?? "Entrenamiento",
+        finishSession,
     };
 }

@@ -128,7 +128,7 @@ export function useAthleteRunRestFlow({
 
     const showLogger =
         phase === "logging_rest" ||
-        (phase === "doing" && !hasRestTimer && !requireStartBeforeLog);
+        (phase === "doing" && !requireStartBeforeLog);
 
     const showRestChip = phase === "logging_rest" && hasRestTimer && remainingSeconds > 0;
 

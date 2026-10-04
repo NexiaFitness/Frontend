@@ -64,3 +64,23 @@ export const ATHLETE_STICKY_FOOTER_BAR = cn(
     ATHLETE_BOTTOM_NAV_OFFSET,
     "lg:static lg:mt-8 lg:bottom-auto lg:bg-transparent lg:p-0 lg:shadow-none lg:ring-0 lg:backdrop-blur-none"
 );
+
+/** CTA sticky en /run (P1-8): sin bottom nav, anclado al borde inferior + safe area. */
+export const ATHLETE_RUN_STICKY_FOOTER_BAR = cn(
+    ATHLETE_CHROME_BAR,
+    "fixed inset-x-0 z-30 space-y-2 p-4",
+    "bottom-[env(safe-area-inset-bottom,0px)]",
+    "lg:static lg:mt-8 lg:bottom-auto lg:bg-transparent lg:p-0 lg:shadow-none lg:ring-0 lg:backdrop-blur-none"
+);
+
+/** Scroll en /run móvil: solo barra CTA sticky (sin h-16 del bottom nav). */
+export const ATHLETE_RUN_STICKY_FOOTER_CONTENT_PB =
+    "pb-[calc(5.5rem+2rem+env(safe-area-inset-bottom))] lg:pb-8";
+
+/** Spacer flex en /run (sin reserva de bottom nav). */
+export const ATHLETE_RUN_STICKY_FOOTER_SPACER: Record<AthleteStickyFooterSize, string> = {
+    single: "min-h-[calc(5.5rem+2rem+env(safe-area-inset-bottom))] lg:min-h-0",
+    double: "min-h-[calc(8.75rem+2rem+env(safe-area-inset-bottom))] lg:min-h-0",
+    withSecondaryLink:
+        "min-h-[calc(9.25rem+2rem+env(safe-area-inset-bottom))] lg:min-h-0",
+};

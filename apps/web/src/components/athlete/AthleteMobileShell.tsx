@@ -8,15 +8,19 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { DashboardRouteErrorBoundary } from "@/components/errors/DashboardRouteErrorBoundary";
 import { useDashboardScrollOnNavigation } from "@/hooks/useDashboardScrollOnNavigation";
 import { DASHBOARD_MAIN_SCROLL_ID } from "@/lib/dashboardScroll";
 import { NEXIA_SCROLLBAR } from "@/components/ui/layout/scrollPresentation";
 import { AthleteBottomNav } from "./AthleteBottomNav";
 
+const ATHLETE_RUN_PATH = /\/dashboard\/sessions\/\d+\/run\/?$/;
+
 export const AthleteMobileShell: React.FC = () => {
     useDashboardScrollOnNavigation();
+    const { pathname } = useLocation();
+    const hideBottomNav = ATHLETE_RUN_PATH.test(pathname);
 
     return (
         <div className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background pt-[env(safe-area-inset-top)]">
@@ -31,7 +35,7 @@ export const AthleteMobileShell: React.FC = () => {
                     <Outlet />
                 </DashboardRouteErrorBoundary>
             </main>
-            <AthleteBottomNav />
+            {!hideBottomNav ? <AthleteBottomNav /> : null}
         </div>
     );
 };
