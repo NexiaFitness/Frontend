@@ -77,7 +77,9 @@ describe("useAthleteRunRestFlow (B6 wall clock)", () => {
         });
 
         expect(onConfirm).toHaveBeenCalledTimes(1);
-        expect(result.current.phase).toBe("rest_overlay");
+        // B2: tras guardar el logger sigue visible en logging_rest (no rest_overlay).
+        expect(result.current.phase).toBe("logging_rest");
+        expect(result.current.showRestOverlay).toBe(false);
         expect(result.current.remainingSeconds).toBe(55);
         expect(onRestComplete).not.toHaveBeenCalled();
     });

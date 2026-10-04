@@ -78,7 +78,9 @@ export function useAthleteRunRestFlow({
     useAthleteWallClockTick(restCountdownActive, tickRest);
 
     useEffect(() => {
-        if (phase !== "rest_overlay" || remainingSeconds > 0) return;
+        const inRestCountdown =
+            phase === "rest_overlay" || phase === "logging_rest";
+        if (!inRestCountdown || remainingSeconds > 0) return;
         if (restDeadlineMsRef.current == null) return;
         restFlowHaptic(200);
         restDeadlineMsRef.current = null;
@@ -110,8 +112,10 @@ export function useAthleteRunRestFlow({
         }
         if (!shouldAdvance) return;
         restFlowHaptic(20);
+        // Tras guardar, permanecer en logging_rest (logger visible) para re-edición B2;
+        // el chip de descanso sigue; overlay fullscreen solo si el atleta lo pide aparte.
         if (hasRestTimer && remainingSeconds > 0) {
-            setPhase("rest_overlay");
+            setPhase("logging_rest");
         } else {
             restDeadlineMsRef.current = null;
             setPhase("doing");
