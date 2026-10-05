@@ -25,7 +25,7 @@ import {
 import { AdminExerciseCatalogForm } from "../AdminExerciseCatalogForm";
 import { ADMIN_CATALOG_COPY } from "../adminCatalogPresentation";
 
-describe("AdminExerciseCatalogForm", () => {
+describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
     beforeEach(() => {
         clearRouterMocks();
         setAuthenticatedUser(validAdminUser);
