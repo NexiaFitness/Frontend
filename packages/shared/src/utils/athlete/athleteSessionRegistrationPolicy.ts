@@ -91,3 +91,14 @@ export function athleteSessionListRegistrationLabel(
 export function shouldOpenSessionInLogMode(cue: AthleteSessionListRegistrationCue): boolean {
     return cue === "register_now" || cue === "complete_registration";
 }
+
+/** FE-3 / E9 — progress API needed for in-progress sessions and completed within edit window. */
+export function shouldFetchAthleteSessionLogProgress(
+    sessionId: number | undefined,
+    status: string | undefined,
+    sessionDate: string | null | undefined
+): boolean {
+    if (!sessionId) return false;
+    if (status !== "completed") return true;
+    return isAthleteSessionRegistrationEditable(sessionDate);
+}

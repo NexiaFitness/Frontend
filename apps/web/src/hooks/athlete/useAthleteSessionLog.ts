@@ -33,6 +33,7 @@ import {
     type AthleteSessionLogBlockModel,
 } from "@nexia/shared/utils/athlete/athleteSessionLogUtils";
 import { flattenRunStepsToFlatExercises, buildAthleteRunSteps } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
+import { isAthleteSessionRegistrationEditable } from "@nexia/shared/utils/athlete/athleteSessionRegistrationPolicy";
 import { flattenAthleteExercises } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import type { AthleteExerciseNoteUpsert } from "@nexia/shared/utils/athlete/athleteExerciseNoteUtils";
 
@@ -40,6 +41,7 @@ export interface UseAthleteSessionLogOptions {
     sessionId: number;
     view: SessionStructureView;
     sessionName: string;
+    sessionDate?: string | null;
     enabled?: boolean;
 }
 
@@ -47,6 +49,7 @@ export function useAthleteSessionLog({
     sessionId,
     view,
     sessionName,
+    sessionDate = null,
     enabled = true,
 }: UseAthleteSessionLogOptions) {
     const { clientId } = useAthleteContext();
@@ -200,7 +203,10 @@ export function useAthleteSessionLog({
         setSaveError(null);
     }, []);
 
-    const registrationEditable = progress?.registration_editable !== false;
+    const registrationEditable =
+        progress != null
+            ? progress.registration_editable !== false
+            : isAthleteSessionRegistrationEditable(sessionDate);
 
     const enterLogMode = useCallback(() => {
         if (!registrationEditable) {

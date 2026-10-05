@@ -4,6 +4,7 @@ import {
     daysAfterSessionDate,
     isAthleteSessionRegistrationEditable,
     resolveAthleteSessionListRegistrationCue,
+    shouldFetchAthleteSessionLogProgress,
 } from "./athleteSessionRegistrationPolicy";
 import type { TrainingSession } from "../../types/trainingSessions";
 import type { AthleteRunSessionRegistrationMetaRow } from "../../types/athleteRunProgress";
@@ -78,5 +79,27 @@ describe("athleteSessionRegistrationPolicy", () => {
                 today
             )
         ).toBe("registration_closed");
+    });
+});
+
+describe("shouldFetchAthleteSessionLogProgress", () => {
+    const today = new Date("2026-10-05T12:00:00");
+
+    it("fetches for in-progress sessions", () => {
+        expect(
+            shouldFetchAthleteSessionLogProgress(1, "planned", "2026-10-05", today)
+        ).toBe(true);
+    });
+
+    it("fetches for completed within edit window", () => {
+        expect(
+            shouldFetchAthleteSessionLogProgress(4445, "completed", "2026-10-02", today)
+        ).toBe(true);
+    });
+
+    it("skips for completed outside edit window", () => {
+        expect(
+            shouldFetchAthleteSessionLogProgress(4456, "completed", "2026-09-26", today)
+        ).toBe(false);
     });
 });

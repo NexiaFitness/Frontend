@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/buttons";
 import { Alert, useToast } from "@/components/ui/feedback";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { useGetClientFeedbackQuery } from "@nexia/shared/api/clientsApi";
-import { useGetTrainingSessionQuery } from "@nexia/shared/api/trainingSessionsApi";
+import {
+    useGetTrainingSessionQuery,
+    useGetWellbeingCheckInQuery,
+} from "@nexia/shared/api/trainingSessionsApi";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import {
@@ -49,6 +52,10 @@ import { useAthleteInjuries } from "@/hooks/athlete/useAthleteInjuries";
 import { useAthleteSessionInjuryAlerts } from "@/hooks/athlete/useAthleteSessionInjuryAlerts";
 import { useAthleteSessionLoads } from "@/hooks/athlete/useAthleteSessionLoads";
 import { BottomSheet } from "@/components/ui/layout/BottomSheet";
+import {
+    isPastSessionDate,
+    shouldFetchAthleteSessionLogProgress,
+} from "@nexia/shared/utils/athlete/athleteSessionRegistrationPolicy";
 import { cn } from "@/lib/utils";
 
 export const AthleteSessionPreviewPage: React.FC = () => {
@@ -58,6 +65,9 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const { showToast } = useToast();
     const [wellbeingOpen, setWellbeingOpen] = useState(false);
+    const [wellbeingAfterAction, setWellbeingAfterAction] = useState<"run" | "log" | null>(
+        null
+    );
     const [injurySheetOpen, setInjurySheetOpen] = useState(false);
     const [terminateConfirmOpen, setTerminateConfirmOpen] = useState(false);
     const terminateSubtitleId = useId();
@@ -72,6 +82,14 @@ export const AthleteSessionPreviewPage: React.FC = () => {
         skip: !sessionId,
     });
 
+    const skipWellbeingLookup =
+        !sessionId ||
+        !session ||
+        session.status === "completed" ||
+        isPastSessionDate(session.session_date);
+    const { data: wellbeingCheckIn, isFetching: loadingWellbeingCheckIn } =
+        useGetWellbeingCheckInQuery(sessionId, { skip: skipWellbeingLookup });
+
     const sessionLoads = useAthleteSessionLoads(
         session?.status === "completed" ? session.session_date : null
     );
@@ -81,16 +99,53 @@ export const AthleteSessionPreviewPage: React.FC = () => {
         sessionId,
         view,
         sessionName: session?.session_name ?? "Sesión",
-        enabled: Boolean(sessionId && session?.status !== "completed"),
+        sessionDate: session?.session_date ?? null,
+        enabled: shouldFetchAthleteSessionLogProgress(
+            sessionId,
+            session?.status,
+            session?.session_date
+        ),
     });
 
-    const enterLogModeRef = React.useRef(sessionLog.enterLogMode);
-    enterLogModeRef.current = sessionLog.enterLogMode;
-    useEffect(() => {
-        if (searchParams.get("mode") === "log" && sessionLog.registrationEditable) {
-            enterLogModeRef.current();
+    const { enterLogMode, registrationEditable: logRegistrationEditable } = sessionLog;
+
+    const needsWellbeingBeforeLog =
+        !skipWellbeingLookup && !wellbeingCheckIn && !loadingWellbeingCheckIn;
+
+    const requestEnterLogMode = React.useCallback(() => {
+        if (!logRegistrationEditable) {
+            enterLogMode();
+            return;
         }
-    }, [searchParams, sessionLog.registrationEditable]);
+        if (needsWellbeingBeforeLog) {
+            setWellbeingAfterAction("log");
+            setWellbeingOpen(true);
+            return;
+        }
+        enterLogMode();
+    }, [needsWellbeingBeforeLog, enterLogMode, logRegistrationEditable]);
+
+    const autoLogFromQueryRef = React.useRef(false);
+    useEffect(() => {
+        if (searchParams.get("mode") !== "log") {
+            autoLogFromQueryRef.current = false;
+            return;
+        }
+        if (!logRegistrationEditable || autoLogFromQueryRef.current) {
+            return;
+        }
+        if (!skipWellbeingLookup && loadingWellbeingCheckIn) {
+            return;
+        }
+        autoLogFromQueryRef.current = true;
+        requestEnterLogMode();
+    }, [
+        searchParams,
+        logRegistrationEditable,
+        skipWellbeingLookup,
+        loadingWellbeingCheckIn,
+        requestEnterLogMode,
+    ]);
 
     const { data: feedbackList = [] } = useGetClientFeedbackQuery(
         { clientId: clientId ?? 0, limit: 50 },
@@ -143,6 +198,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     };
 
     const handleStartClick = () => {
+        setWellbeingAfterAction("run");
         setWellbeingOpen(true);
     };
 
@@ -151,19 +207,32 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     };
 
     const handleWellbeingSubmit = async (level: 1 | 2 | 3) => {
+        const after = wellbeingAfterAction ?? "run";
         const result = await submit(level);
         setWellbeingOpen(false);
+        setWellbeingAfterAction(null);
         if (result === "failed") {
             showToast(
                 "warning",
                 "No se pudo guardar el check-in. Puedes entrenar igualmente."
             );
         }
-        goToRun();
+        if (after === "log") {
+            sessionLog.enterLogMode();
+        } else {
+            goToRun();
+        }
     };
 
     const handleWellbeingSkip = () => {
-        goToRun();
+        const after = wellbeingAfterAction ?? "run";
+        setWellbeingOpen(false);
+        setWellbeingAfterAction(null);
+        if (after === "log") {
+            sessionLog.enterLogMode();
+        } else {
+            goToRun();
+        }
     };
 
     if (isLoading) {
@@ -318,7 +387,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                             variant="primary"
                             className={ATHLETE_PRIMARY_CTA}
                             onClick={() => {
-                                if (!sessionLog.logMode) sessionLog.enterLogMode();
+                                if (!sessionLog.logMode) requestEnterLogMode();
                                 else if (sessionLog.pendingBlockCount === 0) {
                                     void sessionLog
                                         .completeSessionIfReady()
@@ -379,7 +448,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                                 variant="secondary"
                                 className="min-h-touch-athlete w-full"
                                 disabled={!canStart}
-                                onClick={sessionLog.enterLogMode}
+                                onClick={requestEnterLogMode}
                             >
                                 Registrar al terminar
                             </Button>
@@ -445,7 +514,10 @@ export const AthleteSessionPreviewPage: React.FC = () => {
 
             <WellbeingCheckInSheet
                 isOpen={wellbeingOpen}
-                onClose={() => setWellbeingOpen(false)}
+                onClose={() => {
+                    setWellbeingOpen(false);
+                    setWellbeingAfterAction(null);
+                }}
                 onSubmit={handleWellbeingSubmit}
                 onSkip={handleWellbeingSkip}
                 isSubmitting={submittingWellbeing}
