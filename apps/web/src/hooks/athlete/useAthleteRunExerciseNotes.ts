@@ -35,7 +35,16 @@ export function useAthleteRunExerciseNotes({
     const [putNote] = usePutAthleteExerciseNoteMutation();
 
     useEffect(() => {
-        setDraftBySlot(new Map(savedMap));
+        setDraftBySlot((prev) => {
+            const next = new Map(savedMap);
+            for (const [blockExerciseId, draft] of prev) {
+                const saved = savedMap.get(blockExerciseId) ?? "";
+                if (draft.trim() !== saved.trim()) {
+                    next.set(blockExerciseId, draft);
+                }
+            }
+            return next;
+        });
     }, [savedMap]);
 
     const setDraftForSlot = useCallback((blockExerciseId: number, value: string) => {

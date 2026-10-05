@@ -59,10 +59,12 @@ export const AthleteSessionRunPage: React.FC = () => {
         registrationEditable: runProgressForNotes?.registration_editable !== false,
         isOnline: isOnlineStatus,
     });
+    const { persistSlots, getDraftForSlot, setDraftForSlot, registrationEditable: exerciseNoteEditable } =
+        exerciseNotes;
     const persistNoteSlotIdsRef = useRef<number[]>([]);
     const afterStepConfirm = useCallback(async () => {
-        await exerciseNotes.persistSlots(persistNoteSlotIdsRef.current);
-    }, [exerciseNotes.persistSlots]);
+        await persistSlots(persistNoteSlotIdsRef.current);
+    }, [persistSlots]);
 
     const {
         isOnline,
@@ -203,7 +205,7 @@ export const AthleteSessionRunPage: React.FC = () => {
         () => blockExerciseIdsForRunStep(currentRunStep, current),
         [currentRunStep, current]
     );
-    const exerciseNoteDisabled = !exerciseNotes.registrationEditable;
+    const exerciseNoteDisabled = !exerciseNoteEditable;
 
     const runMenu = useAthleteRunSessionMenu({
         sessionId,
@@ -398,8 +400,8 @@ export const AthleteSessionRunPage: React.FC = () => {
                         runReference={timedRunReference}
                         isRunReferenceLoading={isTimedRunReferenceLoading}
                         exerciseNoteSlotIds={noteSlotIds}
-                        getExerciseNote={exerciseNotes.getDraftForSlot}
-                        onExerciseNoteChange={exerciseNotes.setDraftForSlot}
+                        getExerciseNote={getDraftForSlot}
+                        onExerciseNoteChange={setDraftForSlot}
                         exerciseNoteDisabled={exerciseNoteDisabled}
                     />
                 ) : isGroupRound && groupContext ? (
@@ -420,8 +422,8 @@ export const AthleteSessionRunPage: React.FC = () => {
                         slotReferences={slotReferences}
                         isSlotReferencesLoading={isSlotReferencesLoading}
                         exerciseNoteSlotIds={noteSlotIds}
-                        getExerciseNote={exerciseNotes.getDraftForSlot}
-                        onExerciseNoteChange={exerciseNotes.setDraftForSlot}
+                        getExerciseNote={getDraftForSlot}
+                        onExerciseNoteChange={setDraftForSlot}
                         exerciseNoteDisabled={exerciseNoteDisabled}
                     />
                 ) : current ? (
@@ -457,12 +459,12 @@ export const AthleteSessionRunPage: React.FC = () => {
                         sessionReadyToFinish={showFinishSession}
                         exerciseNote={
                             noteSlotIds[0] != null
-                                ? exerciseNotes.getDraftForSlot(noteSlotIds[0])
+                                ? getDraftForSlot(noteSlotIds[0])
                                 : ""
                         }
                         onExerciseNoteChange={
                             noteSlotIds[0] != null
-                                ? (value) => exerciseNotes.setDraftForSlot(noteSlotIds[0], value)
+                                ? (value) => setDraftForSlot(noteSlotIds[0], value)
                                 : undefined
                         }
                         exerciseNoteDisabled={exerciseNoteDisabled}

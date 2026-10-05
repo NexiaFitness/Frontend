@@ -62,13 +62,13 @@ export function useAthleteRunRestConfirm({
             }
             setAmrapValidationVisible(false);
         }
+        if (afterStepConfirm) {
+            await afterStepConfirm();
+        }
         if (isBatchStep) {
             await handleSaveBatch();
         } else {
             await handleSaveSet();
-        }
-        if (afterStepConfirm) {
-            await afterStepConfirm();
         }
         return true;
     }, [
