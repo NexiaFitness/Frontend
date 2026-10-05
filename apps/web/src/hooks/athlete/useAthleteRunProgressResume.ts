@@ -35,7 +35,10 @@ export function useAthleteRunProgressResume({
     setStep,
 }: UseAthleteRunProgressResumeOptions) {
     const { data: runProgress } = useGetAthleteRunProgressQuery(sessionId, {
-        skip: !sessionId || !isOnline,
+        skip: !sessionId,
+        refetchOnMountOrArgChange: isOnline,
+        refetchOnFocus: isOnline,
+        refetchOnReconnect: true,
     });
 
     const progressInitForSessionRef = useRef<number | null>(null);

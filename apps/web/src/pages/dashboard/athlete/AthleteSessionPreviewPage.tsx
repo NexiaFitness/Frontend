@@ -2,7 +2,7 @@
  * AthleteSessionPreviewPage.tsx — Vista previa sesión atleta (F1 / F3b-FE-01).
  */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useId, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
@@ -60,6 +60,9 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     const [wellbeingOpen, setWellbeingOpen] = useState(false);
     const [injurySheetOpen, setInjurySheetOpen] = useState(false);
     const [terminateConfirmOpen, setTerminateConfirmOpen] = useState(false);
+    const terminateSubtitleId = useId();
+    const terminateBodyId = useId();
+    const terminateDescribedBy = `${terminateSubtitleId} ${terminateBodyId}`;
     const { submit, isLoading: submittingWellbeing } = useWellbeingCheckIn(sessionId);
     const { clientId } = useAthleteContext();
     const { activeInjuries, isLoading: loadingInjuries } = useAthleteInjuries();
@@ -402,6 +405,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                 isOpen={terminateConfirmOpen}
                 onClose={() => setTerminateConfirmOpen(false)}
                 title="¿Terminar igualmente?"
+                subtitleId={terminateSubtitleId}
                 subtitle={
                     sessionLog.pendingBlockCount === 1
                         ? "Queda 1 bloque sin registrar. Los bloques pendientes seguirán marcados como no registrados."
@@ -412,6 +416,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                         <Button
                             variant="primary"
                             className={ATHLETE_PRIMARY_CTA}
+                            aria-describedby={terminateDescribedBy}
                             onClick={() => {
                                 void sessionLog.forceCompleteSession().then((ok) => {
                                     if (ok) {
@@ -433,7 +438,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                     </div>
                 }
             >
-                <p className="text-sm text-muted-foreground px-1">
+                <p id={terminateBodyId} className="px-1 text-sm text-muted-foreground">
                     Podrás volver más tarde desde «Mis sesiones» para completar el registro.
                 </p>
             </BottomSheet>

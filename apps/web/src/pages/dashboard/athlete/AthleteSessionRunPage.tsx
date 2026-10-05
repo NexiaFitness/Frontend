@@ -2,7 +2,7 @@
  * AthleteSessionRunPage.tsx — Ejecución sesión atleta (F1 100%, DESIGN §7.4, §5a/B.2 rest).
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AthleteExerciseInjuryAlert } from "@/components/athlete/AthleteExerciseInjuryAlert";
 import { AthleteInjuryConsultSheet } from "@/components/athlete/AthleteInjuryConsultSheet";
@@ -35,6 +35,7 @@ import {
     ATHLETE_PAGE_X,
     ATHLETE_RUN_STICKY_FOOTER_CONTENT_PB,
 } from "@/components/athlete/layout/athleteLayoutClasses";
+import { cn } from "@/lib/utils";
 
 export const AthleteSessionRunPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -49,7 +50,11 @@ export const AthleteSessionRunPage: React.FC = () => {
         null
     );
 
-    const { data: runProgressForNotes } = useGetAthleteRunProgressQuery(sessionId, {
+    const {
+        data: runProgressForNotes,
+        isSuccess: runProgressFetchSucceeded,
+        isFetching: runProgressFetching,
+    } = useGetAthleteRunProgressQuery(sessionId, {
         skip: !sessionId,
     });
     const isOnlineStatus = useOnlineStatus();
@@ -114,6 +119,7 @@ export const AthleteSessionRunPage: React.FC = () => {
         groupContext,
         handleFinish,
         isLoading,
+        runProgress,
         isLastStep,
         showStepActions,
         isCurrentStepSaved,
@@ -284,8 +290,50 @@ export const AthleteSessionRunPage: React.FC = () => {
         return map;
     }, [conflictByExerciseId, isDesktop, isGroupRound, isTimedBlock]);
 
+    const terminateSubtitleId = useId();
+    const terminateBodyId = useId();
+    const terminateDescribedBy = `${terminateSubtitleId} ${terminateBodyId}`;
+
+    const offlineGuidedBlocked =
+        !isOnline &&
+        !isLoading &&
+        runSteps.length > 0 &&
+        runProgress == null &&
+        !runProgressFetching &&
+        !runProgressFetchSucceeded;
+
     if (isLoading) {
         return <AthletePageLoading variant="session-run" />;
+    }
+
+    if (offlineGuidedBlocked) {
+        return (
+            <div className={cn("mx-auto max-w-lg space-y-4 pb-24 pt-4", ATHLETE_PAGE_X)}>
+                <OfflineSessionBadge isOnline={isOnline} pendingCount={pendingCount} />
+                <div
+                    className="rounded-xl border border-border/60 bg-card/80 p-4"
+                    role="alert"
+                >
+                    <p className="text-sm font-medium text-foreground">
+                        Sin conexión para reanudar el guiado
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        Conéctate una vez para sincronizar el progreso de esta sesión, o registra
+                        manualmente lo que ya hiciste.
+                    </p>
+                </div>
+                <Button
+                    variant="primary"
+                    className={ATHLETE_PRIMARY_CTA}
+                    onClick={() => navigate(`/dashboard/sessions/${sessionId}?mode=log`)}
+                >
+                    Ir a registro manual
+                </Button>
+                <Button variant="secondary" onClick={() => navigate(-1)}>
+                    Volver
+                </Button>
+            </div>
+        );
     }
 
     if (runSteps.length === 0) {
@@ -524,6 +572,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                 isOpen={runMenu.terminateConfirmOpen}
                 onClose={() => runMenu.setTerminateConfirmOpen(false)}
                 title="¿Terminar igualmente?"
+                subtitleId={terminateSubtitleId}
                 subtitle={
                     runMenu.pendingStepCount === 1
                         ? "Queda 1 paso sin registrar en esta sesión."
@@ -535,6 +584,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                             variant="primary"
                             className={ATHLETE_PRIMARY_CTA}
                             disabled={runMenu.isFinishing}
+                            aria-describedby={terminateDescribedBy}
                             onClick={() => void runMenu.confirmTerminateSession()}
                         >
                             {runMenu.isFinishing ? "Finalizando…" : "Terminar e ir al feedback"}
@@ -549,7 +599,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                     </div>
                 }
             >
-                <p className="px-1 text-sm text-muted-foreground">
+                <p id={terminateBodyId} className="px-1 text-sm text-muted-foreground">
                     Podrás completar lo pendiente desde la vista de la sesión en modo registrar.
                 </p>
             </BottomSheet>

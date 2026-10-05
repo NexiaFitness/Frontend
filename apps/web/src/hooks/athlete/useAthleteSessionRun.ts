@@ -1323,7 +1323,6 @@ export function useAthleteSessionRun({
     const loadingFromNetwork = loadingSession || loadingStructure;
     const waitingForCache = !isOnline && loadingFromNetwork && !cachedSnapshot;
     const isLoading = (loadingFromNetwork && !isUsingCache && isOnline) || waitingForCache;
-
     const timedBlockClockActive =
         showStepActions &&
         isTimedBlock &&

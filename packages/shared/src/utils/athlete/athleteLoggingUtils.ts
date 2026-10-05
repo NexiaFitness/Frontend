@@ -56,6 +56,39 @@ export function resolveSeriesWeightAutofillKey(scope: SeriesWeightAutofillScope)
     return `block:${scope.blockExerciseId}`;
 }
 
+export type SeriesWeightAutofillStore = Map<string, number>;
+
+export function createSeriesWeightAutofillStore(): SeriesWeightAutofillStore {
+    return new Map();
+}
+
+/** N6 — registra peso confirmado para heredar en series siguientes del mismo slot. */
+export function rememberSeriesWeightAutofill(
+    store: SeriesWeightAutofillStore,
+    scope: SeriesWeightAutofillScope,
+    weightKg: number
+): void {
+    if (weightKg > 0) {
+        store.set(resolveSeriesWeightAutofillKey(scope), weightKg);
+    }
+}
+
+/** Peso mostrado en registro al final cuando la serie N>1 aún está en 0. */
+export function resolveInheritedLogSheetWeight(input: {
+    store: SeriesWeightAutofillStore;
+    scope: SeriesWeightAutofillScope;
+    setIndex: number;
+    skipped: boolean;
+    draftWeight: number;
+}): number {
+    if (input.setIndex <= 1 || input.skipped) return input.draftWeight;
+    const inherited = input.store.get(resolveSeriesWeightAutofillKey(input.scope));
+    if (inherited != null && inherited > 0 && input.draftWeight === 0) {
+        return inherited;
+    }
+    return input.draftWeight;
+}
+
 export function parseDecimalInput(raw: string): number | null {
     const normalized = raw.replace(",", ".").trim();
     if (normalized === "") return null;

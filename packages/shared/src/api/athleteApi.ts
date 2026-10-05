@@ -90,6 +90,7 @@ export const athleteApi = baseApi.injectEndpoints({
         getAthleteRunProgress: builder.query<AthleteRunProgress, number>({
             query: (trainingSessionId) =>
                 `/athlete/run-context/sessions/${trainingSessionId}/progress`,
+            keepUnusedDataFor: 60 * 60 * 24 * 7,
             providesTags: (_result, _error, trainingSessionId) => [
                 { type: "AthleteRunProgress" as const, id: trainingSessionId },
             ],

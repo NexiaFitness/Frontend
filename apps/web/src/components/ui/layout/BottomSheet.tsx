@@ -17,6 +17,8 @@ export interface BottomSheetProps {
     onClose: () => void;
     title: string;
     subtitle?: string;
+    /** id del subtítulo (a11y: aria-describedby en CTAs del footer) */
+    subtitleId?: string;
     children: React.ReactNode;
     /** Pie fijo con blur — CTA separado del scroll */
     footer?: React.ReactNode;
@@ -33,10 +35,13 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     onClose,
     title,
     subtitle,
+    subtitleId: subtitleIdProp,
     children,
     footer,
 }) => {
     const titleId = useId();
+    const autoSubtitleId = useId();
+    const subtitleId = subtitleIdProp ?? autoSubtitleId;
     const sheetRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -83,6 +88,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleId}
+                aria-describedby={subtitle ? subtitleId : undefined}
             >
                 <div className="pointer-events-none absolute inset-x-0 top-0 overflow-hidden rounded-t-[1.35rem]">
                     <div className={NEXIA_DIVIDER_GLOW_BAND} aria-hidden />
@@ -102,7 +108,9 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                             {title}
                         </h2>
                         {subtitle && (
-                            <p className="text-sm text-muted-foreground">{subtitle}</p>
+                            <p id={subtitleId} className="text-sm text-muted-foreground">
+                                {subtitle}
+                            </p>
                         )}
                     </div>
                 </div>

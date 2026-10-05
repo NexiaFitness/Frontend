@@ -226,11 +226,11 @@ export function useAthleteSessionLog({
         setIsSavingBlock(true);
         setSaveError(null);
         try {
-            const { executions, timed, exerciseNotes, notPerformedStepKeys, notPerformedSteps } =
+            const { executions, timed, exerciseNotes, notPerformedSteps } =
                 buildBlockSavePayloads(sessionId, activeBlock, blockDraft);
 
             const needsNotPerformedOnline =
-                notPerformedStepKeys.length > 0 ||
+                notPerformedSteps.length > 0 ||
                 (!activeBlock.hasRegisterableSteps && blockDraft.mobilityDone === false);
 
             if (!isOnline && needsNotPerformedOnline) {
@@ -293,7 +293,7 @@ export function useAthleteSessionLog({
                     const next = new Map(prev);
                     next.set(
                         activeBlock.sessionBlockId,
-                        notPerformedStepKeys.length > 0 &&
+                        notPerformedSteps.length > 0 &&
                             executions.length === 0 &&
                             !timed
                             ? "not_performed"

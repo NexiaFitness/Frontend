@@ -18,7 +18,8 @@
     "clean:cache": "rm -rf node_modules/.vite apps/web/node_modules/.vite",
     "test": "pnpm --filter web test",
     "test:watch": "pnpm --filter web vitest",
-    "ci:local": "pnpm --filter shared build && pnpm --filter web exec tsc --noEmit && pnpm --filter web lint && pnpm --filter web test && pnpm --filter web build"
+    "ci:local": "pnpm --filter shared build && pnpm --filter web exec tsc --noEmit && pnpm --filter web lint && node scripts/check-file-length.mjs && pnpm --filter web test && pnpm --filter web build",
+    "check:file-length": "node scripts/check-file-length.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

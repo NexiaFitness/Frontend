@@ -96,7 +96,6 @@ vi.mock("@nexia/shared/utils/athlete/athleteSessionLogUtils", async (importOrigi
             exerciseNotes: [],
             executions: [{ training_session_id: 99, step_key: "k1", exercise_id: 1, reps: 5, weight_kg: 0 }],
             timed: null,
-            notPerformedStepKeys: ["k2"],
             notPerformedSteps: [
                 { training_session_id: 99, scope: "step", step_key: "k2", exercise_id: 2 },
             ],
@@ -226,7 +225,6 @@ describe("useAthleteSessionLog", () => {
             executions: [{ training_session_id: 99, step_key: "k1", exercise_id: 1, reps: 5, weight_kg: 10 }],
             timed: null,
             exerciseNotes: [],
-            notPerformedStepKeys: [],
             notPerformedSteps: [],
         });
 

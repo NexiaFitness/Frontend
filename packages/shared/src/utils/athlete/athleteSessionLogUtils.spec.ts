@@ -317,7 +317,7 @@ describe("resolveLogDraftSetWeight (registro al final · carga programada)", () 
 });
 
 describe("buildBlockSavePayloads skipped steps", () => {
-    it("marca step_key en notPerformedStepKeys", () => {
+    it("marca step_key en notPerformedSteps", () => {
         const block: AthleteSessionLogBlockModel = {
             sessionBlockId: 10,
             blockTypeName: "Fuerza",
@@ -366,13 +366,13 @@ describe("buildBlockSavePayloads skipped steps", () => {
             timed: null,
             mobilityDone: null,
         };
-        const { executions, notPerformedStepKeys, notPerformedSteps } = buildBlockSavePayloads(
+        const { executions, notPerformedSteps } = buildBlockSavePayloads(
             99,
             block,
             draft
         );
         expect(executions).toHaveLength(0);
-        expect(notPerformedStepKeys).toEqual(["blk-1-ex-1-set-1"]);
+        expect(notPerformedSteps[0]?.step_key).toBe("blk-1-ex-1-set-1");
         expect(notPerformedSteps[0]?.exercise_id).toBe(1);
         expect(notPerformedSteps[0]?.session_block_id).toBe(10);
     });

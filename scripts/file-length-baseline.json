@@ -1,0 +1,8 @@
+{
+  "defaultMaxLines": 600,
+  "testMaxLines": 800,
+  "files": {
+    "apps/web/src/hooks/athlete/useAthleteSessionRun.ts": 1408,
+    "packages/shared/src/utils/athlete/buildAthleteRunSteps.ts": 757
+  }
+}

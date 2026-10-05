@@ -369,8 +369,6 @@ export interface BlockSavePayloads {
     executions: AthleteRunExecutionCreate[];
     timed: AthleteRunTimedResultCreate | null;
     exerciseNotes: AthleteExerciseNoteUpsert[];
-    /** @deprecated use notPerformedSteps — keys only kept for tests */
-    notPerformedStepKeys: string[];
     notPerformedSteps: AthleteRunNotPerformedCreate[];
 }
 
@@ -417,11 +415,9 @@ export function buildBlockSavePayloads(
     draft: AthleteSessionLogBlockDraft
 ): BlockSavePayloads {
     const executions: AthleteRunExecutionCreate[] = [];
-    const notPerformedStepKeys: string[] = [];
     const notPerformedSteps: AthleteRunNotPerformedCreate[] = [];
 
     const markNotPerformed = (stepKey: string) => {
-        notPerformedStepKeys.push(stepKey);
         notPerformedSteps.push(
             buildAthleteRunNotPerformedStepPayload(sessionId, block, stepKey)
         );
@@ -432,7 +428,6 @@ export function buildBlockSavePayloads(
             executions,
             timed: null,
             exerciseNotes: [],
-            notPerformedStepKeys,
             notPerformedSteps,
         };
     }
@@ -535,7 +530,7 @@ export function buildBlockSavePayloads(
         );
     }
 
-    return { executions, timed, exerciseNotes, notPerformedStepKeys, notPerformedSteps };
+    return { executions, timed, exerciseNotes, notPerformedSteps };
 }
 
 export function validateBlockDraft(

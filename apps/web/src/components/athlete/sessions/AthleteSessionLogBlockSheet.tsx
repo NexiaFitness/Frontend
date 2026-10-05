@@ -22,7 +22,11 @@ import type {
     AthleteSessionLogBlockModel,
 } from "@nexia/shared/utils/athlete/athleteSessionLogUtils";
 import { runStepToFlatExercise } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
-import { resolveSeriesWeightAutofillKey } from "@nexia/shared/utils/athlete/athleteLoggingUtils";
+import {
+    createSeriesWeightAutofillStore,
+    rememberSeriesWeightAutofill,
+    resolveInheritedLogSheetWeight,
+} from "@nexia/shared/utils/athlete/athleteLoggingUtils";
 import { useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { AthleteRunExerciseNoteField } from "@/components/athlete/execution/AthleteRunExerciseNoteField";
@@ -52,7 +56,7 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
     errorMessage,
     isOnline,
 }) => {
-    const autofillRef = useRef<Map<string, number>>(new Map());
+    const autofillRef = useRef(createSeriesWeightAutofillStore());
 
     const title = block?.blockTypeName ?? "Registrar bloque";
 
@@ -77,9 +81,7 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
     const handleWeightChange = useCallback(
         (stepKey: string, exerciseScope: ReturnType<typeof runStepToFlatExercise>, value: number) => {
             if (!draft) return;
-            if (value > 0) {
-                autofillRef.current.set(resolveSeriesWeightAutofillKey(exerciseScope), value);
-            }
+            rememberSeriesWeightAutofill(autofillRef.current, exerciseScope, value);
             const nextSets = draft.singleSets.map((row) => {
                 if (row.stepKey !== stepKey) return row;
                 return { ...row, weight: value };
@@ -164,15 +166,13 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                     const step = block.steps.find((s) => s.stepKey === row.stepKey);
                     if (!step) return null;
                     const flat = runStepToFlatExercise(step);
-                    const autofillKey = resolveSeriesWeightAutofillKey(flat);
-                    const inherited =
-                        flat.setIndex > 1 && !row.skipped
-                            ? autofillRef.current.get(autofillKey)
-                            : undefined;
-                    const weight =
-                        inherited != null && inherited > 0 && row.weight === 0
-                            ? inherited
-                            : row.weight;
+                    const weight = resolveInheritedLogSheetWeight({
+                        store: autofillRef.current,
+                        scope: flat,
+                        setIndex: flat.setIndex,
+                        skipped: row.skipped,
+                        draftWeight: row.weight,
+                    });
 
                     return (
                         <div

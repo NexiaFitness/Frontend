@@ -6,6 +6,9 @@ import { describe, expect, it } from "vitest";
 import {
     distributeAmrapPartialReps,
     formatAmrapIncompleteRoundBreakdown,
+    createSeriesWeightAutofillStore,
+    rememberSeriesWeightAutofill,
+    resolveInheritedLogSheetWeight,
     resolveSeriesWeightAutofillKey,
     resolveWeightIncrementStepKg,
     shouldCommitNumericDraftOnChange,
@@ -66,6 +69,37 @@ describe("shouldCommitNumericDraftOnChange", () => {
         expect(shouldCommitNumericDraftOnChange("12,5", true)).toBe(true);
         expect(shouldCommitNumericDraftOnChange("12.", true)).toBe(false);
         expect(shouldCommitNumericDraftOnChange("12,", true)).toBe(false);
+    });
+});
+
+describe("series weight autofill store", () => {
+    it("rememberSeriesWeightAutofill + resolveInheritedLogSheetWeight", () => {
+        const store = createSeriesWeightAutofillStore();
+        const scope = {
+            groupKind: "single_set",
+            groupId: "g-1",
+            exerciseId: 42,
+            blockExerciseId: 100,
+        };
+        rememberSeriesWeightAutofill(store, scope, 60);
+        expect(
+            resolveInheritedLogSheetWeight({
+                store,
+                scope,
+                setIndex: 2,
+                skipped: false,
+                draftWeight: 0,
+            })
+        ).toBe(60);
+        expect(
+            resolveInheritedLogSheetWeight({
+                store,
+                scope,
+                setIndex: 1,
+                skipped: false,
+                draftWeight: 0,
+            })
+        ).toBe(0);
     });
 });
 
