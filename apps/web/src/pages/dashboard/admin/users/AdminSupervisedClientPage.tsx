@@ -5,7 +5,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { PageTitle } from "@/components/dashboard/shared";
@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 import { useAdminSupervisedClient } from "@/components/admin/supervision/useAdminSupervisedClient";
 import {
     ADMIN_SUP_ALERT_SPACING,
-    ADMIN_SUP_BACK_BUTTON,
     ADMIN_SUP_BANNER,
     ADMIN_SUP_COPY,
     ADMIN_SUP_DETAIL_CARD,
@@ -74,16 +73,10 @@ export const AdminSupervisedClientPage: React.FC = () => {
                         </p>
                     </div>
                     <div className={ADMIN_SUP_HEADER_ACTIONS}>
-                        <Button
-                            type="button"
-                            variant="ghost-primary"
-                            size="sm"
-                            className={ADMIN_SUP_BACK_BUTTON}
+                        <PlatformHeaderBackButton
                             onClick={() => goBack()}
-                        >
-                            <ArrowLeft className="h-4 w-4" aria-hidden />
-                            {ADMIN_SUP_COPY.backToTrainer}
-                        </Button>
+                            label={ADMIN_SUP_COPY.backToTrainer}
+                        />
                     </div>
                 </div>
 

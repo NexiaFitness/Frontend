@@ -9,7 +9,8 @@
  */
 
 import React, { useMemo } from "react";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
 import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
 import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
@@ -200,16 +201,7 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
         <div className={`space-y-6 ${DASHBOARD_FIXED_FOOTER_PADDING_CLASS}`}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <PageTitle title={title} subtitle={subtitle} className="min-w-0 flex-1" />
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 self-start"
-                    onClick={onCancel}
-                >
-                    <ArrowLeft className="h-4 w-4" aria-hidden />
-                    Volver
-                </Button>
+                <PlatformHeaderBackButton onClick={onCancel} />
             </div>
 
             <div className="space-y-5 rounded-lg border border-border bg-surface p-6 lg:p-8">

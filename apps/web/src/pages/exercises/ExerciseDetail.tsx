@@ -6,7 +6,8 @@
 
 import React, { useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { useGetExerciseByIdQuery } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
@@ -37,7 +38,6 @@ import { ExerciseDetailExpandableSection } from "@/components/exercises/Exercise
 import { ExerciseDetailTrainerEssentials } from "@/components/exercises/ExerciseDetailTrainerEssentials";
 import {
     EXERCISE_DETAIL_ALERT_SPACING,
-    EXERCISE_DETAIL_BACK_BUTTON,
     EXERCISE_DETAIL_BADGE_MUTED,
     EXERCISE_DETAIL_BADGE_NEUTRAL,
     EXERCISE_DETAIL_BADGE_ROW,
@@ -48,8 +48,6 @@ import {
     EXERCISE_DETAIL_ERROR_ACTION,
     EXERCISE_DETAIL_ERROR_DETAIL,
     EXERCISE_DETAIL_HEADER,
-    EXERCISE_DETAIL_ICON_BACK_GAP,
-    EXERCISE_DETAIL_ICON_SM,
     EXERCISE_DETAIL_ICON_XS,
     EXERCISE_DETAIL_LAYOUT,
     EXERCISE_DETAIL_LEVEL_BADGE,
@@ -253,15 +251,7 @@ export const ExerciseDetail: React.FC = () => {
                     subtitle={subtitleParts || undefined}
                     className={EXERCISE_DETAIL_TITLE_WRAP}
                 />
-                <Button
-                    variant="ghost-primary"
-                    size="sm"
-                    className={EXERCISE_DETAIL_BACK_BUTTON}
-                    onClick={handleBack}
-                >
-                    <ArrowLeft className={cn(EXERCISE_DETAIL_ICON_BACK_GAP, EXERCISE_DETAIL_ICON_SM)} aria-hidden />
-                    Volver a Ejercicios
-                </Button>
+                <PlatformHeaderBackButton onClick={handleBack} label="Volver a Ejercicios" />
             </div>
 
             <article className={EXERCISE_DETAIL_SHELL}>

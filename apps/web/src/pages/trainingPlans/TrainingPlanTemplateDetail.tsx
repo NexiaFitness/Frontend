@@ -4,7 +4,8 @@
 
 import React, { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Check, Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { useGetTrainingPlanTemplateQuery } from "@nexia/shared/api/trainingPlansApi";
 import {
     DUPLICATE_TEMPLATE_ACTION_LABEL,
@@ -26,7 +27,6 @@ import {
     displayTrainingPlanTemplateTitle,
 } from "@/components/trainingPlans/goalLabels";
 import {
-    TEMPLATE_LIBRARY_BACK_BUTTON,
     TEMPLATE_LIBRARY_COPY,
     TEMPLATE_LIBRARY_DETAIL_ACTIONS,
     TEMPLATE_LIBRARY_DETAIL_DESCRIPTION,
@@ -124,15 +124,10 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
             <div className={TEMPLATE_LIBRARY_GLOW} aria-hidden />
             <header className={cn(TEMPLATE_LIBRARY_HEADER, "relative")}>
                 <div className={TEMPLATE_LIBRARY_TITLE_WRAP}>
-                    <Button
-                        variant="ghost-primary"
-                        size="sm"
-                        className={TEMPLATE_LIBRARY_BACK_BUTTON}
+                    <PlatformHeaderBackButton
                         onClick={handleBack}
-                    >
-                        <ArrowLeft className="h-4 w-4" aria-hidden />
-                        {TEMPLATE_LIBRARY_COPY.detailBack}
-                    </Button>
+                        label={TEMPLATE_LIBRARY_COPY.detailBack}
+                    />
                 </div>
                 {template ? (
                     <div className={TEMPLATE_LIBRARY_DETAIL_ACTIONS}>

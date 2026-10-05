@@ -14,7 +14,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
@@ -477,15 +477,7 @@ export const CreateTrainingPlan: React.FC = () => {
                 <h1 className="text-2xl font-bold text-foreground">
                     Planificación
                 </h1>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => goBack()}
-                >
-                    <ArrowLeft className="h-4 w-4" aria-hidden />
-                    Volver
-                </Button>
+                <PlatformHeaderBackButton onClick={() => goBack()} />
             </div>
 
             {/* Card principal con diseño solicitado */}

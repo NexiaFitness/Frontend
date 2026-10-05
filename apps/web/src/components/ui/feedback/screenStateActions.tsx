@@ -9,10 +9,9 @@
  */
 
 import React from "react";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
-import { cn } from "@/lib/utils";
-import { PLATFORM_BACK_OUTLINE_MOBILE } from "@/components/ui/surface/platformPremiumPresentation";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { ALERT_ACTION_ICON_CLASS } from "./alertPresentation";
 import { RESOURCE_QUERY_ACTION } from "./resourceQueryStatePresentation";
 
@@ -51,18 +50,7 @@ export const ScreenStateHomeButton: React.FC<ScreenStatePrimaryHomeProps> = ({
 export const ScreenStateBackButton: React.FC<ScreenStateBackProps> = ({
     onBack,
     label = RESOURCE_QUERY_ACTION.back,
-}) => (
-    <Button
-        type="button"
-        variant="outline-primary"
-        size="sm"
-        className={cn("min-h-touch-athlete w-full", PLATFORM_BACK_OUTLINE_MOBILE)}
-        onClick={onBack}
-    >
-        <ArrowLeft className={ALERT_ACTION_ICON_CLASS} aria-hidden />
-        {label}
-    </Button>
-);
+}) => <PlatformHeaderBackButton onClick={onBack} label={label} />;
 
 /** Primario «Reintentar» con RotateCcw. */
 export const ScreenStateRetryButton: React.FC<ScreenStateRetryProps> = ({

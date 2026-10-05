@@ -7,7 +7,8 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Check, Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 
 import { useGetTrainingPlanTemplateQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
@@ -61,7 +62,6 @@ import {
     TEMPLATE_EDITOR_HERO_SHELL,
     TEMPLATE_EDITOR_HERO_STATS,
     TEMPLATE_EDITOR_HERO_TITLE,
-    TEMPLATE_EDITOR_ICON_BACK,
     TEMPLATE_EDITOR_PAGE,
     TEMPLATE_EDITOR_STATUS_ROW,
     TEMPLATE_EDITOR_TITLE_WRAP,
@@ -70,10 +70,7 @@ import {
     templateProgramExerciseTotal,
 } from "@/components/trainingPlans/templateEditorPresentation";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
-import {
-    PLATFORM_BACK_BUTTON,
-    PLATFORM_PAGE_HEADER,
-} from "@/components/ui/surface/platformPremiumPresentation";
+import { PLATFORM_PAGE_HEADER } from "@/components/ui/surface/platformPremiumPresentation";
 import { displayTrainingPlanTemplateTitle } from "@/components/trainingPlans/goalLabels";
 import { SESSION_TYPES } from "@/pages/sessionProgramming/sessionFormConstants";
 import { cn } from "@/lib/utils";
@@ -383,10 +380,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
         const isNotFound = isErrorTemplate && isTrainingPlanTemplateNotFoundError(templateError);
         return (
             <div className="space-y-4 px-4 py-8 lg:px-8">
-                <Button variant="ghost-primary" size="sm" className="w-fit" onClick={handleBack}>
-                    <ArrowLeft className="h-4 w-4" aria-hidden />
-                    Biblioteca
-                </Button>
+                <PlatformHeaderBackButton onClick={handleBack} label="Biblioteca" />
                 <Alert variant="error">
                     {resolveTrainingPlanTemplateLoadError(templateError)}
                 </Alert>
@@ -417,15 +411,11 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
         <div className={TEMPLATE_EDITOR_PAGE}>
             <header className={cn(PLATFORM_PAGE_HEADER, TEMPLATE_EDITOR_HEADER)}>
                 <div className={TEMPLATE_EDITOR_TITLE_WRAP}>
-                    <Button
-                        variant="outline-primary"
-                        size="sm"
-                        className={cn("mb-2 w-fit", PLATFORM_BACK_BUTTON)}
+                    <PlatformHeaderBackButton
+                        className="mb-2"
                         onClick={handleBack}
-                    >
-                        <ArrowLeft className={cn("h-4 w-4", TEMPLATE_EDITOR_ICON_BACK)} aria-hidden />
-                        Biblioteca
-                    </Button>
+                        label="Biblioteca"
+                    />
                     <PageTitle
                         title={displayTrainingPlanTemplateTitle(template.name)}
                         subtitle={TEMPLATE_EDITOR_COPY.pageSubtitle}

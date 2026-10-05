@@ -4,7 +4,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormCombobox, Textarea } from "@/components/ui/forms";
@@ -288,15 +288,12 @@ export const EditStandaloneSession: React.FC = () => {
 
     return (
             <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
-                <div className="flex items-center justify-between gap-3">
-                    <Button type="button" variant="ghost" size="sm" onClick={goBack}>
-                        <ArrowLeft className="h-4 w-4" aria-hidden />
-                        {backTarget ? "Volver" : "Sesiones"}
-                    </Button>
-                </div>
-
-                <div>
-                    <h1 className="text-xl font-bold">Editar sesión suelta</h1>
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <h1 className="min-w-0 text-xl font-bold">Editar sesión suelta</h1>
+                    <PlatformHeaderBackButton
+                        onClick={goBack}
+                        label={backTarget ? "Volver" : "Sesiones"}
+                    />
                 </div>
 
                 <form onSubmit={handleSave} className="space-y-6">

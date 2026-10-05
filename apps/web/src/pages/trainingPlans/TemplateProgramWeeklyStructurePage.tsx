@@ -6,12 +6,11 @@
 
 import React, { useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 
 import { useGetTrainingPlanTemplateQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetTemplateProgramBlocksQuery } from "@nexia/shared/api/templateProgramApi";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { Button } from "@/components/ui/buttons";
 import { PageTitle } from "@/components/dashboard/shared";
 import { GOAL_LABEL_ES } from "@/components/trainingPlans/goalLabels";
 import {
@@ -91,15 +90,7 @@ export const TemplateProgramWeeklyStructurePage: React.FC = () => {
         <div className={cn("w-full min-w-0 space-y-6", DASHBOARD_FIXED_FOOTER_PADDING_CLASS)}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <PageTitle title="Estructura semanal" subtitle={blockSubtitle} />
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleVolver}
-                    className="shrink-0 self-start sm:self-center"
-                >
-                    <ArrowLeft className="h-4 w-4" aria-hidden />
-                    Volver al editor
-                </Button>
+                <PlatformHeaderBackButton onClick={handleVolver} label="Volver al editor" />
             </div>
 
             <WeeklyStructureEditor

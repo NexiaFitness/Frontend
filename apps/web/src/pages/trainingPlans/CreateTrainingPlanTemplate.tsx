@@ -3,7 +3,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
@@ -30,7 +30,6 @@ import {
 } from "@nexia/shared/types/training";
 import { GOAL_LABEL_ES } from "@/components/trainingPlans/goalLabels";
 import {
-    TEMPLATE_LIBRARY_BACK_BUTTON,
     TEMPLATE_LIBRARY_COPY,
     TEMPLATE_LIBRARY_FORM_ACTIONS,
     TEMPLATE_LIBRARY_FORM_FIELD_ERROR,
@@ -175,15 +174,10 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
             <div className={TEMPLATE_LIBRARY_GLOW} aria-hidden />
             <header className={TEMPLATE_LIBRARY_HEADER}>
                 <div className={TEMPLATE_LIBRARY_TITLE_WRAP}>
-                    <Button
-                        variant="ghost-primary"
-                        size="sm"
-                        className={TEMPLATE_LIBRARY_BACK_BUTTON}
+                    <PlatformHeaderBackButton
                         onClick={() => goBack()}
-                    >
-                        <ArrowLeft className="h-4 w-4" aria-hidden />
-                        {TEMPLATE_LIBRARY_COPY.createBack}
-                    </Button>
+                        label={TEMPLATE_LIBRARY_COPY.createBack}
+                    />
                     <PageTitle
                         title="Crear plantilla de plan"
                         subtitle={TEMPLATE_LIBRARY_COPY.createSubtitle}

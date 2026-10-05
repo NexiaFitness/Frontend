@@ -5,7 +5,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
 import { Alert, EmptyState } from "@/components/ui/feedback";
@@ -23,7 +24,6 @@ import { AdminPhysicalTestFormModal } from "@/components/admin/physical-tests/Ad
 import { AdminPhysicalTestLifecycleModal } from "@/components/admin/physical-tests/AdminPhysicalTestLifecycleModal";
 import {
     ADMIN_PT_ALERT_SPACING,
-    ADMIN_PT_BACK_BUTTON,
     ADMIN_PT_CARD_ACTIONS,
     ADMIN_PT_CARD_ITEM,
     ADMIN_PT_CARD_LIST,
@@ -147,16 +147,10 @@ export const AdminPhysicalTestsPage: React.FC = () => {
                         <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
                     </div>
                     <div className={ADMIN_PT_HEADER_ACTIONS}>
-                        <Button
-                            type="button"
-                            variant="ghost-primary"
-                            size="sm"
-                            className={ADMIN_PT_BACK_BUTTON}
+                        <PlatformHeaderBackButton
                             onClick={() => goBack()}
-                        >
-                            <ArrowLeft className="h-4 w-4" aria-hidden />
-                            {ADMIN_PT_COPY.backToAdmin}
-                        </Button>
+                            label={ADMIN_PT_COPY.backToAdmin}
+                        />
                         {isStandard ? (
                             <Button type="button" variant="primary" size="sm" onClick={openCreate}>
                                 <Plus className="h-4 w-4" aria-hidden />

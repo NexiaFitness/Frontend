@@ -16,7 +16,6 @@ import type { AppDispatch } from "@nexia/shared/store";
 import { trainingSessionsApi } from "@nexia/shared/api/trainingSessionsApi";
 import {
     ChevronRight,
-    ArrowLeft,
     Pencil,
     CalendarPlus,
     AlertTriangle,
@@ -66,6 +65,15 @@ import {
     returnToStateFromView,
 } from "@/lib/sessionDetailNavigation";
 import { cn } from "@/lib/utils";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
+import {
+    SESSION_DETAIL_BADGE_ROW,
+    SESSION_DETAIL_BODY,
+    SESSION_DETAIL_CLIENT,
+    SESSION_DETAIL_IDENTITY,
+    SESSION_DETAIL_TITLE,
+    SESSION_DETAIL_TITLE_GROUP,
+} from "@/components/sessionProgramming/detail/sessionDetailPresentation";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { BlockLevelMeter } from "@/components/trainingPlans/periodization/BlockLevelMeter";
 import {
@@ -187,47 +195,50 @@ const SessionReviewHeader: React.FC<{
             </nav>
 
             <div className={cn(SESSION_REVIEW_HERO_ROW, "relative z-[1]")}>
-                {isLoadingClient ? (
-                    <div className="size-16 rounded-full bg-surface-2 animate-pulse shrink-0" />
-                ) : client ? (
-                    <ClientAvatar
-                        clientId={client.id}
-                        nombre={client.nombre}
-                        apellidos={client.apellidos}
-                        size="lg"
-                        className="shrink-0"
-                    />
-                ) : null}
-
-                <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2 gap-y-1">
-                        <h1 className={SESSION_REVIEW_TITLE}>{session.session_name}</h1>
-                        <span
-                            className={cn(
-                                SESSION_REVIEW_STATUS_BADGE,
-                                sessionReviewStatusBadgeClass(session.status),
-                            )}
-                        >
-                            {session.status === "completed" ? (
-                                <CheckCircle2 className="size-3.5" aria-hidden />
-                            ) : null}
-                            {statusLabel}
-                        </span>
-                    </div>
-                    {client ? (
-                        <p className={SESSION_REVIEW_CLIENT_META}>
-                            {[client.nombre, client.apellidos, client.objetivo_entrenamiento]
-                                .filter(Boolean)
-                                .join(" · ")}
-                        </p>
+                <div className={cn(SESSION_DETAIL_IDENTITY, "min-w-0 flex-1")}>
+                    {isLoadingClient ? (
+                        <div className="size-12 shrink-0 rounded-full bg-surface-2 animate-pulse md:size-16" />
+                    ) : client ? (
+                        <ClientAvatar
+                            clientId={client.id}
+                            nombre={client.nombre}
+                            apellidos={client.apellidos}
+                            size="lg"
+                            className="shrink-0"
+                        />
                     ) : null}
+
+                    <div className={SESSION_DETAIL_BODY}>
+                        <div className={SESSION_DETAIL_TITLE_GROUP}>
+                            <h1 className={cn(SESSION_REVIEW_TITLE, SESSION_DETAIL_TITLE)}>
+                                {session.session_name}
+                            </h1>
+                            <div className={SESSION_DETAIL_BADGE_ROW}>
+                                <span
+                                    className={cn(
+                                        SESSION_REVIEW_STATUS_BADGE,
+                                        sessionReviewStatusBadgeClass(session.status),
+                                    )}
+                                >
+                                    {session.status === "completed" ? (
+                                        <CheckCircle2 className="size-3.5" aria-hidden />
+                                    ) : null}
+                                    {statusLabel}
+                                </span>
+                            </div>
+                        </div>
+                        {client ? (
+                            <p className={cn(SESSION_REVIEW_CLIENT_META, SESSION_DETAIL_CLIENT)}>
+                                {[client.nombre, client.apellidos, client.objetivo_entrenamiento]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                            </p>
+                        ) : null}
+                    </div>
                 </div>
 
                 <div className={SESSION_REVIEW_HEADER_ACTIONS}>
-                    <Button variant="ghost-primary" size="sm" onClick={onBack}>
-                        <ArrowLeft className="size-3.5 shrink-0" aria-hidden />
-                        Volver
-                    </Button>
+                    <PlatformHeaderBackButton onClick={onBack} />
                     <Button variant="primary" size="sm" onClick={onSchedule}>
                         <CalendarPlus className="size-3.5 shrink-0" aria-hidden />
                         Programar siguiente

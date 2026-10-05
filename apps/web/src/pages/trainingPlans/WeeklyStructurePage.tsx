@@ -17,12 +17,11 @@
 import React, { useRef, useCallback, useMemo } from "react";
 import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
 import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { Button } from "@/components/ui/buttons";
 import { PageTitle } from "@/components/dashboard/shared";
 import { GOAL_LABEL_ES } from "@/components/trainingPlans/goalLabels";
 import {
@@ -136,15 +135,7 @@ export const WeeklyStructurePage: React.FC = () => {
         >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <PageTitle title="Planificación" subtitle={blockSubtitle} />
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleVolver}
-                    className="shrink-0 self-start sm:self-center"
-                >
-                    <ArrowLeft className="h-4 w-4" aria-hidden />
-                    Volver
-                </Button>
+                <PlatformHeaderBackButton onClick={handleVolver} />
             </div>
 
             <WeeklyStructureEditor

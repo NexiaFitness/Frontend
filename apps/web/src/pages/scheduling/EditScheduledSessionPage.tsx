@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormCombobox, FormField, Textarea } from "@/components/ui/forms";
@@ -18,9 +18,6 @@ import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
 import {
-    PLATFORM_BACK_BUTTON,
-    PLATFORM_ICON_BACK_GAP,
-    PLATFORM_ICON_SM,
     PLATFORM_PAGE_HEADER,
     PLATFORM_PAGE_TITLE_WRAP,
     PLATFORM_SPEC_GRID,
@@ -222,19 +219,7 @@ export const EditScheduledSessionPage: React.FC = () => {
                     subtitle={`Cliente ID: ${session.client_id} (no editable)`}
                     className={PLATFORM_PAGE_TITLE_WRAP}
                 />
-                <Button
-                    type="button"
-                    variant="outline-primary"
-                    size="sm"
-                    className={PLATFORM_BACK_BUTTON}
-                    onClick={goCalendar}
-                >
-                    <ArrowLeft
-                        className={cn(PLATFORM_ICON_BACK_GAP, PLATFORM_ICON_SM)}
-                        aria-hidden
-                    />
-                    Volver
-                </Button>
+                <PlatformHeaderBackButton onClick={goCalendar} />
             </div>
 
             <form id="edit-scheduled-session" onSubmit={handleSubmit}>

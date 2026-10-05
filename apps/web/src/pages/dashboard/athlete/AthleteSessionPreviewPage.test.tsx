@@ -43,8 +43,13 @@ vi.mock("@nexia/shared/api/trainingSessionsApi", () => ({
             status: "planned",
             session_name: "QA Preview",
             notes: null,
+            session_date: "2026-10-05",
         },
         isLoading: false,
+    }),
+    useGetWellbeingCheckInQuery: () => ({
+        data: undefined,
+        isFetching: false,
     }),
 }));
 

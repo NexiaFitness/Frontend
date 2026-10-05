@@ -14,7 +14,8 @@
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
-import { ArrowLeft, ChevronRight, Plus, Upload } from "lucide-react";
+import { ChevronRight, Plus, Upload } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
@@ -28,7 +29,6 @@ import { useAdminCatalogList } from "@/components/admin/catalog/useAdminCatalogL
 import {
     adminCatalogFilterClass,
     ADMIN_CATALOG_ALERT_SPACING,
-    ADMIN_CATALOG_BACK_BUTTON,
     ADMIN_CATALOG_CARD_ITEM,
     ADMIN_CATALOG_CARD_LIST,
     ADMIN_CATALOG_CARD_META,
@@ -129,16 +129,10 @@ export const AdminCatalogListPage: React.FC = () => {
                         </p>
                     </div>
                     <div className={ADMIN_CATALOG_HEADER_ACTIONS}>
-                        <Button
-                            type="button"
-                            variant="ghost-primary"
-                            size="sm"
-                            className={ADMIN_CATALOG_BACK_BUTTON}
+                        <PlatformHeaderBackButton
                             onClick={() => goBack()}
-                        >
-                            <ArrowLeft className="h-4 w-4" aria-hidden />
-                            {ADMIN_CATALOG_COPY.backToAdmin}
-                        </Button>
+                            label={ADMIN_CATALOG_COPY.backToAdmin}
+                        />
                         <Button
                             type="button"
                             variant="outline-primary"

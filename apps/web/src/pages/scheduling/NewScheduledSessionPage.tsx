@@ -12,7 +12,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { ArrowLeft, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { Alert, LoadingSpinner } from "@/components/ui/feedback";
 import { Input, FormCombobox, Textarea, DatePickerButton, TimePickerButton } from "@/components/ui/forms";
@@ -31,9 +32,7 @@ import type {
     AvailableSlot,
 } from "@nexia/shared/types/scheduling";
 import { SCHEDULED_SESSION_TYPE, SESSION_LOCATION } from "@nexia/shared/types/scheduling";
-import { cn } from "@/lib/utils";
 import {
-    SCHEDULE_NEW_BACK_BUTTON,
     SCHEDULE_NEW_BODY,
     SCHEDULE_NEW_CONFLICT_ERROR,
     SCHEDULE_NEW_CONFLICT_OK,
@@ -48,8 +47,6 @@ import {
     SCHEDULE_NEW_FORM_GRID_4,
     SCHEDULE_NEW_HEADER,
     SCHEDULE_NEW_HINT,
-    SCHEDULE_NEW_ICON_BACK_GAP,
-    SCHEDULE_NEW_ICON_SM,
     SCHEDULE_NEW_LOADING_ROW,
     SCHEDULE_NEW_LOCATION_OPTIONS,
     SCHEDULE_NEW_PAGE,
@@ -271,18 +268,10 @@ export const NewScheduledSessionPage: React.FC = () => {
                         subtitle="Programa una cita con tu cliente"
                         className={SCHEDULE_NEW_TITLE_WRAP}
                     />
-                    <Button
-                        variant="ghost-primary"
-                        size="sm"
-                        className={SCHEDULE_NEW_BACK_BUTTON}
+                    <PlatformHeaderBackButton
                         onClick={() => navigate("/dashboard/scheduling")}
-                    >
-                        <ArrowLeft
-                            className={cn(SCHEDULE_NEW_ICON_BACK_GAP, SCHEDULE_NEW_ICON_SM)}
-                            aria-hidden
-                        />
-                        Volver al calendario
-                    </Button>
+                        label="Volver al calendario"
+                    />
                 </div>
 
                 <article className={SCHEDULE_NEW_SHELL}>

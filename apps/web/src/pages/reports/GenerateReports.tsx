@@ -4,7 +4,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
@@ -20,7 +20,6 @@ import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import type { ReportFormData, ReportFormat, ReportType } from "@nexia/shared/types/reports";
 import { REPORT_FORMAT, REPORT_TYPE } from "@nexia/shared/types/reports";
 import {
-    GENERATE_REPORTS_BACK_BUTTON,
     GENERATE_REPORTS_BACK_LABEL,
     GENERATE_REPORTS_CANCEL,
     GENERATE_REPORTS_CLIENT_LABEL,
@@ -37,8 +36,6 @@ import {
     GENERATE_REPORTS_FORM_DIVIDER,
     GENERATE_REPORTS_GLOW,
     GENERATE_REPORTS_HEADER,
-    GENERATE_REPORTS_ICON_BACK_GAP,
-    GENERATE_REPORTS_ICON_SM,
     GENERATE_REPORTS_PAGE,
     GENERATE_REPORTS_PAGE_SUBTITLE,
     GENERATE_REPORTS_PAGE_TITLE,
@@ -131,19 +128,10 @@ export const GenerateReports: React.FC = () => {
                     subtitle={GENERATE_REPORTS_PAGE_SUBTITLE}
                     className={GENERATE_REPORTS_TITLE_WRAP}
                 />
-                <Button
-                    type="button"
-                    variant="ghost-primary"
-                    size="sm"
-                    className={GENERATE_REPORTS_BACK_BUTTON}
+                <PlatformHeaderBackButton
                     onClick={() => navigate("/dashboard")}
-                >
-                    <ArrowLeft
-                        className={cn(GENERATE_REPORTS_ICON_BACK_GAP, GENERATE_REPORTS_ICON_SM)}
-                        aria-hidden
-                    />
-                    {GENERATE_REPORTS_BACK_LABEL}
-                </Button>
+                    label={GENERATE_REPORTS_BACK_LABEL}
+                />
             </div>
 
             <form onSubmit={handleSubmit}>

@@ -4,8 +4,8 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
 import { Alert } from "@/components/ui/feedback";
 import {
@@ -25,7 +25,6 @@ import {
     CREATE_TEMPLATE_PAGE_TITLE,
     CREATE_TEMPLATE_SECTION,
     CREATE_TEMPLATE_SUBMIT,
-    SESSION_PROG_FORM_BACK_BUTTON,
     SESSION_PROG_FORM_BACK_LABEL,
     SESSION_PROG_FORM_BODY,
     SESSION_PROG_FORM_CANCEL,
@@ -35,8 +34,6 @@ import {
     SESSION_PROG_FORM_GLOW,
     SESSION_PROG_FORM_GRID_2,
     SESSION_PROG_FORM_HEADER,
-    SESSION_PROG_FORM_ICON_BACK_GAP,
-    SESSION_PROG_FORM_ICON_SM,
     SESSION_PROG_FORM_INFO_PANEL,
     SESSION_PROG_FORM_PAGE,
     SESSION_PROG_FORM_SECTION,
@@ -124,19 +121,7 @@ export const CreateTemplate: React.FC = () => {
                     subtitle={CREATE_TEMPLATE_PAGE_SUBTITLE}
                     className={SESSION_PROG_FORM_TITLE_WRAP}
                 />
-                <Button
-                    type="button"
-                    variant="ghost-primary"
-                    size="sm"
-                    className={SESSION_PROG_FORM_BACK_BUTTON}
-                    onClick={goBack}
-                >
-                    <ArrowLeft
-                        className={cn(SESSION_PROG_FORM_ICON_BACK_GAP, SESSION_PROG_FORM_ICON_SM)}
-                        aria-hidden
-                    />
-                    {SESSION_PROG_FORM_BACK_LABEL}
-                </Button>
+                <PlatformHeaderBackButton onClick={goBack} label={SESSION_PROG_FORM_BACK_LABEL} />
             </div>
 
             <form id="create-template-form" onSubmit={handleSubmit}>

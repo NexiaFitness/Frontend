@@ -8,7 +8,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import {
     TEST_CATEGORIES,
     useCreateTestEvaluation,
@@ -34,7 +34,6 @@ import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
 import {
-    CREATE_EVAL_BACK_BUTTON,
     CREATE_EVAL_BACK_LABEL,
     CREATE_EVAL_CATEGORY_LABEL,
     CREATE_EVAL_CREATE_TOGGLE,
@@ -46,8 +45,6 @@ import {
     CREATE_EVAL_FORM_CARD,
     CREATE_EVAL_GLOW,
     CREATE_EVAL_HEADER,
-    CREATE_EVAL_ICON_BACK_GAP,
-    CREATE_EVAL_ICON_SM,
     CREATE_EVAL_LOADING_ROW,
     CREATE_EVAL_PAGE,
     CREATE_EVAL_TITLE_WRAP,
@@ -331,19 +328,10 @@ export const CreateTestEvaluation: React.FC = () => {
                     subtitle={pageSubtitle}
                     className={CREATE_EVAL_TITLE_WRAP}
                 />
-                <Button
-                    type="button"
-                    variant="ghost-primary"
-                    size="sm"
-                    className={CREATE_EVAL_BACK_BUTTON}
+                <PlatformHeaderBackButton
                     onClick={() => navigate(returnPath)}
-                >
-                    <ArrowLeft
-                        className={cn(CREATE_EVAL_ICON_BACK_GAP, CREATE_EVAL_ICON_SM)}
-                        aria-hidden
-                    />
-                    {CREATE_EVAL_BACK_LABEL}
-                </Button>
+                    label={CREATE_EVAL_BACK_LABEL}
+                />
             </div>
 
             {isPageLoading ? (

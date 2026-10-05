@@ -73,7 +73,7 @@ export const SESSION_REVIEW_CLIENT_META = cn(
 
 export const SESSION_REVIEW_HEADER_ACTIONS = cn(
     "flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end md:w-auto md:shrink-0",
-    "[&_button]:w-full sm:[&_button]:w-auto",
+    "[&_button]:w-full md:[&_button]:w-auto",
 );
 
 export function sessionReviewStatusBadgeClass(status: string): string {

@@ -8,7 +8,8 @@
  */
 
 import React, { useCallback, useEffect, useMemo } from "react";
-import { ArrowLeft, GripVertical, Plus, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
@@ -33,7 +34,6 @@ import type { CatalogMuscleRole, CatalogPatternRole } from "@nexia/shared/types/
 import {
     ADMIN_CATALOG_ADD_ROW,
     ADMIN_CATALOG_ALERT_SPACING,
-    ADMIN_CATALOG_BACK_BUTTON,
     ADMIN_CATALOG_CHIP_LIST,
     ADMIN_CATALOG_COPY,
     ADMIN_CATALOG_FIELD_GROW,
@@ -380,16 +380,11 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                 {ADMIN_CATALOG_COPY.deactivate}
                             </Button>
                         ) : null}
-                        <Button
-                            type="button"
-                            variant="ghost-primary"
-                            size="sm"
-                            className={ADMIN_CATALOG_BACK_BUTTON}
+                        <PlatformHeaderBackButton
                             onClick={handleCancel}
-                        >
-                            <ArrowLeft className="h-4 w-4" aria-hidden />
-                            {ADMIN_CATALOG_COPY.backToList}
-                        </Button>
+                            label={ADMIN_CATALOG_COPY.backToList}
+                            className="md:w-auto"
+                        />
                     </div>
                 </div>
 

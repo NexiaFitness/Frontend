@@ -5,7 +5,8 @@
 import React, { useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
-import { ArrowLeft, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
 import { Alert, EmptyState } from "@/components/ui/feedback";
@@ -28,7 +29,6 @@ import {
 } from "@/components/admin/taxonomies/AdminTaxonomyImpactModal";
 import {
     ADMIN_TAX_ALERT_SPACING,
-    ADMIN_TAX_BACK_BUTTON,
     ADMIN_TAX_CARD_ACTIONS,
     ADMIN_TAX_CARD_ITEM,
     ADMIN_TAX_CARD_LIST,
@@ -146,16 +146,10 @@ export const AdminTaxonomiesPage: React.FC = () => {
                         <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
                     </div>
                     <div className={ADMIN_TAX_HEADER_ACTIONS}>
-                        <Button
-                            type="button"
-                            variant="ghost-primary"
-                            size="sm"
-                            className={ADMIN_TAX_BACK_BUTTON}
+                        <PlatformHeaderBackButton
                             onClick={() => goBack()}
-                        >
-                            <ArrowLeft className="h-4 w-4" aria-hidden />
-                            {ADMIN_TAX_COPY.backToAdmin}
-                        </Button>
+                            label={ADMIN_TAX_COPY.backToAdmin}
+                        />
                         <Button type="button" variant="primary" size="sm" onClick={openCreate}>
                             <Plus className="h-4 w-4" aria-hidden />
                             {ADMIN_TAX_COPY.newItem}

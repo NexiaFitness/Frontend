@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/feedback";
@@ -13,7 +13,6 @@ import { PLATFORM_PAGE_SHELL } from "@/components/ui/surface/platformPremiumPres
 import { useAdminOrganizationDetail } from "@/components/admin/organizations/useAdminOrganizationDetail";
 import {
     ADMIN_ORGS_ALERT_SPACING,
-    ADMIN_ORGS_BACK_BUTTON,
     ADMIN_ORGS_COPY,
     ADMIN_ORGS_DETAIL_CARD,
     ADMIN_ORGS_DETAIL_CARD_TITLE,
@@ -57,16 +56,10 @@ export const AdminOrganizationsDetailPage: React.FC = () => {
                         ) : null}
                     </div>
                     <div className={ADMIN_ORGS_HEADER_ACTIONS}>
-                        <Button
-                            type="button"
-                            variant="ghost-primary"
-                            size="sm"
-                            className={ADMIN_ORGS_BACK_BUTTON}
+                        <PlatformHeaderBackButton
                             onClick={() => detail.backToList()}
-                        >
-                            <ArrowLeft className="h-4 w-4" aria-hidden />
-                            {ADMIN_ORGS_COPY.backToList}
-                        </Button>
+                            label={ADMIN_ORGS_COPY.backToList}
+                        />
                     </div>
                 </div>
 

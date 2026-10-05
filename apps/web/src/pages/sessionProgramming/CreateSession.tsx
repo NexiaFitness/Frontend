@@ -80,13 +80,13 @@ import type { ConstructorRow } from "@/components/sessionProgramming/constructor
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
 import { SaveAsTemplateModal } from "@/components/sessionProgramming/SaveAsTemplateModal";
-import { ArrowLeft, ClipboardList } from "lucide-react";
+import { ClipboardList } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { BlockLevelMeter } from "@/components/trainingPlans/periodization/BlockLevelMeter";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import {
-    SESSION_PROGRAMMING_BACK_BUTTON,
     SESSION_PROGRAMMING_CLIENT_BANNER,
     SESSION_PROGRAMMING_CLIENT_BANNER_SUBTITLE,
     SESSION_PROGRAMMING_CLIENT_BANNER_TEXT,
@@ -826,15 +826,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 <div className={SESSION_PROGRAMMING_GLOW} aria-hidden />
                 <div className={SESSION_PROGRAMMING_STACK}>
                 <header className={SESSION_PROGRAMMING_HEADER}>
-                    <Button
-                        variant="ghost-primary"
-                        size="sm"
-                        className={SESSION_PROGRAMMING_BACK_BUTTON}
-                        onClick={handleGoBack}
-                    >
-                        <ArrowLeft className="h-4 w-4" aria-hidden />
-                        Volver
-                    </Button>
+                    <PlatformHeaderBackButton onClick={handleGoBack} />
                 </header>
 
                 {clientPlanMismatch ? (

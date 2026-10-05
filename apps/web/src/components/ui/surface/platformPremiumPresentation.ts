@@ -52,20 +52,25 @@ export const PLATFORM_PAGE_BREADCRUMB = "mb-4";
 export { NEXIA_PORTAL_GREETING_H1 as PLATFORM_PAGE_TITLE_H1 } from "@/components/athlete/account/athleteSettingsPresentation";
 
 /**
- * «Volver» en cabeceras / ScreenState: outline en móvil; ghost-primary en lg+.
- * Usar con `Button variant="outline-primary"` (o enlace tipográfico atleta).
+ * «Volver» en cabeceras / ScreenState: outline en móvil; ghost-primary en md+.
+ * Usar con `Button variant="outline-primary"` + `PlatformHeaderBackButton`.
  */
 export const PLATFORM_BACK_OUTLINE_MOBILE = cn(
-    "border border-primary/30 bg-primary/20 text-primary",
+    "border-primary/30 bg-primary/20 text-primary",
     "hover:border-primary/50 hover:bg-primary/30",
-    "md:border-transparent md:bg-transparent md:hover:bg-primary/10"
+    "md:border-transparent md:bg-transparent md:text-primary md:shadow-none",
+    "md:hover:border-transparent md:hover:bg-primary/10"
 );
 
-/** Cabecera Volver: layout + outline móvil / tipográfico lg+. */
-export const PLATFORM_BACK_BUTTON = cn(
-    "shrink-0 self-end sm:self-start",
+/** Cabecera «Volver»: ancho completo centrado en móvil; ghost a la derecha desde md. */
+export const PLATFORM_HEADER_BACK_BUTTON = cn(
+    "min-h-touch-athlete w-full justify-center",
+    "md:min-h-0 md:h-9 md:w-auto md:shrink-0 md:self-end md:justify-center",
     PLATFORM_BACK_OUTLINE_MOBILE
 );
+
+/** @deprecated Alias — preferir `PLATFORM_HEADER_BACK_BUTTON` o `PlatformHeaderBackButton`. */
+export const PLATFORM_BACK_BUTTON = PLATFORM_HEADER_BACK_BUTTON;
 
 /** Etiquetas de campo / sección (uppercase metadata). */
 export const PLATFORM_SECTION_LABEL =

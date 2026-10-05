@@ -4,7 +4,8 @@
 
 import React from "react";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
 import { Alert, EmptyState } from "@/components/ui/feedback";
@@ -16,7 +17,6 @@ import { PLATFORM_PAGE_SHELL } from "@/components/ui/surface/platformPremiumPres
 import { useAdminOrganizationsList } from "@/components/admin/organizations/useAdminOrganizationsList";
 import {
     ADMIN_ORGS_ALERT_SPACING,
-    ADMIN_ORGS_BACK_BUTTON,
     ADMIN_ORGS_CARD_ITEM,
     ADMIN_ORGS_CARD_LIST,
     ADMIN_ORGS_CARD_META,
@@ -65,16 +65,10 @@ export const AdminOrganizationsListPage: React.FC = () => {
                         </p>
                     </div>
                     <div className={ADMIN_ORGS_HEADER_ACTIONS}>
-                        <Button
-                            type="button"
-                            variant="ghost-primary"
-                            size="sm"
-                            className={ADMIN_ORGS_BACK_BUTTON}
+                        <PlatformHeaderBackButton
                             onClick={() => goBack()}
-                        >
-                            <ArrowLeft className="h-4 w-4" aria-hidden />
-                            {ADMIN_ORGS_COPY.backToAdmin}
-                        </Button>
+                            label={ADMIN_ORGS_COPY.backToAdmin}
+                        />
                     </div>
                 </div>
 

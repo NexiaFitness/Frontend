@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
 import {
@@ -36,7 +36,6 @@ import {
     normalizeExerciseLoadType,
 } from "@nexia/shared/types/exerciseLoadType";
 import {
-    EXERCISE_FORM_BACK_BUTTON,
     EXERCISE_FORM_BACK_LABEL,
     EXERCISE_FORM_BODY,
     EXERCISE_FORM_CANCEL,
@@ -50,8 +49,6 @@ import {
     EXERCISE_FORM_GRID_2,
     EXERCISE_FORM_GRID_3,
     EXERCISE_FORM_HEADER,
-    EXERCISE_FORM_ICON_BACK_GAP,
-    EXERCISE_FORM_ICON_SM,
     EXERCISE_FORM_ID_LABEL,
     EXERCISE_FORM_INSTRUCTIONS_LABEL,
     EXERCISE_FORM_LEVEL_LABEL,
@@ -234,19 +231,11 @@ export const ExerciseForm: React.FC = () => {
         return (
             <div className="px-4 lg:px-8">
                 <Alert variant="error">Ejercicio no encontrado</Alert>
-                <Button
-                    type="button"
-                    variant="ghost-primary"
-                    size="sm"
-                    className={cn("mt-4", EXERCISE_FORM_BACK_BUTTON)}
+                <PlatformHeaderBackButton
+                    className="mt-4"
                     onClick={() => navigate("/dashboard/exercises")}
-                >
-                    <ArrowLeft
-                        className={cn(EXERCISE_FORM_ICON_BACK_GAP, EXERCISE_FORM_ICON_SM)}
-                        aria-hidden
-                    />
-                    {EXERCISE_FORM_BACK_LABEL}
-                </Button>
+                    label={EXERCISE_FORM_BACK_LABEL}
+                />
             </div>
         );
     }
@@ -267,19 +256,7 @@ export const ExerciseForm: React.FC = () => {
                     }
                     className={EXERCISE_FORM_TITLE_WRAP}
                 />
-                <Button
-                    type="button"
-                    variant="ghost-primary"
-                    size="sm"
-                    className={EXERCISE_FORM_BACK_BUTTON}
-                    onClick={goBack}
-                >
-                    <ArrowLeft
-                        className={cn(EXERCISE_FORM_ICON_BACK_GAP, EXERCISE_FORM_ICON_SM)}
-                        aria-hidden
-                    />
-                    {EXERCISE_FORM_BACK_LABEL}
-                </Button>
+                <PlatformHeaderBackButton onClick={goBack} label={EXERCISE_FORM_BACK_LABEL} />
             </div>
 
             <form id="exercise-form" onSubmit={handleSubmit}>

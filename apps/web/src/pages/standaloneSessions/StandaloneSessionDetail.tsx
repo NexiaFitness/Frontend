@@ -12,8 +12,27 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Calendar, ChevronRight, Clock, Timer } from "lucide-react";
+import { Calendar, ChevronRight, Clock, Timer } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
+import {
+    SESSION_DETAIL_AVATAR,
+    SESSION_DETAIL_AVATAR_INNER,
+    SESSION_DETAIL_BADGE_ROW,
+    SESSION_DETAIL_BODY,
+    SESSION_DETAIL_BREADCRUMB,
+    SESSION_DETAIL_BREADCRUMB_CURRENT,
+    SESSION_DETAIL_BREADCRUMB_LINK,
+    SESSION_DETAIL_CLIENT,
+    SESSION_DETAIL_HEADER,
+    SESSION_DETAIL_MOBILE_BLOCK,
+    SESSION_DETAIL_IDENTITY,
+    SESSION_DETAIL_META,
+    SESSION_DETAIL_META_ITEM,
+    SESSION_DETAIL_TITLE,
+    SESSION_DETAIL_TITLE_GROUP,
+    SESSION_DETAIL_TOOLBAR,
+} from "@/components/sessionProgramming/detail/sessionDetailPresentation";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -235,74 +254,71 @@ export const StandaloneSessionDetail: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <button
-                    type="button"
-                    className="hover:text-foreground"
-                    onClick={goBack}
-                >
+            <div className={SESSION_DETAIL_MOBILE_BLOCK}>
+            <nav className={SESSION_DETAIL_BREADCRUMB} aria-label="Ruta">
+                <button type="button" className={SESSION_DETAIL_BREADCRUMB_LINK} onClick={goBack}>
                     {backTarget?.includes("/clients/") && !backTarget.includes("/sessions/new")
                         ? "Cliente"
                         : "Sesiones"}
                 </button>
-                <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-                <span className="truncate font-medium text-foreground">{session.session_name}</span>
-            </div>
+                <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className={SESSION_DETAIL_BREADCRUMB_CURRENT}>{session.session_name}</span>
+            </nav>
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-start gap-4">
-                    <span className="relative flex h-14 w-14 shrink-0 overflow-hidden rounded-full">
-                        <span className="flex h-full w-full items-center justify-center rounded-full bg-success/20 text-lg font-bold text-success">
+            <div className={SESSION_DETAIL_HEADER}>
+                <div className={SESSION_DETAIL_IDENTITY}>
+                    <span className={SESSION_DETAIL_AVATAR}>
+                        <span className={SESSION_DETAIL_AVATAR_INNER}>
                             {getInitials(clientName)}
                         </span>
                     </span>
-                    <div>
-                        <div className="flex flex-wrap items-center gap-3">
-                            <h1 className="text-xl font-bold">{session.session_name}</h1>
-                            <Badge
-                                className={cn(
-                                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-0",
-                                    statusStyle
-                                )}
-                            >
-                                {statusLabel}
-                            </Badge>
-                            <Badge
-                                className={cn(
-                                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-0",
-                                    typeStyle
-                                )}
-                            >
-                                {typeLabel}
-                            </Badge>
-                            <Badge className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-0 bg-muted text-muted-foreground">
-                                Sesion libre
-                            </Badge>
+                    <div className={SESSION_DETAIL_BODY}>
+                        <div className={SESSION_DETAIL_TITLE_GROUP}>
+                            <h1 className={SESSION_DETAIL_TITLE}>{session.session_name}</h1>
+                            <div className={SESSION_DETAIL_BADGE_ROW}>
+                                <Badge
+                                    className={cn(
+                                        "inline-flex items-center rounded-full border-0 px-2.5 py-0.5 text-xs font-semibold",
+                                        statusStyle
+                                    )}
+                                >
+                                    {statusLabel}
+                                </Badge>
+                                <Badge
+                                    className={cn(
+                                        "inline-flex items-center rounded-full border-0 px-2.5 py-0.5 text-xs font-semibold",
+                                        typeStyle
+                                    )}
+                                >
+                                    {typeLabel}
+                                </Badge>
+                                <Badge className="inline-flex items-center rounded-full border-0 bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                                    Sesion libre
+                                </Badge>
+                            </div>
                         </div>
-                        <p className="mt-1 text-sm text-muted-foreground">{clientName}</p>
-                        <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1.5">
-                                <Calendar className="h-3.5 w-3.5" aria-hidden />
+                        <p className={SESSION_DETAIL_CLIENT}>{clientName}</p>
+                        <div className={SESSION_DETAIL_META}>
+                            <span className={SESSION_DETAIL_META_ITEM}>
+                                <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
                                 {formatLongDate(session.session_date)}
                             </span>
-                            <span className="flex items-center gap-1.5">
-                                <Clock className="h-3.5 w-3.5" aria-hidden />
-                                --
+                            <span className={SESSION_DETAIL_META_ITEM}>
+                                <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                —
                             </span>
-                            <span className="flex items-center gap-1.5">
-                                <Timer className="h-3.5 w-3.5" aria-hidden />
+                            <span className={SESSION_DETAIL_META_ITEM}>
+                                <Timer className="h-3.5 w-3.5 shrink-0" aria-hidden />
                                 {session.planned_duration ?? 0} min
                             </span>
                         </div>
                     </div>
                 </div>
-                <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    <Button variant="outline" onClick={goBack}>
-                        <ArrowLeft className="h-4 w-4" aria-hidden />
-                        Volver
-                    </Button>
+                <div className={SESSION_DETAIL_TOOLBAR}>
+                    <PlatformHeaderBackButton onClick={goBack} />
                     <Button
                         variant="outline-primary"
+                        className="min-h-touch-athlete w-full md:min-h-0 md:w-auto"
                         onClick={() =>
                             navigate(`/dashboard/standalone-sessions/${session.id}/edit`, {
                                 state: location.state,
@@ -334,6 +350,7 @@ export const StandaloneSessionDetail: React.FC = () => {
                         </Button>
                     ) : null}
                 </div>
+            </div>
             </div>
 
             {session.status === "completed" && (

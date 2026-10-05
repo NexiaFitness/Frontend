@@ -5,7 +5,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { ArrowLeft } from "lucide-react";
+
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
@@ -29,7 +30,6 @@ import {
     CREATE_SESSION_FROM_TEMPLATE_PAGE_TITLE,
     CREATE_SESSION_FROM_TEMPLATE_SECTION,
     CREATE_SESSION_FROM_TEMPLATE_SUBMIT,
-    SESSION_PROG_FORM_BACK_BUTTON,
     SESSION_PROG_FORM_BACK_LABEL,
     SESSION_PROG_FORM_BODY,
     SESSION_PROG_FORM_CANCEL,
@@ -38,8 +38,6 @@ import {
     SESSION_PROG_FORM_FOOTER_BTN,
     SESSION_PROG_FORM_GLOW,
     SESSION_PROG_FORM_HEADER,
-    SESSION_PROG_FORM_ICON_BACK_GAP,
-    SESSION_PROG_FORM_ICON_SM,
     SESSION_PROG_FORM_PAGE,
     SESSION_PROG_FORM_SECTION,
     SESSION_PROG_FORM_SECTION_TITLE,
@@ -254,19 +252,10 @@ export const CreateSessionFromTemplate: React.FC = () => {
                     subtitle={pageSubtitle}
                     className={SESSION_PROG_FORM_TITLE_WRAP}
                 />
-                <Button
-                    type="button"
-                    variant="ghost-primary"
-                    size="sm"
-                    className={SESSION_PROG_FORM_BACK_BUTTON}
+                <PlatformHeaderBackButton
                     onClick={() => navigate("/dashboard")}
-                >
-                    <ArrowLeft
-                        className={cn(SESSION_PROG_FORM_ICON_BACK_GAP, SESSION_PROG_FORM_ICON_SM)}
-                        aria-hidden
-                    />
-                    {SESSION_PROG_FORM_BACK_LABEL}
-                </Button>
+                    label={SESSION_PROG_FORM_BACK_LABEL}
+                />
             </div>
 
             <article className={cn(SESSION_PROG_FORM_CARD, "mb-6")}>

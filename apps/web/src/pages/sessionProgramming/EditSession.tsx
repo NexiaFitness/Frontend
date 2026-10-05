@@ -95,13 +95,13 @@ import {
     SET_TYPE,
     type SessionBlockExercise,
 } from "@nexia/shared/types/sessionProgramming";
-import { ArrowLeft, ChevronRight, ClipboardList } from "lucide-react";
+import { ChevronRight, ClipboardList } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { buildReviewNavigationState } from "@/lib/sessionDetailNavigation";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { BlockLevelMeter } from "@/components/trainingPlans/periodization/BlockLevelMeter";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
-    SESSION_PROGRAMMING_BACK_BUTTON,
     SESSION_PROGRAMMING_CLIENT_BANNER,
     SESSION_PROGRAMMING_CLIENT_BANNER_SUBTITLE,
     SESSION_PROGRAMMING_CLIENT_BANNER_TEXT,
@@ -777,15 +777,7 @@ export const EditSession: React.FC = () => {
                 <div className={SESSION_PROGRAMMING_GLOW} aria-hidden />
                 <div className={SESSION_PROGRAMMING_STACK}>
                     <header className={SESSION_PROGRAMMING_HEADER}>
-                        <Button
-                            variant="ghost-primary"
-                            size="sm"
-                            className={SESSION_PROGRAMMING_BACK_BUTTON}
-                            onClick={() => navigate(-1)}
-                        >
-                            <ArrowLeft className="h-4 w-4" aria-hidden />
-                            Volver
-                        </Button>
+                        <PlatformHeaderBackButton onClick={() => navigate(-1)} />
                     </header>
 
                     {session.client_id && client ? (

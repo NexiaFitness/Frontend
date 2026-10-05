@@ -6,7 +6,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 
 import {
     useGetTemplateProgramSessionQuery,
@@ -259,10 +259,7 @@ export const EditTemplateSessionPage: React.FC = () => {
         <div className={cn("space-y-6 px-4 py-6 lg:px-8", DASHBOARD_FIXED_FOOTER_PADDING_CLASS)}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <PageTitle title="Editar sesión de plantilla" subtitle={subtitle} />
-                <Button variant="outline" size="sm" onClick={handleBack} className="shrink-0">
-                    <ArrowLeft className="h-4 w-4" aria-hidden />
-                    Volver al editor
-                </Button>
+                <PlatformHeaderBackButton onClick={handleBack} label="Volver al editor" />
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">

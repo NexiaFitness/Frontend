@@ -5,8 +5,8 @@
 import React, { useMemo } from "react";
 import { ScrollText } from "lucide-react";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Alert, EmptyState } from "@/components/ui/feedback";
 import { PaginationBar } from "@/components/ui/pagination";
 import { PageTitle } from "@/components/dashboard/shared";
@@ -17,7 +17,6 @@ import { AdminAuditFilters } from "@/components/admin/audit/AdminAuditFilters";
 import { AdminAuditLogRow } from "@/components/admin/audit/AdminAuditLogRow";
 import {
     ADMIN_AUDIT_ALERT_SPACING,
-    ADMIN_AUDIT_BACK_BUTTON,
     ADMIN_AUDIT_CARD_LIST,
     ADMIN_AUDIT_COPY,
     ADMIN_AUDIT_GLOW,
@@ -106,16 +105,10 @@ export const AdminAuditLogPage: React.FC = () => {
                         <p className="mt-1 text-xs text-muted-foreground">{ADMIN_AUDIT_COPY.hint}</p>
                     </div>
                     <div className={ADMIN_AUDIT_HEADER_ACTIONS}>
-                        <Button
-                            type="button"
-                            variant="ghost-primary"
-                            size="sm"
-                            className={ADMIN_AUDIT_BACK_BUTTON}
+                        <PlatformHeaderBackButton
                             onClick={() => goBack()}
-                        >
-                            <ArrowLeft className="h-4 w-4" aria-hidden />
-                            {ADMIN_AUDIT_COPY.backToAdmin}
-                        </Button>
+                            label={ADMIN_AUDIT_COPY.backToAdmin}
+                        />
                     </div>
                 </div>
 

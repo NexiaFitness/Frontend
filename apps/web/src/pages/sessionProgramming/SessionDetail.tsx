@@ -9,7 +9,6 @@
 import React, { useCallback, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
-    ArrowLeft,
     Calendar,
     CheckCircle,
     ChevronRight,
@@ -49,6 +48,26 @@ import {
     SessionExecutionSummary,
     SessionTimedAthleteResultsPanel,
 } from "@/components/sessionProgramming/detail";
+import {
+    SESSION_DETAIL_AVATAR,
+    SESSION_DETAIL_AVATAR_INNER,
+    SESSION_DETAIL_BADGE_ROW,
+    SESSION_DETAIL_BODY,
+    SESSION_DETAIL_BREADCRUMB,
+    SESSION_DETAIL_BREADCRUMB_CURRENT,
+    SESSION_DETAIL_BREADCRUMB_LINK,
+    SESSION_DETAIL_CLIENT,
+    SESSION_DETAIL_MOBILE_BLOCK,
+    SESSION_DETAIL_HEADER,
+    SESSION_DETAIL_IDENTITY,
+    SESSION_DETAIL_META,
+    SESSION_DETAIL_META_ITEM,
+    SESSION_DETAIL_PLAN,
+    SESSION_DETAIL_PLAN_EMPHASIS,
+    SESSION_DETAIL_TITLE,
+    SESSION_DETAIL_TITLE_GROUP,
+} from "@/components/sessionProgramming/detail/sessionDetailPresentation";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import {
     navigateDashboardBack,
     readSafeReturnTo,
@@ -232,8 +251,7 @@ export const SessionDetail: React.FC = () => {
     const typeVariant: BadgeVariant = TYPE_BADGE_VARIANT[sessionTypeKey] ?? "subtle-secondary";
     const clientName = client ? `${client.nombre} ${client.apellidos}` : "Cliente";
 
-    const showAthleteRegistrationPanels = Boolean(session.client_id);
-    const showPrescriptionSectionLabel =
+    const showExecutionSummary =
         session.status === "completed" || session.status === "in_progress";
 
     const embeddedCoherence = session.coherence ?? null;
@@ -241,59 +259,57 @@ export const SessionDetail: React.FC = () => {
 
     return (
         <div className={cn("space-y-6", DASHBOARD_FIXED_FOOTER_PADDING_CLASS)}>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <button
-                    type="button"
-                    className="hover:text-foreground"
-                    onClick={goBack}
-                >
+            <div className={SESSION_DETAIL_MOBILE_BLOCK}>
+            <nav className={SESSION_DETAIL_BREADCRUMB} aria-label="Ruta">
+                <button type="button" className={SESSION_DETAIL_BREADCRUMB_LINK} onClick={goBack}>
                     {backTarget?.includes("/clients/") && !backTarget.includes("/sessions/new")
                         ? "Cliente"
                         : "Sesiones"}
                 </button>
-                <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-                <span className="truncate font-medium text-foreground">{session.session_name}</span>
-            </div>
+                <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className={SESSION_DETAIL_BREADCRUMB_CURRENT}>{session.session_name}</span>
+            </nav>
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-start gap-4 min-w-0 flex-1">
-                    <span className="relative flex h-14 w-14 shrink-0 overflow-hidden rounded-full">
-                        <span className="flex h-full w-full items-center justify-center rounded-full bg-success/20 text-lg font-bold text-success">
+            <div className={SESSION_DETAIL_HEADER}>
+                <div className={SESSION_DETAIL_IDENTITY}>
+                    <span className={SESSION_DETAIL_AVATAR}>
+                        <span className={SESSION_DETAIL_AVATAR_INNER}>
                             {getInitials(clientName)}
                         </span>
                     </span>
-                    <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-3">
-                            <h1 className="text-xl font-bold">{session.session_name}</h1>
-                            <Badge variant={statusVariant}>{statusLabel}</Badge>
-                            <Badge variant={typeVariant}>{typeLabel}</Badge>
+                    <div className={SESSION_DETAIL_BODY}>
+                        <div className={SESSION_DETAIL_TITLE_GROUP}>
+                            <h1 className={SESSION_DETAIL_TITLE}>{session.session_name}</h1>
+                            <div className={SESSION_DETAIL_BADGE_ROW}>
+                                <Badge variant={statusVariant}>{statusLabel}</Badge>
+                                <Badge variant={typeVariant}>{typeLabel}</Badge>
+                            </div>
                         </div>
-                        <p className="mt-1 text-sm text-muted-foreground">{clientName}</p>
+                        <p className={SESSION_DETAIL_CLIENT}>{clientName}</p>
                         {session.training_plan_id && plan?.name ? (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                Plan: <span className="font-medium text-foreground">{plan.name}</span>
+                            <p className={SESSION_DETAIL_PLAN}>
+                                Plan:{" "}
+                                <span className={SESSION_DETAIL_PLAN_EMPHASIS}>{plan.name}</span>
                             </p>
                         ) : null}
-                        <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1.5">
-                                <Calendar className="h-3.5 w-3.5" aria-hidden />
+                        <div className={SESSION_DETAIL_META}>
+                            <span className={SESSION_DETAIL_META_ITEM}>
+                                <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
                                 {formatLongDate(session.session_date)}
                             </span>
-                            <span className="flex items-center gap-1.5">
-                                <Clock className="h-3.5 w-3.5" aria-hidden />
+                            <span className={SESSION_DETAIL_META_ITEM}>
+                                <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
                                 {session.session_time ? session.session_time.slice(0, 5) : "—"}
                             </span>
-                            <span className="flex items-center gap-1.5">
-                                <Timer className="h-3.5 w-3.5" aria-hidden />
+                            <span className={SESSION_DETAIL_META_ITEM}>
+                                <Timer className="h-3.5 w-3.5 shrink-0" aria-hidden />
                                 {session.planned_duration ?? 0} min
                             </span>
                         </div>
                     </div>
                 </div>
-                <Button variant="ghost-primary" size="sm" onClick={goBack} className="shrink-0">
-                    <ArrowLeft className="h-4 w-4" aria-hidden />
-                    Volver
-                </Button>
+                <PlatformHeaderBackButton onClick={goBack} />
+            </div>
             </div>
 
             <SessionContextStrip
@@ -322,11 +338,11 @@ export const SessionDetail: React.FC = () => {
                 />
             ) : null}
 
-            {showAthleteRegistrationPanels ? (
+            {showExecutionSummary && session.client_id ? (
                 <SessionExecutionSummary
                     sessionId={session.id}
-                    clientId={session.client_id!}
-                    enabled={showAthleteRegistrationPanels}
+                    clientId={session.client_id}
+                    enabled={showExecutionSummary}
                 />
             ) : null}
 
@@ -336,7 +352,7 @@ export const SessionDetail: React.FC = () => {
                         <Dumbbell className="h-4 w-4" aria-hidden />
                     </div>
                     <h2 className="text-lg font-semibold">
-                        {showPrescriptionSectionLabel ? "Prescripción" : "Ejercicios"}
+                        {showExecutionSummary ? "Prescripción" : "Ejercicios"}
                     </h2>
                     <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-semibold text-primary">
                         {sessionStructure.totalExercises}

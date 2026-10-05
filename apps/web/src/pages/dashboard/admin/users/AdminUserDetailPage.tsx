@@ -6,7 +6,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 import { useSelector } from "react-redux";
-import { ArrowLeft } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/feedback";
@@ -31,7 +31,6 @@ import { AdminAuditLogRow } from "@/components/admin/audit/AdminAuditLogRow";
 import {
     ADMIN_USERS_ALERT_SPACING,
     ADMIN_USERS_AUDIT_LIST,
-    ADMIN_USERS_BACK_BUTTON,
     ADMIN_USERS_COPY,
     ADMIN_USERS_DETAIL_ACTIONS,
     ADMIN_USERS_DETAIL_CARD,
@@ -131,16 +130,10 @@ export const AdminUserDetailPage: React.FC = () => {
                                 {ADMIN_SUP_COPY.viewAsSupervisor}
                             </Button>
                         ) : null}
-                        <Button
-                            type="button"
-                            variant="ghost-primary"
-                            size="sm"
-                            className={ADMIN_USERS_BACK_BUTTON}
+                        <PlatformHeaderBackButton
                             onClick={() => goBack()}
-                        >
-                            <ArrowLeft className="h-4 w-4" aria-hidden />
-                            {ADMIN_USERS_COPY.backToUsers}
-                        </Button>
+                            label={ADMIN_USERS_COPY.backToUsers}
+                        />
                     </div>
                 </div>
 

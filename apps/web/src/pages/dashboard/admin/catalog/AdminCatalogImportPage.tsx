@@ -13,7 +13,8 @@
 
 import React from "react";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
-import { ArrowLeft, Download } from "lucide-react";
+import { Download } from "lucide-react";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { FormField } from "@/components/ui/forms";
@@ -23,7 +24,6 @@ import { useAdminCatalogImport } from "@/components/admin/catalog/useAdminCatalo
 import {
     adminCatalogFilterClass,
     ADMIN_CATALOG_ALERT_SPACING,
-    ADMIN_CATALOG_BACK_BUTTON,
     ADMIN_CATALOG_COPY,
     ADMIN_CATALOG_GLOW,
     ADMIN_CATALOG_HEADER_ACTIONS,
@@ -81,16 +81,10 @@ export const AdminCatalogImportPage: React.FC = () => {
                         <PageTitle title={ADMIN_CATALOG_COPY.importTitle} />
                     </div>
                     <div className={ADMIN_CATALOG_HEADER_ACTIONS}>
-                        <Button
-                            type="button"
-                            variant="ghost-primary"
-                            size="sm"
-                            className={ADMIN_CATALOG_BACK_BUTTON}
+                        <PlatformHeaderBackButton
                             onClick={() => goBack()}
-                        >
-                            <ArrowLeft className="h-4 w-4" aria-hidden />
-                            {ADMIN_CATALOG_COPY.importBackToList}
-                        </Button>
+                            label={ADMIN_CATALOG_COPY.importBackToList}
+                        />
                     </div>
                 </div>
 
