@@ -116,7 +116,7 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                         className={ATHLETE_PRIMARY_CTA}
                         onClick={() => void onSave()}
                         isLoading={isSaving}
-                        disabled={isSaving}
+                        disabled={isSaving || !draft}
                     >
                         Guardar bloque
                     </Button>

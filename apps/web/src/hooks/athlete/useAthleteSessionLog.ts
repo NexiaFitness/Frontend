@@ -179,14 +179,20 @@ export function useAthleteSessionLog({
         [activeBlockId, logBlocks]
     );
 
-    const openBlock = useCallback(
-        (block: AthleteSessionLogBlockModel) => {
-            setSaveError(null);
-            setActiveBlockId(block.sessionBlockId);
-            setBlockDraft(buildInitialBlockDraft(block, progress));
-        },
-        [progress]
-    );
+    const openBlock = useCallback((block: AthleteSessionLogBlockModel) => {
+        setSaveError(null);
+        setActiveBlockId(block.sessionBlockId);
+        // No hidratar hasta tener progress BE-1: evita mostrar reps prescritas y pisar guardado.
+        setBlockDraft(null);
+    }, []);
+
+    useEffect(() => {
+        if (!activeBlock || isProgressLoading || !progress) return;
+        setBlockDraft((prev) => {
+            if (prev !== null) return prev;
+            return buildInitialBlockDraft(activeBlock, progress);
+        });
+    }, [activeBlock, isProgressLoading, progress]);
 
     const closeBlock = useCallback(() => {
         setActiveBlockId(null);
@@ -211,7 +217,12 @@ export function useAthleteSessionLog({
     }, [closeBlock]);
 
     const saveActiveBlock = useCallback(async () => {
-        if (!activeBlock || !blockDraft) return;
+        if (!activeBlock) return;
+        if (isProgressLoading || !progress) {
+            setSaveError("Espera a que cargue tu registro guardado antes de guardar.");
+            return;
+        }
+        if (!blockDraft) return;
         if (!registrationEditable) {
             setSaveError(
                 "El plazo para registrar o editar esta sesión ha cerrado (máximo 7 días después)."
@@ -327,6 +338,8 @@ export function useAthleteSessionLog({
         putExerciseNote,
         refreshPendingCount,
         refetchProgress,
+        isProgressLoading,
+        progress,
         registrationEditable,
         sessionId,
     ]);

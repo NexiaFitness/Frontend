@@ -26,6 +26,8 @@ let progressData: {
     steps: [],
 };
 
+let progressIsLoading = false;
+
 const logExecution = vi.fn(() => Promise.resolve("offline" as const));
 const logTimedResult = vi.fn(() => Promise.resolve("offline" as const));
 const finishSession = vi.fn(() => Promise.resolve("offline" as const));
@@ -34,8 +36,8 @@ let isOnline = true;
 
 vi.mock("@nexia/shared/api/athleteApi", () => ({
     useGetAthleteRunProgressQuery: () => ({
-        data: progressData,
-        isLoading: false,
+        data: progressIsLoading ? undefined : progressData,
+        isLoading: progressIsLoading,
         isFetching: false,
         refetch: refetchProgress,
     }),
@@ -117,11 +119,49 @@ describe("useAthleteSessionLog", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         isOnline = true;
+        progressIsLoading = false;
         progressData = {
             pending_count: 1,
             blocks: [{ session_block_id: 10, status: "pending", steps: [] }],
             steps: [],
         };
+    });
+
+    it("no guarda hasta hidratar borrador desde progress (sesión completada)", async () => {
+        progressIsLoading = true;
+        const { result, rerender } = renderHook(
+            () =>
+                useAthleteSessionLog({
+                    sessionId: 99,
+                    view: emptyView,
+                    sessionName: "QA",
+                }),
+            { wrapper }
+        );
+
+        await act(async () => {
+            result.current.openBlock(stubBlock);
+        });
+
+        expect(result.current.blockDraft).toBeNull();
+
+        await act(async () => {
+            await result.current.saveActiveBlock();
+        });
+        expect(postExecution).not.toHaveBeenCalled();
+        expect(result.current.saveError).toMatch(/Espera a que cargue/i);
+
+        progressIsLoading = false;
+        rerender();
+
+        await waitFor(() => {
+            expect(result.current.blockDraft).not.toBeNull();
+        });
+
+        await act(async () => {
+            await result.current.saveActiveBlock();
+        });
+        expect(postExecution).toHaveBeenCalled();
     });
 
     it("forceCompleteSession completa sesión online con bloques pendientes", async () => {

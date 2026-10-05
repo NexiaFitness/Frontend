@@ -243,6 +243,37 @@ function singleSetStep(overrides: Partial<AthleteRunStep> = {}): AthleteRunStep 
     };
 }
 
+describe("buildInitialBlockDraft · reps guardadas vs prescritas", () => {
+    it("prioriza reps de progress sobre defaultReps del step", () => {
+        const step = singleSetStep({ defaultReps: 10 });
+        const block: AthleteSessionLogBlockModel = {
+            sessionBlockId: 199,
+            blockTypeName: "Calentamiento",
+            setType: "straight",
+            status: "registered",
+            expectedStepKeys: [step.stepKey],
+            steps: [step],
+            summaryLine: null,
+            isPendingHighlight: false,
+            hasRegisterableSteps: true,
+        };
+        const p = progress({
+            steps: [
+                {
+                    step_key: step.stepKey,
+                    status: "registered",
+                    kind: "execution",
+                    session_block_id: 199,
+                    reps: 14,
+                    weight_kg: null,
+                },
+            ],
+        });
+        const draft = buildInitialBlockDraft(block, p);
+        expect(draft.singleSets[0]?.reps).toBe(14);
+    });
+});
+
 describe("resolveLogDraftSetWeight (registro al final · carga programada)", () => {
     it("usa plannedWeight cuando defaultWeight es 0 (4453)", () => {
         const step = singleSetStep();
