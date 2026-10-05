@@ -14,6 +14,7 @@ import {
     useGetAthleteRunReferenceQuery,
     usePostAthleteRunExecutionMutation,
     usePostAthleteRunTimedResultMutation,
+    usePutAthleteExerciseNoteMutation,
 } from "@nexia/shared/api/athleteApi";
 import { shouldShowRunSuggestion } from "@nexia/shared/types/athleteRunSuggestion";
 import { hasAthleteRunReferencePoint } from "@nexia/shared/types/athleteRunReference";
@@ -71,7 +72,6 @@ import {
 import type { SlotLogValues } from "@/components/athlete/execution/AthleteMultiSlotLogger";
 import { useAthleteExercisePr } from "@/hooks/athlete/useAthleteExercisePr";
 import { useAthleteRunRestConfirm } from "@/hooks/athlete/useAthleteRunRestConfirm";
-import { usePutAthleteExerciseNoteMutation } from "@nexia/shared/api/athleteApi";
 import { useAthleteBlockTimer } from "@/hooks/athlete/useAthleteBlockTimer";
 import { useAthleteRunWakeLock } from "@/hooks/athlete/useAthleteRunWakeLock";
 import { useAthleteBlockWorkPhase } from "@/hooks/athlete/useAthleteBlockWorkPhase";
@@ -158,7 +158,7 @@ export function useAthleteSessionRun({
             postTimedResult: async (payload: AthleteRunTimedResultCreate) => {
                 await postTimedResult(payload).unwrap();
             },
-            putExerciseNote: async (payload) => {
+            putExerciseNote: async (payload: import("@nexia/shared/utils/athlete/athleteExerciseNoteUtils").AthleteExerciseNoteUpsert) => {
                 await putExerciseNote(payload).unwrap();
             },
         }),
@@ -1082,7 +1082,7 @@ export function useAthleteSessionRun({
 
     useAthleteRunLoggerDefaultEffects({
         currentStepKey,
-        current,
+        current: current ?? null,
         isBatchStep,
         restShowLogger: restFlow.showLogger,
         restPhase: restFlow.phase,

@@ -16,6 +16,7 @@ import { resolveRunLoggerDefaults } from "@nexia/shared/utils/athlete/runReferen
 import { resolveLocalRunReference } from "@nexia/shared/utils/athlete/localRunReferenceUtils";
 import { resolveSeriesWeightAutofillKey } from "@nexia/shared/utils/athlete/athleteLoggingUtils";
 import type { AthleteRunStep } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
+import type { AthleteRunReference } from "@nexia/shared/types/athleteRunReference";
 import type { SlotLogValues } from "@/components/athlete/execution/AthleteMultiSlotLogger";
 export interface UseAthleteRunLoggerDefaultEffectsOptions {
     currentStepKey: string | undefined;
@@ -25,8 +26,8 @@ export interface UseAthleteRunLoggerDefaultEffectsOptions {
     restPhase: string;
     isGroupRound: boolean;
     currentRunStep: AthleteRunStep | undefined;
-    effectiveRunReference: { reference?: { weight_kg?: number | null; rpe?: number | null } | null } | null | undefined;
-    slotReferences: Record<string, { reference?: { weight_kg?: number | null; rpe?: number | null } | null }>;
+    effectiveRunReference: AthleteRunReference | null | undefined;
+    slotReferences: Record<string, Pick<AthleteRunReference, "reference">>;
     localExecutions: LocalSetExecution[];
     touchedWeightStepKeysRef: MutableRefObject<Set<string>>;
     seriesAutofillWeightRef: MutableRefObject<Map<string, number>>;

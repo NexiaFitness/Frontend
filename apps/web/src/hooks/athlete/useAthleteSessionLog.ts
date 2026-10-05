@@ -34,6 +34,7 @@ import {
 } from "@nexia/shared/utils/athlete/athleteSessionLogUtils";
 import { flattenRunStepsToFlatExercises, buildAthleteRunSteps } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
 import { flattenAthleteExercises } from "@nexia/shared/utils/athlete/athleteSessionUtils";
+import type { AthleteExerciseNoteUpsert } from "@nexia/shared/utils/athlete/athleteExerciseNoteUtils";
 
 export interface UseAthleteSessionLogOptions {
     sessionId: number;
@@ -99,7 +100,7 @@ export function useAthleteSessionLog({
             postTimedResult: async (payload: AthleteRunTimedResultCreate) => {
                 await postTimedResult(payload).unwrap();
             },
-            putExerciseNote: async (payload) => {
+            putExerciseNote: async (payload: AthleteExerciseNoteUpsert) => {
                 await putExerciseNote(payload).unwrap();
             },
         }),

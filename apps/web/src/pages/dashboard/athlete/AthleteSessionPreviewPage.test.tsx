@@ -83,6 +83,32 @@ vi.mock("@/hooks/useMediaQuery", () => ({
     useIsAthleteDesktopLayout: () => false,
 }));
 
+vi.mock("@/hooks/athlete/useAthleteSessionLog", () => ({
+    useAthleteSessionLog: () => ({
+        logMode: false,
+        enterLogMode: vi.fn(),
+        exitLogMode: vi.fn(),
+        logBlocks: [],
+        pendingBlockCount: 0,
+        isProgressLoading: false,
+        isOnline: true,
+        syncPendingCount: 0,
+        activeBlock: null,
+        blockDraft: null,
+        setBlockDraft: vi.fn(),
+        openBlock: vi.fn(),
+        closeBlock: vi.fn(),
+        saveActiveBlock: vi.fn(),
+        markBlockNotPerformed: vi.fn(),
+        saveError: null,
+        isSavingBlock: false,
+        registrationEditable: false,
+        forceCompleteSession: vi.fn().mockResolvedValue(true),
+        completeSessionIfReady: vi.fn(),
+        refetchProgress: vi.fn(),
+    }),
+}));
+
 function renderPage() {
     return render(
         <MemoryRouter>

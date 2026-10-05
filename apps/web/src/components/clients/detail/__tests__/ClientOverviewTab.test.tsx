@@ -311,7 +311,14 @@ describe("ClientOverviewTab", () => {
         const user = userEvent.setup();
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-        const link = await screen.findByRole("button", { name: /ver ejecución/i });
+        await waitFor(
+            () => {
+                expect(screen.getByTestId("client-overview-last-session")).toBeInTheDocument();
+            },
+            { timeout: 5000 },
+        );
+
+        const link = await screen.findByRole("button", { name: /ver ejecución/i }, { timeout: 5000 });
         await user.click(link);
         expect(mockNavigate).toHaveBeenCalledWith(
             "/dashboard/session-programming/sessions/99",
