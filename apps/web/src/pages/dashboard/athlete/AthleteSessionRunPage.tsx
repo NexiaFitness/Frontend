@@ -62,9 +62,11 @@ export const AthleteSessionRunPage: React.FC = () => {
     const { persistSlots, getDraftForSlot, setDraftForSlot, registrationEditable: exerciseNoteEditable } =
         exerciseNotes;
     const persistNoteSlotIdsRef = useRef<number[]>([]);
+    const persistSlotsRef = useRef(persistSlots);
+    persistSlotsRef.current = persistSlots;
     const afterStepConfirm = useCallback(async () => {
-        await persistSlots(persistNoteSlotIdsRef.current);
-    }, [persistSlots]);
+        await persistSlotsRef.current(persistNoteSlotIdsRef.current);
+    }, []);
 
     const {
         isOnline,
