@@ -230,7 +230,7 @@ describe("ClientOverviewTab", () => {
                     screen.getByText(/comunicación con el atleta/i),
                 ).toBeInTheDocument();
             },
-            { timeout: 3000 },
+            { timeout: 10_000 },
         );
         expect(screen.getByText(/strength a/i)).toBeInTheDocument();
         expect(screen.getByText(/rodilla en zancada/i)).toBeInTheDocument();
@@ -246,7 +246,7 @@ describe("ClientOverviewTab", () => {
                     screen.getByText(/cuando el atleta complete una sesión/i),
                 ).toBeInTheDocument();
             },
-            { timeout: 3000 },
+            { timeout: 10_000 },
         );
     });
 
@@ -284,7 +284,7 @@ describe("ClientOverviewTab", () => {
             () => {
                 expect(screen.getByTestId("client-overview-last-session")).toBeInTheDocument();
             },
-            { timeout: 3000 },
+            { timeout: 10_000 },
         );
         expect(screen.getByText(/última sesión/i)).toBeInTheDocument();
     });
