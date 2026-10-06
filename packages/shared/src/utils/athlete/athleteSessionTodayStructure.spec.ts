@@ -19,6 +19,23 @@ describe("formatSessionTodayStructureLine", () => {
         ).toBe("3 bloques · 45 min estimados");
     });
 
+    it("I12: Home usa summary.blocks sin cargar la estructura completa", () => {
+        expect(
+            formatSessionTodayStructureLine(
+                {
+                    blocks: 4,
+                    estimated_duration: 50,
+                    total_sets: 16,
+                    planned_intensity: null,
+                    planned_volume: null,
+                    actual_intensity: null,
+                    actual_volume: null,
+                },
+                40
+            )
+        ).toBe("4 bloques · 50 min estimados");
+    });
+
     it("falls back to planned duration on session", () => {
         expect(formatSessionTodayStructureLine(undefined, 30)).toBe("30 min estimados");
     });

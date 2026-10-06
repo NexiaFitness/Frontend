@@ -1,5 +1,8 @@
 /**
  * AthleteTodayAppointmentsCard — Citas del día bajo el hero de entreno (AG-2).
+ *
+ * @author Frontend Team
+ * @since 2026-10-06
  */
 
 import React from "react";
@@ -9,6 +12,7 @@ import {
     formatCalendarEventClockMadrid,
     resolveCalendarEventDisplayTitle,
 } from "@nexia/shared/utils/athlete/athleteCalendarUtils";
+import { ATHLETE_TODAY_APPOINTMENTS_CARD } from "@/components/athlete/athleteAgendaPresentation";
 import { cn } from "@/lib/utils";
 
 export interface AthleteTodayAppointmentsCardProps {
@@ -24,10 +28,7 @@ export const AthleteTodayAppointmentsCard: React.FC<AthleteTodayAppointmentsCard
 
     return (
         <div
-            className={cn(
-                "rounded-xl border border-border/70 bg-card/80 p-4 space-y-3",
-                className
-            )}
+            className={cn(ATHLETE_TODAY_APPOINTMENTS_CARD, className)}
             data-testid="athlete-today-appointments"
         >
             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">

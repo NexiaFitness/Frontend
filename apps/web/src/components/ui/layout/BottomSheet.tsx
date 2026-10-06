@@ -2,6 +2,9 @@
  * BottomSheet.tsx — Panel deslizante desde abajo (portal atleta móvil).
  * Contexto: UX-FE-01, patrón SidePanel (backdrop, ESC, a11y).
  * Contratos: DESIGN_MOBILE §3.5, §6.7, agent.md
+ *
+ * @author Frontend Team
+ * @since 2026-10-06
  */
 
 import React, { useEffect, useId, useRef } from "react";
@@ -30,6 +33,15 @@ const SHEET_MOTION =
 const BACKDROP_MOTION =
     "animate-in fade-in duration-300 motion-reduce:animate-none";
 
+const FOCUSABLE_SELECTOR =
+    'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function getFocusable(container: HTMLElement): HTMLElement[] {
+    return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+        (el) => el.tabIndex !== -1 && !el.hasAttribute("disabled")
+    );
+}
+
 export const BottomSheet: React.FC<BottomSheetProps> = ({
     isOpen,
     onClose,
@@ -43,23 +55,49 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     const autoSubtitleId = useId();
     const subtitleId = subtitleIdProp ?? autoSubtitleId;
     const sheetRef = useRef<HTMLDivElement>(null);
+    const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
     useEffect(() => {
-        const handleEscapeKey = (event: KeyboardEvent) => {
-            if (event.key === "Escape" && isOpen) {
+        if (!isOpen) return undefined;
+
+        previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+        document.body.style.overflow = "hidden";
+        sheetRef.current?.focus();
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                event.preventDefault();
                 onClose();
+                return;
+            }
+            if (event.key !== "Tab") return;
+            const sheet = sheetRef.current;
+            if (!sheet) return;
+            const focusable = getFocusable(sheet);
+            if (focusable.length === 0) {
+                event.preventDefault();
+                sheet.focus();
+                return;
+            }
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            const active = document.activeElement;
+            if (event.shiftKey && (active === first || active === sheet)) {
+                event.preventDefault();
+                last.focus();
+                return;
+            }
+            if (!event.shiftKey && active === last) {
+                event.preventDefault();
+                first.focus();
             }
         };
 
-        if (isOpen) {
-            document.addEventListener("keydown", handleEscapeKey);
-            document.body.style.overflow = "hidden";
-            sheetRef.current?.focus();
-        }
-
+        document.addEventListener("keydown", handleKeyDown);
         return () => {
-            document.removeEventListener("keydown", handleEscapeKey);
+            document.removeEventListener("keydown", handleKeyDown);
             document.body.style.overflow = "unset";
+            previouslyFocusedRef.current?.focus?.();
         };
     }, [isOpen, onClose]);
 

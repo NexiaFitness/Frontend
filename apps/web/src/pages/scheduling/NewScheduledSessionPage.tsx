@@ -20,6 +20,7 @@ import { Input, FormCombobox, Textarea, DatePickerButton, TimePickerButton } fro
 import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { useScheduleSession, getMutationErrorMessage } from "@nexia/shared";
+import { madridTrainerTimeError } from "@nexia/shared/utils/athlete/athleteCalendarUtils";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import type { RootState } from "@nexia/shared/store";
@@ -244,6 +245,13 @@ export const NewScheduledSessionPage: React.FC = () => {
         if (!formData.scheduledDate) errors.scheduledDate = "Se requiere una fecha";
         if (!formData.startTime) errors.startTime = "Se requiere hora de inicio";
         if (!formData.endTime) errors.endTime = "Se requiere hora de fin";
+        const startMadridError = madridTrainerTimeError(
+            formData.scheduledDate,
+            formData.startTime
+        );
+        const endMadridError = madridTrainerTimeError(formData.scheduledDate, formData.endTime);
+        if (startMadridError) errors.startTime = startMadridError;
+        if (endMadridError) errors.endTime = endMadridError;
         if (formData.durationMinutes <= 0) errors.durationMinutes = "La duración debe ser mayor a 0";
 
         if (Object.keys(errors).length > 0) {

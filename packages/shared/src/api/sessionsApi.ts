@@ -52,10 +52,10 @@ export const sessionsApi = baseApi.injectEndpoints({
             providesTags: (result, _error, { trainerId }) =>
                 result
                     ? [
-                          ...result.items.map(({ id, session_kind }) => ({
-                              type: "TrainingSession" as const,
-                              id: `${session_kind}-${id}`,
-                          })),
+                          ...result.items.flatMap(({ id, session_kind }) => [
+                              { type: "TrainingSession" as const, id },
+                              { type: "TrainingSession" as const, id: `${session_kind}-${id}` },
+                          ]),
                           { type: "TrainingSession", id: `LIST_${trainerId}` },
                       ]
                     : [{ type: "TrainingSession", id: `LIST_${trainerId}` }],

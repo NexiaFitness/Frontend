@@ -33,6 +33,7 @@ import type {
     SessionRecommendationsParams,
 } from '../types/sessionRecommendations';
 import type { SessionExecutionSummary } from '../types/trainerSetExecutions';
+import { getSubmitWellbeingInvalidationTags } from './wellbeingCheckInApi';
 
 /** Arg del listado por plan: número (primera página, limit 1000) o objeto con paginación. */
 export type GetTrainingSessionsQueryArg =
@@ -405,9 +406,8 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 method: 'POST',
                 body,
             }),
-            invalidatesTags: (_result, _error, { sessionId }) => [
-                { type: 'TrainingSession', id: sessionId },
-            ],
+            invalidatesTags: (_result, _error, { sessionId }) =>
+                getSubmitWellbeingInvalidationTags(sessionId),
         }),
 
         getWellbeingCheckIn: builder.query<WellbeingCheckIn, number>({
@@ -476,6 +476,8 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                     | { type: 'SessionBlockExercise' }
                 > = [
                     { type: 'TrainingSession', id },
+                    { type: 'TrainingSession', id: `training-${id}` },
+                    { type: 'TrainingSession', id: `WELLBEING_${id}` },
                     { type: 'SessionBlock', id: `SESSION-${id}` },
                     { type: 'SessionBlockExercise' },
                     exerciseSelectionAnalyzeTag(id),
@@ -485,6 +487,9 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                         { type: 'TrainingSession', id: `PLAN_${result.training_plan_id}` },
                         { type: 'TrainingPlan', id: result.training_plan_id }
                     );
+                }
+                if (result?.trainer_id != null) {
+                    tags.push({ type: 'TrainingSession', id: `LIST_${result.trainer_id}` });
                 }
                 return tags;
             },

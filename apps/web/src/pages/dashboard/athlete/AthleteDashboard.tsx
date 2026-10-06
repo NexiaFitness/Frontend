@@ -25,7 +25,6 @@ import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSetting
 import { Button } from "@/components/ui/buttons";
 import { useAthleteDashboard } from "@/hooks/athlete/useAthleteDashboard";
 import { useGetSessionSummaryQuery } from "@nexia/shared/api/sessionProgrammingApi";
-import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
 import { formatSessionTodayStructureLine } from "@nexia/shared/utils/athlete/athleteSessionTodayStructure";
 import { useAthleteWeeklyInsight } from "@/hooks/athlete/useAthleteWeeklyInsight";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
@@ -86,20 +85,13 @@ export const AthleteDashboard: React.FC = () => {
     const { data: todaySessionSummary } = useGetSessionSummaryQuery(todaySessionId ?? 0, {
         skip: !todaySessionId,
     });
-    const { view: todayStructureView } = useSessionStructureView(todaySessionId ?? 0);
     const todayStructureLine = useMemo(() => {
         if (!todaySessionId) return null;
         return formatSessionTodayStructureLine(
             todaySessionSummary,
-            todaySession?.planned_duration ?? null,
-            todayStructureView?.blocks?.length ?? null
+            todaySession?.planned_duration ?? null
         );
-    }, [
-        todaySessionId,
-        todaySessionSummary,
-        todaySession?.planned_duration,
-        todayStructureView?.blocks?.length,
-    ]);
+    }, [todaySessionId, todaySessionSummary, todaySession?.planned_duration]);
 
     const todayStripDay = useMemo(
         () => weekStrip.find((d) => d.isToday) ?? null,

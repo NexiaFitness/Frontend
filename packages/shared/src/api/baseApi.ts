@@ -449,7 +449,6 @@ export const baseApi = createApi({
         "ExerciseSafety",
         "AthleteWeeklySummary",
         "AthleteLastPerformance",
-        "AthleteLastPerformance",
         "AthleteSuggestedLoad",
         "AthleteRunReference",
         "AthleteRunProgress",

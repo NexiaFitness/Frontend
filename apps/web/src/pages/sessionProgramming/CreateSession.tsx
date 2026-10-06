@@ -32,10 +32,12 @@ import { trainingSessionsApi } from "@nexia/shared/api/trainingSessionsApi";
 import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { Input, FormCombobox, Textarea, DatePickerButton, TimePickerButton } from "@/components/ui/forms";
+import { Input, FormCombobox, Textarea, DatePickerButton } from "@/components/ui/forms";
 import {
+    madridTrainerTimeError,
     normalizeSessionTimeForApi,
 } from "@nexia/shared/utils/athlete/athleteCalendarUtils";
+import { SessionMadridTimeField } from "@/components/sessionProgramming/SessionMadridTimeField";
 import {
     useGetClientQuery,
     useGetClientTrainingSessionsQuery,
@@ -695,6 +697,15 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             return;
         }
 
+        const madridTimeError = madridTrainerTimeError(
+            formData.sessionDate,
+            formData.sessionTime
+        );
+        if (madridTimeError) {
+            showWarning(madridTimeError, 6000);
+            return;
+        }
+
         if (!trainerId || !effectiveClientId) {
             showWarning("Selecciona un cliente para continuar con la creación de la sesión", 5000);
             return;
@@ -1021,35 +1032,14 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         />
                                     </div>
                                 </div>
-                                <div className={SESSION_PROGRAMMING_FIELD_COMPACT}>
-                                    <span className={SESSION_PROGRAMMING_FIELD_LABEL}>Hora (opcional)</span>
-                                    <div
-                                        className={`${SESSION_PROGRAMMING_FIELD_CONTROL} flex flex-wrap items-center gap-2`}
-                                    >
-                                        <TimePickerButton
-                                            label="Sin hora fijada"
-                                            value={formData.sessionTime}
-                                            onChange={(v) =>
-                                                setFormData({ ...formData, sessionTime: v })
-                                            }
-                                            aria-label="Hora de la sesión"
-                                        />
-                                        {formData.sessionTime ? (
-                                            <button
-                                                type="button"
-                                                className="text-xs text-muted-foreground underline-offset-2 hover:underline"
-                                                onClick={() =>
-                                                    setFormData({ ...formData, sessionTime: "" })
-                                                }
-                                            >
-                                                Quitar hora
-                                            </button>
-                                        ) : null}
-                                    </div>
-                                    <p className={SESSION_PROGRAMMING_FIELD_HINT}>
-                                        Aparece en la agenda del atleta y en el calendario unificado.
-                                    </p>
-                                </div>
+                                <SessionMadridTimeField
+                                    dateKey={formData.sessionDate}
+                                    value={formData.sessionTime}
+                                    onChange={(v) =>
+                                        setFormData({ ...formData, sessionTime: v })
+                                    }
+                                    hint="Aparece en la agenda del atleta y en el calendario unificado."
+                                />
                                 <div className={SESSION_PROGRAMMING_FIELD_COMPACT}>
                                     <label htmlFor="create-session-type" className={SESSION_PROGRAMMING_FIELD_LABEL}>
                                         Tipo *

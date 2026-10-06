@@ -19,6 +19,7 @@ import {
     ATHLETE_SESSION_EXERCISE_SECONDARY,
     ATHLETE_SESSION_PREVIEW_BLOCK,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
+import { ATHLETE_EXERCISE_INFO_BUTTON } from "@/components/athlete/athleteAgendaPresentation";
 import type { SessionBlockView } from "@nexia/shared/sessionProgramming/sessionBlockView";
 import { getBlockDisplayName } from "@nexia/shared/sessionProgramming/sessionBlockView";
 import { buildAthletePreviewGroupRows } from "@nexia/shared/utils/athlete/athleteSessionPreviewUtils";
@@ -146,7 +147,7 @@ export const AthleteSessionExerciseList: React.FC<AthleteSessionExerciseListProp
                                         {infoExerciseId != null ? (
                                             <button
                                                 type="button"
-                                                className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full text-primary hover:bg-primary/10"
+                                                className={ATHLETE_EXERCISE_INFO_BUTTON}
                                                 aria-label={`Información de rendimiento: ${row.title}`}
                                                 onClick={() =>
                                                     setInfoExercise({

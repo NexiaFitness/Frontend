@@ -17,7 +17,11 @@ import { ClientAvatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/buttons";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
-import { TrainerWellbeingCheckInBadge } from "@/components/trainer/wellbeing/TrainerWellbeingCheckInBadge";
+import { TrainerWellbeingCheckInBadgeView } from "@/components/trainer/wellbeing/TrainerWellbeingCheckInBadge";
+import {
+    useGetWellbeingCheckInsBySessionsQuery,
+    wellbeingBySessionId,
+} from "@nexia/shared/api/wellbeingCheckInApi";
 import {
     TRAINER_DASHBOARD_COPY,
     TRAINER_DASHBOARD_COUNT_BADGE,
@@ -103,6 +107,23 @@ export const TodaySessionsWidget: React.FC = () => {
         return c ? `${c.nombre} ${c.apellidos}`.trim() : `Cliente #${session.client_id}`;
     };
 
+    const validSessions = (sessionsResponse?.items ?? []).filter((s) => s.status !== "cancelled");
+    const visibleSessions = validSessions.slice(0, 5);
+    const trainingSessionIds = visibleSessions
+        .filter((session) => session.session_kind === "training")
+        .map((session) => session.id);
+    const {
+        data: wellbeingBatch,
+        isLoading: wellbeingLoading,
+        isError: wellbeingError,
+    } = useGetWellbeingCheckInsBySessionsQuery(trainingSessionIds, {
+        skip: trainingSessionIds.length === 0,
+    });
+    const wellbeingById = React.useMemo(
+        () => wellbeingBySessionId(wellbeingBatch?.items),
+        [wellbeingBatch?.items]
+    );
+
     if (isLoading) {
         return (
             <section className={TRAINER_DASHBOARD_WIDGET}>
@@ -111,8 +132,6 @@ export const TodaySessionsWidget: React.FC = () => {
             </section>
         );
     }
-
-    const validSessions = (sessionsResponse?.items ?? []).filter((s) => s.status !== "cancelled");
 
     return (
         <section className={TRAINER_DASHBOARD_WIDGET}>
@@ -139,7 +158,7 @@ export const TodaySessionsWidget: React.FC = () => {
             ) : (
                 <>
                     <div className={TRAINER_DASHBOARD_LIST}>
-                        {validSessions.slice(0, 5).map((session) => {
+                        {visibleSessions.map((session) => {
                             const client = clientMap.get(session.client_id);
                             return (
                                 <button
@@ -166,8 +185,10 @@ export const TodaySessionsWidget: React.FC = () => {
                                             {SESSION_KIND_LABEL[session.session_kind] ?? session.session_type}
                                         </span>
                                         {session.session_kind === "training" ? (
-                                            <TrainerWellbeingCheckInBadge
-                                                sessionId={session.id}
+                                            <TrainerWellbeingCheckInBadgeView
+                                                checkIn={wellbeingById.get(session.id) ?? null}
+                                                isLoading={wellbeingLoading}
+                                                isError={wellbeingError}
                                                 className="mt-1"
                                             />
                                         ) : null}
