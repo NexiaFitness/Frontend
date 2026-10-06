@@ -19,7 +19,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { Input, FormCombobox, Textarea, DatePickerButton } from "@/components/ui/forms";
+import { Input, FormCombobox, Textarea, DatePickerButton, TimePickerButton } from "@/components/ui/forms";
+import {
+    normalizeSessionTimeForApi,
+    sessionTimeToPickerValue,
+} from "@nexia/shared/utils/athlete/athleteCalendarUtils";
 import { useGetClientQuery, useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
@@ -222,6 +226,7 @@ export const EditSession: React.FC = () => {
         plannedDuration: "",
         plannedIntensity: "",
         plannedVolume: "",
+        sessionTime: "",
         notes: "",
     });
 
@@ -620,6 +625,7 @@ export const EditSession: React.FC = () => {
                 plannedDuration: session.planned_duration?.toString() || "",
                 plannedIntensity: clampIntSlider1to10(session.planned_intensity, 5),
                 plannedVolume: clampIntSlider1to10(session.planned_volume, 5),
+                sessionTime: sessionTimeToPickerValue(session.session_time),
                 notes: session.notes || "",
             });
         }
@@ -678,6 +684,7 @@ export const EditSession: React.FC = () => {
             const sessionData: TrainingSessionUpdate = {
                 session_name: resolvedSessionName,
                 session_date: formData.sessionDate,
+                session_time: normalizeSessionTimeForApi(formData.sessionTime),
                 session_type: formData.sessionType,
                 planned_duration: formData.plannedDuration ? Number(formData.plannedDuration) : null,
                 planned_intensity: formData.plannedIntensity
@@ -893,6 +900,36 @@ export const EditSession: React.FC = () => {
                                                 {formErrors.sessionDate}
                                             </p>
                                         ) : null}
+                                    </div>
+
+                                    <div className={SESSION_PROGRAMMING_FIELD_COMPACT}>
+                                        <span className={SESSION_PROGRAMMING_FIELD_LABEL}>Hora (opcional)</span>
+                                        <div
+                                            className={cn(
+                                                SESSION_PROGRAMMING_FIELD_CONTROL,
+                                                "flex flex-wrap items-center gap-2"
+                                            )}
+                                        >
+                                            <TimePickerButton
+                                                label="Sin hora fijada"
+                                                value={formData.sessionTime}
+                                                onChange={(v) =>
+                                                    setFormData({ ...formData, sessionTime: v })
+                                                }
+                                                aria-label="Hora de la sesión"
+                                            />
+                                            {formData.sessionTime ? (
+                                                <button
+                                                    type="button"
+                                                    className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                                                    onClick={() =>
+                                                        setFormData({ ...formData, sessionTime: "" })
+                                                    }
+                                                >
+                                                    Quitar hora
+                                                </button>
+                                            ) : null}
+                                        </div>
                                     </div>
 
                                     <div className={SESSION_PROGRAMMING_FIELD_COMPACT}>

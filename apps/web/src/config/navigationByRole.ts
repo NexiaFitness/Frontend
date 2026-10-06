@@ -24,6 +24,7 @@ import {
     User,
     BarChart3,
     Play,
+    CalendarDays,
     MessageSquare,
     Settings2,
     Tags,
@@ -78,7 +79,8 @@ const ATHLETE_NAV: RoleNavigation = {
     footerSubtitle: "Athlete",
     menuItems: [
         { label: "Inicio", path: "/dashboard", icon: LayoutDashboard },
-        { label: "Mis sesiones", path: "/dashboard/sessions", icon: Calendar },
+        { label: "Mi agenda", path: "/dashboard/agenda", icon: CalendarDays },
+        { label: "Mis sesiones", path: "/dashboard/sessions", icon: Play },
         { label: "Feedback", path: "/dashboard/feedback", icon: MessageSquare },
         { label: "Mi plan", path: "/dashboard/my-plan", icon: ClipboardList },
         { label: "Mi cuenta", path: "/dashboard/account", icon: User },

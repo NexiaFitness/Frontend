@@ -462,5 +462,6 @@ export const baseApi = createApi({
         "AdminPhysicalTests",
         "AdminOrganizations",
         "AdminDashboard",
+        "CalendarEvent",
     ],
 });

@@ -6,6 +6,7 @@ export * from "./catalogsApi";
 export * from "./exerciseAlternativesApi";
 export * from "./reportsApi";
 export * from "./schedulingApi";
+export * from "./calendarApi";
 // Métricas: solo V2 (V1 migrado en Ola 1 - TICK-D02)
 export * from "./metricsApiV2";
 export * from "./exercisesApi";

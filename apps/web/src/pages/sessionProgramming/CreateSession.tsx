@@ -32,7 +32,10 @@ import { trainingSessionsApi } from "@nexia/shared/api/trainingSessionsApi";
 import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { Input, FormCombobox, Textarea, DatePickerButton } from "@/components/ui/forms";
+import { Input, FormCombobox, Textarea, DatePickerButton, TimePickerButton } from "@/components/ui/forms";
+import {
+    normalizeSessionTimeForApi,
+} from "@nexia/shared/utils/athlete/athleteCalendarUtils";
 import {
     useGetClientQuery,
     useGetClientTrainingSessionsQuery,
@@ -253,6 +256,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         plannedDuration: "60",
         plannedIntensity: "5",
         plannedVolume: "5",
+        sessionTime: "",
         notes: "",
     });
 
@@ -718,6 +722,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 trainer_id: trainerId,
                 session_name: resolvedSessionName,
                 session_date: formData.sessionDate,
+                session_time: normalizeSessionTimeForApi(formData.sessionTime),
                 session_type: formData.sessionType,
                 planned_duration: formData.plannedDuration
                     ? Number(formData.plannedDuration)
@@ -1015,6 +1020,35 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                             variant="form"
                                         />
                                     </div>
+                                </div>
+                                <div className={SESSION_PROGRAMMING_FIELD_COMPACT}>
+                                    <span className={SESSION_PROGRAMMING_FIELD_LABEL}>Hora (opcional)</span>
+                                    <div
+                                        className={`${SESSION_PROGRAMMING_FIELD_CONTROL} flex flex-wrap items-center gap-2`}
+                                    >
+                                        <TimePickerButton
+                                            label="Sin hora fijada"
+                                            value={formData.sessionTime}
+                                            onChange={(v) =>
+                                                setFormData({ ...formData, sessionTime: v })
+                                            }
+                                            aria-label="Hora de la sesión"
+                                        />
+                                        {formData.sessionTime ? (
+                                            <button
+                                                type="button"
+                                                className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                                                onClick={() =>
+                                                    setFormData({ ...formData, sessionTime: "" })
+                                                }
+                                            >
+                                                Quitar hora
+                                            </button>
+                                        ) : null}
+                                    </div>
+                                    <p className={SESSION_PROGRAMMING_FIELD_HINT}>
+                                        Aparece en la agenda del atleta y en el calendario unificado.
+                                    </p>
                                 </div>
                                 <div className={SESSION_PROGRAMMING_FIELD_COMPACT}>
                                     <label htmlFor="create-session-type" className={SESSION_PROGRAMMING_FIELD_LABEL}>

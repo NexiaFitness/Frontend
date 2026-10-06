@@ -36,6 +36,9 @@ export * from "./clientEquipment";
 export * from "./clientOnboarding";
 export * from "./clientStats";
 
+// Calendar (AG-2 global events)
+export * from "./calendar";
+
 // Coherence types
 export * from "./coherence";
 export * from "./coherenceReport";

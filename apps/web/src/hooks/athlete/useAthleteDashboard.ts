@@ -3,6 +3,7 @@
  * Contexto: portal atleta F0/F2, orquestación RTK Query.
  */
 
+import { skipToken } from "@reduxjs/toolkit/query";
 import { useMemo, useState, useCallback, useEffect } from "react";
 
 function formatLocalIsoDate(d: Date): string {
@@ -27,7 +28,13 @@ import {
     useGetClientFeedbackQuery,
     useGetClientTrainingPlanSummaryQuery,
 } from "@nexia/shared/api/clientsApi";
+import { useGetCalendarEventsQuery } from "@nexia/shared/api/calendarApi";
 import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
+import type { CalendarEvent } from "@nexia/shared/types/calendar";
+import {
+    athleteCalendarDateWindow,
+    filterHomeTodayAppointments,
+} from "@nexia/shared/utils/athlete/athleteCalendarUtils";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import type { RootState } from "@nexia/shared/store";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
@@ -70,6 +77,7 @@ export interface AthleteDashboardData {
     trainerNote: { session: TrainingSession; note: string } | null;
     extraTodaySessionCount: number;
     hasScheduledSessions: boolean;
+    todayAppointments: CalendarEvent[];
     isLoading: boolean;
     isError: boolean;
     isRestDay: boolean;
@@ -85,6 +93,22 @@ export function useAthleteDashboard(): AthleteDashboardData {
     const { clientId, isLoading: profileLoading } = useAthleteContext();
 
     const dateWindow = useMemo(() => athleteSessionsDateWindow(), []);
+    const calendarWindow = useMemo(() => athleteCalendarDateWindow(), []);
+
+    const {
+        data: calendarData,
+        isLoading: calendarLoading,
+        refetch: refetchCalendar,
+    } = useGetCalendarEventsQuery(
+        clientId != null && clientId > 0
+            ? {
+                  clientId,
+                  from: calendarWindow.from,
+                  to: calendarWindow.to,
+                  limit: 200,
+              }
+            : skipToken
+    );
 
     const {
         data: sessions = [],
@@ -125,6 +149,11 @@ export function useAthleteDashboard(): AthleteDashboardData {
     const { data: weeklySummary, isLoading: weeklyLoading } = useGetAthleteWeeklySummaryQuery(
         undefined,
         { skip: !clientId }
+    );
+
+    const todayAppointments = useMemo(
+        () => filterHomeTodayAppointments(calendarData?.items ?? []),
+        [calendarData?.items]
     );
 
     const todaySession = useMemo(() => findTodayPrimarySession(sessions), [sessions]);
@@ -169,11 +198,21 @@ export function useAthleteDashboard(): AthleteDashboardData {
     }, []);
 
     const refreshDashboard = useCallback(async () => {
-        await Promise.all([refetchSessions(), refetchPlan(), refetchFeedback()]);
-    }, [refetchSessions, refetchPlan, refetchFeedback]);
+        await Promise.all([
+            refetchSessions(),
+            refetchPlan(),
+            refetchFeedback(),
+            refetchCalendar(),
+        ]);
+    }, [refetchSessions, refetchPlan, refetchFeedback, refetchCalendar]);
 
     const isLoading =
-        profileLoading || sessionsLoading || planLoading || feedbackLoading || weeklyLoading;
+        profileLoading ||
+        sessionsLoading ||
+        planLoading ||
+        feedbackLoading ||
+        weeklyLoading ||
+        calendarLoading;
     const isRestDay = !todaySession && sessions.length > 0;
 
     const dashboardMode = useMemo(
@@ -244,6 +283,7 @@ export function useAthleteDashboard(): AthleteDashboardData {
         trainerNote,
         extraTodaySessionCount,
         hasScheduledSessions,
+        todayAppointments,
         isLoading,
         isError: sessionsError,
         isRestDay,

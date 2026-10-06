@@ -75,6 +75,10 @@ export * from "./api/fatigueApi";
 export * from "./api/injuriesApi";
 export * from "./api/notificationsApi";
 export * from "./api/athleteApi";
+export {
+    useGetCalendarEventsQuery,
+    useLazyGetCalendarEventsQuery,
+} from "./api/calendarApi";
 export * from "./api";
 
 // Store

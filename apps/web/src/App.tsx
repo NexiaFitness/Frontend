@@ -45,6 +45,9 @@ const AthleteDashboard = lazyWithRetry(() =>
 const AthletePlanPage = lazyWithRetry(() =>
   import("./pages/dashboard/athlete/AthletePlanPage").then((m) => ({ default: m.AthletePlanPage }))
 );
+const AthleteAgendaPage = lazyWithRetry(() =>
+  import("./pages/dashboard/athlete/AthleteAgendaPage").then((m) => ({ default: m.AthleteAgendaPage }))
+);
 const SessionsRouteSwitcher = lazyWithRetry(() =>
   import("./pages/dashboard/athlete/SessionsRouteSwitcher").then((m) => ({
     default: m.SessionsRouteSwitcher,
@@ -724,6 +727,16 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
                 <AthletePlanPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="agenda"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <Suspense fallback={<AthleteMobileSuspenseFallback />}>
+                  <AthleteAgendaPage />
+                </Suspense>
               </RoleProtectedRoute>
             }
           />

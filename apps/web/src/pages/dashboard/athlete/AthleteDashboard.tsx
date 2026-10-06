@@ -16,6 +16,7 @@ import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { AthletePeriodizationStrip } from "@/components/athlete/AthletePeriodizationStrip";
 import { AthleteTrainerNoteCard } from "@/components/athlete/AthleteTrainerNoteCard";
 import { AthleteWeekInsight } from "@/components/athlete/AthleteWeekInsight";
+import { AthleteTodayAppointmentsCard } from "@/components/athlete/AthleteTodayAppointmentsCard";
 import { SessionTodayCard } from "@/components/athlete/SessionTodayCard";
 import { WeekStrip } from "@/components/athlete/WeekStrip";
 import { Alert } from "@/components/ui/feedback";
@@ -68,6 +69,7 @@ export const AthleteDashboard: React.FC = () => {
         trainerNote,
         extraTodaySessionCount,
         hasScheduledSessions,
+        todayAppointments,
         isLoading,
         isError,
         heroSubtitle,
@@ -86,7 +88,8 @@ export const AthleteDashboard: React.FC = () => {
         todaySession && isAthleteExtraSession(todaySession, hasActivePlan)
     );
 
-    const showTrainingShell = hasActivePlan || hasScheduledSessions;
+    const showTrainingShell =
+        hasActivePlan || hasScheduledSessions || todayAppointments.length > 0;
 
     const weeklyInsight = useAthleteWeeklyInsight(
         hasActivePlan,
@@ -223,7 +226,7 @@ export const AthleteDashboard: React.FC = () => {
                         <AthletePeriodizationStrip strip={periodizationStrip} />
                     )}
 
-                    {showTrainingShell && (
+                    {showTrainingShell && todaySession && (
                         <SessionTodayCard
                             session={todaySession}
                             hero={sessionHero}
@@ -238,6 +241,10 @@ export const AthleteDashboard: React.FC = () => {
                             }
                             showExtraSessionBadge={showExtraSessionBadge}
                         />
+                    )}
+
+                    {todayAppointments.length > 0 && (
+                        <AthleteTodayAppointmentsCard appointments={todayAppointments} />
                     )}
 
                     {hasScheduledSessions && (

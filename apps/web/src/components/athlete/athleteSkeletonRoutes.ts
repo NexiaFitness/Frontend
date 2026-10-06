@@ -25,6 +25,9 @@ export function athleteSkeletonVariantFromPath(pathname: string): AthletePageSke
     if (/^\/dashboard\/sessions\/\d+/.test(pathname)) {
         return "session-preview";
     }
+    if (pathname.startsWith("/dashboard/agenda")) {
+        return "sessions-list";
+    }
     if (pathname.startsWith("/dashboard/sessions")) {
         return "sessions-list";
     }
