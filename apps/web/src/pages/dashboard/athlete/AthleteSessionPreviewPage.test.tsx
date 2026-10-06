@@ -56,7 +56,7 @@ vi.mock("@nexia/shared/api/trainingSessionsApi", () => ({
 vi.mock("@nexia/shared/hooks/sessionProgramming", () => ({
     useSessionStructureView: () => ({
         view: {
-            blocks: [{ id: 1, groups: [] }],
+            blocks: [{ blockId: 1, blockTypeName: "Fuerza", groups: [] }],
             totalExercises: 2,
             totalSets: 4,
         },
@@ -66,6 +66,14 @@ vi.mock("@nexia/shared/hooks/sessionProgramming", () => ({
 
 vi.mock("@nexia/shared/api/clientsApi", () => ({
     useGetClientFeedbackQuery: () => ({ data: [] }),
+}));
+
+vi.mock("@nexia/shared/api/athleteApi", () => ({
+    useGetAthleteExerciseLastPerformanceQuery: () => ({
+        data: undefined,
+        isFetching: false,
+        isError: false,
+    }),
 }));
 
 vi.mock("@/hooks/athlete/useAthleteInjuries", () => ({
