@@ -17,8 +17,8 @@ export function isRtkNotFoundError(error: unknown): boolean {
 }
 
 export interface OptionalWellbeingQueryInput {
-    data: WellbeingCheckIn | undefined;
-    error: unknown;
+    data?: WellbeingCheckIn;
+    error?: unknown;
     isError: boolean;
     isLoading: boolean;
     isFetching: boolean;
