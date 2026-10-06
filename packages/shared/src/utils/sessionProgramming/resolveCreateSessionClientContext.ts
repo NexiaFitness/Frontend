@@ -4,6 +4,7 @@
 
 export type CreateSessionClientPlanContext =
     | { status: "pending" }
+    | { status: "client-selection" }
     | { status: "ready"; effectiveClientId: number }
     | {
           status: "mismatch";
@@ -41,5 +42,5 @@ export function resolveCreateSessionClientContext(input: {
         return { status: "ready", effectiveClientId: queryClientId };
     }
 
-    return { status: "pending" };
+    return { status: "client-selection" };
 }

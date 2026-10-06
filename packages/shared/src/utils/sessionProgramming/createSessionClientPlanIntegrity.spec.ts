@@ -39,6 +39,17 @@ describe("resolveCreateSessionClientContext", () => {
             }),
         ).toEqual({ status: "ready", effectiveClientId: 354 });
     });
+
+    it("shows client selection when the URL has no client or plan context", () => {
+        expect(
+            resolveCreateSessionClientContext({
+                queryClientId: null,
+                planId: null,
+                planClientId: null,
+                isPlanLoading: false,
+            }),
+        ).toEqual({ status: "client-selection" });
+    });
 });
 
 describe("buildCreateSessionQueryFromBlock (G1)", () => {
