@@ -47,6 +47,7 @@ import {
     createMockTrainingPlanRecommendationsComplete,
     createMockTrainingPlanRecommendationsIncomplete,
 } from "@/test-utils/fixtures/trainingRecommendations";
+import { OVERVIEW_STAT_CHIP_LABELS } from "../clientOverviewPresentation";
 
 describe("ClientOverviewTab", () => {
     const mockClient = createMockClient({
@@ -183,9 +184,14 @@ describe("ClientOverviewTab", () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
         await waitFor(() => {
-            expect(screen.getByText(/adherencia/i)).toBeInTheDocument();
-        }, { timeout: 10000 });
-        expect(screen.getByText(/^peso$/i)).toBeInTheDocument();
+            expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            const loadedCards = screen.getAllByRole("article");
+            const cardText = loadedCards.map((card) => card.textContent ?? "").join("\n");
+            expect(cardText).toContain(OVERVIEW_STAT_CHIP_LABELS.adherence);
+            expect(cardText).toContain(OVERVIEW_STAT_CHIP_LABELS.weight);
+        });
     });
 
     it("shows comms section with response form when feedback exists", async () => {
