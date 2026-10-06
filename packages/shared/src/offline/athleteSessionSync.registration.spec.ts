@@ -21,10 +21,12 @@ vi.mock("./athleteSessionDb", () => ({
         },
     ],
     getPendingTimedResults: async () => [],
+    getPendingExerciseNotes: async () => [],
     getPendingLogs: async () => [],
     getPendingCompletes: async () => [],
     removePendingExecution: vi.fn(),
     removePendingTimedResult: vi.fn(),
+    removePendingExerciseNote: vi.fn(),
     removePendingLog: vi.fn(),
     removePendingComplete: vi.fn(),
     clearSessionOfflineData: vi.fn(),
@@ -53,6 +55,7 @@ describe("flushPendingSessionSync FE-9", () => {
                 data: { detail: "El plazo de registro cerró" },
             }),
             postTimedResult: vi.fn(),
+            putExerciseNote: vi.fn(),
         };
         const result = await flushPendingSessionSync(99, adapter);
         expect(result.registrationWindowClosed).toBe(true);

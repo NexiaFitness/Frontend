@@ -109,6 +109,7 @@ const noopAdapter = {
     completeSession: vi.fn(),
     postExecution: vi.fn(),
     postTimedResult: vi.fn(),
+    putExerciseNote: vi.fn(),
 };
 
 describe("prepareOfflineExecutionPayload", () => {
@@ -171,8 +172,10 @@ describe("flushPendingSessionSync", () => {
             syncedLogs: 0,
             syncedExecutions: 0,
             syncedTimedResults: 0,
+            syncedExerciseNotes: 0,
             syncedCompletes: 0,
             conflict: false,
+            registrationWindowClosed: false,
         });
     });
 });
