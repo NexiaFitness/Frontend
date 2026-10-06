@@ -27,6 +27,7 @@ import type {
     GetAthleteSessionsRegistrationMetaArg,
 } from "../types/athleteRunProgress";
 import type { AthleteExerciseNoteUpsert } from "../utils/athlete/athleteExerciseNoteUtils";
+import type { AthleteLastPerformance } from "../types/athleteLastPerformance";
 
 export interface AthleteExerciseNoteUpsertOut {
     training_session_id: number;
@@ -38,6 +39,13 @@ export interface AthleteExerciseNoteUpsertOut {
 
 export const athleteApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
+        getAthleteExerciseLastPerformance: builder.query<AthleteLastPerformance, number>({
+            query: (exerciseId) => `/athlete/exercises/${exerciseId}/last-performance`,
+            providesTags: (_result, _error, exerciseId) => [
+                { type: "AthleteLastPerformance" as const, id: exerciseId },
+            ],
+        }),
+
         getAthleteWeeklySummary: builder.query<
             AthleteWeeklySummary,
             AthleteWeeklySummaryQuery | void
@@ -196,6 +204,8 @@ export const athleteApi = baseApi.injectEndpoints({
 });
 
 export const {
+    useGetAthleteExerciseLastPerformanceQuery,
+    useLazyGetAthleteExerciseLastPerformanceQuery,
     useGetAthleteWeeklySummaryQuery,
     useGetAthleteRunReferenceQuery,
     useGetAthleteRunProgressQuery,

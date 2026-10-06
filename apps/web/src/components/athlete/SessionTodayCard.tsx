@@ -30,6 +30,8 @@ export interface SessionTodayCardProps {
     onCta: (action: SessionHeroCtaAction, sessionId: number | null) => void;
     /** Móvil: el footer sticky ya muestra el CTA primario — evitar duplicado en card. */
     hideStartCtaOnMobile?: boolean;
+    /** FE-8: bloques + duración estimada (sin vol/int). */
+    structureLine?: string | null;
     /** D10 — sesiones adicionales hoy (mixto). */
     extraTodaySessionCount?: number;
     onOpenExtraTodaySessions?: () => void;
@@ -42,6 +44,7 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
     planProgressPercent,
     onCta,
     hideStartCtaOnMobile = false,
+    structureLine = null,
     extraTodaySessionCount = 0,
     onOpenExtraTodaySessions,
     showExtraSessionBadge = false,
@@ -58,7 +61,7 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
     const showSessionMeta =
         style.showMetaRow &&
         session &&
-        (session.planned_duration != null || session.session_type);
+        (structureLine || session.planned_duration != null || session.session_type);
 
     const suppressPrimaryCtaMobile =
         hideStartCtaOnMobile &&
@@ -129,14 +132,19 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
                 )}
             </div>
 
-            {showSessionMeta && (
+            {showSessionMeta && session && (
                 <div className="relative flex flex-wrap gap-3 text-sm text-muted-foreground">
-                    {session.planned_duration != null && (
+                    {structureLine ? (
+                        <span className="inline-flex items-center gap-1">
+                            <Clock className="size-4 text-primary" aria-hidden />
+                            {structureLine}
+                        </span>
+                    ) : session.planned_duration != null ? (
                         <span className="inline-flex items-center gap-1">
                             <Clock className="size-4 text-primary" aria-hidden />
                             {session.planned_duration} min
                         </span>
-                    )}
+                    ) : null}
                     <span className="inline-flex items-center gap-1">
                         <Dumbbell className="size-4 text-primary" aria-hidden />
                         {getTrainingGoalLabel(session.session_type)}

@@ -17,6 +17,7 @@ import { ClientAvatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/buttons";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
+import { TrainerWellbeingCheckInBadge } from "@/components/trainer/wellbeing/TrainerWellbeingCheckInBadge";
 import {
     TRAINER_DASHBOARD_COPY,
     TRAINER_DASHBOARD_COUNT_BADGE,
@@ -164,6 +165,12 @@ export const TodaySessionsWidget: React.FC = () => {
                                         <span className={TRAINER_DASHBOARD_TYPE_CHIP}>
                                             {SESSION_KIND_LABEL[session.session_kind] ?? session.session_type}
                                         </span>
+                                        {session.session_kind === "training" ? (
+                                            <TrainerWellbeingCheckInBadge
+                                                sessionId={session.id}
+                                                className="mt-1"
+                                            />
+                                        ) : null}
                                     </div>
                                     <span
                                         className={cn(

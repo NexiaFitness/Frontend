@@ -24,6 +24,9 @@ import { AthleteEmptyState } from "@/components/athlete/empty/AthleteEmptyState"
 import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
 import { Button } from "@/components/ui/buttons";
 import { useAthleteDashboard } from "@/hooks/athlete/useAthleteDashboard";
+import { useGetSessionSummaryQuery } from "@nexia/shared/api/sessionProgrammingApi";
+import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
+import { formatSessionTodayStructureLine } from "@nexia/shared/utils/athlete/athleteSessionTodayStructure";
 import { useAthleteWeeklyInsight } from "@/hooks/athlete/useAthleteWeeklyInsight";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
 import type { SessionHeroCtaAction } from "@nexia/shared/utils/athlete/athleteDashboardHeroCopy";
@@ -78,6 +81,25 @@ export const AthleteDashboard: React.FC = () => {
         refreshDashboard,
         insightDeepLinkContext,
     } = useAthleteDashboard();
+
+    const todaySessionId = todaySession?.id;
+    const { data: todaySessionSummary } = useGetSessionSummaryQuery(todaySessionId ?? 0, {
+        skip: !todaySessionId,
+    });
+    const { view: todayStructureView } = useSessionStructureView(todaySessionId ?? 0);
+    const todayStructureLine = useMemo(() => {
+        if (!todaySessionId) return null;
+        return formatSessionTodayStructureLine(
+            todaySessionSummary,
+            todaySession?.planned_duration ?? null,
+            todayStructureView?.blocks?.length ?? null
+        );
+    }, [
+        todaySessionId,
+        todaySessionSummary,
+        todaySession?.planned_duration,
+        todayStructureView?.blocks?.length,
+    ]);
 
     const todayStripDay = useMemo(
         () => weekStrip.find((d) => d.isToday) ?? null,
@@ -231,6 +253,7 @@ export const AthleteDashboard: React.FC = () => {
                             session={todaySession}
                             hero={sessionHero}
                             planProgressPercent={hasActivePlan ? planProgressPercent : null}
+                            structureLine={todayStructureLine}
                             onCta={handleHeroCta}
                             hideStartCtaOnMobile={showStickyCta}
                             extraTodaySessionCount={extraTodaySessionCount}

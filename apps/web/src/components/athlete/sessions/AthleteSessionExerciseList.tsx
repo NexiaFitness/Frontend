@@ -5,7 +5,8 @@
  */
 
 import React, { useState } from "react";
-import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { AthleteExercisePerformanceInfoSheet } from "@/components/athlete/sessions/AthleteExercisePerformanceInfoSheet";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { AthleteInjuryCallout } from "@/components/athlete/AthleteInjuryCallout";
 import {
@@ -66,6 +67,11 @@ export const AthleteSessionExerciseList: React.FC<AthleteSessionExerciseListProp
     hasDangerConflict,
     onConsult,
 }) => {
+    const [infoExercise, setInfoExercise] = useState<{
+        id: number;
+        title: string;
+    } | null>(null);
+
     return (
         <div className="space-y-3">
             {blocks.map((block, blockIndex) => (
@@ -97,6 +103,9 @@ export const AthleteSessionExerciseList: React.FC<AthleteSessionExerciseListProp
                                 const hasConflict = row.exerciseIds.some((id) =>
                                     conflictByExerciseId.has(id)
                                 );
+                                const infoExerciseId =
+                                    row.exerciseIds.length === 1 ? row.exerciseIds[0] : null;
+
                                 return (
                                     <li
                                         key={row.key}
@@ -134,6 +143,21 @@ export const AthleteSessionExerciseList: React.FC<AthleteSessionExerciseListProp
                                                 <AthletePreviewNotes notes={row.notes.trim()} />
                                             ) : null}
                                         </div>
+                                        {infoExerciseId != null ? (
+                                            <button
+                                                type="button"
+                                                className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full text-primary hover:bg-primary/10"
+                                                aria-label={`Información de rendimiento: ${row.title}`}
+                                                onClick={() =>
+                                                    setInfoExercise({
+                                                        id: infoExerciseId,
+                                                        title: row.title,
+                                                    })
+                                                }
+                                            >
+                                                <Info className="size-4" aria-hidden />
+                                            </button>
+                                        ) : null}
                                     </li>
                                 );
                             })
@@ -141,6 +165,12 @@ export const AthleteSessionExerciseList: React.FC<AthleteSessionExerciseListProp
                     </ul>
                 </section>
             ))}
+            <AthleteExercisePerformanceInfoSheet
+                isOpen={infoExercise != null}
+                exerciseId={infoExercise?.id ?? null}
+                exerciseTitle={infoExercise?.title ?? ""}
+                onClose={() => setInfoExercise(null)}
+            />
         </div>
     );
 };
