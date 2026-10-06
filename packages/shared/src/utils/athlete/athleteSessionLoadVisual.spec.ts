@@ -30,4 +30,9 @@ describe("aggregateDayLoadFromSessions", () => {
         expect(m.sessionCount).toBe(2);
         expect(m.volumeTier).toBe("medium");
     });
+
+    it("I7: un día vacío no inventa sesión ni carga fantasma", () => {
+        const m = aggregateDayLoadFromSessions([]);
+        expect(m.sessionCount).toBe(0);
+    });
 });

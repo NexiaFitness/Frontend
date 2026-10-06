@@ -12,10 +12,12 @@ import {
     resolveAthleteSessionStatusBadge,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
+import { buildSessionLoadVisualModel } from "@nexia/shared/utils/athlete/athleteSessionLoadVisual";
 import {
     formatAthleteDateLong,
     getSessionStatusLabel,
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
+import { AthleteSessionLoadIndicator } from "@/components/athlete/AthleteSessionLoadIndicator";
 
 export interface AthleteSessionPreviewHeaderProps {
     session: TrainingSession;
@@ -29,6 +31,11 @@ export const AthleteSessionPreviewHeader: React.FC<AthleteSessionPreviewHeaderPr
     setCount,
 }) => {
     const statusVariant = resolveAthleteSessionStatusBadge(session);
+    const loadModel = buildSessionLoadVisualModel({
+        plannedVolume: session.planned_volume,
+        plannedIntensity: session.planned_intensity,
+        sessionCount: 1,
+    });
 
     return (
         <header className="space-y-4">
@@ -36,15 +43,22 @@ export const AthleteSessionPreviewHeader: React.FC<AthleteSessionPreviewHeaderPr
                 {getSessionStatusLabel(session)}
             </span>
 
-            <div className="space-y-1">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                    {session.session_name}
-                </h1>
-                {session.session_date && (
-                    <p className="text-sm text-muted-foreground">
-                        {formatAthleteDateLong(session.session_date)}
-                    </p>
-                )}
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1">
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                        {session.session_name}
+                    </h1>
+                    {session.session_date && (
+                        <p className="text-sm text-muted-foreground">
+                            {formatAthleteDateLong(session.session_date)}
+                        </p>
+                    )}
+                </div>
+                <AthleteSessionLoadIndicator
+                    model={loadModel}
+                    sheetTitle="Carga de la sesión"
+                    helpText="El color indica lo intenso que es el entrenamiento; el tamaño, cuánto trabajo hay."
+                />
             </div>
 
             <div className="flex flex-wrap gap-2">

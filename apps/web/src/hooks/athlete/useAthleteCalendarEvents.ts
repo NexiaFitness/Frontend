@@ -11,6 +11,7 @@ import type { CalendarEvent } from "@nexia/shared/types/calendar";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import {
     athleteCalendarDateWindow,
+    athleteCalendarHasPartialFailure,
     calendarEventDateKeyMadrid,
     filterHomeTodayAppointments,
     groupCalendarEventsByDayMadrid,
@@ -41,6 +42,8 @@ export function useAthleteCalendarEvents(clientId: number | null | undefined) {
     const {
         data: sessions = [],
         isLoading: sessionsLoading,
+        isError: sessionsError,
+        refetch: refetchSessions,
     } = useGetTrainingSessionsByClientQuery(
         clientId
             ? {
@@ -95,7 +98,8 @@ export function useAthleteCalendarEvents(clientId: number | null | undefined) {
         loadModelForDate,
         loadModelForEvent,
         isLoading: profileLoading || eventsLoading || sessionsLoading,
-        isError: eventsError,
+        isError: athleteCalendarHasPartialFailure(eventsError, sessionsError),
         refetchEvents,
+        refetchSessions,
     };
 }

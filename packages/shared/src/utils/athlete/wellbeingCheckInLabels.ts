@@ -9,3 +9,16 @@ export function wellbeingCheckInShortLabel(level: number): string {
 export function wellbeingCheckInAriaLabel(level: number): string {
     return `Check-in pre-sesión: ${wellbeingCheckInShortLabel(level)}`;
 }
+
+export function wellbeingCheckInTrainerStatusCopy(input: {
+    isLoading: boolean;
+    isError: boolean;
+    checkIn: { pre_fatigue_level: number } | null | undefined;
+}): string {
+    if (input.isLoading) return "Check-in…";
+    if (input.isError) return "No se pudo cargar el check-in";
+    if (input.checkIn) {
+        return `Check-in pre-sesión: ${wellbeingCheckInShortLabel(input.checkIn.pre_fatigue_level)}`;
+    }
+    return "Sin check-in pre-sesión";
+}

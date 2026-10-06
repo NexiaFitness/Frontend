@@ -33,6 +33,7 @@ import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingS
 import type { CalendarEvent } from "@nexia/shared/types/calendar";
 import {
     athleteCalendarDateWindow,
+    athleteCalendarHasPartialFailure,
     filterHomeTodayAppointments,
 } from "@nexia/shared/utils/athlete/athleteCalendarUtils";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
@@ -98,6 +99,7 @@ export function useAthleteDashboard(): AthleteDashboardData {
     const {
         data: calendarData,
         isLoading: calendarLoading,
+        isError: calendarError,
         refetch: refetchCalendar,
     } = useGetCalendarEventsQuery(
         clientId != null && clientId > 0
@@ -285,7 +287,7 @@ export function useAthleteDashboard(): AthleteDashboardData {
         hasScheduledSessions,
         todayAppointments,
         isLoading,
-        isError: sessionsError,
+        isError: athleteCalendarHasPartialFailure(calendarError, sessionsError),
         isRestDay,
         heroSubtitle,
         sessionHero,

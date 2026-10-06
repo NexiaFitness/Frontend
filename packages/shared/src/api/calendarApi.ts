@@ -4,28 +4,31 @@
 
 import { baseApi } from "./baseApi";
 import type { CalendarEventListResponse, CalendarEventsQueryArgs } from "../types/calendar";
+import { madridDayEndIso, madridDayStartIso } from "../utils/athlete/athleteCalendarUtils";
+
+export function buildCalendarEventsSearchParams(
+    args: CalendarEventsQueryArgs = {}
+): URLSearchParams {
+    const params = new URLSearchParams();
+    if (args.clientId != null) params.set("client_id", String(args.clientId));
+    if (args.trainerId != null) params.set("trainer_id", String(args.trainerId));
+    if (args.from) {
+        params.set("from", args.from.includes("T") ? args.from : madridDayStartIso(args.from));
+    }
+    if (args.to) {
+        params.set("to", args.to.includes("T") ? args.to : madridDayEndIso(args.to));
+    }
+    if (args.eventKind) params.set("event_kind", args.eventKind);
+    if (args.skip != null) params.set("skip", String(args.skip));
+    if (args.limit != null) params.set("limit", String(args.limit));
+    return params;
+}
 
 export const calendarApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         getCalendarEvents: builder.query<CalendarEventListResponse, CalendarEventsQueryArgs | void>({
             query: (args) => {
-                const params = new URLSearchParams();
-                const a = args ?? {};
-                if (a.clientId != null) params.set("client_id", String(a.clientId));
-                if (a.trainerId != null) params.set("trainer_id", String(a.trainerId));
-                if (a.from) {
-                    params.set(
-                        "from",
-                        a.from.includes("T") ? a.from : `${a.from}T00:00:00`
-                    );
-                }
-                if (a.to) {
-                    params.set("to", a.to.includes("T") ? a.to : `${a.to}T23:59:59`);
-                }
-                if (a.eventKind) params.set("event_kind", a.eventKind);
-                if (a.skip != null) params.set("skip", String(a.skip));
-                if (a.limit != null) params.set("limit", String(a.limit));
-                const qs = params.toString();
+                const qs = buildCalendarEventsSearchParams(args ?? {}).toString();
                 return { url: `/calendar/events${qs ? `?${qs}` : ""}`, method: "GET" };
             },
             providesTags: (result) =>

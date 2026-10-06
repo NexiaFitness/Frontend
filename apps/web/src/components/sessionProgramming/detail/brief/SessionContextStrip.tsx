@@ -27,7 +27,7 @@ import {
 } from "@nexia/shared/api/trainingSessionsApi";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
 import { useOptionalWellbeingCheckIn } from "@/hooks/trainer/useOptionalWellbeingCheckIn";
-import { wellbeingCheckInShortLabel } from "@nexia/shared/utils/athlete/wellbeingCheckInLabels";
+import { wellbeingCheckInTrainerStatusCopy } from "@nexia/shared/utils/athlete/wellbeingCheckInLabels";
 import {
     computeWeekOfBlock,
     computeSessionPosition,
@@ -244,7 +244,7 @@ export const SessionContextStrip: React.FC<SessionContextStripProps> = ({
     const { data: physicalQualities } = useGetPhysicalQualitiesQuery();
 
     const { currentRiskLevel, latestAnalysis } = useClientFatigue(clientId);
-    const { checkIn: wellbeingCheckIn, isLoading: loadingWellbeing } =
+    const { checkIn: wellbeingCheckIn, isLoading: loadingWellbeing, isError: wellbeingError } =
         useOptionalWellbeingCheckIn(sessionId);
 
     // --- derivados -------------------------------------------------------
@@ -372,18 +372,11 @@ export const SessionContextStrip: React.FC<SessionContextStripProps> = ({
                     )}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                    {loadingWellbeing ? (
-                        "Check-in…"
-                    ) : wellbeingCheckIn ? (
-                        <>
-                            Check-in pre-sesión:{" "}
-                            <span className="font-semibold text-foreground">
-                                {wellbeingCheckInShortLabel(wellbeingCheckIn.pre_fatigue_level)}
-                            </span>
-                        </>
-                    ) : (
-                        "Sin check-in pre-sesión"
-                    )}
+                    {wellbeingCheckInTrainerStatusCopy({
+                        isLoading: loadingWellbeing,
+                        isError: wellbeingError,
+                        checkIn: wellbeingCheckIn,
+                    })}
                 </p>
                 {cohPct != null && (
                     <p className="text-xs text-muted-foreground">

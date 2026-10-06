@@ -1,10 +1,14 @@
 /**
  * TrainerWellbeingCheckInBadge — TR-1 chip for pre-session athlete triage.
+ *
+ * @author Frontend Team
+ * @since 2026-10-06
  */
 
 import React from "react";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { useOptionalWellbeingCheckIn } from "@/hooks/trainer/useOptionalWellbeingCheckIn";
+import type { WellbeingCheckIn } from "@nexia/shared/types/trainingSessions";
 import { wellbeingCheckInShortLabel } from "@nexia/shared/utils/athlete/wellbeingCheckInLabels";
 import { cn } from "@/lib/utils";
 
@@ -14,24 +18,30 @@ function toneForLevel(level: number): BadgeVariant {
     return "subtle";
 }
 
-export interface TrainerWellbeingCheckInBadgeProps {
-    sessionId: number;
+export interface TrainerWellbeingCheckInBadgeViewProps {
+    checkIn: WellbeingCheckIn | null | undefined;
+    isLoading: boolean;
+    isError: boolean;
     className?: string;
     showPending?: boolean;
 }
 
-export const TrainerWellbeingCheckInBadge: React.FC<TrainerWellbeingCheckInBadgeProps> = ({
-    sessionId,
-    className,
-    showPending = true,
-}) => {
-    const { checkIn, isLoading } = useOptionalWellbeingCheckIn(sessionId);
-
+export const TrainerWellbeingCheckInBadgeView: React.FC<
+    TrainerWellbeingCheckInBadgeViewProps
+> = ({ checkIn, isLoading, isError, className, showPending = true }) => {
     if (isLoading) {
         return (
             <span className={cn("text-xs text-muted-foreground", className)} aria-hidden>
                 …
             </span>
+        );
+    }
+
+    if (isError) {
+        return (
+            <Badge variant="subtle-warning" className={cn("text-xs font-medium", className)}>
+                No se pudo cargar el check-in
+            </Badge>
         );
     }
 
@@ -53,5 +63,26 @@ export const TrainerWellbeingCheckInBadge: React.FC<TrainerWellbeingCheckInBadge
         >
             Check-in: {wellbeingCheckInShortLabel(level)}
         </Badge>
+    );
+};
+
+export interface TrainerWellbeingCheckInBadgeProps {
+    sessionId: number;
+    className?: string;
+    showPending?: boolean;
+}
+
+export const TrainerWellbeingCheckInBadge: React.FC<TrainerWellbeingCheckInBadgeProps> = ({
+    sessionId,
+    className,
+    showPending = true,
+}) => {
+    const state = useOptionalWellbeingCheckIn(sessionId);
+    return (
+        <TrainerWellbeingCheckInBadgeView
+            {...state}
+            className={className}
+            showPending={showPending}
+        />
     );
 };

@@ -34,7 +34,7 @@ export function buildSessionLoadVisualModel(input: {
 }): AthleteSessionLoadVisualModel {
     const volumeTier = loadTierFrom1to10(input.plannedVolume);
     const intensityTier = loadTierFrom1to10(input.plannedIntensity);
-    const sessionCount = Math.max(1, input.sessionCount ?? 1);
+    const sessionCount = input.sessionCount ?? 1;
     const volumeLabel = TIER_LABEL[volumeTier];
     const intensityLabel = TIER_LABEL[intensityTier];
     const countSuffix = sessionCount > 1 ? `, ${sessionCount} sesiones` : "";

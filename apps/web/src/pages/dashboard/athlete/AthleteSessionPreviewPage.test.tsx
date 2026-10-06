@@ -44,6 +44,8 @@ vi.mock("@nexia/shared/api/trainingSessionsApi", () => ({
             session_name: "QA Preview",
             notes: null,
             session_date: "2026-10-05",
+            planned_volume: 8,
+            planned_intensity: 3,
         },
         isLoading: false,
     }),
@@ -187,5 +189,14 @@ describe("AthleteSessionPreviewPage wellbeing (B7)", () => {
         });
         expect(showToast).not.toHaveBeenCalled();
         expect(navigate).toHaveBeenCalledWith("/dashboard/sessions/42/run");
+    });
+});
+
+describe("AthleteSessionPreviewPage CARGA-1 (I8)", () => {
+    it("muestra el indicador de carga en la cabecera de la sesión", () => {
+        renderPage();
+        expect(
+            screen.getByRole("button", { name: /Carga alta, intensidad baja/i })
+        ).toBeInTheDocument();
     });
 });

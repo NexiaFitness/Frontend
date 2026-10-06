@@ -1,15 +1,16 @@
 /**
  * AthleteAgendaPage.tsx — Agenda unificada solo lectura (AG-2).
+ *
+ * @author Frontend Team
+ * @since 2026-10-06
  */
 
 import React, { useCallback } from "react";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
-import {
-    formatAthleteDateLong,
-    toLocalDateKey,
-} from "@nexia/shared/utils/athlete/athleteSessionUtils";
+import { formatAthleteDateLong } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import {
     formatCalendarEventClockMadrid,
+    madridTodayDateKey,
     resolveCalendarEventDisplayTitle,
 } from "@nexia/shared/utils/athlete/athleteCalendarUtils";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
@@ -18,6 +19,12 @@ import { AthleteSessionLoadIndicator } from "@/components/athlete/AthleteSession
 import { Alert } from "@/components/ui/feedback";
 import { PullToRefresh } from "@/components/ui/layout/PullToRefresh";
 import { ATHLETE_PAGE } from "@/components/athlete/layout/athleteLayoutClasses";
+import {
+    ATHLETE_AGENDA_DAY_CARD,
+    ATHLETE_AGENDA_DAY_CARD_TODAY,
+    ATHLETE_AGENDA_PAGE,
+    ATHLETE_AGENDA_TODAY_BADGE,
+} from "@/components/athlete/athleteAgendaPresentation";
 import { useAthleteCalendarEvents } from "@/hooks/athlete/useAthleteCalendarEvents";
 import { cn } from "@/lib/utils";
 
@@ -26,15 +33,15 @@ export const AthleteAgendaPage: React.FC = () => {
     const {
         groupedDays,
         loadModelForDate,
-        loadModelForEvent,
         isLoading,
         isError,
         refetchEvents,
+        refetchSessions,
     } = useAthleteCalendarEvents(clientId);
 
     const handleRefresh = useCallback(async () => {
-        await refetchEvents();
-    }, [refetchEvents]);
+        await Promise.all([refetchEvents(), refetchSessions()]);
+    }, [refetchEvents, refetchSessions]);
 
     if (profileLoading || isLoading) {
         return <AthletePageLoading variant="sessions-list" />;
@@ -64,12 +71,12 @@ export const AthleteAgendaPage: React.FC = () => {
         );
     }
 
-    const todayKey = toLocalDateKey(new Date());
+    const todayKey = madridTodayDateKey();
 
     return (
         <PullToRefresh onRefresh={handleRefresh}>
             <div
-                className={cn(ATHLETE_PAGE, "space-y-6 px-4 pb-24 pt-4 lg:px-8 lg:pb-8")}
+                className={cn(ATHLETE_PAGE, ATHLETE_AGENDA_PAGE)}
                 data-testid="athlete-agenda-page"
             >
                 <header className="space-y-1">
@@ -96,8 +103,8 @@ export const AthleteAgendaPage: React.FC = () => {
                                 <section
                                     key={dateKey}
                                     className={cn(
-                                        "rounded-xl border border-border/60 bg-card/50 p-4",
-                                        isToday && "border-primary/40 shadow-sm"
+                                        ATHLETE_AGENDA_DAY_CARD,
+                                        isToday && ATHLETE_AGENDA_DAY_CARD_TODAY
                                     )}
                                     aria-label={formatAthleteDateLong(dateKey)}
                                 >
@@ -105,7 +112,7 @@ export const AthleteAgendaPage: React.FC = () => {
                                         <h2 className="text-sm font-semibold text-foreground">
                                             {formatAthleteDateLong(dateKey)}
                                             {isToday ? (
-                                                <span className="ml-2 text-xs font-medium text-primary">
+                                                <span className={ATHLETE_AGENDA_TODAY_BADGE}>
                                                     Hoy
                                                 </span>
                                             ) : null}
@@ -123,10 +130,6 @@ export const AthleteAgendaPage: React.FC = () => {
                                                 event.starts_at,
                                                 event.has_explicit_time
                                             );
-                                            const eventLoad =
-                                                event.event_kind === "personal_workout"
-                                                    ? loadModelForEvent(event)
-                                                    : null;
                                             return (
                                                 <li
                                                     key={event.id}
@@ -143,11 +146,6 @@ export const AthleteAgendaPage: React.FC = () => {
                                                         ) : null}
                                                     </div>
                                                     <div className="flex shrink-0 items-center gap-2">
-                                                        {eventLoad ? (
-                                                            <AthleteSessionLoadIndicator
-                                                                model={eventLoad}
-                                                            />
-                                                        ) : null}
                                                         {clock ? (
                                                             <span className="tabular-nums text-muted-foreground">
                                                                 {clock}
