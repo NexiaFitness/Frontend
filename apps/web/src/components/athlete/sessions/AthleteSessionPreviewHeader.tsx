@@ -19,6 +19,7 @@ import {
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import {
+    formatAthleteSessionExerciseSetSummary,
     formatAthleteSessionPreviewDate,
     getSessionStatusLabel,
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
@@ -95,7 +96,7 @@ export const AthleteSessionPreviewHeader: React.FC<AthleteSessionPreviewHeaderPr
                 )}
                 <span className={ATHLETE_SESSION_META_PILL}>
                     <Dumbbell className="size-3.5 text-primary/70" aria-hidden />
-                    {exerciseCount} ejercicios · {setCount} series
+                    {formatAthleteSessionExerciseSetSummary(exerciseCount, setCount)}
                 </span>
             </div>
 

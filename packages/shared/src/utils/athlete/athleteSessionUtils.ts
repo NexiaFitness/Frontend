@@ -105,6 +105,17 @@ export function formatAthleteDateLong(isoDate: string): string {
 }
 
 /** V04 cabecera: día con mayúscula inicial; mes en minúsculas (es-ES). */
+/** Pill meta V04: «1 ejercicio · 1 serie» con plurales correctos. */
+export function formatAthleteSessionExerciseSetSummary(
+    exerciseCount: number,
+    setCount: number
+): string {
+    const exercises =
+        exerciseCount === 1 ? "1 ejercicio" : `${exerciseCount} ejercicios`;
+    const sets = setCount === 1 ? "1 serie" : `${setCount} series`;
+    return `${exercises} · ${sets}`;
+}
+
 export function formatAthleteSessionPreviewDate(isoDate: string): string {
     const date = parseSessionDateLocal(isoDate);
     const weekday = formatWeekdayLong(date);
