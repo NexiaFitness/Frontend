@@ -92,15 +92,26 @@ export const ATHLETE_SESSION_PREVIEW_PATTERNS =
 export const ATHLETE_SESSION_PREVIEW_PATTERNS_LABEL =
     "text-[10px] font-semibold uppercase tracking-[0.12em] text-primary/75";
 
-/** Acordeón bloque / ejercicio (mapa de sesión). */
-export const ATHLETE_SESSION_DISCLOSURE_TRIGGER = cn(
-    "flex min-h-touch-athlete w-full items-center gap-3 rounded-lg border border-border/55",
-    "bg-background/35 px-3 py-2.5 text-left backdrop-blur-sm transition-colors",
-    "hover:bg-background/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45"
+/** Cabecera de bloque dentro de «Tu sesión» (sin mini-card anidada). */
+export const ATHLETE_SESSION_BLOCK_SECTION_HEADER = cn(
+    "flex min-h-touch-athlete w-full items-center gap-3 border-b border-border/45",
+    "pb-3 text-left transition-colors",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2",
+    "focus-visible:ring-offset-background"
 );
 
-export const ATHLETE_SESSION_DISCLOSURE_PANEL =
-    "border-t border-border/45 px-3 pb-3 pt-2 space-y-2";
+export const ATHLETE_SESSION_BLOCK_SECTION_HEADER_STATIC = cn(
+    ATHLETE_SESSION_BLOCK_SECTION_HEADER,
+    "cursor-default border-b border-border/45"
+);
+
+export const ATHLETE_SESSION_BLOCK_BODY = "space-y-3 pt-3";
+
+/** @deprecated V04-MAP-UI — usar BLOCK_SECTION_HEADER (filas planas). */
+export const ATHLETE_SESSION_DISCLOSURE_TRIGGER = ATHLETE_SESSION_BLOCK_SECTION_HEADER;
+
+/** @deprecated V04-MAP-UI — usar BLOCK_BODY. */
+export const ATHLETE_SESSION_DISCLOSURE_PANEL = ATHLETE_SESSION_BLOCK_BODY;
 
 export const ATHLETE_SESSION_SET_TABLE = "w-full text-left text-xs";
 
@@ -160,9 +171,6 @@ export const ATHLETE_SESSION_LOG_BLOCK_HINT =
 export const ATHLETE_SESSION_LOG_BLOCK_SUMMARY =
     "text-sm text-muted-foreground";
 
-/** Copy del enlace «Volver» cuando la V04 se abre desde Mi agenda. */
-export const ATHLETE_SESSION_BACK_FROM_AGENDA_LABEL = "Volver a Mi agenda";
-
 export const ATHLETE_SESSION_EXERCISE_ROW = cn(
     "flex items-start gap-2 rounded-md py-1.5 text-sm",
     "text-muted-foreground"
@@ -173,6 +181,17 @@ export const ATHLETE_SESSION_EXERCISE_ROW_CONFLICT = cn(
     "border-l-2 border-warning/50 pl-2.5 text-warning"
 );
 
+/** Fila plana de ejercicio en mapa V04 (sin mini-card). */
+export const ATHLETE_SESSION_EXERCISE_ROW_FLAT = cn(
+    "flex items-start gap-2.5 border-b border-border/40 py-3 last:border-b-0"
+);
+
+export const ATHLETE_SESSION_EXERCISE_ROW_FLAT_CAUTION = cn(
+    ATHLETE_SESSION_EXERCISE_ROW_FLAT,
+    "border-l-2 border-l-warning/55 pl-2.5"
+);
+
+/** @deprecated V04-MAP-UI — prefer EXERCISE_ROW_FLAT. */
 export const ATHLETE_SESSION_EXERCISE_ITEM = cn(
     "flex items-center gap-2.5 rounded-lg border border-border/55 bg-background/35",
     "px-3 py-2.5 backdrop-blur-sm",
@@ -182,6 +201,11 @@ export const ATHLETE_SESSION_EXERCISE_ITEM = cn(
 export const ATHLETE_SESSION_EXERCISE_ITEM_CAUTION = cn(
     ATHLETE_SESSION_EXERCISE_ITEM,
     "border-warning/28 bg-warning/8"
+);
+
+export const ATHLETE_SESSION_SERIES_TOGGLE = cn(
+    "mt-2 min-h-8 text-left text-xs font-medium text-primary/90",
+    "underline-offset-2 hover:underline"
 );
 
 export const ATHLETE_SESSION_EXERCISE_NAME =

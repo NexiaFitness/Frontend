@@ -1,24 +1,26 @@
 /**
- * AthleteSessionPrescriptionMap — Mapa plegable de la sesión (V04, mobile-first).
+ * AthleteSessionPrescriptionMap — Mapa de prescripción V04 (superficie plana, un acordeón de bloque).
  */
 
 import React, { useId, useState } from "react";
-import { AlertTriangle, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { AthleteExercisePerformanceInfoButton } from "@/components/athlete/sessions/AthleteExercisePerformanceInfoButton";
 import { AthleteExercisePerformanceInfoSheet } from "@/components/athlete/sessions/AthleteExercisePerformanceInfoSheet";
 import { AthleteInjuryCallout } from "@/components/athlete/AthleteInjuryCallout";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
-    ATHLETE_EXERCISE_INFO_BUTTON,
-    ATHLETE_SESSION_DISCLOSURE_PANEL,
-    ATHLETE_SESSION_DISCLOSURE_TRIGGER,
+    ATHLETE_SESSION_BLOCK_BODY,
+    ATHLETE_SESSION_BLOCK_SECTION_HEADER,
+    ATHLETE_SESSION_BLOCK_SECTION_HEADER_STATIC,
     ATHLETE_SESSION_EXERCISE_DETAIL,
-    ATHLETE_SESSION_EXERCISE_ITEM,
-    ATHLETE_SESSION_EXERCISE_ITEM_CAUTION,
     ATHLETE_SESSION_EXERCISE_NAME,
     ATHLETE_SESSION_EXERCISE_NOTES_BODY,
     ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE,
+    ATHLETE_SESSION_EXERCISE_ROW_FLAT,
+    ATHLETE_SESSION_EXERCISE_ROW_FLAT_CAUTION,
     ATHLETE_SESSION_EXERCISE_SECONDARY,
     ATHLETE_SESSION_PREVIEW_BLOCK,
+    ATHLETE_SESSION_SERIES_TOGGLE,
     ATHLETE_SESSION_SET_TABLE,
     ATHLETE_SESSION_SET_TABLE_CELL,
     ATHLETE_SESSION_SET_TABLE_CELL_MUTED,
@@ -41,6 +43,7 @@ import {
     formatTrainerNoteForAthlete,
     hasHumanTrainerNote,
 } from "@nexia/shared/utils/athlete/athleteSessionNotesUtils";
+import { shouldShowPrescriptionBlockTitle } from "@nexia/shared/utils/athlete/athleteSessionPrescriptionMapUtils";
 import { cn } from "@/lib/utils";
 
 const GROUP_KIND_LABEL: Record<SessionExerciseGroupView["kind"], string | null> = {
@@ -134,19 +137,19 @@ const ExerciseNotes: React.FC<{ notes: string }> = ({ notes }) => {
     );
 };
 
-const ExerciseDisclosure: React.FC<{
+const ExerciseRow: React.FC<{
     card: AthletePreviewExerciseCard;
     hasConflict: boolean;
     onInfo: (id: number, title: string) => void;
 }> = ({ card, hasConflict, onInfo }) => {
-    const [open, setOpen] = useState(false);
-    const panelId = useId();
+    const [seriesOpen, setSeriesOpen] = useState(false);
     const infoExerciseId = card.exerciseIds.length === 1 ? card.exerciseIds[0] : null;
+    const hasSeries = card.setLines.length > 0;
 
     return (
-        <div
+        <li
             className={
-                hasConflict ? ATHLETE_SESSION_EXERCISE_ITEM_CAUTION : ATHLETE_SESSION_EXERCISE_ITEM
+                hasConflict ? ATHLETE_SESSION_EXERCISE_ROW_FLAT_CAUTION : ATHLETE_SESSION_EXERCISE_ROW_FLAT
             }
         >
             {hasConflict ? (
@@ -155,61 +158,94 @@ const ExerciseDisclosure: React.FC<{
                     aria-label="Precaución por lesión activa"
                 />
             ) : null}
-            <div className="min-w-0 flex-1">
-                <button
-                    type="button"
-                    className="flex w-full items-start gap-2 text-left"
-                    aria-expanded={open}
-                    aria-controls={panelId}
-                    onClick={() => setOpen((v) => !v)}
-                >
-                    <div className="min-w-0 flex-1">
-                        <span
-                            className={
-                                card.hasCompoundLayout
-                                    ? "block text-xs font-semibold uppercase tracking-wide text-primary/85"
-                                    : ATHLETE_SESSION_EXERCISE_NAME
-                            }
-                        >
-                            {card.title}
-                        </span>
-                        <p className={ATHLETE_SESSION_EXERCISE_DETAIL}>{card.detail}</p>
-                        {card.secondaryDetail ? (
-                            <p className={ATHLETE_SESSION_EXERCISE_SECONDARY}>{card.secondaryDetail}</p>
-                        ) : null}
-                    </div>
-                    {open ? (
-                        <ChevronUp className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-                    ) : (
-                        <ChevronDown className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-                    )}
-                </button>
-                {open ? (
-                    <div id={panelId} className="mt-3 space-y-2">
-                        <SetLinesTable lines={card.setLines} />
-                        {hasHumanTrainerNote(card.notes) ? (
-                            <ExerciseNotes notes={formatTrainerNoteForAthlete(card.notes!)} />
-                        ) : null}
-                    </div>
+            <div className="flex min-w-0 flex-1 items-start gap-2">
+                <div className="min-w-0 flex-1">
+                    <span
+                        className={
+                            card.hasCompoundLayout
+                                ? "block text-xs font-semibold uppercase tracking-wide text-primary/85"
+                                : ATHLETE_SESSION_EXERCISE_NAME
+                        }
+                    >
+                        {card.title}
+                    </span>
+                    <p className={ATHLETE_SESSION_EXERCISE_DETAIL}>{card.detail}</p>
+                    {card.secondaryDetail ? (
+                        <p className={ATHLETE_SESSION_EXERCISE_SECONDARY}>{card.secondaryDetail}</p>
+                    ) : null}
+                    {hasHumanTrainerNote(card.notes) ? (
+                        <ExerciseNotes notes={formatTrainerNoteForAthlete(card.notes!)} />
+                    ) : null}
+                    {hasSeries ? (
+                        <>
+                            <button
+                                type="button"
+                                className={ATHLETE_SESSION_SERIES_TOGGLE}
+                                aria-expanded={seriesOpen}
+                                onClick={() => setSeriesOpen((v) => !v)}
+                            >
+                                {seriesOpen ? "Ocultar series" : "Ver series"}
+                            </button>
+                            {seriesOpen ? (
+                                <div className="mt-2">
+                                    <SetLinesTable lines={card.setLines} />
+                                </div>
+                            ) : null}
+                        </>
+                    ) : null}
+                </div>
+                {infoExerciseId != null ? (
+                    <AthleteExercisePerformanceInfoButton
+                        exerciseId={infoExerciseId}
+                        exerciseTitle={card.title}
+                        onOpen={onInfo}
+                    />
                 ) : null}
             </div>
-            {infoExerciseId != null ? (
-                <button
-                    type="button"
-                    className={ATHLETE_EXERCISE_INFO_BUTTON}
-                    aria-label={`Información de rendimiento: ${card.title}`}
-                    onClick={() => onInfo(infoExerciseId, card.title)}
-                >
-                    <Info className="size-4" aria-hidden />
-                </button>
+        </li>
+    );
+};
+
+const GroupSection: React.FC<{
+    group: SessionExerciseGroupView;
+    conflictByExerciseId: Map<number, unknown>;
+    onInfo: (id: number, title: string) => void;
+}> = ({ group, conflictByExerciseId, onInfo }) => {
+    const kindLabel = GROUP_KIND_LABEL[group.kind];
+    const cards = buildAthletePreviewExerciseCards(group);
+
+    return (
+        <div className="space-y-2">
+            {kindLabel ? (
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-primary/70">
+                    {kindLabel}
+                    {group.rounds != null && group.rounds > 0 ? ` · ${group.rounds} rondas` : null}
+                    {group.timeCapMinutes != null ? ` · ${group.timeCapMinutes} min` : null}
+                </p>
             ) : null}
+            <ul className="space-y-0">
+                {cards.map((card) => {
+                    const hasConflict = card.exerciseIds.some((id) => conflictByExerciseId.has(id));
+                    return (
+                        <ExerciseRow
+                            key={card.key}
+                            card={card}
+                            hasConflict={hasConflict}
+                            onInfo={onInfo}
+                        />
+                    );
+                })}
+            </ul>
         </div>
     );
 };
 
-const BlockDisclosure: React.FC<{
+const BlockSection: React.FC<{
     block: SessionBlockView;
     blockIndex: number;
+    blockCount: number;
+    sessionHeadline: string | null | undefined;
+    collapsible: boolean;
     defaultOpen: boolean;
     conflictByExerciseId: Map<number, unknown>;
     showConflictSummary: boolean;
@@ -221,6 +257,9 @@ const BlockDisclosure: React.FC<{
 }> = ({
     block,
     blockIndex,
+    blockCount,
+    sessionHeadline,
+    collapsible,
     defaultOpen,
     conflictByExerciseId,
     showConflictSummary,
@@ -234,38 +273,60 @@ const BlockDisclosure: React.FC<{
     const panelId = useId();
     const exerciseCount = countExercisesInBlock(block);
     const blockTitle = getBlockDisplayName(block.blockTypeName);
+    const showBlockTitle = shouldShowPrescriptionBlockTitle(
+        blockTitle,
+        sessionHeadline,
+        blockCount
+    );
+    const isOpen = collapsible ? open : true;
+
+    const titleRow = (
+        <>
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
+                {showBlockTitle ? (
+                    <span className="text-sm font-semibold text-foreground">{blockTitle}</span>
+                ) : null}
+                <span className="text-xs text-muted-foreground">
+                    {exerciseCount} {exerciseCount === 1 ? "ejercicio" : "ejercicios"}
+                </span>
+            </div>
+            {blockIndex === 0 && showConflictSummary && conflictCount > 0 ? (
+                <span className="text-caption font-medium text-warning">
+                    {formatInjuryPrecautionCount(conflictCount)}
+                </span>
+            ) : null}
+            {collapsible ? (
+                open ? (
+                    <ChevronUp className="size-5 shrink-0 text-primary/80" aria-hidden />
+                ) : (
+                    <ChevronDown className="size-5 shrink-0 text-primary/80" aria-hidden />
+                )
+            ) : null}
+        </>
+    );
 
     return (
         <section className={ATHLETE_SESSION_PREVIEW_BLOCK}>
             {blockIndex === 0 ? <NexiaGlassAccentRim /> : null}
-            <button
-                type="button"
-                className={cn(ATHLETE_SESSION_DISCLOSURE_TRIGGER, "relative w-full")}
-                aria-expanded={open}
-                aria-controls={panelId}
-                onClick={() => setOpen((v) => !v)}
-            >
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
-                    <span className="text-sm font-semibold text-foreground">{blockTitle}</span>
-                    <span className="text-xs text-muted-foreground">
-                        {exerciseCount}{" "}
-                        {exerciseCount === 1 ? "ejercicio" : "ejercicios"}
-                    </span>
-                </div>
-                {blockIndex === 0 && showConflictSummary && conflictCount > 0 ? (
-                    <span className="text-caption font-medium text-warning">
-                        {formatInjuryPrecautionCount(conflictCount)}
-                    </span>
-                ) : null}
-                {open ? (
-                    <ChevronUp className="size-5 shrink-0 text-primary/80" aria-hidden />
-                ) : (
-                    <ChevronDown className="size-5 shrink-0 text-primary/80" aria-hidden />
-                )}
-            </button>
 
-            {open ? (
-                <div id={panelId} className={ATHLETE_SESSION_DISCLOSURE_PANEL}>
+            {collapsible ? (
+                <button
+                    type="button"
+                    className={cn(ATHLETE_SESSION_BLOCK_SECTION_HEADER, "relative w-full")}
+                    aria-expanded={open}
+                    aria-controls={panelId}
+                    onClick={() => setOpen((v) => !v)}
+                >
+                    {titleRow}
+                </button>
+            ) : (
+                <div className={cn(ATHLETE_SESSION_BLOCK_SECTION_HEADER_STATIC, "relative w-full")}>
+                    {titleRow}
+                </div>
+            )}
+
+            {isOpen ? (
+                <div id={panelId} className={ATHLETE_SESSION_BLOCK_BODY}>
                     {blockIndex === 0 && showConflictSummary && mobileConflictSummary ? (
                         <AthleteInjuryCallout
                             message={mobileConflictSummary}
@@ -273,42 +334,15 @@ const BlockDisclosure: React.FC<{
                             onConsult={onConsult}
                         />
                     ) : null}
-                    <div className="space-y-3">
-                        {block.groups.map((group) => {
-                            const kindLabel = GROUP_KIND_LABEL[group.kind];
-                            const cards = buildAthletePreviewExerciseCards(group);
-                            return (
-                                <div key={group.groupId} className="space-y-2">
-                                    {kindLabel ? (
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-primary/70">
-                                            {kindLabel}
-                                            {group.rounds != null && group.rounds > 0
-                                                ? ` · ${group.rounds} rondas`
-                                                : null}
-                                            {group.timeCapMinutes != null
-                                                ? ` · ${group.timeCapMinutes} min`
-                                                : null}
-                                        </p>
-                                    ) : null}
-                                    <ul className="space-y-2">
-                                        {cards.map((card) => {
-                                            const hasConflict = card.exerciseIds.some((id) =>
-                                                conflictByExerciseId.has(id)
-                                            );
-                                            return (
-                                                <li key={card.key}>
-                                                    <ExerciseDisclosure
-                                                        card={card}
-                                                        hasConflict={hasConflict}
-                                                        onInfo={onInfo}
-                                                    />
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </div>
-                            );
-                        })}
+                    <div className="space-y-4">
+                        {block.groups.map((group) => (
+                            <GroupSection
+                                key={group.groupId}
+                                group={group}
+                                conflictByExerciseId={conflictByExerciseId}
+                                onInfo={onInfo}
+                            />
+                        ))}
                     </div>
                 </div>
             ) : null}
@@ -318,6 +352,7 @@ const BlockDisclosure: React.FC<{
 
 export interface AthleteSessionPrescriptionMapProps {
     blocks: SessionBlockView[];
+    sessionHeadline?: string | null;
     conflictByExerciseId: Map<number, unknown>;
     conflictCount: number;
     showConflictSummary: boolean;
@@ -328,6 +363,7 @@ export interface AthleteSessionPrescriptionMapProps {
 
 export const AthleteSessionPrescriptionMap: React.FC<AthleteSessionPrescriptionMapProps> = ({
     blocks,
+    sessionHeadline,
     conflictByExerciseId,
     conflictCount,
     showConflictSummary,
@@ -340,14 +376,19 @@ export const AthleteSessionPrescriptionMap: React.FC<AthleteSessionPrescriptionM
         title: string;
     } | null>(null);
 
+    const collapsible = blocks.length > 1;
+
     return (
         <>
             <div className="space-y-3">
                 {blocks.map((block, blockIndex) => (
-                    <BlockDisclosure
+                    <BlockSection
                         key={block.blockId}
                         block={block}
                         blockIndex={blockIndex}
+                        blockCount={blocks.length}
+                        sessionHeadline={sessionHeadline}
+                        collapsible={collapsible}
                         defaultOpen={blockIndex === 0}
                         conflictByExerciseId={conflictByExerciseId}
                         conflictCount={conflictCount}

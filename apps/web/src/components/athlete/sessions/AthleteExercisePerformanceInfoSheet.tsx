@@ -80,8 +80,8 @@ export const AthleteExercisePerformanceInfoSheet: React.FC<
         <BottomSheet
             isOpen={isOpen}
             onClose={onClose}
-            title={exerciseTitle}
-            subtitle="Contexto de rendimiento"
+            title={`Tu rendimiento en ${exerciseTitle}`}
+            subtitle="1RM y última marca"
         >
             {body}
         </BottomSheet>

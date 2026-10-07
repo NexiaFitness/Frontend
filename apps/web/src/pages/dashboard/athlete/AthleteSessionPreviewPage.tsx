@@ -58,6 +58,7 @@ import {
     isPastSessionDate,
     shouldFetchAthleteSessionLogProgress,
 } from "@nexia/shared/utils/athlete/athleteSessionRegistrationPolicy";
+import { resolveAgendaTrainingHeadline } from "@nexia/shared/utils/athlete/athleteAgendaViewUtils";
 import { cn } from "@/lib/utils";
 
 export const AthleteSessionPreviewPage: React.FC = () => {
@@ -159,6 +160,11 @@ export const AthleteSessionPreviewPage: React.FC = () => {
         { skip: !clientId }
     );
     const hasSessionFeedback = sessionHasClientFeedback(sessionId, feedbackList);
+
+    const sessionHeadline = useMemo(
+        () => (session ? resolveAgendaTrainingHeadline(session) : null),
+        [session]
+    );
 
     const sessionExercises = useMemo(() => collectSessionExerciseRefs(view), [view]);
     const hasActiveInjuries = activeInjuries.length > 0;
@@ -348,6 +354,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                         ) : (
                             <AthleteSessionPrescriptionMap
                                 blocks={view.blocks}
+                                sessionHeadline={sessionHeadline}
                                 conflictByExerciseId={conflictByExerciseId}
                                 conflictCount={conflictCount}
                                 showConflictSummary={showMobileConflictSummary}

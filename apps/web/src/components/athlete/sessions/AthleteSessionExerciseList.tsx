@@ -5,7 +5,8 @@
  */
 
 import React, { useState } from "react";
-import { AlertTriangle, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { AthleteExercisePerformanceInfoButton } from "@/components/athlete/sessions/AthleteExercisePerformanceInfoButton";
 import { AthleteExercisePerformanceInfoSheet } from "@/components/athlete/sessions/AthleteExercisePerformanceInfoSheet";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { AthleteInjuryCallout } from "@/components/athlete/AthleteInjuryCallout";
@@ -17,7 +18,6 @@ import {
     ATHLETE_SESSION_EXERCISE_NOTES_BODY,
     ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE,
     ATHLETE_SESSION_EXERCISE_SECONDARY,
-    ATHLETE_EXERCISE_INFO_BUTTON,
     ATHLETE_SESSION_PREVIEW_BLOCK,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
 import type { SessionBlockView } from "@nexia/shared/sessionProgramming/sessionBlockView";
@@ -151,19 +151,13 @@ export const AthleteSessionExerciseList: React.FC<AthleteSessionExerciseListProp
                                             ) : null}
                                         </div>
                                         {infoExerciseId != null ? (
-                                            <button
-                                                type="button"
-                                                className={ATHLETE_EXERCISE_INFO_BUTTON}
-                                                aria-label={`Información de rendimiento: ${row.title}`}
-                                                onClick={() =>
-                                                    setInfoExercise({
-                                                        id: infoExerciseId,
-                                                        title: row.title,
-                                                    })
+                                            <AthleteExercisePerformanceInfoButton
+                                                exerciseId={infoExerciseId}
+                                                exerciseTitle={row.title}
+                                                onOpen={(id, title) =>
+                                                    setInfoExercise({ id, title })
                                                 }
-                                            >
-                                                <Info className="size-4" aria-hidden />
-                                            </button>
+                                            />
                                         ) : null}
                                     </li>
                                 );
