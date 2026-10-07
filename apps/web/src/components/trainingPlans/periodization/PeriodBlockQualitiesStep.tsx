@@ -22,7 +22,7 @@ import {
     ADD_PILL_SECTION_LABEL_CLASS,
 } from "@/components/ui/chips";
 import { HintTooltip } from "@/components/ui/feedback";
-import { BlockLevelMeter } from "./BlockLevelMeter";
+import { QualityShareBar } from "./QualityShareBar";
 import { useToast } from "@/components/ui/feedback";
 import { cn } from "@/lib/utils";
 
@@ -170,41 +170,31 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                                 key={q.physical_quality_id}
                                 className="relative pr-9"
                             >
-                                <BlockLevelMeter
-                                    accentHex={qColor.hex}
-                                    prefix={name}
-                                    level={q.percentage}
+                                <QualityShareBar
+                                    name={name}
+                                    percentage={q.percentage}
+                                    colorHex={qColor.hex}
+                                    labelDensity="comfortable"
                                     min={0}
                                     max={100}
                                     step={5}
-                                    qualitativeLabel={false}
-                                    valueFormat="percent"
-                                    headerLeading={
-                                        <>
-                                            <span
-                                                className="h-2 w-2 shrink-0 rounded-full"
-                                                style={{
-                                                    backgroundColor: qColor.hex,
-                                                }}
-                                                aria-hidden
-                                            />
-                                            {qualityTooltip ? (
-                                                <HintTooltip
-                                                    label={qualityTooltip}
-                                                    align="start"
+                                    labelAccessory={
+                                        qualityTooltip ? (
+                                            <HintTooltip
+                                                label={qualityTooltip}
+                                                align="start"
+                                            >
+                                                <span
+                                                    className="inline-flex shrink-0 text-muted-foreground/70 hover:text-primary"
+                                                    tabIndex={0}
                                                 >
-                                                    <span
-                                                        className="inline-flex text-muted-foreground/70 hover:text-primary"
-                                                        tabIndex={0}
-                                                    >
-                                                        <HelpCircle
-                                                            className="h-3.5 w-3.5"
-                                                            aria-hidden
-                                                        />
-                                                    </span>
-                                                </HintTooltip>
-                                            ) : null}
-                                        </>
+                                                    <HelpCircle
+                                                        className="h-3.5 w-3.5"
+                                                        aria-hidden
+                                                    />
+                                                </span>
+                                            </HintTooltip>
+                                        ) : undefined
                                     }
                                     onChange={(value) =>
                                         onUpdateQualityPct(

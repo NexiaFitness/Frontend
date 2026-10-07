@@ -1,6 +1,7 @@
 /**
- * BlockLevelMeter.tsx — Volumen, intensidad o % cualidad con NexiaProgressBar premium.
+ * BlockLevelMeter.tsx — Volumen e intensidad (1–10) con NexiaProgressBar premium.
  * Patrón canónico: CreateSession, PeriodBlockCard, wizard D-PAP.
+ * Cualidades físicas (%): usar QualityShareBar.
  */
 
 import React from "react";
@@ -16,16 +17,12 @@ import {
     BLOCK_LEVEL_METER_QUALITATIVE_CLASS,
     BLOCK_LEVEL_METER_RANGE_WRAP,
     BLOCK_LEVEL_METER_VALUE_CLASS,
-    blockLevelMeterAccentRangeEditableClass,
     blockLevelMeterRangeClass,
     type BlockLevelMeterTone,
 } from "./blockLevelMeterPresentation";
 
 export interface BlockLevelMeterProps {
-    /** Volumen/intensidad — omitir si se usa `accentHex` (cualidades). */
     tone?: BlockLevelMeterTone;
-    /** Color dinámico (hex) para cualidades físicas — barra premium primary. */
-    accentHex?: string;
     level: number;
     prefix: string;
     hint?: string | null;
@@ -37,16 +34,13 @@ export interface BlockLevelMeterProps {
     min?: number;
     max?: number;
     step?: number;
-    /** Etiqueta cualitativa 1–10 (p. ej. «Moderado»). Desactivar en % cualidades. */
     qualitativeLabel?: boolean;
     valueFormat?: "ratio" | "percent";
-    /** Iconos o ayudas antes del label (p. ej. dot + tooltip). */
     headerLeading?: React.ReactNode;
 }
 
 export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
     tone,
-    accentHex: _accentHex,
     level,
     prefix,
     hint,
@@ -69,16 +63,6 @@ export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
 
     const valueLabel =
         valueFormat === "percent" ? `${clamped}%` : `${clamped}/${max}`;
-
-    const valueClass = _accentHex
-        ? "text-xs font-bold tabular-nums"
-        : cn("text-xs", BLOCK_LEVEL_METER_VALUE_CLASS[resolvedTone]);
-
-    const rangeStyle = _accentHex
-        ? ({
-              "--meter-accent": _accentHex,
-          } as React.CSSProperties)
-        : undefined;
 
     const meterAriaLabel = `${prefix} ${valueLabel}`;
 
@@ -115,8 +99,10 @@ export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
                     )}
                 </p>
                 <span
-                    className={valueClass}
-                    style={_accentHex ? { color: _accentHex } : undefined}
+                    className={cn(
+                        "text-xs",
+                        BLOCK_LEVEL_METER_VALUE_CLASS[resolvedTone],
+                    )}
                 >
                     {valueLabel}
                 </span>
@@ -136,21 +122,11 @@ export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
                         value={clamped}
                         disabled={disabled}
                         onChange={(e) => onChange(Number(e.target.value))}
-                        className={
-                            _accentHex
-                                ? cn(
-                                      blockLevelMeterAccentRangeEditableClass(),
-                                      "relative z-[1] bg-transparent",
-                                  )
-                                : cn(
-                                      blockLevelMeterRangeClass(resolvedTone),
-                                      "relative z-[1]",
-                                  )
-                        }
-                        style={{
-                            ...rangeStyle,
-                            background: "transparent",
-                        }}
+                        className={cn(
+                            blockLevelMeterRangeClass(resolvedTone),
+                            "relative z-[1]",
+                        )}
+                        style={{ background: "transparent" }}
                         aria-label={meterAriaLabel}
                         aria-valuemin={min}
                         aria-valuemax={max}
