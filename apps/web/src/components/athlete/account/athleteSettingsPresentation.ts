@@ -51,12 +51,25 @@ export const NEXIA_PORTAL_CARD_DESCRIPTION = "text-sm text-muted-foreground";
 
 export const ATHLETE_DIVIDER = NEXIA_DIVIDER_SUBTLE;
 
-/** Enlace «Volver» — outline en móvil; tipográfico en lg+ (§6.7 + mobile outline). */
+/**
+ * «Volver» texto + flecha — ghost-primary atleta (F3b, 05_ACTION_HIERARCHY).
+ * Ancho contenido; flecha pegada al copy (`gap-1.5`).
+ */
 export const ATHLETE_BACK_LINK = cn(
-    "inline-flex min-h-touch-athlete items-center gap-2 rounded-lg px-3 text-sm font-medium",
-    "border border-primary/30 bg-primary/20 text-primary transition-colors",
-    "hover:border-primary/50 hover:bg-primary/30",
-    "md:border-transparent md:bg-transparent md:px-0 md:text-primary/85 md:hover:bg-transparent md:hover:text-primary",
+    "inline-flex w-fit max-w-full min-h-touch-athlete items-center justify-start gap-1.5",
+    "rounded-lg px-1.5 py-2 text-sm font-medium text-primary/85",
+    "transition-colors hover:bg-primary/10 hover:text-primary",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45",
+    "focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "motion-safe:active:opacity-80 motion-reduce:active:opacity-100"
+);
+
+/** Variante solo icono (círculo) — vistas muy cargadas de CTAs; misma semántica que BACK_LINK. */
+export const ATHLETE_BACK_ICON_BUTTON = cn(
+    "inline-flex size-11 shrink-0 items-center justify-center rounded-full",
+    "text-primary/85 transition-colors hover:bg-primary/10 hover:text-primary",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45",
+    "focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     "motion-safe:active:opacity-80 motion-reduce:active:opacity-100"
 );
 

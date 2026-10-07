@@ -115,6 +115,9 @@ export const ATHLETE_SESSION_LOG_BLOCK_HINT =
 export const ATHLETE_SESSION_LOG_BLOCK_SUMMARY =
     "text-sm text-muted-foreground";
 
+/** Copy del enlace «Volver» cuando la V04 se abre desde Mi agenda. */
+export const ATHLETE_SESSION_BACK_FROM_AGENDA_LABEL = "Volver a Mi agenda";
+
 export const ATHLETE_SESSION_EXERCISE_ROW = cn(
     "flex items-start gap-2 rounded-md py-1.5 text-sm",
     "text-muted-foreground"

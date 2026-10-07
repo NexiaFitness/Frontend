@@ -3,7 +3,7 @@
  */
 
 import React, { useEffect, useId, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { Alert, useToast } from "@/components/ui/feedback";
@@ -35,6 +35,7 @@ import {
     ATHLETE_TRAINER_QUOTE_LABEL,
 } from "@/components/athlete/account/athleteSettingsPresentation";
 import { AthleteSessionPreviewHeader, AthleteSessionExercisesLabel } from "@/components/athlete/sessions/AthleteSessionPreviewHeader";
+import { ATHLETE_SESSION_BACK_FROM_AGENDA_LABEL } from "@/components/athlete/sessions/athleteSessionsPresentation";
 import { AthleteSessionExerciseList } from "@/components/athlete/sessions/AthleteSessionExerciseList";
 import { AthleteSessionLogBlockList } from "@/components/athlete/sessions/AthleteSessionLogBlockList";
 import { AthleteSessionLogBlockSheet } from "@/components/athlete/sessions/AthleteSessionLogBlockSheet";
@@ -62,7 +63,12 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const sessionId = Number(id);
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchParams] = useSearchParams();
+    const backLabel =
+        (location.state as { from?: string } | null)?.from === "agenda"
+            ? ATHLETE_SESSION_BACK_FROM_AGENDA_LABEL
+            : "Volver";
     const { showToast } = useToast();
     const [wellbeingOpen, setWellbeingOpen] = useState(false);
     const [wellbeingAfterAction, setWellbeingAfterAction] = useState<"run" | "log" | null>(
@@ -259,10 +265,10 @@ export const AthleteSessionPreviewPage: React.FC = () => {
             <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className={cn(ATHLETE_BACK_LINK, "mb-4")}
+                className={cn(ATHLETE_BACK_LINK, "mb-4 self-start")}
             >
                 <ArrowLeft className="size-4 shrink-0" aria-hidden />
-                Volver
+                <span className="truncate">{backLabel}</span>
             </button>
 
             <div
