@@ -79,7 +79,7 @@ function TrainingRow({
     if (!headline && !subline && !hasMeta) return null;
 
     return (
-        <li>
+        <li role="presentation">
             <button
                 type="button"
                 className={ATHLETE_AGENDA_TRAINING_ROW}
@@ -136,7 +136,7 @@ function AppointmentRow({
     const title = resolveCalendarEventDisplayTitle(event);
 
     return (
-        <li>
+        <li role="presentation">
             <button
                 type="button"
                 className={ATHLETE_AGENDA_APPOINTMENT_ROW}
