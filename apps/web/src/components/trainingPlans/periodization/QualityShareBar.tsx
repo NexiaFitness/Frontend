@@ -92,7 +92,7 @@ export const QualityShareBar: React.FC<Props> = ({
                 step={step}
                 value={clamped}
                 disabled={disabled}
-                onChange={(e) => onChange(Number(e.target.value))}
+                onChange={(e) => onChange?.(Number(e.target.value))}
                 className={qualityShareBarRangeClass()}
                 style={{ "--quality-accent": colorHex } as React.CSSProperties}
                 aria-label={meterAriaLabel}
