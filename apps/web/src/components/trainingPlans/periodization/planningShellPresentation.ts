@@ -155,11 +155,11 @@ export function planningShellSplitGridClass(variant: PlanningShellSplitVariant):
     );
 }
 
-/** Fila superior explore: todas las cards de bloque (scroll horizontal si hace falta). */
-export const PLANNING_EXPLORE_BLOCKS_ROW = cn(
-    "flex w-full min-w-0 gap-4 overflow-x-auto pb-1",
-    "snap-x snap-mandatory scrollbar-primary",
-);
+/** Rejilla superior explore — fases + CTA (paridad cards plan/sesiones). */
+export {
+    PERIOD_BLOCK_CARD_LIST_GRID_CLASS as PLANNING_EXPLORE_BLOCKS_ROW,
+    PERIOD_BLOCK_CARD_LIST_ITEM_CLASS as PLANNING_EXPLORE_BLOCKS_ITEM,
+} from "./periodBlockCardPresentation";
 
 /** Columna izquierda del split (solo calendario). */
 export const PLANNING_SHELL_MAIN_COLUMN = "min-w-0";

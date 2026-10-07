@@ -8,11 +8,12 @@ import { cn } from "@/lib/utils";
 import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentation";
 import { NEXIA_DIVIDER_GLOW } from "@/components/ui/surface/nexiaDividerPresentation";
 import { PLATFORM_SECTION_LABEL } from "@/components/ui/surface/platformPremiumPresentation";
+import { TRAINING_PLANS_TABS_CARD_GRID } from "@/components/trainingPlans/templateLibraryPresentation";
 
-/** Shell tarjeta bloque — compacta, glass premium. */
+/** Shell tarjeta bloque — glass premium, ancho fluido en rejilla (paridad plan/sesiones). */
 export const PERIOD_BLOCK_CARD_SHELL_CLASS = cn(
     NEXIA_GLASS_CARD,
-    "relative w-full max-w-[19rem]",
+    "relative flex h-full w-full max-w-none flex-col",
     "border-primary/20",
     "transition-all duration-200",
     "hover:border-primary/35 hover:shadow-[0_8px_32px_-12px] hover:shadow-primary/15",
@@ -81,14 +82,18 @@ export const PERIOD_BLOCK_CARD_FOOTER_CLASS =
 export const PERIOD_BLOCK_CARD_SESSIONS_CLASS =
     "relative z-[1] border-t border-border/40 px-4 py-2.5";
 
-/** Grid contenedor lista de bloques — auto-fill tarjetas estrechas. */
-export const PERIOD_BLOCK_CARD_LIST_GRID_CLASS =
-    "grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(17rem,19rem))]";
+/** Rejilla fases — paridad Planificación / lista sesiones (máx. 3 cols + gap-6 en lg). */
+export const PERIOD_BLOCK_CARD_LIST_GRID_CLASS = cn(
+    TRAINING_PLANS_TABS_CARD_GRID,
+    "w-full min-w-0 items-stretch",
+);
 
-/** Tarjeta CTA «Añadir fase» — misma anchura que PeriodBlockCard. */
+export const PERIOD_BLOCK_CARD_LIST_ITEM_CLASS = "flex min-h-0 h-full min-w-0";
+
+/** Tarjeta CTA «Añadir fase» — misma celda que PeriodBlockCard. */
 export const PERIOD_BLOCK_ADD_PHASE_CARD_CLASS = cn(
     NEXIA_GLASS_CARD,
-    "relative flex h-full w-full max-w-[19rem] min-h-[14.5rem] flex-col",
+    "relative flex h-full w-full max-w-none min-h-[14.5rem] flex-col",
     "border-2 border-dashed border-primary/35 bg-primary/[0.04]",
     "transition-all duration-200",
     "hover:border-primary/55 hover:bg-primary/[0.07]",

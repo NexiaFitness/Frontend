@@ -1,11 +1,14 @@
 /**
  * TrainingPlanTemplateCard — Card de plantilla (biblioteca premium).
+ *
+ * Card clicable (asignar / detalle / editor según estado). Duplicar = ghost-primary canónico.
  */
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
+import { NexiaProgressBar } from "@/components/ui/progress";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
 import type { TrainingPlanTemplate } from "@nexia/shared/types/training";
@@ -21,20 +24,18 @@ import { categoryChipsFromTemplate, displayTrainingPlanTemplateTitle } from "./g
 import { AssignTemplateModal } from "./AssignTemplateModal";
 import { DuplicateTemplateModal } from "./DuplicateTemplateModal";
 import {
-    TEMPLATE_LIBRARY_CARD,
+    TEMPLATE_LIBRARY_CARD_INTERACTIVE,
     TEMPLATE_LIBRARY_CARD_ACTIONS,
     TEMPLATE_LIBRARY_CARD_BADGE_ROW,
     TEMPLATE_LIBRARY_CARD_DUPLICATE_BTN,
     TEMPLATE_LIBRARY_CARD_HINT,
     TEMPLATE_LIBRARY_CARD_META,
-    TEMPLATE_LIBRARY_CARD_PROGRESS,
-    TEMPLATE_LIBRARY_CARD_PROGRESS_FILL,
-    TEMPLATE_LIBRARY_CARD_SECONDARY_BTN,
     TEMPLATE_LIBRARY_CARD_STAT_ROW,
     TEMPLATE_LIBRARY_CARD_STAT_VALUE,
     TEMPLATE_LIBRARY_CARD_STATS,
-    TEMPLATE_LIBRARY_CARD_TITLE_BTN,
+    TEMPLATE_LIBRARY_CARD_TITLE,
     TEMPLATE_LIBRARY_LEVEL_BADGE,
+    PLANNING_LIBRARY_GOAL_CHIP,
 } from "./templateLibraryPresentation";
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -88,29 +89,25 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
             ? Math.round(Math.min(100, Math.max(0, template.success_rate)))
             : null;
 
-    const handleOpenDetail = (): void => {
+    const handleOpenDetail = useCallback((): void => {
         navigate(`/dashboard/training-plans/templates/${template.id}`);
-    };
+    }, [navigate, template.id]);
 
-    const handleOpenEditor = (): void => {
+    const handleOpenEditor = useCallback((): void => {
         navigate(`/dashboard/training-plans/templates/${template.id}/edit`);
-    };
+    }, [navigate, template.id]);
 
-    const handlePrimary = (): void => {
+    const handleCardActivate = useCallback((): void => {
         if (cardActions.primaryIntent === "assign") {
             setAssignOpen(true);
             return;
         }
-        handleOpenEditor();
-    };
-
-    const handleSecondary = (): void => {
-        if (cardActions.secondaryLabel === "Ver detalle") {
-            handleOpenDetail();
+        if (cardActions.primaryIntent === "continue_edit") {
+            handleOpenEditor();
             return;
         }
-        handleOpenEditor();
-    };
+        handleOpenDetail();
+    }, [cardActions.primaryIntent, handleOpenDetail, handleOpenEditor]);
 
     const levelBadge =
         template.level != null ? (
@@ -126,18 +123,23 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
 
     return (
         <>
-            <article className={TEMPLATE_LIBRARY_CARD}>
+            <article
+                role="button"
+                tabIndex={0}
+                onClick={handleCardActivate}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleCardActivate();
+                    }
+                }}
+                className={TEMPLATE_LIBRARY_CARD_INTERACTIVE}
+            >
                 <NexiaGlassAccentRim />
-                <div className="flex min-h-0 flex-1 flex-col gap-4">
+                <div className="relative z-[1] flex min-h-0 flex-1 flex-col gap-4">
                     <div className="min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                            <button
-                                type="button"
-                                onClick={handleOpenDetail}
-                                className={TEMPLATE_LIBRARY_CARD_TITLE_BTN}
-                            >
-                                {displayTitle}
-                            </button>
+                            <p className={TEMPLATE_LIBRARY_CARD_TITLE}>{displayTitle}</p>
                             {levelBadge}
                         </div>
                         <div className={TEMPLATE_LIBRARY_CARD_BADGE_ROW}>
@@ -158,10 +160,7 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
                                 {categoryChips.map((chip, i) => (
                                     <span
                                         key={`${chip.label}-${i}`}
-                                        className={cn(
-                                            "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
-                                            chip.toneClass,
-                                        )}
+                                        className={cn(PLANNING_LIBRARY_GOAL_CHIP, chip.toneClass)}
                                     >
                                         {chip.label}
                                     </span>
@@ -195,28 +194,23 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
                                         {successPct}%
                                     </span>
                                 </div>
-                                <div
-                                    className={TEMPLATE_LIBRARY_CARD_PROGRESS}
-                                    role="progressbar"
-                                    aria-valuenow={successPct}
-                                    aria-valuemin={0}
-                                    aria-valuemax={100}
-                                >
-                                    <div
-                                        className={TEMPLATE_LIBRARY_CARD_PROGRESS_FILL}
-                                        style={{ width: `${successPct}%` }}
-                                    />
-                                </div>
+                                <NexiaProgressBar
+                                    value={successPct}
+                                    tone={successPct >= 75 ? "success" : "primary"}
+                                    aria-label={`Tasa de éxito ${successPct} por ciento`}
+                                />
                             </>
                         ) : null}
                     </div>
                 </div>
 
-                <div className={TEMPLATE_LIBRARY_CARD_ACTIONS}>
+                <div
+                    className={cn(TEMPLATE_LIBRARY_CARD_ACTIONS, "border-t border-border/60 pt-3")}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                >
                     {!cardActions.assignEnabled && cardActions.assignDisabledReason ? (
-                        <p className={TEMPLATE_LIBRARY_CARD_HINT}>
-                            {cardActions.assignDisabledReason}
-                        </p>
+                        <p className={TEMPLATE_LIBRARY_CARD_HINT}>{cardActions.assignDisabledReason}</p>
                     ) : null}
                     <Button
                         variant="ghost-primary"
@@ -224,19 +218,8 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
                         className={TEMPLATE_LIBRARY_CARD_DUPLICATE_BTN}
                         onClick={() => setDuplicateOpen(true)}
                     >
-                        <Copy className="h-4 w-4" aria-hidden />
+                        <Copy className="h-4 w-4 shrink-0" aria-hidden />
                         {DUPLICATE_TEMPLATE_ACTION_LABEL}
-                    </Button>
-                    <Button variant="primary" size="sm" className="w-full min-h-touch" onClick={handlePrimary}>
-                        {cardActions.primaryLabel}
-                    </Button>
-                    <Button
-                        variant="outline-primary"
-                        size="sm"
-                        className={cn("w-full min-h-touch", TEMPLATE_LIBRARY_CARD_SECONDARY_BTN)}
-                        onClick={handleSecondary}
-                    >
-                        {cardActions.secondaryLabel}
                     </Button>
                 </div>
             </article>

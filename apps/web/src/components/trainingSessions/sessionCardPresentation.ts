@@ -18,6 +18,7 @@ import {
     PERIOD_BLOCK_CARD_ICON_BTN_DELETE_CLASS,
     PERIOD_BLOCK_CARD_ICON_BTN_EDIT_CLASS,
 } from "@/components/trainingPlans/periodization/periodBlockCardPresentation";
+import { TRAINING_PLANS_TABS_CARD_GRID } from "@/components/trainingPlans/templateLibraryPresentation";
 
 export const SESSION_CARD_SHELL_CLASS = cn(
     NEXIA_GLASS_CARD,
@@ -34,10 +35,16 @@ export const SESSION_CARD_SHELL_LIST_CLASS = cn(
 
 export const SESSION_CARD_LIST_ITEM_CLASS = "flex min-h-0 h-full min-w-0";
 
-/** Rejilla responsive — columnas 1fr para rellenar fila (sin hueco a la derecha). */
+/** Rejilla lista sesiones — paridad Planificación (máx. 3 cols + gap-6 en lg). */
 export const SESSION_CARD_LIST_GRID_CLASS = cn(
-    "grid w-full min-w-0 gap-4",
-    "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
+    TRAINING_PLANS_TABS_CARD_GRID,
+    "w-full min-w-0 items-stretch",
+);
+
+/** Zona chip / nota breve encima del footer (altura estable en rejilla). */
+export const SESSION_CARD_PREFOOTER_CLASS = cn(
+    "relative z-[1] shrink-0 space-y-2 px-4 pb-1 pt-2",
+    "min-h-[2.25rem]",
 );
 
 export const SESSION_CARD_MAIN_STACK_CLASS = "relative z-[1] flex min-h-0 flex-1 flex-col";

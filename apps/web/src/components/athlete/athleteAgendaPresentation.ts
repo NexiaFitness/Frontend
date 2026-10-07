@@ -24,7 +24,7 @@ export const ATHLETE_AGENDA_TODAY_BADGE =
     "ml-2 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary";
 
 export const ATHLETE_AGENDA_TRAINING_ROW = cn(
-    "flex min-h-touch-athlete w-full items-center gap-3 rounded-lg border border-border/50",
+    "group flex min-h-touch-athlete w-full flex-col items-stretch gap-2 rounded-lg border border-border/50",
     "bg-card/30 px-3 py-2.5 text-left transition-colors",
     "hover:bg-card/45 active:bg-card/55"
 );
@@ -34,7 +34,8 @@ export const ATHLETE_AGENDA_APPOINTMENT_ROW = cn(
     "border-amber-400/25 bg-amber-400/5"
 );
 
-export const ATHLETE_SESSION_PLANNED_LOAD_ROW = "flex min-w-[6.5rem] max-w-[7.5rem] items-end gap-2";
+export const ATHLETE_SESSION_PLANNED_LOAD_ROW =
+    "flex w-[3.25rem] shrink-0 flex-col gap-1";
 
 export const ATHLETE_SESSION_PLANNED_LOAD_TOUCH = cn(
     "inline-flex min-h-touch-athlete min-w-touch-athlete shrink-0 items-center justify-center rounded-lg",

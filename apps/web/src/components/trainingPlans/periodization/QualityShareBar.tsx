@@ -1,5 +1,5 @@
 /**
- * QualityShareBar.tsx — Barra de % cualidad física (tinte glass, paridad premium).
+ * QualityShareBar.tsx — % cualidad física (color de catálogo + track premium).
  */
 
 import React from "react";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 import {
     QUALITY_SHARE_BAR_DOT_CLASS,
+    QUALITY_SHARE_BAR_FILL_CLASS,
     QUALITY_SHARE_BAR_LABEL_CLASS,
     QUALITY_SHARE_BAR_LABEL_COMFORT_CLASS,
     QUALITY_SHARE_BAR_PERCENT_CLASS,
@@ -32,30 +33,41 @@ export const QualityShareBar: React.FC<Props> = ({
     colorHex,
     className,
     labelDensity = "default",
-}) => (
-    <div className={cn("flex min-w-0 items-center gap-2", className)}>
-        <span
-            className={QUALITY_SHARE_BAR_DOT_CLASS}
-            style={qualityShareBarDotStyle(colorHex)}
-            aria-hidden
-        />
-        <span
-            className={
-                labelDensity === "comfortable"
-                    ? QUALITY_SHARE_BAR_LABEL_COMFORT_CLASS
-                    : QUALITY_SHARE_BAR_LABEL_CLASS
-            }
-            style={qualityShareBarLabelToneStyle(colorHex)}
-            title={name}
-        >
-            {name}
-        </span>
-        <div className={QUALITY_SHARE_BAR_TRACK_CLASS} aria-hidden>
-            <div
-                className="h-full rounded-full transition-[width] duration-300 ease-out"
-                style={qualityShareBarFillStyle(colorHex, percentage)}
+}) => {
+    const clamped = Math.max(0, Math.min(100, percentage));
+
+    return (
+        <div className={cn("flex min-w-0 items-center gap-2", className)}>
+            <span
+                className={QUALITY_SHARE_BAR_DOT_CLASS}
+                style={qualityShareBarDotStyle(colorHex)}
+                aria-hidden
             />
+            <span
+                className={
+                    labelDensity === "comfortable"
+                        ? QUALITY_SHARE_BAR_LABEL_COMFORT_CLASS
+                        : QUALITY_SHARE_BAR_LABEL_CLASS
+                }
+                style={qualityShareBarLabelToneStyle(colorHex)}
+                title={name}
+            >
+                {name}
+            </span>
+            <div
+                className={QUALITY_SHARE_BAR_TRACK_CLASS}
+                role="progressbar"
+                aria-valuenow={clamped}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`${name} ${clamped} por ciento`}
+            >
+                <div
+                    className={QUALITY_SHARE_BAR_FILL_CLASS}
+                    style={qualityShareBarFillStyle(colorHex, clamped)}
+                />
+            </div>
+            <span className={QUALITY_SHARE_BAR_PERCENT_CLASS}>{clamped}%</span>
         </div>
-        <span className={QUALITY_SHARE_BAR_PERCENT_CLASS}>{percentage}%</span>
-    </div>
-);
+    );
+};

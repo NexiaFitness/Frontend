@@ -50,9 +50,10 @@ import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { CollapsibleFormGroup } from "@/components/ui/forms/CollapsibleFormGroup";
 import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
 import { cn } from "@/lib/utils";
+import { NexiaProgressBar } from "@/components/ui/progress";
+import { nexiaProgressToneFromDeviationPercent } from "@/components/ui/progress/nexiaProgressPresentation";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
-    SESSION_VALIDATION_DEVIATION_TRACK,
     SESSION_VALIDATION_EMPTY_HINT,
     SESSION_VALIDATION_INSIGHT_BODY,
     SESSION_VALIDATION_INSIGHT_CARD,
@@ -65,8 +66,6 @@ import {
     SESSION_VALIDATION_SECTION_EYEBROW,
     SESSION_VALIDATION_UNCOVERED_SHELL,
     SESSION_VALIDATION_VOLUME_FULL,
-    sessionValidationAxialFillClass,
-    sessionValidationDeviationFillClass,
 } from "./sessionValidationReviewPresentation";
 
 // ---------------------------------------------------------------------------
@@ -164,15 +163,12 @@ export function DeviationBar({ percent, compact = false }: { percent: number; co
     const widthPct = Math.min(abs, 100);
     return (
         <div className={cn("flex items-center gap-2", compact && "gap-1.5")}>
-            <div className={cn("flex-1", SESSION_VALIDATION_DEVIATION_TRACK, compact ? "h-2" : "h-2")}>
-                <div
-                    className={cn(
-                        "h-full rounded-full transition-[width] duration-300 ease-out",
-                        sessionValidationDeviationFillClass(percent),
-                    )}
-                    style={{ width: `${widthPct}%` }}
-                />
-            </div>
+            <NexiaProgressBar
+                value={widthPct}
+                tone={nexiaProgressToneFromDeviationPercent(percent)}
+                className="min-w-0 flex-1"
+                aria-label={`Desviación ${percent.toFixed(0)} por ciento`}
+            />
             <span
                 className={cn(
                     "shrink-0 tabular-nums text-right font-medium",
@@ -467,15 +463,11 @@ const AxialLoadSection: React.FC<{ data: AxialScoreResponse | undefined }> = ({ 
                     {exceeds_threshold ? "Excede umbral" : "Dentro del umbral"}
                 </span>
             </div>
-            <div className={SESSION_VALIDATION_DEVIATION_TRACK}>
-                <div
-                    className={cn(
-                        "h-full rounded-full transition-[width] duration-300 ease-out",
-                        sessionValidationAxialFillClass(exceeds_threshold),
-                    )}
-                    style={{ width: `${Math.min((total_score / Math.max(threshold, 1)) * 100, 100)}%` }}
-                />
-            </div>
+            <NexiaProgressBar
+                value={Math.min((total_score / Math.max(threshold, 1)) * 100, 100)}
+                tone={exceeds_threshold ? "destructive" : "success"}
+                aria-label={`Carga axial ${total_score} de ${threshold}`}
+            />
             {exercises_breakdown.length > 0 && (
                 <div className="space-y-1.5">
                     <p className="text-xs font-medium text-muted-foreground">Desglose por ejercicio</p>

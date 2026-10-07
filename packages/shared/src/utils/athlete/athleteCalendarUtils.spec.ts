@@ -14,6 +14,7 @@ import {
     madridTrainerTimeError,
     mergeAthleteAgendaDaysByMadrid,
     normalizeSessionTimeForApi,
+    resolveCalendarEventDisplayTitle,
 } from "./athleteCalendarUtils";
 
 function baseEvent(partial: Partial<CalendarEvent>): CalendarEvent {
@@ -41,6 +42,27 @@ function baseEvent(partial: Partial<CalendarEvent>): CalendarEvent {
         ...partial,
     };
 }
+
+describe("resolveCalendarEventDisplayTitle", () => {
+    it("traduce títulos auto-generados en inglés (BE session_type)", () => {
+        expect(
+            resolveCalendarEventDisplayTitle(
+                baseEvent({ title: "Consultation", metadata: { session_type: "consultation" } })
+            )
+        ).toBe("Consulta");
+        expect(resolveCalendarEventDisplayTitle(baseEvent({ title: "Consultation" }))).toBe(
+            "Consulta"
+        );
+    });
+
+    it("conserva título personalizado del entrenador", () => {
+        expect(
+            resolveCalendarEventDisplayTitle(
+                baseEvent({ title: "Revisión de técnica", metadata: null })
+            )
+        ).toBe("Revisión de técnica");
+    });
+});
 
 describe("athleteCalendarUtils Madrid", () => {
     it("formatea hora civil en Europe/Madrid", () => {

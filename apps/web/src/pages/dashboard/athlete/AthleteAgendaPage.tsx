@@ -22,9 +22,8 @@ import type { CalendarEvent } from "@nexia/shared/types/calendar";
 import type { AthleteAgendaFilter } from "@nexia/shared/utils/athlete/athleteAgendaViewUtils";
 import {
     filterAgendaDaysFromMonday,
+    filterAgendaWeekSectionsForView,
     groupAgendaDaysByWeek,
-    normalizeAgendaDayRows,
-    filterNormalizedAgendaRows,
 } from "@nexia/shared/utils/athlete/athleteAgendaViewUtils";
 import { athleteCalendarDateWindow } from "@nexia/shared/utils/athlete/athleteCalendarUtils";
 
@@ -62,19 +61,17 @@ export const AthleteAgendaPage: React.FC = () => {
         [groupedDays, windowFrom]
     );
 
-    const weekSections = useMemo(() => groupAgendaDaysByWeek(visibleDays), [visibleDays]);
+    const weekSections = useMemo(
+        () =>
+            filterAgendaWeekSectionsForView(
+                groupAgendaDaysByWeek(visibleDays),
+                sessionsById,
+                filter
+            ),
+        [visibleDays, sessionsById, filter]
+    );
 
-    const hasVisibleContent = useMemo(() => {
-        return weekSections.some((section) =>
-            section.days.some((day) => {
-                const normalized = filterNormalizedAgendaRows(
-                    normalizeAgendaDayRows(day.rows, sessionsById),
-                    filter
-                );
-                return normalized.length > 0;
-            })
-        );
-    }, [weekSections, sessionsById, filter]);
+    const hasVisibleContent = weekSections.length > 0;
 
     useEffect(() => {
         const raw = sessionStorage.getItem(AGENDA_SCROLL_KEY);
@@ -102,7 +99,7 @@ export const AthleteAgendaPage: React.FC = () => {
     }, []);
 
     if (profileLoading || isLoading) {
-        return <AthletePageLoading variant="sessions-list" />;
+        return <AthletePageLoading variant="agenda" />;
     }
 
     if (profileError || !clientId) {

@@ -214,3 +214,10 @@ export function nexiaSegmentedItemClass(
         isSelected ? NEXIA_SEGMENTED_ITEM_SELECTED : NEXIA_SEGMENTED_ITEM_IDLE
     );
 }
+
+/** Chevron en filas navegables (agenda, listas). Usar en `<button className="group">`. */
+export const NEXIA_ROW_CHEVRON = cn(
+    "size-5 shrink-0 text-primary/75 transition-colors",
+    "group-hover:text-primary group-active:text-primary/90",
+    "motion-safe:group-hover:translate-x-0.5 motion-reduce:group-hover:translate-x-0"
+);

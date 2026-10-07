@@ -7,10 +7,18 @@
 import type { CSSProperties } from "react";
 
 import { cn } from "@/lib/utils";
+import { ATHLETE_PROGRESS_TRACK } from "@/components/athlete/athleteProgressPresentation";
 
+/** Track premium (glass) — relleno sigue el hex de cada cualidad. */
 export const QUALITY_SHARE_BAR_TRACK_CLASS = cn(
-    "h-2 flex-1 min-w-0 overflow-hidden rounded-full",
-    "border border-border/45 bg-surface-2/70",
+    ATHLETE_PROGRESS_TRACK,
+    "min-w-0 flex-1",
+);
+
+export const QUALITY_SHARE_BAR_FILL_CLASS = cn(
+    "relative h-full rounded-full transition-[width] duration-500 ease-out",
+    "after:pointer-events-none after:absolute after:inset-x-0 after:top-0 after:h-2/5",
+    "after:rounded-full after:bg-gradient-to-b after:from-white/22 after:to-transparent",
 );
 
 /** Etiqueta fija estrecha (paneles con muchas columnas). */

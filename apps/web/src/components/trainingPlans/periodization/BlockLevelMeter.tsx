@@ -1,5 +1,5 @@
 /**
- * BlockLevelMeter.tsx — Volumen, intensidad o % cualidad con barra premium glass.
+ * BlockLevelMeter.tsx — Volumen, intensidad o % cualidad con NexiaProgressBar premium.
  * Patrón canónico: CreateSession, PeriodBlockCard, wizard D-PAP.
  */
 
@@ -8,25 +8,23 @@ import React from "react";
 import { sliderLevelLabelEs } from "@nexia/shared";
 
 import { cn } from "@/lib/utils";
+import { NexiaProgressBar } from "@/components/ui/progress";
+import { nexiaProgressToneFromBlockLevel } from "@/components/ui/progress/nexiaProgressPresentation";
 
 import {
-    BLOCK_LEVEL_METER_FILL_CLASS,
     BLOCK_LEVEL_METER_PREFIX_CLASS,
     BLOCK_LEVEL_METER_QUALITATIVE_CLASS,
     BLOCK_LEVEL_METER_RANGE_WRAP,
-    BLOCK_LEVEL_METER_TRACK_CLASS,
     BLOCK_LEVEL_METER_VALUE_CLASS,
-    blockLevelMeterAccentFillStyle,
     blockLevelMeterAccentRangeEditableClass,
-    blockLevelMeterEditableTrackBackground,
-    blockLevelMeterRangeEditableClass,
+    blockLevelMeterRangeClass,
     type BlockLevelMeterTone,
 } from "./blockLevelMeterPresentation";
 
 export interface BlockLevelMeterProps {
     /** Volumen/intensidad — omitir si se usa `accentHex` (cualidades). */
     tone?: BlockLevelMeterTone;
-    /** Color dinámico (hex) para cualidades físicas. */
+    /** Color dinámico (hex) para cualidades físicas — barra premium primary. */
     accentHex?: string;
     level: number;
     prefix: string;
@@ -48,7 +46,7 @@ export interface BlockLevelMeterProps {
 
 export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
     tone,
-    accentHex,
+    accentHex: _accentHex,
     level,
     prefix,
     hint,
@@ -67,35 +65,31 @@ export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
     const clamped = Math.max(min, Math.min(max, Math.round(level)));
     const widthPct = ((clamped - min) / (max - min)) * 100;
     const editable = onChange != null;
+    const progressTone = nexiaProgressToneFromBlockLevel(resolvedTone);
 
     const valueLabel =
         valueFormat === "percent" ? `${clamped}%` : `${clamped}/${max}`;
 
-    const valueClass = accentHex
+    const valueClass = _accentHex
         ? "text-xs font-bold tabular-nums"
         : cn("text-xs", BLOCK_LEVEL_METER_VALUE_CLASS[resolvedTone]);
 
-    const track = (
-        <div className={BLOCK_LEVEL_METER_TRACK_CLASS}>
-            <div
-                className={cn(
-                    "h-full rounded-full transition-[width] duration-300 ease-out",
-                    !accentHex && BLOCK_LEVEL_METER_FILL_CLASS[resolvedTone],
-                )}
-                style={
-                    accentHex
-                        ? blockLevelMeterAccentFillStyle(accentHex, widthPct)
-                        : { width: `${widthPct}%` }
-                }
-            />
-        </div>
-    );
-
-    const rangeStyle = accentHex
+    const rangeStyle = _accentHex
         ? ({
-              "--meter-accent": accentHex,
+              "--meter-accent": _accentHex,
           } as React.CSSProperties)
         : undefined;
+
+    const meterAriaLabel = `${prefix} ${valueLabel}`;
+
+    const progressBar = (
+        <NexiaProgressBar
+            value={widthPct}
+            tone={progressTone}
+            aria-label={editable ? undefined : meterAriaLabel}
+            aria-hidden={editable ? true : undefined}
+        />
+    );
 
     return (
         <div className={cn("space-y-1.5", className)}>
@@ -122,14 +116,17 @@ export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
                 </p>
                 <span
                     className={valueClass}
-                    style={accentHex ? { color: accentHex } : undefined}
+                    style={_accentHex ? { color: _accentHex } : undefined}
                 >
                     {valueLabel}
                 </span>
             </div>
 
             {editable ? (
-                <div className={BLOCK_LEVEL_METER_RANGE_WRAP}>
+                <div className={cn(BLOCK_LEVEL_METER_RANGE_WRAP, "relative")}>
+                    <div className="pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2">
+                        {progressBar}
+                    </div>
                     <input
                         id={id}
                         type="range"
@@ -140,34 +137,28 @@ export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
                         disabled={disabled}
                         onChange={(e) => onChange(Number(e.target.value))}
                         className={
-                            accentHex
-                                ? blockLevelMeterAccentRangeEditableClass()
-                                : blockLevelMeterRangeEditableClass(resolvedTone)
+                            _accentHex
+                                ? cn(
+                                      blockLevelMeterAccentRangeEditableClass(),
+                                      "relative z-[1] bg-transparent",
+                                  )
+                                : cn(
+                                      blockLevelMeterRangeClass(resolvedTone),
+                                      "relative z-[1]",
+                                  )
                         }
                         style={{
                             ...rangeStyle,
-                            background: blockLevelMeterEditableTrackBackground(
-                                accentHex,
-                                resolvedTone,
-                                widthPct,
-                            ),
+                            background: "transparent",
                         }}
-                        aria-label={`${prefix}: ${valueLabel}`}
+                        aria-label={meterAriaLabel}
                         aria-valuemin={min}
                         aria-valuemax={max}
                         aria-valuenow={clamped}
                     />
                 </div>
             ) : (
-                <div
-                    role="meter"
-                    aria-valuemin={min}
-                    aria-valuemax={max}
-                    aria-valuenow={clamped}
-                    aria-label={`${prefix} ${valueLabel}`}
-                >
-                    {track}
-                </div>
+                progressBar
             )}
 
             {hint ? (

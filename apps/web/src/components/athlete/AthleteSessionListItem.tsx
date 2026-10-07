@@ -5,6 +5,7 @@
 import React from "react";
 import { ChevronRight, Clock } from "lucide-react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { NEXIA_ROW_CHEVRON } from "@/components/ui/surface/platformPremiumPresentation";
 import { cn } from "@/lib/utils";
 import { AthleteProgressBar } from "@/components/athlete/AthleteProgressBar";
 import {
@@ -74,6 +75,7 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
             onClick={() => onSelect(session.id)}
             className={cn(
                 ATHLETE_SESSION_LIST_ITEM,
+                "group",
                 isToday && cn(ATHLETE_SESSION_LIST_ITEM_TODAY, "pt-5"),
                 !isToday && "pt-4"
             )}
@@ -136,10 +138,7 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
                 )}
             </div>
 
-            <ChevronRight
-                className="relative size-5 shrink-0 text-primary/55"
-                aria-hidden
-            />
+            <ChevronRight className={cn("relative", NEXIA_ROW_CHEVRON)} aria-hidden />
         </button>
     );
 };

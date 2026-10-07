@@ -551,7 +551,7 @@ export const TrainingPlansPage: React.FC = () => {
                     </Button>
                 ) : (
                     <Button
-                        variant="primary"
+                        variant="outline-primary"
                         size="sm"
                         className={TEMPLATE_LIBRARY_PRIMARY_CTA}
                         onClick={handleCreateTemplate}

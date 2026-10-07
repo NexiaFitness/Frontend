@@ -18,21 +18,18 @@ import {
 /** @deprecated Use labelTrainingGoal from @nexia/shared */
 export const GOAL_LABEL_ES: Record<string, string> = TRAINING_GOAL_LABEL_ES;
 
-const CHIP_NEUTRAL = "bg-muted/50 text-muted-foreground";
+const CHIP_NEUTRAL = "border-border/60 bg-muted/30 text-muted-foreground";
 
-/**
- * Paleta semántica: color según el significado del objetivo.
- * primary=cyan, success=verde, warning=ámbar.
- */
+/** Tinte glass por objetivo (tokens semánticos — DESIGN_PREMIUM §3). */
 const GOAL_CHIP_TONE: Record<string, string> = {
-    [TRAINING_PLAN_GOAL.HYPERTROPHY]: "bg-primary/15 text-primary", // Hipertrofia: crecimiento, construcción
-    [TRAINING_PLAN_GOAL.WEIGHT_LOSS]: "bg-warning/10 text-warning", // Pérdida de peso: quemar, déficit
-    [TRAINING_PLAN_GOAL.STRENGTH]: "bg-red-600/20 text-red-400", // Fuerza: rojo
-    [TRAINING_PLAN_GOAL.POWER]: "bg-purple-600/20 text-purple-400", // Potencia: púrpura
-    [TRAINING_PLAN_GOAL.ENDURANCE]: "bg-primary/10 text-primary", // Resistencia: aliento, esfuerzo sostenido
-    [TRAINING_PLAN_GOAL.GENERAL_FITNESS]: "bg-success/12 text-success", // Mantenimiento: verde
-    [TRAINING_PLAN_GOAL.REHABILITATION]: "bg-orange-700/25 text-orange-400", // Rehabilitación: naranja oscuro
-    [TRAINING_PLAN_GOAL.SPORT_PERFORMANCE]: "bg-violet-600/20 text-violet-400", // Rendimiento: granate morado
+    [TRAINING_PLAN_GOAL.HYPERTROPHY]: "border-primary/30 bg-primary/12 text-primary",
+    [TRAINING_PLAN_GOAL.WEIGHT_LOSS]: "border-warning/30 bg-warning/10 text-warning",
+    [TRAINING_PLAN_GOAL.STRENGTH]: "border-destructive/25 bg-destructive/10 text-destructive",
+    [TRAINING_PLAN_GOAL.POWER]: "border-warning/25 bg-warning/8 text-warning",
+    [TRAINING_PLAN_GOAL.ENDURANCE]: "border-primary/25 bg-primary/8 text-primary",
+    [TRAINING_PLAN_GOAL.GENERAL_FITNESS]: "border-success/30 bg-success/10 text-success",
+    [TRAINING_PLAN_GOAL.REHABILITATION]: "border-warning/20 bg-warning/8 text-warning",
+    [TRAINING_PLAN_GOAL.SPORT_PERFORMANCE]: "border-primary/20 bg-primary/8 text-primary",
 };
 
 /**

@@ -12,9 +12,9 @@ import {
     volumeBarWidthPct,
     volumeStatusLabel,
 } from "@nexia/shared";
+import { NexiaProgressBar } from "@/components/ui/progress";
+import { nexiaProgressToneFromMuscleVolumeStatus } from "@/components/ui/progress/nexiaProgressPresentation";
 import {
-    MUSCLE_VOLUME_BAR_FILL_CLASS,
-    MUSCLE_VOLUME_BAR_TRACK_CLASS,
     MUSCLE_VOLUME_ROW_BREAKDOWN_CLASS,
     MUSCLE_VOLUME_ROW_CONTEXT_CLASS,
     MUSCLE_VOLUME_ROW_META_CLASS,
@@ -97,22 +97,11 @@ export const MuscleVolumeRow: React.FC<MuscleVolumeRowProps> = ({
                     {statusBadge}
                 </div>
             </div>
-            <div
-                className={MUSCLE_VOLUME_BAR_TRACK_CLASS}
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.round(widthPct)}
+            <NexiaProgressBar
+                value={widthPct}
+                tone={nexiaProgressToneFromMuscleVolumeStatus(row.status)}
                 aria-label={`${displayName}: ${volumeStatusLabel(row.status)}`}
-            >
-                <div
-                    className={cn(
-                        "h-full rounded-full transition-[width] duration-300 ease-out",
-                        MUSCLE_VOLUME_BAR_FILL_CLASS[row.status],
-                    )}
-                    style={{ width: `${widthPct}%` }}
-                />
-            </div>
+            />
             {context ? <span className={MUSCLE_VOLUME_ROW_CONTEXT_CLASS}>{context}</span> : null}
             {hasBreakdown ? (
                 <div className={MUSCLE_VOLUME_ROW_BREAKDOWN_CLASS}>

@@ -21,7 +21,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { ChevronDown, Calendar } from "lucide-react";
+import { Calendar, ChevronDown } from "lucide-react";
 import { useGetClientQuery, useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetStandaloneSessionsByClientQuery } from "@nexia/shared/api/standaloneSessionsApi";
 import { useGetScheduledSessionsQuery } from "@nexia/shared/api/schedulingApi";
@@ -40,6 +40,7 @@ import type { SessionListItem } from "@nexia/shared/types/standaloneSessions";
 import type { PlanTrainingSession } from "@nexia/shared";
 import { ClientActivePlanScheduleLayout } from "@/components/clients/session/ClientActivePlanScheduleLayout";
 import { ClientActivePlanSummaryPanel } from "@/components/clients/session/ClientActivePlanSummaryPanel";
+import { ClientSessionAppointmentCard } from "@/components/clients/session/ClientSessionAppointmentCard";
 import { ClientSessionPickDayPanel } from "@/components/clients/session/ClientSessionPickDayPanel";
 import { ClientDaySessionsPickerSheet } from "@/components/clients/session/ClientDaySessionsPickerSheet";
 import { PlanningShellBodyLayout } from "@/components/trainingPlans/periodization/PlanningShellBodyLayout";
@@ -50,12 +51,7 @@ import { useClientActivePlanSessionSchedule } from "@/hooks/clients/useClientAct
 import { usePeriodBlocksStructurePendingDates } from "@/hooks/trainingPlans/usePeriodBlocksStructurePendingDates";
 import { SessionCard } from "@/components/trainingSessions";
 import { SESSION_CARD_LIST_ITEM_CLASS } from "@/components/trainingSessions/sessionCardPresentation";
-import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
-    CLIENT_SESSIONS_APPOINTMENT_CARD,
-    CLIENT_SESSIONS_APPOINTMENT_INNER,
-    CLIENT_SESSIONS_APPOINTMENT_META,
-    CLIENT_SESSIONS_APPOINTMENT_TITLE,
     CLIENT_SESSIONS_EMPTY_FILTER,
     CLIENT_SESSIONS_FILTER_CHIP,
     CLIENT_SESSIONS_FILTER_ROW,
@@ -72,6 +68,7 @@ import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFor
 import { PaginationBar } from "@/components/ui/pagination";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
+import { getMutationErrorMessage } from "@nexia/shared/utils/errorMessage";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import {
     CLIENT_SESSIONS_CALENDAR_SECTION_ID,
@@ -89,7 +86,7 @@ interface ClientSessionsTabProps {
 
 type ListFilter = "all" | "planned" | "completed" | "cancelled" | "appointment";
 
-const LIST_PAGE_SIZE = 10;
+const LIST_PAGE_SIZE = 9;
 
 const EMPTY_EXCEPTION_DATES = new Set<string>();
 
@@ -100,19 +97,6 @@ const LIST_FILTER_OPTIONS: { value: ListFilter; label: string }[] = [
     { value: "cancelled", label: "Canceladas" },
     { value: "appointment", label: "Citas" },
 ];
-
-const SCHED_TYPE_LABEL: Record<string, string> = {
-    training: "Entrenamiento",
-    consultation: "Consulta",
-    assessment: "Evaluación",
-};
-
-const SCHED_STATUS_BADGE: Record<string, { cls: string; label: string }> = {
-    scheduled: { cls: "bg-primary/10 text-primary border-primary/30", label: "Agendada" },
-    confirmed: { cls: "bg-success/10 text-success border-success/30", label: "Confirmada" },
-    completed: { cls: "bg-muted text-muted-foreground border-border", label: "Completada" },
-    cancelled: { cls: "bg-destructive/10 text-destructive border-destructive/30", label: "Cancelada" },
-};
 
 /** Fecha del mes en formato YYYY-MM-DD para el rango de scheduled */
 function monthToStartEnd(date: Date): { start_date: string; end_date: string } {
@@ -216,6 +200,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         data: standaloneSessions = [],
         isLoading: isLoadingStandalone,
         isError: isErrorStandalone,
+        error: standaloneError,
     } = useGetStandaloneSessionsByClientQuery(
         { clientId, skip: 0, limit: 1000 },
         { refetchOnMountOrArgChange: true }
@@ -225,6 +210,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         data: scheduledSessions = [],
         isLoading: isLoadingScheduled,
         isError: isErrorScheduled,
+        error: scheduledError,
     } = useGetScheduledSessionsQuery({
         client_id: clientId,
         start_date: startDate,
@@ -246,10 +232,25 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
     }, [isLoading, setSearchParams]);
 
     const isError = isErrorSessions || isErrorStandalone || isErrorScheduled;
-    const errorMessage =
-        sessionsError && typeof sessionsError === "object" && "data" in sessionsError
-            ? String((sessionsError as { data: unknown }).data)
-            : "No se pudieron cargar los datos";
+    const errorMessage = useMemo(() => {
+        if (isErrorSessions && sessionsError) {
+            return getMutationErrorMessage(sessionsError);
+        }
+        if (isErrorStandalone && standaloneError) {
+            return getMutationErrorMessage(standaloneError);
+        }
+        if (isErrorScheduled && scheduledError) {
+            return getMutationErrorMessage(scheduledError);
+        }
+        return "No se pudieron cargar los datos de sesiones.";
+    }, [
+        isErrorSessions,
+        sessionsError,
+        isErrorStandalone,
+        standaloneError,
+        isErrorScheduled,
+        scheduledError,
+    ]);
 
     const handleAddSession = useCallback(() => {
         navigate(`/dashboard/session-programming/create-session?clientId=${clientId}`);
@@ -580,43 +581,15 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                                             );
                                         }
                                         const s = entry.item;
-                                        const badge = SCHED_STATUS_BADGE[s.status] ?? SCHED_STATUS_BADGE.scheduled;
                                         return (
-                                            <li key={`a-${s.id}`}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleSessionClickScheduled(s)}
-                                                    className={CLIENT_SESSIONS_APPOINTMENT_CARD}
-                                                >
-                                                    <NexiaGlassAccentRim />
-                                                    <div className={CLIENT_SESSIONS_APPOINTMENT_INNER}>
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <h4 className={CLIENT_SESSIONS_APPOINTMENT_TITLE}>
-                                                                {SCHED_TYPE_LABEL[s.session_type] ?? s.session_type}
-                                                            </h4>
-                                                            <span
-                                                                className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${badge.cls}`}
-                                                            >
-                                                                {badge.label}
-                                                            </span>
-                                                        </div>
-                                                        <p className={CLIENT_SESSIONS_APPOINTMENT_META}>
-                                                            <Calendar className="inline h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />{" "}
-                                                            {new Date(s.scheduled_date + "T12:00:00").toLocaleDateString("es-ES", {
-                                                                day: "numeric",
-                                                                month: "short",
-                                                                year: "numeric",
-                                                            })}
-                                                            {" · "}
-                                                            {s.start_time}–{s.end_time}
-                                                        </p>
-                                                        {s.notes ? (
-                                                            <p className="line-clamp-2 text-xs text-muted-foreground">
-                                                                {s.notes}
-                                                            </p>
-                                                        ) : null}
-                                                    </div>
-                                                </button>
+                                            <li
+                                                key={`a-${s.id}`}
+                                                className={SESSION_CARD_LIST_ITEM_CLASS}
+                                            >
+                                                <ClientSessionAppointmentCard
+                                                    appointment={s}
+                                                    onOpen={handleSessionClickScheduled}
+                                                />
                                             </li>
                                         );
                                     })}

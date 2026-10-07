@@ -14,6 +14,16 @@ vi.mock("@nexia/shared/hooks/athlete/useAthleteContext", () => ({
     useAthleteContext: () => ({ clientId: 7, isLoading: false, isError: false }),
 }));
 
+vi.mock("@nexia/shared/utils/athlete/athleteCalendarUtils", async (importOriginal) => {
+    const actual = await importOriginal<
+        typeof import("@nexia/shared/utils/athlete/athleteCalendarUtils")
+    >();
+    return {
+        ...actual,
+        madridTodayDateKey: () => "2026-10-07",
+    };
+});
+
 vi.mock("@nexia/shared/api/athleteApi", () => ({
     useGetAthleteSessionsRegistrationMetaQuery: () => ({ data: [] }),
 }));
@@ -29,34 +39,48 @@ const trainingSession = {
     status: "planned",
 };
 
-vi.mock("@/hooks/athlete/useAthleteCalendarEvents", () => ({
-    useAthleteCalendarEvents: () => ({
-        groupedDays: [
+const groupedDaysFixture = [
+    {
+        dateKey: "2026-10-07",
+        rows: [
             {
-                dateKey: "2026-10-07",
-                rows: [
-                    {
-                        kind: "training_session",
-                        session: trainingSession,
-                    },
-                    {
-                        kind: "calendar_event",
-                        event: {
-                            id: 2,
-                            event_kind: "appointment",
-                            starts_at: "2026-10-07T10:00:00+02:00",
-                            has_explicit_time: true,
-                            title: "Consulta",
-                            location: "Online",
-                            meeting_link: null,
-                            is_active: true,
-                            status: "scheduled",
-                        },
-                    },
-                ],
+                kind: "training_session",
+                session: trainingSession,
+            },
+            {
+                kind: "calendar_event",
+                event: {
+                    id: 2,
+                    event_kind: "appointment",
+                    starts_at: "2026-10-07T10:00:00+02:00",
+                    has_explicit_time: true,
+                    title: "Consulta",
+                    location: "Online",
+                    meeting_link: null,
+                    is_active: true,
+                    status: "scheduled",
+                },
             },
         ],
-        sessionsById: new Map([[99, trainingSession]]),
+    },
+    {
+        dateKey: "2026-10-14",
+        rows: [
+            {
+                kind: "training_session",
+                session: { ...trainingSession, id: 100, session_date: "2026-10-14" },
+            },
+        ],
+    },
+];
+
+vi.mock("@/hooks/athlete/useAthleteCalendarEvents", () => ({
+    useAthleteCalendarEvents: () => ({
+        groupedDays: groupedDaysFixture,
+        sessionsById: new Map([
+            [99, trainingSession],
+            [100, { ...trainingSession, id: 100, session_date: "2026-10-14" }],
+        ]),
         isLoading: false,
         isError: false,
         refetchEvents: vi.fn(),
@@ -69,18 +93,20 @@ describe("AthleteAgendaPage", () => {
         const user = userEvent.setup();
         render(<AthleteAgendaPage />);
         expect(screen.getByRole("heading", { name: /Mi agenda/i })).toBeInTheDocument();
-        expect(screen.getByText("Fuerza máxima")).toBeInTheDocument();
-        expect(screen.getByText(/Pecho · Tríceps/)).toBeInTheDocument();
+        expect(screen.getAllByText("Fuerza máxima").length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText(/Pecho · Tríceps/).length).toBeGreaterThanOrEqual(1);
         expect(screen.queryByRole("button", { name: /Carga alta/i })).not.toBeInTheDocument();
 
         await user.click(screen.getByRole("tab", { name: /Entrenos/i }));
         expect(screen.queryByText("Consulta")).not.toBeInTheDocument();
 
-        await user.click(
-            screen.getByRole("button", {
-                name: /Fuerza máxima, Pecho · Tríceps/i,
-            })
-        );
+        const trainingRows = screen.getAllByRole("button", {
+            name: /Fuerza máxima, Pecho · Tríceps/i,
+        });
+        await user.click(trainingRows[0]);
         expect(navigate).toHaveBeenCalledWith("/dashboard/sessions/99");
+
+        await user.click(screen.getByRole("tab", { name: /Citas/i }));
+        expect(screen.queryByRole("heading", { name: /PRÓXIMA SEMANA/i })).not.toBeInTheDocument();
     });
 });

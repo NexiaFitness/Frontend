@@ -16,6 +16,8 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { ATHLETE_AGENDA_DAY_CARD } from "@/components/athlete/athleteAgendaPresentation";
+import { NEXIA_SEGMENTED_SHELL } from "@/components/ui/surface/platformPremiumPresentation";
 
 
 
@@ -38,6 +40,8 @@ export type AthletePageSkeletonVariant =
     | "feedback-history"
 
     | "plan"
+
+    | "agenda"
 
     | "exercise-detail"
 
@@ -463,6 +467,82 @@ function FeedbackHistorySkeleton() {
 
 
 
+function AgendaTrainingRowSkeleton() {
+    return (
+        <div className="space-y-2 rounded-lg border border-border/50 bg-card/30 px-3 py-2.5">
+            <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                    <Block className="h-2.5 w-16" />
+                    <Block className="h-4 w-full max-w-[11rem]" />
+                    <Block className="h-3 w-28" />
+                </div>
+                <div className="flex w-[3.25rem] shrink-0 flex-col gap-1">
+                    <Block className="h-7 w-full rounded-sm" />
+                    <Block className="h-7 w-full rounded-sm" />
+                </div>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    <Block className="h-3 w-12" />
+                    <Block className="h-3 w-10" />
+                    <Block className="h-3 w-14" />
+                </div>
+                <Block className="size-4 shrink-0 rounded-sm" />
+            </div>
+        </div>
+    );
+}
+
+function AgendaDayCardSkeleton({ rowCount = 2 }: { rowCount?: number }) {
+    return (
+        <div className={cn(ATHLETE_AGENDA_DAY_CARD)}>
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                <Block className="h-4 w-44" />
+                <Block className="h-3 w-24" />
+            </div>
+            <div className="space-y-2">
+                {Array.from({ length: rowCount }).map((_, i) => (
+                    <AgendaTrainingRowSkeleton key={i} />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function AgendaSkeleton() {
+    return (
+        <div className="space-y-6" role="status" aria-busy="true" aria-label="Cargando agenda">
+            <span className="sr-only">Cargando tu agenda</span>
+
+            <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                    <Block className="size-11 shrink-0 rounded-xl" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                        <Block className="h-3 w-20" />
+                        <Block className="h-8 w-36" />
+                        <Block className="h-4 w-full max-w-xs" />
+                    </div>
+                </div>
+                <Block className="h-px w-full opacity-60" />
+            </div>
+
+            <div className={NEXIA_SEGMENTED_SHELL}>
+                <div className="grid grid-cols-3 gap-1">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <Block key={i} className="h-9 rounded-md" />
+                    ))}
+                </div>
+            </div>
+
+            <div className="space-y-4">
+                <Block className="h-3 w-28" />
+                <AgendaDayCardSkeleton rowCount={2} />
+                <AgendaDayCardSkeleton rowCount={1} />
+            </div>
+        </div>
+    );
+}
+
 function PlanSkeleton() {
     return (
         <div className="space-y-6" role="status" aria-busy="true" aria-label="Cargando plan">
@@ -622,6 +702,8 @@ const VARIANTS: Record<AthletePageSkeletonVariant, React.FC> = {
     "feedback-history": FeedbackHistorySkeleton,
 
     plan: PlanSkeleton,
+
+    agenda: AgendaSkeleton,
 
     "exercise-detail": ExerciseDetailSkeleton,
 

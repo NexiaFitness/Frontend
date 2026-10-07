@@ -5,7 +5,7 @@
 
 import { cn } from "@/lib/utils";
 
-export type AthleteProgressTone = "primary" | "warning" | "success";
+export type AthleteProgressTone = "primary" | "warning" | "success" | "destructive";
 
 /** Shell glass compartido (track lineal + base escala rating). */
 export const ATHLETE_PROGRESS_TRACK_SHELL = cn(
@@ -42,5 +42,10 @@ export const ATHLETE_PROGRESS_FILL: Record<AthleteProgressTone, string> = {
         FILL_BASE,
         "bg-gradient-to-r from-success via-success/80 to-success/45",
         "shadow-[0_0_16px_-4px] shadow-success/45"
+    ),
+    destructive: cn(
+        FILL_BASE,
+        "bg-gradient-to-r from-destructive via-destructive/80 to-destructive/45",
+        "shadow-[0_0_16px_-4px] shadow-destructive/45"
     ),
 };

@@ -26,6 +26,7 @@ import { PlanningProgramSummaryCard } from "./PlanningProgramSummaryCard";
 import { PlanningShellBodyLayout } from "./PlanningShellBodyLayout";
 import type { PeriodBlockFormState } from "./usePeriodBlockForm";
 import {
+    PLANNING_EXPLORE_BLOCKS_ITEM,
     PLANNING_EXPLORE_BLOCKS_ROW,
     PLANNING_NO_PHASES_CALLOUT_PRIMARY,
     PLANNING_NO_PHASES_CALLOUT_SECONDARY,
@@ -195,7 +196,7 @@ export const PlanningExploreShell: React.FC<Props> = ({
             {showBlocksRow ? (
                 <div className={PLANNING_EXPLORE_BLOCKS_ROW} data-testid="planning-explore-blocks-row">
                     {blocks.map((block) => (
-                        <div key={block.id} className="shrink-0 snap-start">
+                        <div key={block.id} className={PLANNING_EXPLORE_BLOCKS_ITEM}>
                             <PeriodBlockCard
                                 block={block}
                                 catalog={catalog}
@@ -228,7 +229,7 @@ export const PlanningExploreShell: React.FC<Props> = ({
                         </div>
                     ))}
                     {showAddPhaseCard ? (
-                        <div className="shrink-0 snap-start">
+                        <div className={PLANNING_EXPLORE_BLOCKS_ITEM}>
                             <PeriodBlockAddPhaseCard
                                 onAddPhase={onAddPhase}
                                 suggestedStartDate={suggestedPhaseStartDate}

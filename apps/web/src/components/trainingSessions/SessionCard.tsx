@@ -41,6 +41,7 @@ import {
     SESSION_CARD_CARGA_STACK_CLASS,
     SESSION_CARD_DEFAULT_STATUS,
     SESSION_CARD_FOOTER_PIN_CLASS,
+    SESSION_CARD_PREFOOTER_CLASS,
     SESSION_CARD_MAIN_STACK_CLASS,
     SESSION_CARD_SHELL_LIST_CLASS,
     SESSION_CARD_STANDALONE_BADGE,
@@ -104,7 +105,7 @@ function SessionCardPhaseChip({
             onClick={handleOpenReview}
             className={cn(
                 SESSION_CARD_COHERENCE_CHIP,
-                "w-full justify-start text-[10px]",
+                "w-fit max-w-full justify-start text-[10px]",
                 heroStatusBadgeClasses(chip.heroStatus),
             )}
             aria-label={COHERENCE_STRIP_COPY.listChipAria(chip.heroLabel, chip.warningCount)}
@@ -249,12 +250,6 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                                 Fuera del plan
                             </span>
                         ) : null}
-                        {showPhaseChip ? (
-                            <SessionCardPhaseChip
-                                sessionId={session.id}
-                                inlineCoherence={inlineCoherence}
-                            />
-                        ) : null}
                     </div>
 
                     <div className={PERIOD_BLOCK_CARD_METRICS_COLUMN_CLASS}>
@@ -286,20 +281,25 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                     </div>
                 </div>
 
-                {trainerNotes ? (
-                    <>
-                        <div className={PERIOD_BLOCK_CARD_DIVIDER_WRAP_CLASS} aria-hidden>
-                            <div className={PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS} />
-                        </div>
-                        <p className="relative z-[1] shrink-0 px-4 py-2.5 text-[11px] leading-relaxed text-muted-foreground line-clamp-2">
-                            {trainerNotes}
-                        </p>
-                    </>
-                ) : null}
             </div>
 
             {showFooter ? (
                 <div className={SESSION_CARD_FOOTER_PIN_CLASS}>
+                    {trainerNotes || showPhaseChip ? (
+                        <div className={SESSION_CARD_PREFOOTER_CLASS}>
+                            {trainerNotes ? (
+                                <p className="text-[11px] leading-snug text-muted-foreground line-clamp-1">
+                                    {trainerNotes}
+                                </p>
+                            ) : null}
+                            {showPhaseChip ? (
+                                <SessionCardPhaseChip
+                                    sessionId={session.id}
+                                    inlineCoherence={inlineCoherence}
+                                />
+                            ) : null}
+                        </div>
+                    ) : null}
                     <div className={PERIOD_BLOCK_CARD_DIVIDER_WRAP_CLASS} aria-hidden>
                         <div className={PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS} />
                     </div>

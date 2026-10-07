@@ -1,13 +1,12 @@
 /**
  * SessionsPage — Listado unificado de sesiones (training + standalone)
  *
- * VISTA_LISTADO_SESIONES Fase 2-7.
- * Obtiene trainerId, llama GET /sessions, mantiene estado de filtros y paginación.
+ * VISTA_LISTADO_SESIONES Fase 2-7 · premium DESIGN_PREMIUM.md (paridad TrainingPlansPage).
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, Pencil, CalendarDays } from "lucide-react";
+import { Plus, CalendarDays, Search } from "lucide-react";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useGetSessionsQuery } from "@nexia/shared/api/sessionsApi";
 import { useGetSessionTemplatesQuery } from "@nexia/shared/api/sessionProgrammingApi";
@@ -16,64 +15,41 @@ import type { RootState } from "@nexia/shared/store";
 import type { SessionOut } from "@nexia/shared/types/sessions";
 import type { SessionTemplate } from "@nexia/shared/types/sessionProgramming";
 import { LoadingSpinner, EmptyState } from "@/components/ui/feedback";
-import { FormCombobox, DatePickerButton, SearchBar } from "@/components/ui/forms";
+import { FormCombobox, DatePickerButton, Input } from "@/components/ui/forms";
 import { Button } from "@/components/ui/buttons";
-import { ClientAvatar } from "@/components/ui/avatar";
 import { PaginationBar } from "@/components/ui/pagination";
 import { TabsBar } from "@/components/ui/tabs/TabsBar";
 import { PageTitle } from "@/components/dashboard/shared";
+import { TrainerSessionsListRow } from "@/components/sessions/TrainerSessionsListRow";
+import {
+    SESSIONS_PAGE,
+    SESSIONS_PAGE_COPY,
+    SESSIONS_PAGE_EMPTY_GLOW,
+    SESSIONS_PAGE_EMPTY_SHELL,
+    SESSIONS_PAGE_EMPTY_ACTION,
+    SESSIONS_PAGE_GLOW,
+    SESSIONS_PAGE_HEADER,
+    SESSIONS_PAGE_LIST,
+    SESSIONS_PAGE_LOADING,
+    SESSIONS_PAGE_PRIMARY_CTA,
+    SESSIONS_PAGE_SEARCH_ICON,
+    SESSIONS_PAGE_SEARCH_INPUT,
+    SESSIONS_PAGE_SEARCH_WRAP,
+    SESSIONS_PAGE_STACK,
+    SESSIONS_PAGE_TEMPLATE_CARD,
+    SESSIONS_PAGE_TEMPLATE_META,
+    SESSIONS_PAGE_TEMPLATE_TITLE,
+    SESSIONS_PAGE_TITLE_WRAP,
+    SESSIONS_PAGE_TOOLBAR,
+    sessionsPageFilterChipClass,
+    sessionsPageFilterCountClass,
+} from "@/components/sessions/sessionsPagePresentation";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
-
-const TYPE_LABELS: Record<string, string> = {
-    strength: "Fuerza",
-    cardio: "Cardio",
-    technique: "Técnica",
-    assessment: "Evaluación",
-};
-
-const TYPE_BADGE_CLASS: Record<string, string> = {
-    strength: "bg-primary/20 text-primary",
-    cardio: "bg-warning/20 text-warning",
-    technique: "bg-info/20 text-info",
-    assessment: "bg-[hsl(270,60%,60%)]/20 text-[hsl(270,60%,60%)]",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-    planned: "Planificada",
-    completed: "Completada",
-    cancelled: "Cancelada",
-    modified: "Modificada",
-    in_progress: "En curso",
-    skipped: "Saltada",
-    archived: "Archivada",
-};
-
-const STATUS_BADGE_CLASS: Record<string, string> = {
-    planned: "bg-primary/15 text-primary",
-    completed: "bg-success/15 text-success",
-    cancelled: "bg-destructive/15 text-destructive",
-    modified: "bg-primary/15 text-primary",
-    in_progress: "bg-primary/15 text-primary",
-    skipped: "bg-destructive/15 text-destructive",
-};
-
-/** DESIGN.md Card-5 / §5.4 — franja izquierda por estado (tokens semánticos). */
-const STATUS_LEFT_BORDER_CLASS: Record<string, string> = {
-    planned: "border-l-primary",
-    completed: "border-l-success",
-    cancelled: "border-l-destructive",
-    modified: "border-l-primary",
-    in_progress: "border-l-primary",
-    skipped: "border-l-destructive",
-};
-
-function sessionRowBorderClass(status: string): string {
-    return STATUS_LEFT_BORDER_CLASS[status] ?? "border-l-muted-foreground/40";
-}
 
 const STATUS_FILTER_OPTIONS = [
     { value: "all", label: "Todas" },
@@ -89,23 +65,6 @@ const SESSION_TYPE_FILTER_OPTIONS = [
     { value: "technique", label: "Técnica" },
     { value: "assessment", label: "Evaluación" },
 ];
-
-/** DESIGN.md §5.4 Filter Chips — rectangulares, h-9, rounded-md. */
-function sessionStatusFilterChipClass(active: boolean): string {
-    return cn(
-        "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors",
-        active
-            ? "border-primary bg-primary/10 text-primary"
-            : "border-border text-muted-foreground hover:border-input hover:text-foreground"
-    );
-}
-
-function sessionStatusFilterCountClass(active: boolean): string {
-    return cn(
-        "tabular-nums font-normal",
-        active ? "text-primary/60" : "text-muted-foreground/50"
-    );
-}
 
 function resolveSessionsEmptyState(
     statusFilter: string,
@@ -243,15 +202,7 @@ export const SessionsPage: React.FC = () => {
             orderBy: "session_date" as const,
             order: "desc" as const,
         }),
-        [
-            trainerId,
-            skip,
-            statusFilter,
-            typeFilter,
-            dateFrom,
-            dateTo,
-            searchDebounced,
-        ]
+        [trainerId, skip, statusFilter, typeFilter, dateFrom, dateTo, searchDebounced]
     );
 
     const skipSessionsQueries = !trainerId || !isAuthenticated;
@@ -320,17 +271,22 @@ export const SessionsPage: React.FC = () => {
     const templatesList = templatesData?.items ?? [];
     const templatesTotal = templatesData?.total ?? 0;
 
+    const pageSubtitle =
+        activeTab === "sessions"
+            ? SESSIONS_PAGE_COPY.sessionsSubtitle(total)
+            : SESSIONS_PAGE_COPY.templatesSubtitle(templatesTotal);
+
     if (!trainerId && !isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-[200px] text-muted-foreground">
-                No se pudo cargar el perfil del entrenador.
+            <div className={SESSIONS_PAGE_LOADING}>
+                <p className="text-sm text-muted-foreground">No se pudo cargar el perfil del entrenador.</p>
             </div>
         );
     }
 
     if (isLoading && !data) {
         return (
-            <div className="flex items-center justify-center min-h-[200px]">
+            <div className={SESSIONS_PAGE_LOADING}>
                 <LoadingSpinner size="lg" />
             </div>
         );
@@ -338,321 +294,299 @@ export const SessionsPage: React.FC = () => {
 
     if (isError) {
         return (
-            <div className="flex items-center justify-center min-h-[200px] text-destructive">
-                Error al cargar las sesiones.
+            <div className={SESSIONS_PAGE_LOADING}>
+                <p className="text-sm text-destructive">Error al cargar las sesiones.</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <PageTitle
-                    title={activeTab === "sessions" ? "Sesiones" : "Plantillas"}
-                    subtitle={
-                        activeTab === "sessions"
-                            ? `${total} sesiones programadas`
-                            : `${templatesTotal} plantillas disponibles`
-                    }
-                />
-                {activeTab === "sessions" ? (
-                    <Button size="sm" onClick={() => navigate("/dashboard/session-programming/create-session")}>
-                        <Plus className="h-4 w-4" aria-hidden />
-                        Nueva sesión
-                    </Button>
-                ) : (
-                    <Button size="sm" onClick={() => navigate("/dashboard/session-programming/create-template")}>
-                        <Plus className="h-4 w-4" aria-hidden />
-                        Nueva plantilla
-                    </Button>
-                )}
-            </div>
+        <div className={cn(SESSIONS_PAGE, "relative")}>
+            <div className={SESSIONS_PAGE_GLOW} aria-hidden />
 
-            <TabsBar
-                ariaLabel="Sesiones y plantillas"
-                value={activeTab}
-                onChange={(id) => {
-                    if (id === "sessions" || id === "templates") {
-                        setActiveTab(id);
-                        scrollDashboardMainToTop();
-                    }
-                }}
-                items={[
-                    { id: "sessions", label: "Sesiones" },
-                    { id: "templates", label: "Plantillas" },
-                ]}
-                distribute="equal"
-            />
-
-            {activeTab === "sessions" && (
-                <>
-                    {/* Filtros — DESIGN.md §5.4 Filter Chips, h-9 alineado con inputs */}
-                    <div className="flex flex-wrap items-center gap-2">
-                        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por estado">
-                            {STATUS_FILTER_OPTIONS.map(({ value, label }) => {
-                                const active = statusFilter === value;
-                                return (
-                                    <button
-                                        key={value}
-                                        type="button"
-                                        onClick={() => handleStatusChange(value)}
-                                        className={sessionStatusFilterChipClass(active)}
-                                        aria-pressed={active}
-                                    >
-                                        <span>{label}</span>
-                                        <span className={sessionStatusFilterCountClass(active)}>
-                                            {statusCounts[value]}
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        <div className="h-9 w-36 min-w-[9rem]">
-                            <FormCombobox
-                                value={typeFilter}
-                                onChange={handleTypeChange}
-                                options={SESSION_TYPE_FILTER_OPTIONS}
-                                placeholder="Todos"
-                                size="sm"
-                                className="w-full"
-                                ariaLabel="Filtrar por tipo de sesión"
-                            />
-                        </div>
-                        <div className="flex h-9 items-center gap-2">
-                            <DatePickerButton
-                                label="Desde"
-                                value={dateFrom}
-                                onChange={(v) => {
-                                    setDateFrom(v);
-                                    setPage(1);
-                                }}
-                                aria-label="Desde"
-                            />
-                            <span className="text-muted-foreground text-sm">–</span>
-                            <DatePickerButton
-                                label="Hasta"
-                                value={dateTo}
-                                onChange={(v) => {
-                                    setDateTo(v);
-                                    setPage(1);
-                                }}
-                                aria-label="Hasta"
-                            />
-                        </div>
-                        <SearchBar
-                            value={search}
-                            onChange={(value) => {
-                                setSearch(value);
-                                setPage(1);
-                            }}
-                            placeholder="Buscar sesión o cliente..."
-                            ariaLabel="Buscar sesión o cliente"
+            <div className={cn(SESSIONS_PAGE_STACK, "relative space-y-6")}>
+                <div className={SESSIONS_PAGE_HEADER}>
+                    <div className={SESSIONS_PAGE_TITLE_WRAP}>
+                        <PageTitle
+                            title={activeTab === "sessions" ? "Sesiones" : "Plantillas"}
+                            subtitle={pageSubtitle}
                         />
                     </div>
-
-                    {/* Lista o estado vacío (EmptyState reutilizable) */}
-                    {items.length === 0 ? (
-                        <div className="rounded-lg border border-dashed border-border/50 bg-muted/10">
-                            <EmptyState
-                                icon={<CalendarDays />}
-                                title={sessionsEmptyState.title}
-                                description={sessionsEmptyState.description}
-                                className="py-16"
-                                action={
-                                    sessionsEmptyState.showCreateAction ? (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                                navigate("/dashboard/session-programming/create-session")
-                                            }
-                                        >
-                                            <Plus className="size-4" aria-hidden />
-                                            Crear primera sesión
-                                        </Button>
-                                    ) : undefined
-                                }
-                            />
-                        </div>
+                    {activeTab === "sessions" ? (
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            className={SESSIONS_PAGE_PRIMARY_CTA}
+                            onClick={() => navigate("/dashboard/session-programming/create-session")}
+                        >
+                            <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                            Nueva sesión
+                        </Button>
                     ) : (
-                        <>
-                            <div className="space-y-2">
-                                {items.map((s) => (
-                                    <div
-                                        key={`${s.session_kind}-${s.id}`}
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={() =>
-                                            navigate(getDetailUrl(s), {
-                                                state: returnToStateFromView(location),
-                                            })
-                                        }
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Enter" || e.key === " ") {
-                                                e.preventDefault();
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            className={SESSIONS_PAGE_PRIMARY_CTA}
+                            onClick={() => navigate("/dashboard/session-programming/create-template")}
+                        >
+                            <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                            Nueva plantilla
+                        </Button>
+                    )}
+                </div>
+
+                <TabsBar
+                    ariaLabel="Sesiones y plantillas"
+                    value={activeTab}
+                    onChange={(id) => {
+                        if (id === "sessions" || id === "templates") {
+                            setActiveTab(id);
+                            scrollDashboardMainToTop();
+                        }
+                    }}
+                    items={[
+                        { id: "sessions", label: "Sesiones" },
+                        { id: "templates", label: "Plantillas" },
+                    ]}
+                    distribute="equal"
+                />
+
+                {activeTab === "sessions" && (
+                    <>
+                        <div className={SESSIONS_PAGE_TOOLBAR}>
+                            <NexiaGlassAccentRim />
+                            <div
+                                className="flex flex-wrap items-center gap-1.5"
+                                role="group"
+                                aria-label="Filtrar por estado"
+                            >
+                                {STATUS_FILTER_OPTIONS.map(({ value, label }) => {
+                                    const active = statusFilter === value;
+                                    return (
+                                        <button
+                                            key={value}
+                                            type="button"
+                                            onClick={() => handleStatusChange(value)}
+                                            className={sessionsPageFilterChipClass(active)}
+                                            aria-pressed={active}
+                                        >
+                                            <span>{label}</span>
+                                            <span className={sessionsPageFilterCountClass(active)}>
+                                                {statusCounts[value]}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <div className="h-9 w-full min-w-0 sm:w-44 sm:min-w-[11rem]">
+                                <FormCombobox
+                                    value={typeFilter}
+                                    onChange={handleTypeChange}
+                                    options={SESSION_TYPE_FILTER_OPTIONS}
+                                    placeholder="Todos"
+                                    size="sm"
+                                    className="w-full"
+                                    ariaLabel="Filtrar por tipo de sesión"
+                                />
+                            </div>
+                            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                                <DatePickerButton
+                                    label="Desde"
+                                    value={dateFrom}
+                                    onChange={(v) => {
+                                        setDateFrom(v);
+                                        setPage(1);
+                                    }}
+                                    aria-label="Desde"
+                                />
+                                <span className="text-sm text-muted-foreground">–</span>
+                                <DatePickerButton
+                                    label="Hasta"
+                                    value={dateTo}
+                                    onChange={(v) => {
+                                        setDateTo(v);
+                                        setPage(1);
+                                    }}
+                                    aria-label="Hasta"
+                                />
+                            </div>
+                            <div className={SESSIONS_PAGE_SEARCH_WRAP}>
+                                <Search className={SESSIONS_PAGE_SEARCH_ICON} aria-hidden />
+                                <Input
+                                    type="text"
+                                    size="sm"
+                                    placeholder={SESSIONS_PAGE_COPY.searchSessions}
+                                    value={search}
+                                    onChange={(e) => {
+                                        setSearch(e.target.value);
+                                        setPage(1);
+                                    }}
+                                    className={SESSIONS_PAGE_SEARCH_INPUT}
+                                    aria-label="Buscar sesión o cliente"
+                                />
+                            </div>
+                        </div>
+
+                        {items.length === 0 ? (
+                            <div className={SESSIONS_PAGE_EMPTY_SHELL}>
+                                <NexiaGlassAccentRim />
+                                <div className={SESSIONS_PAGE_EMPTY_GLOW} aria-hidden />
+                                <EmptyState
+                                    icon={<CalendarDays className="text-primary/70" />}
+                                    title={sessionsEmptyState.title}
+                                    description={sessionsEmptyState.description}
+                                    className="relative z-[1] py-8"
+                                    action={
+                                        sessionsEmptyState.showCreateAction ? (
+                                            <Button
+                                                variant="primary"
+                                                size="sm"
+                                                className={SESSIONS_PAGE_EMPTY_ACTION}
+                                                onClick={() =>
+                                                    navigate("/dashboard/session-programming/create-session")
+                                                }
+                                            >
+                                                <Plus className="size-4 shrink-0" aria-hidden />
+                                                Crear primera sesión
+                                            </Button>
+                                        ) : undefined
+                                    }
+                                />
+                            </div>
+                        ) : (
+                            <>
+                                <div className={SESSIONS_PAGE_LIST}>
+                                    {items.map((s) => (
+                                        <TrainerSessionsListRow
+                                            key={`${s.session_kind}-${s.id}`}
+                                            session={s}
+                                            formatDate={formatSessionDate}
+                                            onOpen={() =>
                                                 navigate(getDetailUrl(s), {
                                                     state: returnToStateFromView(location),
-                                                });
+                                                })
                                             }
-                                        }}
-                                        className={cn(
-                                            "flex w-full cursor-pointer items-center gap-4 rounded-lg border border-border border-l-[3px] bg-card p-4 text-left transition-colors",
-                                            sessionRowBorderClass(s.status),
-                                            "hover:border-primary/30 hover:bg-surface-2"
-                                        )}
-                                    >
-                                        <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-semibold">{s.session_name}</p>
-                                            <div className="mt-1 flex items-center gap-2">
-                                                <ClientAvatar
-                                                    clientId={s.client_id}
-                                                    nombre={s.client_name?.split(/\s+/)[0]}
-                                                    apellidos={s.client_name?.split(/\s+/).slice(1).join(" ") || undefined}
-                                                    size="sm"
-                                                    className="shrink-0"
-                                                />
-                                                <span className="text-xs text-muted-foreground truncate">
-                                                    {s.client_name}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <span className="shrink-0 text-xs text-muted-foreground">
-                                            {formatSessionDate(s.session_date)}
-                                            {s.session_time ? ` · ${s.session_time.slice(0, 5)}` : ""}
-                                        </span>
-                                        <span
-                                            className={cn(
-                                                "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium border-0",
-                                                TYPE_BADGE_CLASS[s.session_type] ?? "bg-muted text-muted-foreground"
-                                            )}
-                                        >
-                                            {TYPE_LABELS[s.session_type] ?? s.session_type}
-                                        </span>
-                                        <span
-                                            className={cn(
-                                                "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium border-0",
-                                                STATUS_BADGE_CLASS[s.status] ?? "bg-muted text-muted-foreground"
-                                            )}
-                                        >
-                                            {STATUS_LABELS[s.status] ?? s.status}
-                                        </span>
-                                        <span className="shrink-0 text-xs text-muted-foreground">
-                                            {s.exercises_count} ejerc.
-                                            {s.planned_duration != null ? ` · ${s.planned_duration} min` : ""}
-                                        </span>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 shrink-0"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                navigate(getEditUrl(s));
-                                            }}
-                                            aria-label="Editar sesión"
-                                        >
-                                            <Pencil className="h-3.5 w-3.5" aria-hidden />
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
-                            <PaginationBar
-                                currentPage={page}
-                                totalPages={Math.max(1, Math.ceil(total / PAGE_SIZE))}
-                                totalItems={total}
-                                pageSize={PAGE_SIZE}
-                                onPageChange={handlePageChange}
-                            />
-                        </>
-                    )}
-                </>
-            )}
+                                            onEdit={() => navigate(getEditUrl(s))}
+                                        />
+                                    ))}
+                                </div>
+                                <PaginationBar
+                                    currentPage={page}
+                                    totalPages={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+                                    totalItems={total}
+                                    pageSize={PAGE_SIZE}
+                                    onPageChange={handlePageChange}
+                                />
+                            </>
+                        )}
+                    </>
+                )}
 
-            {activeTab === "templates" && (
-                <>
-                    <div className="flex flex-wrap items-center gap-3">
-                        <SearchBar
-                            value={templatesSearch}
-                            onChange={(value) => {
-                                setTemplatesSearch(value);
-                                setTemplatesPage(1);
-                            }}
-                            placeholder="Buscar plantilla por nombre o descripción..."
-                            ariaLabel="Buscar plantillas"
-                            className="sm:max-w-sm"
-                        />
-                    </div>
-                    {isLoadingTemplates ? (
-                        <div className="flex items-center justify-center min-h-[160px]">
-                            <LoadingSpinner size="md" />
+                {activeTab === "templates" && (
+                    <>
+                        <div className={SESSIONS_PAGE_TOOLBAR}>
+                            <NexiaGlassAccentRim />
+                            <div className={cn(SESSIONS_PAGE_SEARCH_WRAP, "sm:ml-0 sm:w-full")}>
+                                <Search className={SESSIONS_PAGE_SEARCH_ICON} aria-hidden />
+                                <Input
+                                    type="text"
+                                    size="sm"
+                                    placeholder={SESSIONS_PAGE_COPY.searchTemplates}
+                                    value={templatesSearch}
+                                    onChange={(e) => {
+                                        setTemplatesSearch(e.target.value);
+                                        setTemplatesPage(1);
+                                    }}
+                                    className={SESSIONS_PAGE_SEARCH_INPUT}
+                                    aria-label="Buscar plantillas"
+                                />
+                            </div>
                         </div>
-                    ) : templatesTotal === 0 && !templatesSearchDebounced.trim() ? (
-                        <div className="flex flex-col items-center justify-center rounded-lg bg-surface py-20 text-center">
-                            <p className="mb-1 font-medium">Sin plantillas.</p>
-                            <p className="mb-4 text-sm text-muted-foreground">
-                                Crea la primera plantilla para reutilizar estructuras de sesión.
-                            </p>
-                            <Button
-                                size="sm"
-                                onClick={() => navigate("/dashboard/session-programming/create-template")}
-                            >
-                                <Plus className="h-4 w-4" aria-hidden />
-                                Crear primera plantilla
-                            </Button>
-                        </div>
-                    ) : templatesList.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center rounded-lg bg-surface py-16 text-center">
-                            <p className="mb-1 font-medium">Ninguna plantilla coincide.</p>
-                            <p className="text-sm text-muted-foreground">
-                                Prueba con otro término de búsqueda.
-                            </p>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="space-y-2">
-                                {templatesList.map((template: SessionTemplate) => (
-                                    <div
-                                        key={template.id}
-                                        className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-4"
-                                    >
-                                        <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-semibold text-foreground">
-                                                {template.name}
-                                            </p>
-                                            <p className="mt-1 text-xs text-muted-foreground">
-                                                {template.session_type}
-                                                {template.estimated_duration != null
-                                                    ? ` · ${template.estimated_duration} min`
-                                                    : ""}
-                                                {template.usage_count > 0
-                                                    ? ` · ${template.usage_count} usos`
-                                                    : ""}
-                                            </p>
-                                        </div>
+
+                        {isLoadingTemplates ? (
+                            <div className={SESSIONS_PAGE_LOADING}>
+                                <LoadingSpinner size="md" />
+                            </div>
+                        ) : templatesTotal === 0 && !templatesSearchDebounced.trim() ? (
+                            <div className={SESSIONS_PAGE_EMPTY_SHELL}>
+                                <NexiaGlassAccentRim />
+                                <div className={SESSIONS_PAGE_EMPTY_GLOW} aria-hidden />
+                                <EmptyState
+                                    title="Sin plantillas"
+                                    description="Crea la primera plantilla para reutilizar estructuras de sesión."
+                                    className="relative z-[1] py-8"
+                                    action={
                                         <Button
-                                            variant="outline"
+                                            variant="primary"
                                             size="sm"
+                                            className={SESSIONS_PAGE_EMPTY_ACTION}
                                             onClick={() =>
-                                                navigate(
-                                                    `/dashboard/session-programming/create-from-template/${template.id}`
-                                                )
+                                                navigate("/dashboard/session-programming/create-template")
                                             }
                                         >
-                                            Usar plantilla
+                                            <Plus className="size-4 shrink-0" aria-hidden />
+                                            Crear primera plantilla
                                         </Button>
-                                    </div>
-                                ))}
+                                    }
+                                />
                             </div>
-                            <PaginationBar
-                                currentPage={templatesPage}
-                                totalPages={Math.max(1, Math.ceil(templatesTotal / PAGE_SIZE))}
-                                totalItems={templatesTotal}
-                                pageSize={PAGE_SIZE}
-                                onPageChange={handleTemplatesPageChange}
-                            />
-                        </>
-                    )}
-                </>
-            )}
+                        ) : templatesList.length === 0 ? (
+                            <div className={SESSIONS_PAGE_EMPTY_SHELL}>
+                                <NexiaGlassAccentRim />
+                                <EmptyState
+                                    title="Ninguna plantilla coincide"
+                                    description="Prueba con otro término de búsqueda."
+                                    className="relative z-[1] py-8"
+                                />
+                            </div>
+                        ) : (
+                            <>
+                                <div className={SESSIONS_PAGE_LIST}>
+                                    {templatesList.map((template: SessionTemplate) => (
+                                        <article
+                                            key={template.id}
+                                            className={SESSIONS_PAGE_TEMPLATE_CARD}
+                                        >
+                                            <NexiaGlassAccentRim />
+                                            <div className="relative z-[1] min-w-0 flex-1">
+                                                <p className={SESSIONS_PAGE_TEMPLATE_TITLE}>{template.name}</p>
+                                                <p className={SESSIONS_PAGE_TEMPLATE_META}>
+                                                    {template.session_type}
+                                                    {template.estimated_duration != null
+                                                        ? ` · ${template.estimated_duration} min`
+                                                        : ""}
+                                                    {template.usage_count > 0
+                                                        ? ` · ${template.usage_count} usos`
+                                                        : ""}
+                                                </p>
+                                            </div>
+                                            <Button
+                                                variant="outline-primary"
+                                                size="sm"
+                                                className="relative z-[1] w-full shrink-0 sm:w-auto"
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/dashboard/session-programming/create-from-template/${template.id}`
+                                                    )
+                                                }
+                                            >
+                                                Usar plantilla
+                                            </Button>
+                                        </article>
+                                    ))}
+                                </div>
+                                <PaginationBar
+                                    currentPage={templatesPage}
+                                    totalPages={Math.max(1, Math.ceil(templatesTotal / PAGE_SIZE))}
+                                    totalItems={templatesTotal}
+                                    pageSize={PAGE_SIZE}
+                                    onPageChange={handleTemplatesPageChange}
+                                />
+                            </>
+                        )}
+                    </>
+                )}
+            </div>
         </div>
     );
 };

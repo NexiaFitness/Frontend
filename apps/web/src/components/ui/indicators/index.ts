@@ -11,3 +11,5 @@ export { SatisfactionIcon } from "./SatisfactionIcon";
 export type { SatisfactionIconProps } from "./SatisfactionIcon";
 export { TrendIcon } from "./TrendIcon";
 export type { TrendIconProps } from "./TrendIcon";
+export { NexiaProgressBar } from "@/components/ui/progress";
+export type { NexiaProgressBarProps, NexiaProgressTone } from "@/components/ui/progress";

@@ -33,6 +33,7 @@ import {
     ATHLETE_AGENDA_TODAY_BADGE,
     ATHLETE_AGENDA_TRAINING_ROW,
 } from "@/components/athlete/athleteAgendaPresentation";
+import { NEXIA_ROW_CHEVRON } from "@/components/ui/surface/platformPremiumPresentation";
 import { AthleteSessionPlannedLoadBars } from "@/components/athlete/AthleteSessionPlannedLoadBars";
 import type { AthleteAgendaDayRow } from "@nexia/shared/utils/athlete/athleteCalendarUtils";
 import {
@@ -85,19 +86,24 @@ function TrainingRow({
                 aria-label={buildAgendaTrainingRowAriaLabel(session, dateKey)}
                 onClick={() => onOpenTraining(path)}
             >
-                <div className="min-w-0 flex-1 space-y-1">
-                    {ordinal ? (
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-primary/70">
-                            {ordinal}
-                        </p>
-                    ) : null}
-                    {headline ? (
-                        <p className="text-sm font-semibold text-foreground">{headline}</p>
-                    ) : null}
-                    {subline ? (
-                        <p className="text-xs text-muted-foreground">{subline}</p>
-                    ) : null}
-                    <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs text-muted-foreground">
+                <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1 space-y-1">
+                        {ordinal ? (
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-primary/70">
+                                {ordinal}
+                            </p>
+                        ) : null}
+                        {headline ? (
+                            <p className="text-sm font-semibold text-foreground">{headline}</p>
+                        ) : null}
+                        {subline ? (
+                            <p className="text-xs text-muted-foreground">{subline}</p>
+                        ) : null}
+                    </div>
+                    <AthleteSessionPlannedLoadBars session={session} interactive={false} />
+                </div>
+                <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
                         {clock ? (
                             <span className="inline-flex items-center gap-1 tabular-nums">
                                 <Clock className="size-3.5 text-primary/70" aria-hidden />
@@ -111,10 +117,7 @@ function TrainingRow({
                             <span className="font-medium text-primary/80">{statusShort}</span>
                         ) : null}
                     </div>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                    <AthleteSessionPlannedLoadBars session={session} interactive={false} />
-                    <ChevronRight className="size-5 text-muted-foreground" aria-hidden />
+                    <ChevronRight className={NEXIA_ROW_CHEVRON} aria-hidden />
                 </div>
             </button>
         </li>
@@ -139,18 +142,22 @@ function AppointmentRow({
                 className={ATHLETE_AGENDA_APPOINTMENT_ROW}
                 onClick={() => onOpenAppointment(event)}
             >
-                <div className="min-w-0 flex-1 space-y-0.5 text-left">
-                    <p className="text-sm font-semibold text-foreground">{title}</p>
-                    {event.location ? (
-                        <p className="truncate text-xs text-muted-foreground">{event.location}</p>
+                <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1 space-y-0.5 text-left">
+                        <p className="text-sm font-semibold text-foreground">{title}</p>
+                        {event.location ? (
+                            <p className="truncate text-xs text-muted-foreground">{event.location}</p>
+                        ) : null}
+                    </div>
+                    {clock ? (
+                        <span className="shrink-0 text-sm font-semibold tabular-nums text-primary">
+                            {clock}
+                        </span>
                     ) : null}
                 </div>
-                {clock ? (
-                    <span className="shrink-0 text-sm font-semibold tabular-nums text-primary">
-                        {clock}
-                    </span>
-                ) : null}
-                <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+                <div className="flex items-center justify-end">
+                    <ChevronRight className={NEXIA_ROW_CHEVRON} aria-hidden />
+                </div>
             </button>
         </li>
     );

@@ -185,6 +185,34 @@ export interface AgendaWeekSection {
     days: AthleteAgendaDayGroup[];
 }
 
+export function agendaDayHasVisibleRows(
+    day: AthleteAgendaDayGroup,
+    sessionsById: Map<number, TrainingSession>,
+    filter: AthleteAgendaFilter
+): boolean {
+    const normalized = filterNormalizedAgendaRows(
+        normalizeAgendaDayRows(day.rows, sessionsById),
+        filter
+    );
+    return normalized.length > 0;
+}
+
+/** Semanas y días sin contenido para el filtro activo no se renderizan. */
+export function filterAgendaWeekSectionsForView(
+    sections: AgendaWeekSection[],
+    sessionsById: Map<number, TrainingSession>,
+    filter: AthleteAgendaFilter
+): AgendaWeekSection[] {
+    return sections
+        .map((section) => ({
+            ...section,
+            days: section.days.filter((day) =>
+                agendaDayHasVisibleRows(day, sessionsById, filter)
+            ),
+        }))
+        .filter((section) => section.days.length > 0);
+}
+
 export function groupAgendaDaysByWeek(
     days: AthleteAgendaDayGroup[],
     todayKey = madridTodayDateKey()

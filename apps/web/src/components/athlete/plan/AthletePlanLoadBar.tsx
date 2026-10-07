@@ -30,7 +30,7 @@ export const AthletePlanLoadBar: React.FC<AthletePlanLoadBarProps> = ({
     const isCompact = variant === "compact";
 
     return (
-        <div className={isCompact ? "min-w-[3.25rem] flex-1 space-y-1" : "space-y-1.5"}>
+        <div className={isCompact ? "w-full shrink-0 space-y-1" : "space-y-1.5"}>
             <div
                 className={
                     isCompact

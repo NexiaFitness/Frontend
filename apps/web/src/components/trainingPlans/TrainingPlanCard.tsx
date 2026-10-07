@@ -1,15 +1,16 @@
 /**
  * TrainingPlanCard — Card premium de plan asignado a un cliente (tab Planificación).
  *
- * Tokens: templateLibraryPresentation.ts (PLANNING_LIBRARY_*)
- * Doc: DESIGN_PREMIUM.md
+ * Toda la card es clicable (misma navegación que antes: ficha cliente → planificación).
+ * Tokens: templateLibraryPresentation.ts
  */
 
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
-import { Button } from "@/components/ui/buttons";
 import { ClientAvatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/buttons";
+import { NexiaProgressBar } from "@/components/ui/progress";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
 import type { TrainingPlan } from "@nexia/shared/types/training";
@@ -17,14 +18,15 @@ import type { Client } from "@nexia/shared/types/client";
 import { categoryChipsFromTrainingPlan } from "./goalLabels";
 import {
     PLANNING_LIBRARY_CARD,
-    PLANNING_LIBRARY_CARD_ACTION_BTN,
     PLANNING_LIBRARY_CARD_ACTIONS,
+    PLANNING_LIBRARY_CARD_AUX_BTN,
     PLANNING_LIBRARY_CARD_CLIENT_NAME,
-    PLANNING_LIBRARY_CARD_PROGRESS,
-    PLANNING_LIBRARY_CARD_PROGRESS_FILL,
+    PLANNING_LIBRARY_CARD_DATE_RANGE,
+    PLANNING_LIBRARY_CARD_PLAN_NAME,
     PLANNING_LIBRARY_CARD_STAT_ROW,
     PLANNING_LIBRARY_CARD_STAT_VALUE,
     PLANNING_LIBRARY_CARD_STATS,
+    PLANNING_LIBRARY_GOAL_CHIP,
     PLANNING_LIBRARY_STATUS_BADGE,
 } from "./templateLibraryPresentation";
 
@@ -34,6 +36,14 @@ function endDatePassed(endIso: string): boolean {
     today.setHours(0, 0, 0, 0);
     end.setHours(0, 0, 0, 0);
     return end < today;
+}
+
+function formatPlanDateRange(startIso: string, endIso: string): string {
+    const start = new Date(startIso + "T12:00:00");
+    const end = new Date(endIso + "T12:00:00");
+    const fmt = (d: Date) =>
+        d.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
+    return `${fmt(start)} – ${fmt(end)}`;
 }
 
 const PLAN_STATUS_LABEL: Record<string, string> = {
@@ -126,15 +136,34 @@ export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
         };
     }, [client, displayName]);
 
-    const handleViewClient = (): void => {
+    const openPlan = useCallback((): void => {
         if (plan.client_id == null) return;
         navigate(`/dashboard/clients/${plan.client_id}?tab=planning`);
-    };
+    }, [navigate, plan.client_id]);
+
+    const planTitle = plan.name?.trim() || "Plan sin nombre";
+    const dateRangeLabel = formatPlanDateRange(plan.start_date, plan.end_date);
 
     return (
-        <article className={PLANNING_LIBRARY_CARD}>
+        <article
+            role="button"
+            tabIndex={plan.client_id != null ? 0 : -1}
+            aria-disabled={plan.client_id == null}
+            onClick={openPlan}
+            onKeyDown={(e) => {
+                if (plan.client_id == null) return;
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openPlan();
+                }
+            }}
+            className={cn(
+                PLANNING_LIBRARY_CARD,
+                plan.client_id == null && "cursor-not-allowed opacity-70",
+            )}
+        >
             <NexiaGlassAccentRim />
-            <div className="flex min-h-0 flex-1 flex-col gap-4">
+            <div className="relative z-[1] flex min-h-0 flex-1 flex-col gap-4">
                 <div className="flex gap-3">
                     {plan.client_id != null ? (
                         <ClientAvatar
@@ -154,18 +183,23 @@ export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
                     )}
                     <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                            <p className={PLANNING_LIBRARY_CARD_CLIENT_NAME}>{displayName}</p>
+                            <div className="min-w-0 flex-1">
+                                <p className={PLANNING_LIBRARY_CARD_PLAN_NAME}>{planTitle}</p>
+                                <p className={cn(PLANNING_LIBRARY_CARD_CLIENT_NAME, "mt-0.5")}>
+                                    {displayName}
+                                </p>
+                            </div>
                             {statusBadge}
                         </div>
+                        <p className={cn(PLANNING_LIBRARY_CARD_DATE_RANGE, "mt-1.5")}>
+                            {dateRangeLabel}
+                        </p>
                         {categoryChips.length > 0 ? (
                             <div className="mt-2 flex flex-wrap gap-2">
                                 {categoryChips.map((chip, i) => (
                                     <span
                                         key={`${chip.label}-${i}`}
-                                        className={cn(
-                                            "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
-                                            chip.toneClass,
-                                        )}
+                                        className={cn(PLANNING_LIBRARY_GOAL_CHIP, chip.toneClass)}
                                     >
                                         {chip.label}
                                     </span>
@@ -182,31 +216,29 @@ export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
                             {sessionsCompleted} / {sessionsTotal}
                         </span>
                     </div>
-                    <div
-                        className={PLANNING_LIBRARY_CARD_PROGRESS}
-                        role="progressbar"
-                        aria-valuenow={progressPct}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                    >
-                        <div
-                            className={PLANNING_LIBRARY_CARD_PROGRESS_FILL}
-                            style={{ width: `${progressPct}%` }}
-                        />
-                    </div>
+                    <NexiaProgressBar
+                        value={progressPct}
+                        tone={progressPct >= 100 ? "success" : "primary"}
+                        aria-label={`Sesiones completadas ${progressPct} por ciento`}
+                    />
                 </div>
-            </div>
 
-            <div className={PLANNING_LIBRARY_CARD_ACTIONS}>
-                <Button
-                    variant="outline-primary"
-                    size="sm"
-                    className={PLANNING_LIBRARY_CARD_ACTION_BTN}
-                    onClick={handleViewClient}
-                    disabled={plan.client_id == null}
+                <div
+                    className={PLANNING_LIBRARY_CARD_ACTIONS}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
                 >
-                    Ver cliente
-                </Button>
+                    <Button
+                        type="button"
+                        variant="ghost-primary"
+                        size="sm"
+                        className={PLANNING_LIBRARY_CARD_AUX_BTN}
+                        onClick={openPlan}
+                        disabled={plan.client_id == null}
+                    >
+                        Ver cliente
+                    </Button>
+                </div>
             </div>
         </article>
     );

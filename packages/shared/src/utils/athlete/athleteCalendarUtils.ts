@@ -144,8 +144,32 @@ export function formatCalendarEventClockMadrid(
     return madridTimeFormatter.format(instant);
 }
 
+/** Títulos auto-generados por BE (session_type.title()) — mostrar en español al atleta. */
+const CALENDAR_APPOINTMENT_TYPE_LABEL_ES: Record<string, string> = {
+    training: "Entrenamiento",
+    consultation: "Consulta",
+    assessment: "Evaluación",
+};
+
+function resolveAppointmentTypeLabelEs(event: CalendarEvent): string | null {
+    const rawType = event.metadata?.session_type;
+    if (typeof rawType === "string") {
+        const key = rawType.toLowerCase().replace(/\s+/g, "_");
+        const label = CALENDAR_APPOINTMENT_TYPE_LABEL_ES[key];
+        if (label) return label;
+    }
+    const title = event.title?.trim();
+    if (!title) return null;
+    const slug = title.toLowerCase().replace(/\s+/g, "_");
+    return CALENDAR_APPOINTMENT_TYPE_LABEL_ES[slug] ?? null;
+}
+
 export function resolveCalendarEventDisplayTitle(event: CalendarEvent): string {
-    if (event.title?.trim()) return event.title.trim();
+    const fromType = resolveAppointmentTypeLabelEs(event);
+    if (fromType) return fromType;
+
+    const customTitle = event.title?.trim();
+    if (customTitle) return customTitle;
     if (event.event_kind === "personal_workout") return "Entrenamiento";
     if (event.event_kind === "group_class") return "Clase grupal";
     return "Cita";

@@ -31,6 +31,7 @@ import {
     PLATFORM_PAGE_WITH_FIXED_FOOTER,
     PLATFORM_SECTION_LABEL,
 } from "@/components/ui/surface/platformPremiumPresentation";
+import { PLATFORM_DASHBOARD_FOOTER_BTN } from "@/components/ui/forms/platformFormPresentation";
 
 export {
     PLATFORM_BACK_BUTTON as TEMPLATE_LIBRARY_BACK_BUTTON,
@@ -55,10 +56,11 @@ export const TRAINING_PLANS_TABS_PRIMARY_CTA = cn(
     "w-full min-h-touch sm:w-auto sm:min-h-0 sm:px-5",
 );
 
+/** Barra filtros premium (paridad ExercisesLibraryToolbar · glass + rim). */
 export const TRAINING_PLANS_TABS_TOOLBAR = cn(
     NEXIA_GLASS_CARD,
     NEXIA_GLASS_CARD_DESKTOP,
-    "relative flex flex-wrap items-center gap-2 p-3 sm:p-4",
+    "relative flex flex-wrap items-center gap-3 p-4 sm:p-5",
 );
 
 export function trainingPlansTabsFilterChipClass(active: boolean): string {
@@ -148,8 +150,21 @@ export const TEMPLATE_LIBRARY_CARD = cn(
     NEXIA_GLASS_CARD,
     NEXIA_GLASS_CARD_DESKTOP,
     "relative flex h-full flex-col gap-4 p-4 pt-5 sm:p-5",
-    "transition-all hover:bg-surface-2/30",
+    "transition-all duration-150",
+    "hover:border-primary/30 hover:bg-surface-2/25",
     "motion-safe:active:scale-[0.995] motion-reduce:active:scale-100",
+);
+
+/** Card de biblioteca clicable (plan asignado o plantilla). */
+export const TEMPLATE_LIBRARY_CARD_INTERACTIVE = cn(
+    TEMPLATE_LIBRARY_CARD,
+    "cursor-pointer text-left",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+);
+
+/** Chip objetivo / categoría (tinte glass — DESIGN_PREMIUM §3). */
+export const PLANNING_LIBRARY_GOAL_CHIP = cn(
+    "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm",
 );
 
 export const TEMPLATE_LIBRARY_CARD_TITLE = cn(NEXIA_PORTAL_CARD_TITLE, "line-clamp-2 text-left");
@@ -169,18 +184,25 @@ export const TEMPLATE_LIBRARY_CARD_STAT_ROW = "flex justify-between text-muted-f
 
 export const TEMPLATE_LIBRARY_CARD_STAT_VALUE = "tabular-nums text-foreground";
 
-export const TEMPLATE_LIBRARY_CARD_PROGRESS = "h-2 w-full overflow-hidden rounded-full bg-muted";
-
-export const TEMPLATE_LIBRARY_CARD_PROGRESS_FILL = "h-full rounded-full bg-primary transition-all duration-300";
-
-export const TEMPLATE_LIBRARY_CARD_ACTIONS = "mt-auto shrink-0 space-y-2 border-t border-border/60 pt-4";
+export const TEMPLATE_LIBRARY_CARD_ACTIONS = "mt-auto shrink-0 space-y-2 pt-1";
 
 export const TEMPLATE_LIBRARY_CARD_HINT = cn(NEXIA_PORTAL_CARD_DESCRIPTION, "text-xs");
 
 export const TEMPLATE_LIBRARY_CARD_SECONDARY_BTN =
     "w-full border-primary/30 text-primary hover:bg-primary/10";
 
-export const TEMPLATE_LIBRARY_CARD_DUPLICATE_BTN = "w-full text-muted-foreground hover:text-primary";
+/** Duplicar plantilla / sesión — ghost-primary de footer (05_ACTION_HIERARCHY). */
+export const TEMPLATE_LIBRARY_DUPLICATE_BTN = cn(
+    PLATFORM_DASHBOARD_FOOTER_BTN,
+    "justify-center",
+);
+
+export const TEMPLATE_LIBRARY_CARD_DUPLICATE_BTN = TEMPLATE_LIBRARY_DUPLICATE_BTN;
+
+export const PLANNING_LIBRARY_CARD_AUX_BTN = cn(
+    PLATFORM_DASHBOARD_FOOTER_BTN,
+    "justify-center",
+);
 
 export const TEMPLATE_LIBRARY_LOADING_SHELL = TRAINING_PLANS_TABS_LOADING_SHELL;
 
@@ -255,9 +277,22 @@ export const TEMPLATE_LIBRARY_LEVEL_BADGE: Record<string, string> = {
 export const TEMPLATE_LIBRARY_SECTION_DESC = TRAINING_PLANS_TABS_SECTION_DESC;
 
 /** Card plan asignado (tab Planificación) — misma receta glass que plantilla. */
-export const PLANNING_LIBRARY_CARD = TEMPLATE_LIBRARY_CARD;
+export const PLANNING_LIBRARY_CARD = TEMPLATE_LIBRARY_CARD_INTERACTIVE;
 
-export const PLANNING_LIBRARY_CARD_CLIENT_NAME = cn(NEXIA_PORTAL_CARD_TITLE, "truncate text-left");
+export const PLANNING_LIBRARY_CARD_PLAN_NAME = cn(
+    NEXIA_PORTAL_CARD_TITLE,
+    "line-clamp-2 text-left text-sm font-semibold sm:text-base",
+);
+
+export const PLANNING_LIBRARY_CARD_CLIENT_NAME = cn(
+    NEXIA_PORTAL_CARD_DESCRIPTION,
+    "truncate text-left text-xs sm:text-sm",
+);
+
+export const PLANNING_LIBRARY_CARD_DATE_RANGE = cn(
+    NEXIA_PORTAL_CARD_DESCRIPTION,
+    "text-xs tabular-nums text-muted-foreground",
+);
 
 export const PLANNING_LIBRARY_CARD_BADGE_ROW = TEMPLATE_LIBRARY_CARD_BADGE_ROW;
 
@@ -267,14 +302,9 @@ export const PLANNING_LIBRARY_CARD_STAT_ROW = TEMPLATE_LIBRARY_CARD_STAT_ROW;
 
 export const PLANNING_LIBRARY_CARD_STAT_VALUE = TEMPLATE_LIBRARY_CARD_STAT_VALUE;
 
-export const PLANNING_LIBRARY_CARD_PROGRESS = TEMPLATE_LIBRARY_CARD_PROGRESS;
-
-export const PLANNING_LIBRARY_CARD_PROGRESS_FILL = TEMPLATE_LIBRARY_CARD_PROGRESS_FILL;
-
-export const PLANNING_LIBRARY_CARD_ACTIONS = TEMPLATE_LIBRARY_CARD_ACTIONS;
-
-export const PLANNING_LIBRARY_CARD_ACTION_BTN = cn(
-    "w-full min-h-touch border-primary/30 text-primary hover:bg-primary/10 sm:min-h-0",
+export const PLANNING_LIBRARY_CARD_ACTIONS = cn(
+    TEMPLATE_LIBRARY_CARD_ACTIONS,
+    "border-t border-border/60 pt-3",
 );
 
 export const PLANNING_LIBRARY_STATUS_BADGE: Record<string, string> = {
