@@ -104,6 +104,17 @@ export function formatAthleteDateLong(isoDate: string): string {
     });
 }
 
+/** V04 cabecera: día con mayúscula inicial; mes en minúsculas (es-ES). */
+export function formatAthleteSessionPreviewDate(isoDate: string): string {
+    const date = parseSessionDateLocal(isoDate);
+    const weekday = formatWeekdayLong(date);
+    const dayMonth = date.toLocaleDateString("es-ES", {
+        day: "numeric",
+        month: "long",
+    });
+    return `${weekday}, ${dayMonth}`;
+}
+
 export interface WeekDayStripItem {
     dateKey: string;
     label: string;

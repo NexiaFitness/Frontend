@@ -237,17 +237,13 @@ export function buildAthletePreviewGroupRows(
                     compound: false,
                 })
             );
-        case "amrap": {
-            const cap =
-                group.timeCapMinutes != null ? `${group.timeCapMinutes} min` : "AMRAP";
+        case "amrap":
             return group.slots.map((slot) =>
                 rowFromSlot(group, slot, {
-                    roundsLabel: roundsLabel ?? cap,
-                    kindHint: "AMRAP",
+                    roundsLabel,
                     compound: group.slots.length > 1,
                 })
             );
-        }
         case "emom": {
             const cap =
                 group.timeCapMinutes != null
@@ -344,17 +340,13 @@ export function buildAthletePreviewExerciseCards(
                     compound: false,
                 })
             );
-        case "amrap": {
-            const cap =
-                group.timeCapMinutes != null ? `${group.timeCapMinutes} min` : "AMRAP";
+        case "amrap":
             return group.slots.map((slot) =>
                 exerciseCardFromSlot(group, slot, {
-                    roundsLabel: roundsLabel ?? cap,
-                    kindHint: "AMRAP",
+                    roundsLabel,
                     compound: group.slots.length > 1,
                 })
             );
-        }
         case "emom": {
             const cap =
                 group.timeCapMinutes != null

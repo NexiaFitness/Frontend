@@ -8,17 +8,22 @@ import { AthleteExercisePerformanceInfoButton } from "@/components/athlete/sessi
 import { AthleteExercisePerformanceInfoSheet } from "@/components/athlete/sessions/AthleteExercisePerformanceInfoSheet";
 import { AthleteInjuryCallout } from "@/components/athlete/AthleteInjuryCallout";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
 import {
     ATHLETE_SESSION_BLOCK_BODY,
+    ATHLETE_SESSION_BLOCK_BODY_COMPACT,
     ATHLETE_SESSION_BLOCK_SECTION_HEADER,
     ATHLETE_SESSION_BLOCK_SECTION_HEADER_STATIC,
+    ATHLETE_SESSION_EXERCISE_ACTIONS_DIVIDER,
     ATHLETE_SESSION_EXERCISE_DETAIL,
     ATHLETE_SESSION_EXERCISE_NAME,
     ATHLETE_SESSION_EXERCISE_NOTES_BODY,
-    ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE,
+    ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE_PROMINENT,
     ATHLETE_SESSION_EXERCISE_ROW_FLAT,
     ATHLETE_SESSION_EXERCISE_ROW_FLAT_CAUTION,
     ATHLETE_SESSION_EXERCISE_SECONDARY,
+    ATHLETE_SESSION_AMRAP_KIND_LABEL,
+    ATHLETE_SESSION_GROUP_KIND_LABEL,
     ATHLETE_SESSION_PREVIEW_BLOCK,
     ATHLETE_SESSION_SERIES_TOGGLE,
     ATHLETE_SESSION_SET_TABLE,
@@ -116,23 +121,23 @@ const SetLinesTable: React.FC<{ lines: AthletePreviewSetLine[] }> = ({ lines }) 
 const ExerciseNotes: React.FC<{ notes: string }> = ({ notes }) => {
     const [open, setOpen] = useState(false);
     return (
-        <div>
+        <div className="w-full">
             <button
                 type="button"
-                className={ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE}
+                className={ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE_PROMINENT}
                 aria-expanded={open}
                 onClick={() => setOpen((v) => !v)}
             >
-                <span className="inline-flex items-center gap-1">
-                    {open ? "Ocultar nota" : "Ver nota del entrenador"}
-                    {open ? (
-                        <ChevronUp className="size-3.5" aria-hidden />
-                    ) : (
-                        <ChevronDown className="size-3.5" aria-hidden />
-                    )}
-                </span>
+                {open ? "Ocultar nota" : "Ver nota del entrenador"}
+                {open ? (
+                    <ChevronUp className="size-4 shrink-0" aria-hidden />
+                ) : (
+                    <ChevronDown className="size-4 shrink-0" aria-hidden />
+                )}
             </button>
-            {open ? <p className={ATHLETE_SESSION_EXERCISE_NOTES_BODY}>{notes}</p> : null}
+            {open ? (
+                <p className={cn(ATHLETE_SESSION_EXERCISE_NOTES_BODY, "text-center")}>{notes}</p>
+            ) : null}
         </div>
     );
 };
@@ -145,6 +150,7 @@ const ExerciseRow: React.FC<{
     const [seriesOpen, setSeriesOpen] = useState(false);
     const infoExerciseId = card.exerciseIds.length === 1 ? card.exerciseIds[0] : null;
     const hasSeries = card.setLines.length > 0;
+    const showTrainerNote = hasHumanTrainerNote(card.notes);
 
     return (
         <li
@@ -173,9 +179,6 @@ const ExerciseRow: React.FC<{
                     {card.secondaryDetail ? (
                         <p className={ATHLETE_SESSION_EXERCISE_SECONDARY}>{card.secondaryDetail}</p>
                     ) : null}
-                    {hasHumanTrainerNote(card.notes) ? (
-                        <ExerciseNotes notes={formatTrainerNoteForAthlete(card.notes!)} />
-                    ) : null}
                     {hasSeries ? (
                         <>
                             <button
@@ -191,6 +194,17 @@ const ExerciseRow: React.FC<{
                                     <SetLinesTable lines={card.setLines} />
                                 </div>
                             ) : null}
+                        </>
+                    ) : null}
+                    {showTrainerNote ? (
+                        <>
+                            <NexiaPremiumDivider
+                                tone="glow"
+                                className={ATHLETE_SESSION_EXERCISE_ACTIONS_DIVIDER}
+                            />
+                            <ExerciseNotes
+                                notes={formatTrainerNoteForAthlete(card.notes!)}
+                            />
                         </>
                     ) : null}
                 </div>
@@ -215,12 +229,26 @@ const GroupSection: React.FC<{
     const cards = buildAthletePreviewExerciseCards(group);
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
             {kindLabel ? (
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-primary/70">
+                <p
+                    className={
+                        group.kind === "amrap"
+                            ? ATHLETE_SESSION_AMRAP_KIND_LABEL
+                            : ATHLETE_SESSION_GROUP_KIND_LABEL
+                    }
+                >
                     {kindLabel}
-                    {group.rounds != null && group.rounds > 0 ? ` · ${group.rounds} rondas` : null}
-                    {group.timeCapMinutes != null ? ` · ${group.timeCapMinutes} min` : null}
+                    {group.kind === "amrap" ? (
+                        group.timeCapMinutes != null ? ` · ${group.timeCapMinutes} min` : null
+                    ) : (
+                        <>
+                            {group.rounds != null && group.rounds > 0
+                                ? ` · ${group.rounds} rondas`
+                                : null}
+                            {group.timeCapMinutes != null ? ` · ${group.timeCapMinutes} min` : null}
+                        </>
+                    )}
                 </p>
             ) : null}
             <ul className="space-y-0">
@@ -279,6 +307,8 @@ const BlockSection: React.FC<{
         blockCount
     );
     const isOpen = collapsible ? open : true;
+    /** Contador solo junto al nombre de bloque (multi-bloque); no repetir «1 ejercicio» si el H1 ya contextualiza. */
+    const showBlockHeader = collapsible || showBlockTitle;
 
     const titleRow = (
         <>
@@ -286,9 +316,11 @@ const BlockSection: React.FC<{
                 {showBlockTitle ? (
                     <span className="text-sm font-semibold text-foreground">{blockTitle}</span>
                 ) : null}
-                <span className="text-xs text-muted-foreground">
-                    {exerciseCount} {exerciseCount === 1 ? "ejercicio" : "ejercicios"}
-                </span>
+                {showBlockTitle ? (
+                    <span className="text-xs text-muted-foreground">
+                        {exerciseCount} {exerciseCount === 1 ? "ejercicio" : "ejercicios"}
+                    </span>
+                ) : null}
             </div>
             {blockIndex === 0 && showConflictSummary && conflictCount > 0 ? (
                 <span className="text-caption font-medium text-warning">
@@ -309,24 +341,35 @@ const BlockSection: React.FC<{
         <section className={ATHLETE_SESSION_PREVIEW_BLOCK}>
             {blockIndex === 0 ? <NexiaGlassAccentRim /> : null}
 
-            {collapsible ? (
-                <button
-                    type="button"
-                    className={cn(ATHLETE_SESSION_BLOCK_SECTION_HEADER, "relative w-full")}
-                    aria-expanded={open}
-                    aria-controls={panelId}
-                    onClick={() => setOpen((v) => !v)}
-                >
-                    {titleRow}
-                </button>
-            ) : (
-                <div className={cn(ATHLETE_SESSION_BLOCK_SECTION_HEADER_STATIC, "relative w-full")}>
-                    {titleRow}
-                </div>
-            )}
+            {showBlockHeader ? (
+                collapsible ? (
+                    <button
+                        type="button"
+                        className={cn(ATHLETE_SESSION_BLOCK_SECTION_HEADER, "relative w-full")}
+                        aria-expanded={open}
+                        aria-controls={panelId}
+                        onClick={() => setOpen((v) => !v)}
+                    >
+                        {titleRow}
+                    </button>
+                ) : (
+                    <div
+                        className={cn(ATHLETE_SESSION_BLOCK_SECTION_HEADER_STATIC, "relative w-full")}
+                    >
+                        {titleRow}
+                    </div>
+                )
+            ) : null}
 
             {isOpen ? (
-                <div id={panelId} className={ATHLETE_SESSION_BLOCK_BODY}>
+                <div
+                    id={panelId}
+                    className={
+                        showBlockHeader
+                            ? ATHLETE_SESSION_BLOCK_BODY
+                            : ATHLETE_SESSION_BLOCK_BODY_COMPACT
+                    }
+                >
                     {blockIndex === 0 && showConflictSummary && mobileConflictSummary ? (
                         <AthleteInjuryCallout
                             message={mobileConflictSummary}

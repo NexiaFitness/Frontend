@@ -105,7 +105,18 @@ export const ATHLETE_SESSION_BLOCK_SECTION_HEADER_STATIC = cn(
     "cursor-default border-b border-border/45"
 );
 
-export const ATHLETE_SESSION_BLOCK_BODY = "space-y-3 pt-3";
+export const ATHLETE_SESSION_BLOCK_BODY = "space-y-2 pt-2";
+
+/** Cuerpo de bloque sin cabecera (solo AMRAP + filas): sin padding superior extra. */
+export const ATHLETE_SESSION_BLOCK_BODY_COMPACT = "space-y-2 pt-0";
+
+/** Superset, EMOM, For Time, etc. — V04 mapa. */
+export const ATHLETE_SESSION_GROUP_KIND_LABEL =
+    "text-[11px] font-semibold uppercase tracking-wide text-primary/70";
+
+/** Solo cabecera AMRAP (rondas van en la fila del ejercicio). */
+export const ATHLETE_SESSION_AMRAP_KIND_LABEL =
+    "text-sm font-semibold uppercase tracking-wide text-primary/70";
 
 /** @deprecated V04-MAP-UI — usar BLOCK_SECTION_HEADER (filas planas). */
 export const ATHLETE_SESSION_DISCLOSURE_TRIGGER = ATHLETE_SESSION_BLOCK_SECTION_HEADER;
@@ -129,6 +140,10 @@ export const ATHLETE_SESSION_SET_TABLE_CELL_MUTED =
 export const ATHLETE_SESSION_PREVIEW_HEADLINE =
     "text-2xl font-bold tracking-tight text-foreground";
 
+/** Fecha bajo titular V04 (gris, entre H1 y patrones). */
+export const ATHLETE_SESSION_PREVIEW_DATE =
+    "text-sm text-muted-foreground leading-snug";
+
 export const ATHLETE_SESSION_BACK_FROM_AGENDA_LABEL = "Volver a Mi agenda";
 
 /** CTX-1 — botón «i» rendimiento en fila de ejercicio (preview). */
@@ -144,7 +159,7 @@ export const ATHLETE_SESSION_META_PILL = cn(
 );
 
 export const ATHLETE_SESSION_PREVIEW_BLOCK = cn(
-    "relative space-y-3 overflow-hidden rounded-xl border border-border/80 bg-card/40 p-4 pt-5",
+    "relative space-y-2 overflow-hidden rounded-xl border border-border/80 bg-card/40 p-3",
     "backdrop-blur-md shadow-[0_12px_40px_-16px] shadow-black/40"
 );
 
@@ -183,7 +198,7 @@ export const ATHLETE_SESSION_EXERCISE_ROW_CONFLICT = cn(
 
 /** Fila plana de ejercicio en mapa V04 (sin mini-card). */
 export const ATHLETE_SESSION_EXERCISE_ROW_FLAT = cn(
-    "flex items-start gap-2.5 border-b border-border/40 py-3 last:border-b-0"
+    "flex items-start gap-2.5 border-b border-border/40 py-2 last:border-b-0"
 );
 
 export const ATHLETE_SESSION_EXERCISE_ROW_FLAT_CAUTION = cn(
@@ -204,9 +219,11 @@ export const ATHLETE_SESSION_EXERCISE_ITEM_CAUTION = cn(
 );
 
 export const ATHLETE_SESSION_SERIES_TOGGLE = cn(
-    "mt-2 min-h-8 text-left text-xs font-medium text-primary/90",
+    "mt-1 min-h-7 w-full text-right text-xs font-medium text-primary/90",
     "underline-offset-2 hover:underline"
 );
+
+export const ATHLETE_SESSION_EXERCISE_ACTIONS_DIVIDER = "my-2 w-full";
 
 export const ATHLETE_SESSION_EXERCISE_NAME =
     "min-w-0 flex-1 text-sm font-medium leading-snug text-foreground";
@@ -225,10 +242,16 @@ export const ATHLETE_SESSION_EXERCISE_DETAIL =
 export const ATHLETE_SESSION_EXERCISE_SECONDARY =
     "mt-0.5 text-xs leading-relaxed text-muted-foreground";
 
-/** Toggle nota del entrenador plegada. */
+/** Toggle nota del entrenador plegada (legacy lista). */
 export const ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE = cn(
     "mt-1.5 min-h-8 text-left text-xs font-medium text-primary/90",
     "underline-offset-2 hover:underline"
+);
+
+/** Nota del entrenador — pie de fila V04, centrada y más legible. */
+export const ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE_PROMINENT = cn(
+    "mx-auto flex min-h-10 w-full max-w-sm items-center justify-center gap-1.5 py-1",
+    "text-sm font-semibold text-primary/90 underline-offset-2 hover:underline"
 );
 
 export const ATHLETE_SESSION_EXERCISE_NOTES_BODY =
