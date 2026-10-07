@@ -45,6 +45,7 @@ import {
 } from "@nexia/shared/api/sessionProgrammingApi";
 import { sessionProgrammingApi } from "@nexia/shared/api/sessionProgrammingApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
+import { applyConstructorExerciseCatalogNames } from "@/components/sessionProgramming/constructor/utils/applyConstructorExerciseCatalogNames";
 import {
     exerciseDisplayName,
     normalizeSessionName,
@@ -417,6 +418,16 @@ export const EditSession: React.FC = () => {
         },
     );
 
+    const exerciseNameById = useMemo(() => {
+        const map = new Map<number, string>();
+        for (const ex of exercisesData?.exercises ?? []) {
+            map.set(ex.id, exerciseDisplayName(ex));
+        }
+        return map;
+    }, [exercisesData?.exercises]);
+
+    const exerciseNameByIdRef = useRef(exerciseNameById);
+    exerciseNameByIdRef.current = exerciseNameById;
 
     /** Al cambiar de sesión, vaciar constructor hasta que lleguen los bloques (evita mezclar sesiones). */
     useEffect(() => {
@@ -529,31 +540,36 @@ export const EditSession: React.FC = () => {
                 };
             });
 
+            const normalized = rows.map((row) => {
+                if (row.setType === SET_TYPE.SUPERSET) {
+                    return normalizeSupersetRow(row);
+                }
+                if (row.setType === SET_TYPE.SINGLE_SET) {
+                    return normalizeSingleSetRow(row);
+                }
+                if (row.setType === SET_TYPE.DROPSET) {
+                    return normalizeDropsetRow(row);
+                }
+                if (row.setType === SET_TYPE.GIANT_SET) {
+                    return normalizeGiantSetRow(row);
+                }
+                if (row.setType === SET_TYPE.FOR_TIME) {
+                    return normalizeForTimeRow(row);
+                }
+                if (row.setType === SET_TYPE.EMOM) {
+                    return normalizeEmomRow(row);
+                }
+                if (row.setType === SET_TYPE.AMRAP) {
+                    return normalizeAmrapRow(row);
+                }
+                return row;
+            });
+
             setConstructorRows(
-                rows.map((row) => {
-                    if (row.setType === SET_TYPE.SUPERSET) {
-                        return normalizeSupersetRow(row);
-                    }
-                    if (row.setType === SET_TYPE.SINGLE_SET) {
-                        return normalizeSingleSetRow(row);
-                    }
-                    if (row.setType === SET_TYPE.DROPSET) {
-                        return normalizeDropsetRow(row);
-                    }
-                    if (row.setType === SET_TYPE.GIANT_SET) {
-                        return normalizeGiantSetRow(row);
-                    }
-                    if (row.setType === SET_TYPE.FOR_TIME) {
-                        return normalizeForTimeRow(row);
-                    }
-                    if (row.setType === SET_TYPE.EMOM) {
-                        return normalizeEmomRow(row);
-                    }
-                    if (row.setType === SET_TYPE.AMRAP) {
-                        return normalizeAmrapRow(row);
-                    }
-                    return row;
-                })
+                applyConstructorExerciseCatalogNames(
+                    normalized,
+                    exerciseNameByIdRef.current,
+                ),
             );
         };
 
@@ -563,34 +579,14 @@ export const EditSession: React.FC = () => {
         };
     }, [sessionId, blocks, isLoadingSessionBlocks, dispatch]);
 
-    /** Nombres del catálogo sin re-hidratar el constructor (evita perder edición y scroll). */
+    /** Catálogo en caché o tardío: resolver nombres sin re-hidratar bloques. */
     useEffect(() => {
-        if (!exercisesData?.exercises?.length) return;
+        if (exerciseNameById.size === 0) return;
 
-        const nameMap: Record<number, string> = {};
-        for (const ex of exercisesData.exercises) {
-            nameMap[ex.id] = ex.nombre;
-        }
-
-        setConstructorRows((prev) => {
-            if (prev.length === 0) return prev;
-
-            let changed = false;
-            const next = prev.map((row) => ({
-                ...row,
-                exercises: row.exercises.map((exercise) => {
-                    const resolved = nameMap[exercise.exerciseId];
-                    if (!resolved || exercise.exerciseName === resolved) {
-                        return exercise;
-                    }
-                    changed = true;
-                    return { ...exercise, exerciseName: resolved };
-                }),
-            }));
-
-            return changed ? next : prev;
-        });
-    }, [exercisesData]);
+        setConstructorRows((prev) =>
+            applyConstructorExerciseCatalogNames(prev, exerciseNameById),
+        );
+    }, [exerciseNameById]);
 
     const handleSelectFromPicker = useCallback(
         (exercise: Exercise) => {
