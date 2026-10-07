@@ -82,6 +82,51 @@ export const ATHLETE_SESSION_COMPLETION_BADGE = {
 };
 
 /** Pill meta preview (duración, ejercicios). */
+export const ATHLETE_SESSION_PREVIEW_SUBLINE =
+    "text-sm text-muted-foreground leading-relaxed";
+
+/** Patrones de movimiento — cabecera V04 (antes de músculos). */
+export const ATHLETE_SESSION_PREVIEW_PATTERNS =
+    "text-sm leading-relaxed text-foreground/90";
+
+export const ATHLETE_SESSION_PREVIEW_PATTERNS_LABEL =
+    "text-[10px] font-semibold uppercase tracking-[0.12em] text-primary/75";
+
+/** Acordeón bloque / ejercicio (mapa de sesión). */
+export const ATHLETE_SESSION_DISCLOSURE_TRIGGER = cn(
+    "flex min-h-touch-athlete w-full items-center gap-3 rounded-lg border border-border/55",
+    "bg-background/35 px-3 py-2.5 text-left backdrop-blur-sm transition-colors",
+    "hover:bg-background/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45"
+);
+
+export const ATHLETE_SESSION_DISCLOSURE_PANEL =
+    "border-t border-border/45 px-3 pb-3 pt-2 space-y-2";
+
+export const ATHLETE_SESSION_SET_TABLE = "w-full text-left text-xs";
+
+export const ATHLETE_SESSION_SET_TABLE_HEAD =
+    "text-[10px] font-semibold uppercase tracking-wide text-muted-foreground";
+
+export const ATHLETE_SESSION_SET_TABLE_ROW =
+    "border-b border-border/35 last:border-0";
+
+export const ATHLETE_SESSION_SET_TABLE_CELL = "py-2 pr-2 align-top text-foreground/90";
+
+export const ATHLETE_SESSION_SET_TABLE_CELL_MUTED =
+    "py-2 pr-2 align-top text-muted-foreground";
+
+export const ATHLETE_SESSION_PREVIEW_HEADLINE =
+    "text-2xl font-bold tracking-tight text-foreground";
+
+export const ATHLETE_SESSION_BACK_FROM_AGENDA_LABEL = "Volver a Mi agenda";
+
+/** CTX-1 — botón «i» rendimiento en fila de ejercicio (preview). */
+export const ATHLETE_EXERCISE_INFO_BUTTON = cn(
+    "inline-flex min-h-touch-athlete min-w-touch-athlete shrink-0 items-center justify-center",
+    "rounded-lg border border-border/55 text-primary/80 transition-colors",
+    "hover:bg-primary/10 hover:text-primary active:scale-[0.98]"
+);
+
 export const ATHLETE_SESSION_META_PILL = cn(
     "inline-flex items-center gap-1.5 rounded-md border border-border/55 bg-background/40",
     "px-2.5 py-1 text-xs text-muted-foreground backdrop-blur-sm"

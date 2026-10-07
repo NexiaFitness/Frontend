@@ -14,10 +14,19 @@ describe("athleteSessionPlannedLoad", () => {
         expect(normalizePlannedLoad1to10(12)).toBe(10);
     });
 
-    it("formats muscle groups with +N", () => {
+    it("formats muscle groups with +N when compact", () => {
         expect(
             formatAgendaMuscleGroupsLine(["Pecho", "Tríceps", "Hombro", "Core"])
         ).toBe("Pecho · Tríceps · Hombro · +1");
+    });
+
+    it("lists all muscle groups when maxVisible is unlimited", () => {
+        expect(
+            formatAgendaMuscleGroupsLine(
+                ["Pecho", "Tríceps", "Hombro", "Core"],
+                Number.POSITIVE_INFINITY
+            )
+        ).toBe("Pecho · Tríceps · Hombro · Core");
     });
 
     it("builds aria label for volume and intensity", () => {

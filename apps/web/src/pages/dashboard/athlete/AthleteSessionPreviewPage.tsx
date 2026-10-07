@@ -36,7 +36,8 @@ import {
 } from "@/components/athlete/account/athleteSettingsPresentation";
 import { AthleteSessionPreviewHeader, AthleteSessionExercisesLabel } from "@/components/athlete/sessions/AthleteSessionPreviewHeader";
 import { ATHLETE_SESSION_BACK_FROM_AGENDA_LABEL } from "@/components/athlete/sessions/athleteSessionsPresentation";
-import { AthleteSessionExerciseList } from "@/components/athlete/sessions/AthleteSessionExerciseList";
+import { ATHLETE_SESSION_NAV_FROM_AGENDA } from "@nexia/shared/utils/athlete/athleteAgendaNavigation";
+import { AthleteSessionPrescriptionMap } from "@/components/athlete/sessions/AthleteSessionPrescriptionMap";
 import { AthleteSessionLogBlockList } from "@/components/athlete/sessions/AthleteSessionLogBlockList";
 import { AthleteSessionLogBlockSheet } from "@/components/athlete/sessions/AthleteSessionLogBlockSheet";
 import { useAthleteSessionLog } from "@/hooks/athlete/useAthleteSessionLog";
@@ -66,7 +67,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     const location = useLocation();
     const [searchParams] = useSearchParams();
     const backLabel =
-        (location.state as { from?: string } | null)?.from === "agenda"
+        (location.state as { from?: string } | null)?.from === ATHLETE_SESSION_NAV_FROM_AGENDA
             ? ATHLETE_SESSION_BACK_FROM_AGENDA_LABEL
             : "Volver";
     const { showToast } = useToast();
@@ -345,7 +346,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                                 onBlockPress={sessionLog.openBlock}
                             />
                         ) : (
-                            <AthleteSessionExerciseList
+                            <AthleteSessionPrescriptionMap
                                 blocks={view.blocks}
                                 conflictByExerciseId={conflictByExerciseId}
                                 conflictCount={conflictCount}
@@ -365,10 +366,20 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                 )}
 
                 {session.status === "completed" && (
-                    <AthleteSessionLoadsPanel
-                        loads={sessionLoads.loads}
-                        previousSession={sessionLoads.previousSession}
-                    />
+                    <>
+                        <AthleteSessionLoadsPanel
+                            loads={sessionLoads.loads}
+                            previousSession={sessionLoads.previousSession}
+                        />
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            className="min-h-touch-athlete w-full"
+                            onClick={() => navigate(`/dashboard/sessions/${sessionId}/summary`)}
+                        >
+                            Ver resumen de la sesión
+                        </Button>
+                    </>
                 )}
             </div>
 

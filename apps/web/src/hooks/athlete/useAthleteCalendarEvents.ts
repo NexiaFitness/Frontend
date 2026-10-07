@@ -7,7 +7,6 @@ import { useMemo } from "react";
 import { useGetCalendarEventsQuery } from "@nexia/shared/api/calendarApi";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
-import type { CalendarEvent } from "@nexia/shared/types/calendar";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import {
     athleteCalendarDateWindow,

@@ -17,13 +17,17 @@ import {
     ATHLETE_SESSION_EXERCISE_NOTES_BODY,
     ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE,
     ATHLETE_SESSION_EXERCISE_SECONDARY,
+    ATHLETE_EXERCISE_INFO_BUTTON,
     ATHLETE_SESSION_PREVIEW_BLOCK,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
-import { ATHLETE_EXERCISE_INFO_BUTTON } from "@/components/athlete/athleteAgendaPresentation";
 import type { SessionBlockView } from "@nexia/shared/sessionProgramming/sessionBlockView";
 import { getBlockDisplayName } from "@nexia/shared/sessionProgramming/sessionBlockView";
 import { buildAthletePreviewGroupRows } from "@nexia/shared/utils/athlete/athleteSessionPreviewUtils";
 import { formatInjuryPrecautionCount } from "@nexia/shared/utils/athlete/athleteInjuryAlertUtils";
+import {
+    formatTrainerNoteForAthlete,
+    hasHumanTrainerNote,
+} from "@nexia/shared/utils/athlete/athleteSessionNotesUtils";
 
 export interface AthleteSessionExerciseListProps {
     blocks: SessionBlockView[];
@@ -140,8 +144,10 @@ export const AthleteSessionExerciseList: React.FC<AthleteSessionExerciseListProp
                                                     {row.secondaryDetail}
                                                 </p>
                                             ) : null}
-                                            {row.notes?.trim() ? (
-                                                <AthletePreviewNotes notes={row.notes.trim()} />
+                                            {hasHumanTrainerNote(row.notes) ? (
+                                                <AthletePreviewNotes
+                                                    notes={formatTrainerNoteForAthlete(row.notes!)}
+                                                />
                                             ) : null}
                                         </div>
                                         {infoExerciseId != null ? (

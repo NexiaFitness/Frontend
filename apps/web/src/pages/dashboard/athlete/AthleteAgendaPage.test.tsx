@@ -104,7 +104,9 @@ describe("AthleteAgendaPage", () => {
             name: /Fuerza máxima, Pecho · Tríceps/i,
         });
         await user.click(trainingRows[0]);
-        expect(navigate).toHaveBeenCalledWith("/dashboard/sessions/99");
+        expect(navigate).toHaveBeenCalledWith("/dashboard/sessions/99", {
+            state: { from: "agenda" },
+        });
 
         await user.click(screen.getByRole("tab", { name: /Citas/i }));
         expect(screen.queryByRole("heading", { name: /PRÓXIMA SEMANA/i })).not.toBeInTheDocument();

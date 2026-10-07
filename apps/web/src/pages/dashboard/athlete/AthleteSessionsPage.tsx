@@ -29,10 +29,7 @@ import {
     useSwipePeekGuard,
 } from "@/hooks/athlete/useAthleteSessionSwipePeek";
 import { useAthleteSessionsList } from "@/hooks/athlete/useAthleteSessionsList";
-import {
-    resolveAthleteSessionListRegistrationCue,
-    shouldOpenSessionInLogMode,
-} from "@nexia/shared/utils/athlete/athleteSessionRegistrationPolicy";
+import { resolveAthleteSessionOpenPath } from "@nexia/shared/utils/athlete/athleteAgendaNavigation";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
 import { ATHLETE_PAGE } from "@/components/athlete/layout/athleteLayoutClasses";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
@@ -89,15 +86,9 @@ export const AthleteSessionsPage: React.FC = () => {
         (sessionId: number) => {
             if (shouldBlockTap()) return;
             const session = sessions.find((s) => s.id === sessionId);
+            if (!session) return;
             const meta = registrationMetaBySessionId.get(sessionId);
-            const cue = session
-                ? resolveAthleteSessionListRegistrationCue(session, meta)
-                : "none";
-            if (shouldOpenSessionInLogMode(cue)) {
-                navigate(`/dashboard/sessions/${sessionId}?mode=log`);
-                return;
-            }
-            navigate(`/dashboard/sessions/${sessionId}`);
+            navigate(resolveAthleteSessionOpenPath(session, meta));
         },
         [navigate, registrationMetaBySessionId, sessions, shouldBlockTap]
     );

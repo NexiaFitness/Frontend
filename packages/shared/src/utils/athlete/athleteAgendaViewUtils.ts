@@ -152,6 +152,26 @@ export function resolveAgendaTrainingSubline(session: TrainingSession): string |
     return formatAgendaMuscleGroupsLine(session.agenda_muscle_groups ?? null);
 }
 
+/** V04 — subtítulo músculos sin truncar (+N solo en filas compactas de agenda). */
+export function resolveAgendaTrainingSublineForPreview(
+    session: TrainingSession
+): string | null {
+    return formatAgendaMuscleGroupsLine(
+        session.agenda_muscle_groups ?? null,
+        Number.POSITIVE_INFINITY
+    );
+}
+
+/** V04 — patrones de movimiento (primarios) antes de músculos en cabecera. */
+export function resolveAgendaTrainingPatternsForPreview(
+    session: TrainingSession
+): string | null {
+    return formatAgendaMuscleGroupsLine(
+        session.agenda_movement_patterns ?? null,
+        Number.POSITIVE_INFINITY
+    );
+}
+
 export function resolveAgendaWeekSectionLabel(
     weekMondayKey: string,
     todayKey = madridTodayDateKey()

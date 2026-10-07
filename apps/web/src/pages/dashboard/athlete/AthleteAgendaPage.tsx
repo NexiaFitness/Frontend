@@ -44,17 +44,22 @@ export const AthleteAgendaPage: React.FC = () => {
         refetchSessions,
     } = useAthleteCalendarEvents(clientId);
 
-    const { data: registrationMeta = [] } = useGetAthleteSessionsRegistrationMetaQuery(undefined, {
-        skip: !clientId,
-    });
+    const calendarWindow = useMemo(() => athleteCalendarDateWindow(), []);
+
+    const { data: registrationMetaPage } = useGetAthleteSessionsRegistrationMetaQuery(
+        { dateFrom: calendarWindow.from, dateTo: calendarWindow.to },
+        { skip: !clientId }
+    );
 
     const registrationMetaBySessionId = useMemo(() => {
-        const map = new Map<number, (typeof registrationMeta)[number]>();
-        for (const row of registrationMeta) map.set(row.session_id, row);
+        const map = new Map<number, NonNullable<typeof registrationMetaPage>["items"][number]>();
+        for (const row of registrationMetaPage?.items ?? []) {
+            map.set(row.training_session_id, row);
+        }
         return map;
-    }, [registrationMeta]);
+    }, [registrationMetaPage]);
 
-    const windowFrom = useMemo(() => athleteCalendarDateWindow().from, []);
+    const windowFrom = calendarWindow.from;
 
     const visibleDays = useMemo(
         () => filterAgendaDaysFromMonday(groupedDays, windowFrom),
@@ -89,7 +94,7 @@ export const AthleteAgendaPage: React.FC = () => {
     const handleOpenTraining = useCallback(
         (path: string) => {
             sessionStorage.setItem(AGENDA_SCROLL_KEY, String(window.scrollY));
-            navigate(path);
+            navigate(path, { state: { from: "agenda" } });
         },
         [navigate]
     );

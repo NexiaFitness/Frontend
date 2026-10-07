@@ -90,6 +90,7 @@ export interface TrainingSession {
     /** Solo lectura — derivado en listado para agenda atleta (BE). */
     agenda_quality_label?: string | null;
     agenda_muscle_groups?: string[] | null;
+    agenda_movement_patterns?: string[] | null;
 }
 
 /**

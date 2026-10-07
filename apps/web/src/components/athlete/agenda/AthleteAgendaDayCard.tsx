@@ -23,7 +23,7 @@ import {
     type AthleteAgendaFilter,
     type NormalizedAgendaRow,
 } from "@nexia/shared/utils/athlete/athleteAgendaViewUtils";
-import { resolveAthleteAgendaSessionPath } from "@nexia/shared/utils/athlete/athleteAgendaNavigation";
+import { resolveAthleteSessionOpenPath } from "@nexia/shared/utils/athlete/athleteAgendaNavigation";
 import { hasAthleteSessionPlannedLoad } from "@nexia/shared/utils/athlete/athleteSessionPlannedLoad";
 import {
     ATHLETE_AGENDA_APPOINTMENT_ROW,
@@ -72,7 +72,7 @@ function TrainingRow({
     const ordinal = trainingSessionOrdinalLabel(sessionIndex, totalTraining);
     const statusShort = agendaTrainingStatusShort(session, dateKey);
     const meta = registrationMetaBySessionId.get(session.id);
-    const path = resolveAthleteAgendaSessionPath(session, meta);
+    const path = resolveAthleteSessionOpenPath(session, meta);
 
     const hasLoad = hasAthleteSessionPlannedLoad(session);
     const hasMeta = Boolean(clock || session.planned_duration != null || hasLoad);

@@ -158,7 +158,19 @@ function buildSlotPrescription(
             notes: slot.notes,
         };
     } else if (sets.length > 1) {
-        primaryParts.unshift(`${sets.length} series`);
+        const perSet = sets
+            .map((s) => {
+                const primary = primaryFromSet(s);
+                const secondary = secondaryFromSet(s, slot, group.restBetweenSeconds);
+                const chunk = [...primary, ...secondary].filter(Boolean).join(" · ");
+                return chunk ? `${s.label}: ${chunk}` : s.label;
+            })
+            .join(" / ");
+        return {
+            detail: perSet || `${sets.length} series`,
+            secondaryDetail: null,
+            notes: slot.notes,
+        };
     }
 
     if (options?.kindHint && !primaryParts.includes(options.kindHint)) {
@@ -260,4 +272,115 @@ export function buildAthletePreviewGroupRows(
         default:
             return group.slots.map((slot) => rowFromSlot(group, slot));
     }
+}
+
+/** Una fila de prescripción por serie (V04 expandido). */
+export interface AthletePreviewSetLine {
+    label: string;
+    reps: string | null;
+    load: string | null;
+    effort: string | null;
+    rest: string | null;
+    extras: string | null;
+}
+
+export interface AthletePreviewExerciseCard extends AthletePreviewGroupRow {
+    setLines: AthletePreviewSetLine[];
+}
+
+function buildAthletePreviewSetLines(
+    slot: SessionExerciseSlotView,
+    group: SessionExerciseGroupView
+): AthletePreviewSetLine[] {
+    if (slot.sets.length === 0) return [];
+    return slot.sets.map((set) => {
+        const extrasParts: string[] = [];
+        const distance = formatDistance(slot.plannedDistance);
+        if (distance) extrasParts.push(distance);
+        const assistance = formatAssistance(slot.plannedAssistanceKg);
+        if (assistance) extrasParts.push(assistance);
+        const repsRaw = set.plannedReps?.trim();
+        return {
+            label: set.label,
+            reps: repsRaw ? repsRaw : null,
+            load: formatWeight(set.plannedWeight),
+            effort: formatEffort(set.effortCharacter, set.effortValue),
+            rest: formatRestSeconds(set.plannedRest ?? group.restBetweenSeconds),
+            extras: extrasParts.length ? extrasParts.join(" · ") : null,
+        };
+    });
+}
+
+function exerciseCardFromSlot(
+    group: SessionExerciseGroupView,
+    slot: SessionExerciseSlotView,
+    options?: { roundsLabel?: string | null; kindHint?: string | null; compound?: boolean }
+): AthletePreviewExerciseCard {
+    const row = rowFromSlot(group, slot, options);
+    return {
+        ...row,
+        setLines: buildAthletePreviewSetLines(slot, group),
+    };
+}
+
+/** Tarjetas de ejercicio con detalle por serie (mapa V04). */
+export function buildAthletePreviewExerciseCards(
+    group: SessionExerciseGroupView
+): AthletePreviewExerciseCard[] {
+    const roundsLabel =
+        group.rounds != null && group.rounds > 0 ? `${group.rounds} rondas` : null;
+
+    switch (group.kind) {
+        case "superset":
+        case "giant_set":
+            return group.slots.map((slot) =>
+                exerciseCardFromSlot(group, slot, { roundsLabel, compound: true })
+            );
+        case "dropset":
+            return group.slots.map((slot) =>
+                exerciseCardFromSlot(group, slot, {
+                    roundsLabel,
+                    kindHint: "Drop set",
+                    compound: false,
+                })
+            );
+        case "amrap": {
+            const cap =
+                group.timeCapMinutes != null ? `${group.timeCapMinutes} min` : "AMRAP";
+            return group.slots.map((slot) =>
+                exerciseCardFromSlot(group, slot, {
+                    roundsLabel: roundsLabel ?? cap,
+                    kindHint: "AMRAP",
+                    compound: group.slots.length > 1,
+                })
+            );
+        }
+        case "emom": {
+            const cap =
+                group.timeCapMinutes != null
+                    ? `${group.timeCapMinutes} min EMOM`
+                    : "EMOM";
+            return group.slots.map((slot) =>
+                exerciseCardFromSlot(group, slot, {
+                    roundsLabel: cap,
+                    compound: group.slots.length > 1,
+                })
+            );
+        }
+        case "for_time":
+            return group.slots.map((slot) =>
+                exerciseCardFromSlot(group, slot, {
+                    roundsLabel,
+                    kindHint: "For Time",
+                    compound: group.slots.length > 1,
+                })
+            );
+        case "single_set":
+        default:
+            return group.slots.map((slot) => exerciseCardFromSlot(group, slot));
+    }
+}
+
+export function countExercisesInBlock(block: { groups: SessionExerciseGroupView[] }): number {
+    return block.groups.reduce((sum, g) => sum + g.slots.length, 0);
 }

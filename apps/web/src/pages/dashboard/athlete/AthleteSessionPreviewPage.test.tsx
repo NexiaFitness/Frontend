@@ -70,6 +70,10 @@ vi.mock("@nexia/shared/api/clientsApi", () => ({
     useGetClientFeedbackQuery: () => ({ data: [] }),
 }));
 
+vi.mock("@nexia/shared/api/trainingPlansApi", () => ({
+    useGetTrainingPlanQuery: () => ({ data: undefined }),
+}));
+
 vi.mock("@nexia/shared/api/athleteApi", () => ({
     useGetAthleteExerciseLastPerformanceQuery: () => ({
         data: undefined,
