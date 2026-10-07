@@ -14,7 +14,7 @@ import {
     athleteCalendarHasPartialFailure,
     calendarEventDateKeyMadrid,
     filterHomeTodayAppointments,
-    groupCalendarEventsByDayMadrid,
+    mergeAthleteAgendaDaysByMadrid,
 } from "@nexia/shared/utils/athlete/athleteCalendarUtils";
 import { aggregateDayLoadFromSessions } from "@nexia/shared/utils/athlete/athleteSessionLoadVisual";
 
@@ -70,13 +70,17 @@ export function useAthleteCalendarEvents(clientId: number | null | undefined) {
     );
 
     const groupedDays = useMemo(
-        () => groupCalendarEventsByDayMadrid(events),
-        [events]
+        () => mergeAthleteAgendaDaysByMadrid(events, sessions),
+        [events, sessions]
     );
 
     const loadModelForDate = (dateKey: string) => {
         const daySessions = sessions.filter(
-            (s) => s.session_date?.split("T")[0] === dateKey && s.status !== "cancelled"
+            (s) =>
+                s.session_date?.split("T")[0] === dateKey &&
+                s.status !== "cancelled" &&
+                s.status !== "skipped" &&
+                s.is_active !== false
         );
         return aggregateDayLoadFromSessions(daySessions);
     };

@@ -12,22 +12,28 @@ vi.mock("@/hooks/athlete/useAthleteCalendarEvents", () => ({
         groupedDays: [
             {
                 dateKey: "2026-10-07",
-                events: [
+                rows: [
                     {
-                        id: 1,
-                        event_kind: "personal_workout",
-                        starts_at: "2026-10-07T08:00:00+02:00",
-                        has_explicit_time: true,
-                        title: "Fuerza",
-                        location: null,
+                        kind: "calendar_event",
+                        event: {
+                            id: 1,
+                            event_kind: "personal_workout",
+                            starts_at: "2026-10-07T08:00:00+02:00",
+                            has_explicit_time: true,
+                            title: "Fuerza",
+                            location: null,
+                        },
                     },
                     {
-                        id: 2,
-                        event_kind: "appointment",
-                        starts_at: "2026-10-07T10:00:00+02:00",
-                        has_explicit_time: true,
-                        title: "Consulta",
-                        location: null,
+                        kind: "calendar_event",
+                        event: {
+                            id: 2,
+                            event_kind: "appointment",
+                            starts_at: "2026-10-07T10:00:00+02:00",
+                            has_explicit_time: true,
+                            title: "Consulta",
+                            location: null,
+                        },
                     },
                 ],
             },

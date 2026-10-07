@@ -6,6 +6,7 @@
  */
 
 import type { CalendarEvent } from "../../types/calendar";
+import type { TrainingSession } from "../../types/trainingSessions";
 
 export const ATHLETE_CALENDAR_TIMEZONE = "Europe/Madrid";
 
@@ -172,6 +173,111 @@ export function filterHomeTodayAppointments(
 export interface CalendarEventsByDay {
     dateKey: string;
     events: CalendarEvent[];
+}
+
+export type AthleteAgendaDayRow =
+    | { kind: "calendar_event"; event: CalendarEvent }
+    | { kind: "training_session"; session: TrainingSession };
+
+export interface AthleteAgendaDayGroup {
+    dateKey: string;
+    rows: AthleteAgendaDayRow[];
+}
+
+/** YYYY-MM-DD de la sesión (campo fecha del entrenador, sin instante). */
+export function trainingSessionDateKey(session: TrainingSession): string | null {
+    if (!session.session_date) return null;
+    return session.session_date.split("T")[0];
+}
+
+export function isAgendaEligibleTrainingSession(session: TrainingSession): boolean {
+    if (!session.session_date) return false;
+    if (session.is_active === false) return false;
+    if (session.status === "cancelled" || session.status === "skipped") return false;
+    return true;
+}
+
+function agendaRowSortTier(row: AthleteAgendaDayRow): [number, number] {
+    if (row.kind === "training_session") {
+        return [0, row.session.id];
+    }
+    if (!row.event.has_explicit_time) {
+        return [1, new Date(row.event.starts_at).getTime()];
+    }
+    return [2, new Date(row.event.starts_at).getTime()];
+}
+
+/**
+ * Agenda atleta por día civil (Madrid): une calendario + sesiones sin evento enlazado.
+ * Sin hora primero; dedup por training_session_id en eventos activos.
+ */
+export function mergeAthleteAgendaDaysByMadrid(
+    events: CalendarEvent[],
+    sessions: TrainingSession[]
+): AthleteAgendaDayGroup[] {
+    const activeEvents = events.filter(isActiveCalendarEvent);
+    const linkedTrainingIds = new Set<number>();
+    for (const event of activeEvents) {
+        if (event.training_session_id != null) {
+            linkedTrainingIds.add(Number(event.training_session_id));
+        }
+    }
+
+    const eligibleSessions = sessions.filter(isAgendaEligibleTrainingSession);
+    const orphanSessions = eligibleSessions.filter(
+        (s) => !linkedTrainingIds.has(Number(s.id))
+    );
+
+    const dateKeys = new Set<string>();
+    for (const event of activeEvents) {
+        dateKeys.add(calendarEventDateKeyMadrid(event.starts_at));
+    }
+    for (const session of eligibleSessions) {
+        const key = trainingSessionDateKey(session);
+        if (key) dateKeys.add(key);
+    }
+
+    return [...dateKeys]
+        .sort((a, b) => a.localeCompare(b))
+        .map((dateKey) => {
+            const dayEvents = activeEvents.filter(
+                (e) => calendarEventDateKeyMadrid(e.starts_at) === dateKey
+            );
+            const dayLinkedIds = new Set(
+                dayEvents
+                    .map((e) => e.training_session_id)
+                    .filter((id): id is number => id != null)
+                    .map((id) => Number(id))
+            );
+            const dayOrphans = orphanSessions.filter(
+                (s) =>
+                    trainingSessionDateKey(s) === dateKey &&
+                    !dayLinkedIds.has(Number(s.id))
+            );
+            const rows: AthleteAgendaDayRow[] = [
+                ...dayOrphans.map((session) => ({
+                    kind: "training_session" as const,
+                    session,
+                })),
+                ...dayEvents.map((event) => ({
+                    kind: "calendar_event" as const,
+                    event,
+                })),
+            ];
+            rows.sort((a, b) => {
+                const [tierA, subA] = agendaRowSortTier(a);
+                const [tierB, subB] = agendaRowSortTier(b);
+                if (tierA !== tierB) return tierA - tierB;
+                return subA - subB;
+            });
+            return { dateKey, rows };
+        })
+        .filter((day) => day.rows.length > 0);
+}
+
+export function resolveTrainingSessionAgendaTitle(session: TrainingSession): string {
+    const name = session.session_name?.trim();
+    return name || "Entrenamiento";
 }
 
 export function groupCalendarEventsByDayMadrid(

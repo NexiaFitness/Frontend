@@ -22,6 +22,8 @@ import type {
 import { formatClientWorkoutSessionCountShort } from "@nexia/shared/training/clientSessionsOnDate";
 import { getTrainingGoalLabel } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import { SESSION_HERO_TONE_STYLES } from "@/components/athlete/sessionHeroPresentation";
+import { AthleteSessionLoadIndicator } from "@/components/athlete/AthleteSessionLoadIndicator";
+import type { AthleteSessionLoadVisualModel } from "@nexia/shared/utils/athlete/athleteSessionLoadVisual";
 
 export interface SessionTodayCardProps {
     session: TrainingSession | undefined;
@@ -30,8 +32,10 @@ export interface SessionTodayCardProps {
     onCta: (action: SessionHeroCtaAction, sessionId: number | null) => void;
     /** Móvil: el footer sticky ya muestra el CTA primario — evitar duplicado en card. */
     hideStartCtaOnMobile?: boolean;
-    /** FE-8: bloques + duración estimada (sin vol/int). */
+    /** FE-8: bloques + duración estimada (sin vol/int en texto). */
     structureLine?: string | null;
+    /** CARGA-1 en hero (AG-2.1): mismo componente que preview de sesión. */
+    sessionLoadModel?: AthleteSessionLoadVisualModel | null;
     /** D10 — sesiones adicionales hoy (mixto). */
     extraTodaySessionCount?: number;
     onOpenExtraTodaySessions?: () => void;
@@ -45,6 +49,7 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
     onCta,
     hideStartCtaOnMobile = false,
     structureLine = null,
+    sessionLoadModel = null,
     extraTodaySessionCount = 0,
     onOpenExtraTodaySessions,
     showExtraSessionBadge = false,
@@ -133,7 +138,7 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
             </div>
 
             {showSessionMeta && session && (
-                <div className="relative flex flex-wrap gap-3 text-sm text-muted-foreground">
+                <div className="relative flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     {structureLine ? (
                         <span className="inline-flex items-center gap-1">
                             <Clock className="size-4 text-primary" aria-hidden />
@@ -144,6 +149,13 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
                             <Clock className="size-4 text-primary" aria-hidden />
                             {session.planned_duration} min
                         </span>
+                    ) : null}
+                    {sessionLoadModel && sessionLoadModel.sessionCount > 0 ? (
+                        <AthleteSessionLoadIndicator
+                            model={sessionLoadModel}
+                            sheetTitle="Carga de la sesión"
+                            helpText="El color indica lo intenso que es el entrenamiento; el tamaño, cuánto trabajo hay."
+                        />
                     ) : null}
                     <span className="inline-flex items-center gap-1">
                         <Dumbbell className="size-4 text-primary" aria-hidden />

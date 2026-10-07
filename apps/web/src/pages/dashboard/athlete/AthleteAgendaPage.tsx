@@ -12,6 +12,7 @@ import {
     formatCalendarEventClockMadrid,
     madridTodayDateKey,
     resolveCalendarEventDisplayTitle,
+    resolveTrainingSessionAgendaTitle,
 } from "@nexia/shared/utils/athlete/athleteCalendarUtils";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { AthleteEmptyState } from "@/components/athlete/empty/AthleteEmptyState";
@@ -84,19 +85,19 @@ export const AthleteAgendaPage: React.FC = () => {
                         Mi agenda
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Citas y entrenos programados · horario de Madrid
+                        Entrenos y citas por día · horario de Madrid cuando hay hora
                     </p>
                 </header>
 
                 {groupedDays.length === 0 ? (
                     <AthleteEmptyState
                         variant="plan"
-                        title="Sin eventos próximos"
-                        description="Cuando tu entrenador agende citas o fije hora en tus sesiones, aparecerán aquí."
+                        title="Sin entrenos ni citas próximos"
+                        description="Cuando tu entrenador programe sesiones o citas en las próximas semanas, aparecerán aquí."
                     />
                 ) : (
                     <div className="space-y-5">
-                        {groupedDays.map(({ dateKey, events }) => {
+                        {groupedDays.map(({ dateKey, rows }) => {
                             const dayLoad = loadModelForDate(dateKey);
                             const isToday = dateKey === todayKey;
                             return (
@@ -125,14 +126,38 @@ export const AthleteAgendaPage: React.FC = () => {
                                         ) : null}
                                     </div>
                                     <ul className="space-y-3">
-                                        {events.map((event) => {
+                                        {rows.map((row) => {
+                                            if (row.kind === "training_session") {
+                                                const { session } = row;
+                                                return (
+                                                    <li
+                                                        key={`ts-${session.id}`}
+                                                        className="flex items-start justify-between gap-3 text-sm"
+                                                    >
+                                                        <div className="min-w-0 space-y-0.5">
+                                                            <p className="font-medium text-foreground">
+                                                                {resolveTrainingSessionAgendaTitle(
+                                                                    session
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                        <span
+                                                            className="shrink-0 text-xs text-muted-foreground"
+                                                            aria-hidden
+                                                        >
+                                                            Entreno
+                                                        </span>
+                                                    </li>
+                                                );
+                                            }
+                                            const { event } = row;
                                             const clock = formatCalendarEventClockMadrid(
                                                 event.starts_at,
                                                 event.has_explicit_time
                                             );
                                             return (
                                                 <li
-                                                    key={event.id}
+                                                    key={`ev-${event.id}`}
                                                     className="flex items-start justify-between gap-3 text-sm"
                                                 >
                                                     <div className="min-w-0 space-y-0.5">

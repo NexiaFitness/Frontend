@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CalendarEvent } from "../../types/calendar";
+import type { TrainingSession } from "../../types/trainingSessions";
 import {
     athleteCalendarHasPartialFailure,
     calendarEventDateKeyMadrid,
@@ -11,6 +12,7 @@ import {
     madridDayStartIso,
     madridTodayDateKey,
     madridTrainerTimeError,
+    mergeAthleteAgendaDaysByMadrid,
     normalizeSessionTimeForApi,
 } from "./athleteCalendarUtils";
 
@@ -112,6 +114,66 @@ describe("athleteCalendarUtils Madrid", () => {
         expect(athleteCalendarHasPartialFailure(true, false)).toBe(true);
         expect(athleteCalendarHasPartialFailure(false, true)).toBe(true);
         expect(athleteCalendarHasPartialFailure(false, false)).toBe(false);
+    });
+});
+
+function baseSession(partial: Partial<TrainingSession> = {}): TrainingSession {
+    return {
+        id: 100,
+        session_name: "Hipertrofia",
+        session_date: "2026-10-08",
+        session_time: null,
+        status: "planned",
+        is_active: true,
+        planned_volume: 8,
+        planned_intensity: 8,
+        ...partial,
+    } as TrainingSession;
+}
+
+describe("mergeAthleteAgendaDaysByMadrid (AG-2.1)", () => {
+    it("incluye sesión sin evento de calendario", () => {
+        const merged = mergeAthleteAgendaDaysByMadrid(
+            [],
+            [baseSession({ id: 50, session_date: "2026-10-08" })]
+        );
+        expect(merged).toHaveLength(1);
+        expect(merged[0].rows).toHaveLength(1);
+        expect(merged[0].rows[0].kind).toBe("training_session");
+    });
+
+    it("no duplica cuando hay evento enlazado", () => {
+        const merged = mergeAthleteAgendaDaysByMadrid(
+            [
+                baseEvent({
+                    id: 9,
+                    event_kind: "personal_workout",
+                    training_session_id: 50,
+                    starts_at: "2026-10-08T10:00:00+02:00",
+                }),
+            ],
+            [baseSession({ id: 50, session_date: "2026-10-08" })]
+        );
+        const day = merged.find((d) => d.dateKey === "2026-10-08");
+        expect(day?.rows).toHaveLength(1);
+        expect(day?.rows[0].kind).toBe("calendar_event");
+    });
+
+    it("ordena entreno sin hora antes de cita con hora", () => {
+        const merged = mergeAthleteAgendaDaysByMadrid(
+            [
+                baseEvent({
+                    id: 2,
+                    event_kind: "appointment",
+                    starts_at: "2026-10-08T16:00:00+02:00",
+                }),
+            ],
+            [baseSession({ id: 50, session_date: "2026-10-08" })]
+        );
+        expect(merged[0].rows.map((r) => r.kind)).toEqual([
+            "training_session",
+            "calendar_event",
+        ]);
     });
 });
 
