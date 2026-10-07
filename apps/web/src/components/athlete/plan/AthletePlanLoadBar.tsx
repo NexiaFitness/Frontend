@@ -13,27 +13,43 @@ export interface AthletePlanLoadBarProps {
     label: string;
     level: number;
     tone?: "primary" | "warning";
+    variant?: "plan" | "compact";
+    /** Compact: hide numeric level (agenda VOL/INT). */
+    showValue?: boolean;
 }
 
 export const AthletePlanLoadBar: React.FC<AthletePlanLoadBarProps> = ({
     label,
     level,
     tone = "primary",
+    variant = "plan",
+    showValue = true,
 }) => {
     const width = athleteLoadBarPercent(level);
+    const levelLabel = formatAthleteLoadLevel(level);
+    const isCompact = variant === "compact";
 
     return (
-        <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="text-foreground/90">{label}</span>
-                <span className="shrink-0 font-semibold tabular-nums text-foreground">
-                    {formatAthleteLoadLevel(level)}
-                </span>
+        <div className={isCompact ? "min-w-[3.25rem] flex-1 space-y-1" : "space-y-1.5"}>
+            <div
+                className={
+                    isCompact
+                        ? "text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                        : "flex items-center justify-between gap-2 text-sm"
+                }
+            >
+                <span className={isCompact ? undefined : "text-foreground/90"}>{label}</span>
+                {!isCompact && showValue ? (
+                    <span className="shrink-0 font-semibold tabular-nums text-foreground">
+                        {levelLabel}
+                    </span>
+                ) : null}
             </div>
             <AthleteProgressBar
                 value={width}
                 tone={tone}
-                aria-label={`${label} ${formatAthleteLoadLevel(level)} de diez`}
+                className={isCompact ? "h-1.5" : undefined}
+                aria-label={`${label} ${levelLabel} de diez`}
             />
         </div>
     );

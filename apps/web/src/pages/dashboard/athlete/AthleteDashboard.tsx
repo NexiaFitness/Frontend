@@ -26,7 +26,6 @@ import { Button } from "@/components/ui/buttons";
 import { useAthleteDashboard } from "@/hooks/athlete/useAthleteDashboard";
 import { useGetSessionSummaryQuery } from "@nexia/shared/api/sessionProgrammingApi";
 import { formatSessionTodayStructureLine } from "@nexia/shared/utils/athlete/athleteSessionTodayStructure";
-import { aggregateDayLoadFromSessions } from "@nexia/shared/utils/athlete/athleteSessionLoadVisual";
 import { useAthleteWeeklyInsight } from "@/hooks/athlete/useAthleteWeeklyInsight";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
 import type { SessionHeroCtaAction } from "@nexia/shared/utils/athlete/athleteDashboardHeroCopy";
@@ -94,10 +93,6 @@ export const AthleteDashboard: React.FC = () => {
         );
     }, [todaySessionId, todaySessionSummary, todaySession?.planned_duration]);
 
-    const todaySessionLoadModel = useMemo(() => {
-        if (!todaySession) return null;
-        return aggregateDayLoadFromSessions([todaySession]);
-    }, [todaySession]);
 
     const todayStripDay = useMemo(
         () => weekStrip.find((d) => d.isToday) ?? null,
@@ -252,7 +247,6 @@ export const AthleteDashboard: React.FC = () => {
                             hero={sessionHero}
                             planProgressPercent={hasActivePlan ? planProgressPercent : null}
                             structureLine={todayStructureLine}
-                            sessionLoadModel={todaySessionLoadModel}
                             onCta={handleHeroCta}
                             hideStartCtaOnMobile={showStickyCta}
                             extraTodaySessionCount={extraTodaySessionCount}

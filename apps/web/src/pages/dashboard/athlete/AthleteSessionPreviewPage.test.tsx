@@ -192,11 +192,11 @@ describe("AthleteSessionPreviewPage wellbeing (B7)", () => {
     });
 });
 
-describe("AthleteSessionPreviewPage CARGA-1 (I8)", () => {
-    it("muestra el indicador de carga en la cabecera de la sesión", () => {
+describe("AthleteSessionPreviewPage planned load (AGENDA spec)", () => {
+    it("muestra barritas VOL/INT en la cabecera de la sesión", () => {
         renderPage();
         expect(
-            screen.getByRole("button", { name: /Carga alta, intensidad baja/i })
+            screen.getByRole("button", { name: /Volumen 8 de 10, intensidad 3 de 10/i })
         ).toBeInTheDocument();
     });
 });

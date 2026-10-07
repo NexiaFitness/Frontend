@@ -1,54 +1,58 @@
 /**
- * athleteAgendaPresentation.ts — Tokens agenda unificada y CARGA-1.
- *
- * @author Frontend Team
- * @since 2026-10-06
+ * athleteAgendaPresentation.ts — Tokens agenda atleta premium (VOL/INT, tarjetas).
  */
 
 import { cn } from "@/lib/utils";
-import type { AthleteSessionLoadVisualModel } from "@nexia/shared/utils/athlete/athleteSessionLoadVisual";
+import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentation";
+import { ATHLETE_SECTION_LABEL } from "@/components/athlete/account/athleteSettingsPresentation";
 
 export const ATHLETE_AGENDA_PAGE = "space-y-6 px-4 pb-24 pt-4 lg:px-8 lg:pb-8";
-export const ATHLETE_AGENDA_DAY_CARD =
-    "rounded-xl border border-border/60 bg-card/50 p-4";
-export const ATHLETE_AGENDA_DAY_CARD_TODAY = "border-primary/40 shadow-sm";
-export const ATHLETE_AGENDA_TODAY_BADGE = "ml-2 text-xs font-medium text-primary";
+
+export const ATHLETE_AGENDA_SECTION_LABEL = cn(
+    ATHLETE_SECTION_LABEL,
+    "text-primary/80 normal-case tracking-normal"
+);
+
+export const ATHLETE_AGENDA_DAY_CARD = cn(
+    NEXIA_GLASS_CARD,
+    "relative space-y-0 p-4 pt-5"
+);
+
+export const ATHLETE_AGENDA_DAY_CARD_TODAY = "border-primary/45 shadow-[0_0_24px_-12px] shadow-primary/35";
+
+export const ATHLETE_AGENDA_TODAY_BADGE =
+    "ml-2 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary";
+
+export const ATHLETE_AGENDA_TRAINING_ROW = cn(
+    "flex min-h-touch-athlete w-full items-center gap-3 rounded-lg border border-border/50",
+    "bg-card/30 px-3 py-2.5 text-left transition-colors",
+    "hover:bg-card/45 active:bg-card/55"
+);
+
+export const ATHLETE_AGENDA_APPOINTMENT_ROW = cn(
+    ATHLETE_AGENDA_TRAINING_ROW,
+    "border-amber-400/25 bg-amber-400/5"
+);
+
+export const ATHLETE_SESSION_PLANNED_LOAD_ROW = "flex min-w-[6.5rem] max-w-[7.5rem] items-end gap-2";
+
+export const ATHLETE_SESSION_PLANNED_LOAD_TOUCH = cn(
+    "inline-flex min-h-touch-athlete min-w-touch-athlete shrink-0 items-center justify-center rounded-lg",
+    "transition-transform active:scale-[0.98]"
+);
+
+export const ATHLETE_LOAD_EXPLAINER_SHEET_TITLE = "Carga de la sesión";
+
+export const ATHLETE_LOAD_EXPLAINER_SHEET_BODY = [
+    "Volumen: cuánto trabajo hay en la sesión (ejercicios, series y repeticiones).",
+    "Intensidad: lo duro que es el entrenamiento (peso y esfuerzo que te pedirá).",
+    "Lo decide tu entrenador al planificar.",
+] as const;
+
 export const ATHLETE_TODAY_APPOINTMENTS_CARD =
     "rounded-xl border border-border/70 bg-card/80 p-4 space-y-3";
 
-export const ATHLETE_LOAD_HIT_TARGET = cn(
-    "relative inline-flex min-h-touch-athlete min-w-touch-athlete shrink-0 items-center justify-center rounded-full",
-    "transition-transform active:scale-95"
-);
-
-export const ATHLETE_LOAD_VOLUME_SIZE: Record<
-    AthleteSessionLoadVisualModel["volumeTier"],
-    string
-> = {
-    low: "size-3 min-w-3",
-    medium: "size-4 min-w-4",
-    high: "size-5 min-w-5",
-};
-
-export const ATHLETE_LOAD_INTENSITY_STYLE: Record<
-    AthleteSessionLoadVisualModel["intensityTier"],
-    { fill: string; ring: string }
-> = {
-    low: {
-        fill: "bg-sky-400/45",
-        ring: "ring-2 ring-sky-300/80 ring-offset-2 ring-offset-background",
-    },
-    medium: {
-        fill: "bg-amber-400/50",
-        ring: "ring-[3px] ring-amber-300/85 ring-offset-2 ring-offset-background",
-    },
-    high: {
-        fill: "bg-orange-400/55",
-        ring: "ring-4 ring-orange-300/90 ring-offset-2 ring-offset-background",
-    },
-};
-
-export const ATHLETE_EXERCISE_INFO_BUTTON = cn(
-    "mt-0.5 flex min-h-touch-athlete min-w-touch-athlete shrink-0 items-center justify-center rounded-full",
-    "text-primary hover:bg-primary/10"
+export const ATHLETE_AGENDA_WEEK_HEADING = cn(
+    ATHLETE_SECTION_LABEL,
+    "pt-2 text-primary/85"
 );

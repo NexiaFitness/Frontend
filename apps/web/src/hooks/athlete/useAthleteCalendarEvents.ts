@@ -12,12 +12,9 @@ import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import {
     athleteCalendarDateWindow,
     athleteCalendarHasPartialFailure,
-    calendarEventDateKeyMadrid,
     filterHomeTodayAppointments,
     mergeAthleteAgendaDaysByMadrid,
 } from "@nexia/shared/utils/athlete/athleteCalendarUtils";
-import { aggregateDayLoadFromSessions } from "@nexia/shared/utils/athlete/athleteSessionLoadVisual";
-
 export function useAthleteCalendarEvents(clientId: number | null | undefined) {
     const { isLoading: profileLoading } = useAthleteContext();
     const window = useMemo(() => athleteCalendarDateWindow(), []);
@@ -74,33 +71,11 @@ export function useAthleteCalendarEvents(clientId: number | null | undefined) {
         [events, sessions]
     );
 
-    const loadModelForDate = (dateKey: string) => {
-        const daySessions = sessions.filter(
-            (s) =>
-                s.session_date?.split("T")[0] === dateKey &&
-                s.status !== "cancelled" &&
-                s.status !== "skipped" &&
-                s.is_active !== false
-        );
-        return aggregateDayLoadFromSessions(daySessions);
-    };
-
-    const loadModelForEvent = (event: CalendarEvent) => {
-        if (event.training_session_id != null) {
-            const linked = sessionsById.get(event.training_session_id);
-            if (linked) {
-                return aggregateDayLoadFromSessions([linked]);
-            }
-        }
-        return loadModelForDate(calendarEventDateKeyMadrid(event.starts_at));
-    };
-
     return {
         events,
         todayAppointments,
         groupedDays,
-        loadModelForDate,
-        loadModelForEvent,
+        sessionsById,
         isLoading: profileLoading || eventsLoading || sessionsLoading,
         isError: athleteCalendarHasPartialFailure(eventsError, sessionsError),
         refetchEvents,

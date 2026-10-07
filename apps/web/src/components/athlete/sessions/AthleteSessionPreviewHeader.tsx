@@ -12,12 +12,11 @@ import {
     resolveAthleteSessionStatusBadge,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
-import { buildSessionLoadVisualModel } from "@nexia/shared/utils/athlete/athleteSessionLoadVisual";
 import {
     formatAthleteDateLong,
     getSessionStatusLabel,
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
-import { AthleteSessionLoadIndicator } from "@/components/athlete/AthleteSessionLoadIndicator";
+import { AthleteSessionPlannedLoadBars } from "@/components/athlete/AthleteSessionPlannedLoadBars";
 
 export interface AthleteSessionPreviewHeaderProps {
     session: TrainingSession;
@@ -31,12 +30,6 @@ export const AthleteSessionPreviewHeader: React.FC<AthleteSessionPreviewHeaderPr
     setCount,
 }) => {
     const statusVariant = resolveAthleteSessionStatusBadge(session);
-    const loadModel = buildSessionLoadVisualModel({
-        plannedVolume: session.planned_volume,
-        plannedIntensity: session.planned_intensity,
-        sessionCount: 1,
-    });
-
     return (
         <header className="space-y-4">
             <span className={ATHLETE_SESSION_STATUS_BADGE[statusVariant]}>
@@ -54,11 +47,7 @@ export const AthleteSessionPreviewHeader: React.FC<AthleteSessionPreviewHeaderPr
                         </p>
                     )}
                 </div>
-                <AthleteSessionLoadIndicator
-                    model={loadModel}
-                    sheetTitle="Carga de la sesión"
-                    helpText="El color indica lo intenso que es el entrenamiento; el tamaño, cuánto trabajo hay."
-                />
+                <AthleteSessionPlannedLoadBars session={session} interactive />
             </div>
 
             <div className="flex flex-wrap gap-2">

@@ -304,7 +304,14 @@ export function groupCalendarEventsByDayMadrid(
 
 export function athleteCalendarDateWindow(now = new Date()): { from: string; to: string } {
     const todayKey = madridTodayDateKey(now);
-    return { from: addCalendarDays(todayKey, -14), to: addCalendarDays(todayKey, 90) };
+    const weekday = (() => {
+        const [year, month, day] = todayKey.split("-").map(Number);
+        const utc = new Date(Date.UTC(year, month - 1, day));
+        const sundayZero = utc.getUTCDay();
+        return sundayZero === 0 ? 7 : sundayZero;
+    })();
+    const mondayKey = addCalendarDays(todayKey, -(weekday - 1));
+    return { from: mondayKey, to: addCalendarDays(todayKey, 90) };
 }
 
 export function athleteCalendarHasPartialFailure(

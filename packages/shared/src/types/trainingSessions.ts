@@ -87,6 +87,9 @@ export interface TrainingSession {
     coherence?: SessionCoherence | null;
     /** % cumplimiento (series reales vs planificadas) cuando status=completed. F2-BE-05 */
     completion_percentage?: number | null;
+    /** Solo lectura — derivado en listado para agenda atleta (BE). */
+    agenda_quality_label?: string | null;
+    agenda_muscle_groups?: string[] | null;
 }
 
 /**

@@ -1,48 +1,105 @@
 /**
- * AthleteAgendaPage.tsx — Agenda unificada solo lectura (AG-2).
- *
- * @author Frontend Team
- * @since 2026-10-06
+ * AthleteAgendaPage.tsx — Agenda unificada atleta (AGENDA_ATLETA_SPEC).
  */
 
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
-import { formatAthleteDateLong } from "@nexia/shared/utils/athlete/athleteSessionUtils";
-import {
-    formatCalendarEventClockMadrid,
-    madridTodayDateKey,
-    resolveCalendarEventDisplayTitle,
-    resolveTrainingSessionAgendaTitle,
-} from "@nexia/shared/utils/athlete/athleteCalendarUtils";
+import { useGetAthleteSessionsRegistrationMetaQuery } from "@nexia/shared/api/athleteApi";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { AthleteEmptyState } from "@/components/athlete/empty/AthleteEmptyState";
-import { AthleteSessionLoadIndicator } from "@/components/athlete/AthleteSessionLoadIndicator";
 import { Alert } from "@/components/ui/feedback";
 import { PullToRefresh } from "@/components/ui/layout/PullToRefresh";
 import { ATHLETE_PAGE } from "@/components/athlete/layout/athleteLayoutClasses";
-import {
-    ATHLETE_AGENDA_DAY_CARD,
-    ATHLETE_AGENDA_DAY_CARD_TODAY,
-    ATHLETE_AGENDA_PAGE,
-    ATHLETE_AGENDA_TODAY_BADGE,
-} from "@/components/athlete/athleteAgendaPresentation";
+import { ATHLETE_AGENDA_PAGE, ATHLETE_AGENDA_WEEK_HEADING } from "@/components/athlete/athleteAgendaPresentation";
 import { useAthleteCalendarEvents } from "@/hooks/athlete/useAthleteCalendarEvents";
 import { cn } from "@/lib/utils";
+import { AthleteAgendaPageHeader } from "@/components/athlete/agenda/AthleteAgendaPageHeader";
+import { AthleteAgendaFilterChips } from "@/components/athlete/agenda/AthleteAgendaFilterChips";
+import { AthleteAgendaDayCard } from "@/components/athlete/agenda/AthleteAgendaDayCard";
+import { AthleteAppointmentDetailSheet } from "@/components/athlete/agenda/AthleteAppointmentDetailSheet";
+import type { CalendarEvent } from "@nexia/shared/types/calendar";
+import type { AthleteAgendaFilter } from "@nexia/shared/utils/athlete/athleteAgendaViewUtils";
+import {
+    filterAgendaDaysFromMonday,
+    groupAgendaDaysByWeek,
+    normalizeAgendaDayRows,
+    filterNormalizedAgendaRows,
+} from "@nexia/shared/utils/athlete/athleteAgendaViewUtils";
+import { athleteCalendarDateWindow } from "@nexia/shared/utils/athlete/athleteCalendarUtils";
+
+const AGENDA_SCROLL_KEY = "nexia_athlete_agenda_scroll_y";
 
 export const AthleteAgendaPage: React.FC = () => {
+    const navigate = useNavigate();
     const { clientId, isLoading: profileLoading, isError: profileError } = useAthleteContext();
+    const [filter, setFilter] = useState<AthleteAgendaFilter>("all");
+    const [appointmentSheet, setAppointmentSheet] = useState<CalendarEvent | null>(null);
+
     const {
         groupedDays,
-        loadModelForDate,
+        sessionsById,
         isLoading,
         isError,
         refetchEvents,
         refetchSessions,
     } = useAthleteCalendarEvents(clientId);
 
+    const { data: registrationMeta = [] } = useGetAthleteSessionsRegistrationMetaQuery(undefined, {
+        skip: !clientId,
+    });
+
+    const registrationMetaBySessionId = useMemo(() => {
+        const map = new Map<number, (typeof registrationMeta)[number]>();
+        for (const row of registrationMeta) map.set(row.session_id, row);
+        return map;
+    }, [registrationMeta]);
+
+    const windowFrom = useMemo(() => athleteCalendarDateWindow().from, []);
+
+    const visibleDays = useMemo(
+        () => filterAgendaDaysFromMonday(groupedDays, windowFrom),
+        [groupedDays, windowFrom]
+    );
+
+    const weekSections = useMemo(() => groupAgendaDaysByWeek(visibleDays), [visibleDays]);
+
+    const hasVisibleContent = useMemo(() => {
+        return weekSections.some((section) =>
+            section.days.some((day) => {
+                const normalized = filterNormalizedAgendaRows(
+                    normalizeAgendaDayRows(day.rows, sessionsById),
+                    filter
+                );
+                return normalized.length > 0;
+            })
+        );
+    }, [weekSections, sessionsById, filter]);
+
+    useEffect(() => {
+        const raw = sessionStorage.getItem(AGENDA_SCROLL_KEY);
+        if (!raw) return;
+        const y = Number(raw);
+        if (!Number.isFinite(y)) return;
+        window.scrollTo(0, y);
+        sessionStorage.removeItem(AGENDA_SCROLL_KEY);
+    }, [hasVisibleContent]);
+
     const handleRefresh = useCallback(async () => {
         await Promise.all([refetchEvents(), refetchSessions()]);
     }, [refetchEvents, refetchSessions]);
+
+    const handleOpenTraining = useCallback(
+        (path: string) => {
+            sessionStorage.setItem(AGENDA_SCROLL_KEY, String(window.scrollY));
+            navigate(path);
+        },
+        [navigate]
+    );
+
+    const handleOpenAppointment = useCallback((event: CalendarEvent) => {
+        setAppointmentSheet(event);
+    }, []);
 
     if (profileLoading || isLoading) {
         return <AthletePageLoading variant="sessions-list" />;
@@ -72,125 +129,53 @@ export const AthleteAgendaPage: React.FC = () => {
         );
     }
 
-    const todayKey = madridTodayDateKey();
-
     return (
         <PullToRefresh onRefresh={handleRefresh}>
             <div
                 className={cn(ATHLETE_PAGE, ATHLETE_AGENDA_PAGE)}
                 data-testid="athlete-agenda-page"
             >
-                <header className="space-y-1">
-                    <h1 className="text-xl font-semibold tracking-tight text-foreground">
-                        Mi agenda
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Entrenos y citas por día · horario de Madrid cuando hay hora
-                    </p>
-                </header>
+                <AthleteAgendaPageHeader />
 
-                {groupedDays.length === 0 ? (
+                <AthleteAgendaFilterChips value={filter} onChange={setFilter} />
+
+                {!hasVisibleContent ? (
                     <AthleteEmptyState
                         variant="plan"
                         title="Sin entrenos ni citas próximos"
                         description="Cuando tu entrenador programe sesiones o citas en las próximas semanas, aparecerán aquí."
                     />
                 ) : (
-                    <div className="space-y-5">
-                        {groupedDays.map(({ dateKey, rows }) => {
-                            const dayLoad = loadModelForDate(dateKey);
-                            const isToday = dateKey === todayKey;
-                            return (
-                                <section
-                                    key={dateKey}
-                                    className={cn(
-                                        ATHLETE_AGENDA_DAY_CARD,
-                                        isToday && ATHLETE_AGENDA_DAY_CARD_TODAY
-                                    )}
-                                    aria-label={formatAthleteDateLong(dateKey)}
-                                >
-                                    <div className="mb-3 flex items-center justify-between gap-3">
-                                        <h2 className="text-sm font-semibold text-foreground">
-                                            {formatAthleteDateLong(dateKey)}
-                                            {isToday ? (
-                                                <span className={ATHLETE_AGENDA_TODAY_BADGE}>
-                                                    Hoy
-                                                </span>
-                                            ) : null}
-                                        </h2>
-                                        {dayLoad.sessionCount > 0 ? (
-                                            <AthleteSessionLoadIndicator
-                                                model={dayLoad}
-                                                autoShowHelpOnce={isToday}
-                                            />
-                                        ) : null}
-                                    </div>
-                                    <ul className="space-y-3">
-                                        {rows.map((row) => {
-                                            if (row.kind === "training_session") {
-                                                const { session } = row;
-                                                return (
-                                                    <li
-                                                        key={`ts-${session.id}`}
-                                                        className="flex items-start justify-between gap-3 text-sm"
-                                                    >
-                                                        <div className="min-w-0 space-y-0.5">
-                                                            <p className="font-medium text-foreground">
-                                                                {resolveTrainingSessionAgendaTitle(
-                                                                    session
-                                                                )}
-                                                            </p>
-                                                        </div>
-                                                        <span
-                                                            className="shrink-0 text-xs text-muted-foreground"
-                                                            aria-hidden
-                                                        >
-                                                            Entreno
-                                                        </span>
-                                                    </li>
-                                                );
+                    <div className="space-y-6">
+                        {weekSections.map((section) => (
+                            <div key={section.weekMondayKey} className="space-y-4">
+                                <h2 className={ATHLETE_AGENDA_WEEK_HEADING}>{section.label}</h2>
+                                <div className="space-y-4">
+                                    {section.days.map((day) => (
+                                        <AthleteAgendaDayCard
+                                            key={day.dateKey}
+                                            dateKey={day.dateKey}
+                                            rows={day.rows}
+                                            filter={filter}
+                                            sessionsById={sessionsById}
+                                            registrationMetaBySessionId={
+                                                registrationMetaBySessionId
                                             }
-                                            const { event } = row;
-                                            const clock = formatCalendarEventClockMadrid(
-                                                event.starts_at,
-                                                event.has_explicit_time
-                                            );
-                                            return (
-                                                <li
-                                                    key={`ev-${event.id}`}
-                                                    className="flex items-start justify-between gap-3 text-sm"
-                                                >
-                                                    <div className="min-w-0 space-y-0.5">
-                                                        <p className="font-medium text-foreground">
-                                                            {resolveCalendarEventDisplayTitle(event)}
-                                                        </p>
-                                                        {event.location ? (
-                                                            <p className="text-xs text-muted-foreground truncate">
-                                                                {event.location}
-                                                            </p>
-                                                        ) : null}
-                                                    </div>
-                                                    <div className="flex shrink-0 items-center gap-2">
-                                                        {clock ? (
-                                                            <span className="tabular-nums text-muted-foreground">
-                                                                {clock}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-xs text-muted-foreground">
-                                                                Todo el día
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </section>
-                            );
-                        })}
+                                            onOpenTraining={handleOpenTraining}
+                                            onOpenAppointment={handleOpenAppointment}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>
+            <AthleteAppointmentDetailSheet
+                event={appointmentSheet}
+                isOpen={appointmentSheet != null}
+                onClose={() => setAppointmentSheet(null)}
+            />
         </PullToRefresh>
     );
 };
