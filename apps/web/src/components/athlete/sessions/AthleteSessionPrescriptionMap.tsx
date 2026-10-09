@@ -23,6 +23,7 @@ import {
     ATHLETE_SESSION_EXERCISE_ROW_FLAT_CAUTION,
     ATHLETE_SESSION_EXERCISE_ROW_HEAD,
     ATHLETE_SESSION_EXERCISE_SECONDARY,
+    ATHLETE_SESSION_EMOM_META,
     ATHLETE_SESSION_PRESCRIPTION_KIND_LABEL,
     ATHLETE_SESSION_PREVIEW_BLOCK,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
@@ -41,7 +42,10 @@ import {
     countExercisesInBlock,
     type AthletePreviewExerciseCard,
 } from "@nexia/shared/utils/athlete/athleteSessionPreviewUtils";
-import { formatAthletePreviewGroupKindLabel } from "@nexia/shared/utils/athlete/athleteStrengthPrescriptionPresentation";
+import {
+    buildAthleteStrengthPrescriptionGroupMeta,
+    formatAthletePreviewGroupKindLabel,
+} from "@nexia/shared/utils/athlete/athleteStrengthPrescriptionPresentation";
 import { AthleteAmrapPrescriptionPanel } from "@/components/athlete/sessions/AthleteAmrapPrescriptionPanel";
 import { AthleteEmomPrescriptionPanel } from "@/components/athlete/sessions/AthleteEmomPrescriptionPanel";
 import { AthleteForTimePrescriptionPanel } from "@/components/athlete/sessions/AthleteForTimePrescriptionPanel";
@@ -74,15 +78,7 @@ const ExerciseRow: React.FC<{
             <div className={ATHLETE_SESSION_EXERCISE_ROW_BODY}>
                 <div className={ATHLETE_SESSION_EXERCISE_ROW_HEAD}>
                     <div className="min-w-0 flex-1">
-                        <span
-                            className={
-                                card.hasCompoundLayout
-                                    ? "block text-xs font-semibold uppercase tracking-wide text-primary/85"
-                                    : ATHLETE_SESSION_EXERCISE_NAME
-                            }
-                        >
-                            {card.title}
-                        </span>
+                        <span className={ATHLETE_SESSION_EXERCISE_NAME}>{card.title}</span>
                         {card.detail ? (
                             <p className={ATHLETE_SESSION_EXERCISE_DETAIL}>{card.detail}</p>
                         ) : null}
@@ -150,14 +146,20 @@ const GroupSection: React.FC<{
         );
     }
 
-    const kindLabel = formatAthletePreviewGroupKindLabel(group.kind, group.rounds);
+    const kindLabel = formatAthletePreviewGroupKindLabel(group.kind);
+    const metaLines = buildAthleteStrengthPrescriptionGroupMeta(group);
     const cards = buildAthletePreviewExerciseCards(group);
 
     return (
-        <div className="space-y-1.5">
+        <div className="space-y-1">
             {kindLabel ? (
                 <p className={ATHLETE_SESSION_PRESCRIPTION_KIND_LABEL}>{kindLabel}</p>
             ) : null}
+            {metaLines.map((line) => (
+                <p key={line} className={ATHLETE_SESSION_EMOM_META}>
+                    {line}
+                </p>
+            ))}
             <ul className="space-y-0">
                 {cards.map((card) => {
                     const hasConflict = card.exerciseIds.some((id) => conflictByExerciseId.has(id));

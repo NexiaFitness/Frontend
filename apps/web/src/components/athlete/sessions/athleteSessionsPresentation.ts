@@ -2,6 +2,7 @@
  * athleteSessionsPresentation.ts — Tokens lista sesiones V02 (§6.7).
  */
 
+import { ATHLETE_SECTION_LABEL } from "@/components/athlete/account/athleteSettingsPresentation";
 import { cn } from "@/lib/utils";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import {
@@ -128,9 +129,8 @@ export const ATHLETE_SESSION_BLOCK_BODY = "space-y-2 pt-2";
 /** Cuerpo de bloque sin cabecera (solo AMRAP + filas): sin padding superior extra. */
 export const ATHLETE_SESSION_BLOCK_BODY_COMPACT = "space-y-2 pt-0";
 
-/** Cabecera modalidad en mapa V04 (Single set, AMRAP, Giant set, …). */
-export const ATHLETE_SESSION_PRESCRIPTION_KIND_LABEL =
-    "text-sm font-semibold uppercase tracking-wide text-primary/70";
+/** Modalidad dentro del bloque — mismo eyebrow 11px que «Tu sesión» (jerarquía por contexto). */
+export const ATHLETE_SESSION_PRESCRIPTION_KIND_LABEL = ATHLETE_SECTION_LABEL;
 
 /** @deprecated Usar ATHLETE_SESSION_PRESCRIPTION_KIND_LABEL */
 export const ATHLETE_SESSION_GROUP_KIND_LABEL = ATHLETE_SESSION_PRESCRIPTION_KIND_LABEL;
@@ -165,11 +165,16 @@ export const ATHLETE_SESSION_SET_TABLE_HEAD = cn(
     "pb-1.5 px-0.5 text-left text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
 );
 
+export const ATHLETE_SESSION_SET_TABLE_HEAD_DATA = cn(
+    ATHLETE_SESSION_SET_TABLE_HEAD,
+    "text-center"
+);
+
 export const ATHLETE_SESSION_SET_TABLE_ROW =
     "border-b border-border/35 last:border-0";
 
 export const ATHLETE_SESSION_SET_TABLE_CELL = cn(
-    "py-1.5 px-0.5 align-top tabular-nums text-foreground/90 break-words"
+    "py-1.5 px-0.5 align-top tabular-nums text-foreground/90 break-words text-center"
 );
 
 export const ATHLETE_SESSION_SET_TABLE_CELL_FIRST = cn(
@@ -177,10 +182,10 @@ export const ATHLETE_SESSION_SET_TABLE_CELL_FIRST = cn(
 );
 
 export const ATHLETE_SESSION_SET_TABLE_CELL_REST = cn(
-    "py-1.5 px-0.5 align-top tabular-nums text-muted-foreground break-words"
+    "py-1.5 px-0.5 align-top tabular-nums text-muted-foreground break-words text-center"
 );
 
-/** Lista clave-valor «Ver prescripción» (AMRAP/EMOM sin tabla). */
+/** Lista clave-valor del expand timed (AMRAP/EMOM sin tabla). */
 export const ATHLETE_SESSION_PRESCRIPTION_DETAIL_LIST =
     "space-y-2 text-xs leading-relaxed text-foreground/90";
 
@@ -258,7 +263,7 @@ export const ATHLETE_SESSION_EXERCISE_ROW_BODY = "flex min-w-0 flex-1 flex-col g
 
 export const ATHLETE_SESSION_EXERCISE_ROW_HEAD = "flex w-full min-w-0 items-start gap-2";
 
-/** Toggle + tabla «Ver series» / «Ver prescripción» — mismo ancho que la fila. */
+/** Toggle + tabla «Ver series» — mismo ancho que la fila. */
 export const ATHLETE_SESSION_EXERCISE_ROW_EXPAND = "mt-0 w-full min-w-0";
 
 export const ATHLETE_SESSION_EXERCISE_ROW_FLAT_CAUTION = cn(

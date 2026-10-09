@@ -1,5 +1,5 @@
 /**
- * Detalle expandible AMRAP / EMOM / FOR TIME («Ver prescripción»).
+ * Detalle expandible AMRAP / EMOM / FOR TIME (mismo copy de toggle que fuerza).
  */
 
 import React, { useState } from "react";
@@ -10,17 +10,21 @@ import {
     ATHLETE_SESSION_PRESCRIPTION_EXPAND_PANEL,
     ATHLETE_SESSION_SERIES_TOGGLE,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
+import type { AthleteTimedPrescriptionKind } from "@nexia/shared/utils/athlete/athleteTimedPrescriptionExpand";
 import type { AthleteTimedPrescriptionExpandView } from "@nexia/shared/utils/athlete/athleteTimedPrescriptionExpand";
 import { forTimeExpandTableColumns } from "@nexia/shared/utils/athlete/athleteTimedPrescriptionExpand";
+import { strengthPrescriptionToggleLabels } from "@nexia/shared/utils/athlete/athleteStrengthPrescriptionPresentation";
 
 export const AthletePrescriptionTimedDetail: React.FC<{
+    kind: AthleteTimedPrescriptionKind;
     expand: AthleteTimedPrescriptionExpandView;
-}> = ({ expand }) => {
+}> = ({ kind, expand }) => {
     const [open, setOpen] = useState(false);
     if (!expand.hasExpandable) return null;
 
     const forTimeRows = expand.forTimeSetRows;
     const columns = forTimeRows ? forTimeExpandTableColumns(forTimeRows) : [];
+    const toggle = strengthPrescriptionToggleLabels(kind);
 
     return (
         <>
@@ -30,13 +34,13 @@ export const AthletePrescriptionTimedDetail: React.FC<{
                 aria-expanded={open}
                 onClick={() => setOpen((v) => !v)}
             >
-                {open ? "Ocultar prescripción" : "Ver prescripción"}
+                {open ? toggle.hide : toggle.show}
             </button>
             {open ? (
                 <div className={ATHLETE_SESSION_PRESCRIPTION_EXPAND_PANEL}>
                     {forTimeRows && columns.length > 0 ? (
                         <AthletePrescriptionExpandTable
-                            rowColumnLabel="Ronda"
+                            rowColumnLabel={toggle.rowColumn}
                             rows={forTimeRows.map((row) => ({
                                 rowKey: row.roundLabel,
                                 rowLabel: row.roundLabel,

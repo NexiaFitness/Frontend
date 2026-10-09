@@ -71,7 +71,7 @@ export const AthletePrescriptionTimedExerciseRow: React.FC<
                     />
                 </div>
                 <div className={ATHLETE_SESSION_EXERCISE_ROW_EXPAND}>
-                    <AthletePrescriptionTimedDetail expand={expand} />
+                    <AthletePrescriptionTimedDetail kind={kind} expand={expand} />
                     {showTrainerNote ? (
                         <>
                             <NexiaPremiumDivider

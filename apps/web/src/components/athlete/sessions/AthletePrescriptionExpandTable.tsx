@@ -1,5 +1,5 @@
 /**
- * Tabla compacta compartida: «Ver series» (fuerza) y FOR TIME «Ver prescripción».
+ * Tabla compacta compartida del expand «Ver series» (fuerza y FOR TIME por ronda).
  */
 
 import React from "react";
@@ -9,6 +9,7 @@ import {
     ATHLETE_SESSION_SET_TABLE_CELL_FIRST,
     ATHLETE_SESSION_SET_TABLE_CELL_REST,
     ATHLETE_SESSION_SET_TABLE_HEAD,
+    ATHLETE_SESSION_SET_TABLE_HEAD_DATA,
     ATHLETE_SESSION_SET_TABLE_ROW,
     ATHLETE_SESSION_SET_TABLE_WRAP,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
@@ -71,7 +72,11 @@ export const AthletePrescriptionExpandTable: React.FC<{
                             {rowColumnLabel}
                         </th>
                         {visible.map((col) => (
-                            <th key={col.key} scope="col" className={ATHLETE_SESSION_SET_TABLE_HEAD}>
+                            <th
+                                key={col.key}
+                                scope="col"
+                                className={ATHLETE_SESSION_SET_TABLE_HEAD_DATA}
+                            >
                                 {col.head}
                             </th>
                         ))}
