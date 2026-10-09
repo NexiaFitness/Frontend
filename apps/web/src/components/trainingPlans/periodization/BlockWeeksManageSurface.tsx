@@ -1,5 +1,9 @@
 /**
  * BlockWeeksManageSurface.tsx — Gestión post-creación de semanas (personalizar / restaurar).
+ * Contexto: edición de la semana tipo propaga en el draft a las semanas que la seguían
+ * (D-ST, propagateTemplateWeekEdit), en paridad con sync-recurring (APB-03).
+ * Notas de mantenimiento: >400 líneas por cohesión hidratación D-PRES + guardado
+ * verificado; reglas puras viven en @nexia/shared (weekStructureDiff).
  */
 
 import React, {
@@ -15,6 +19,7 @@ import {
     classifyWeeksByTemplate,
     getMutationErrorMessage,
     isWeeklyStructureDirty,
+    propagateTemplateWeekEdit,
     weeklyStructureDraftsEqual,
 } from "@nexia/shared";
 import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
@@ -128,6 +133,13 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
             );
         },
         [],
+    );
+
+    /** Edición del usuario: aplica la regla D-ST de semana tipo antes de guardar. */
+    const handleDraftEdit = useCallback(
+        (next: WeeklyStructureWeekCreate[]) =>
+            setDraftSynced((prev) => propagateTemplateWeekEdit(prev, next)),
+        [setDraftSynced],
     );
 
     const setBaselineSynced = useCallback(
@@ -377,7 +389,7 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
                         patternsLoading={patternsLoading}
                         patternsError={patternsError}
                         value={draft}
-                        onChange={setDraftSynced}
+                        onChange={handleDraftEdit}
                         showRangeHeader
                         mode="all"
                         weekKindByOrdinal={weekKindByOrdinal}

@@ -17,139 +17,46 @@ import {
     ATHLETE_SESSION_EXERCISE_ACTIONS_DIVIDER,
     ATHLETE_SESSION_EXERCISE_DETAIL,
     ATHLETE_SESSION_EXERCISE_NAME,
-    ATHLETE_SESSION_EXERCISE_NOTES_BODY,
-    ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE_PROMINENT,
+    ATHLETE_SESSION_EXERCISE_ROW_BODY,
+    ATHLETE_SESSION_EXERCISE_ROW_EXPAND,
     ATHLETE_SESSION_EXERCISE_ROW_FLAT,
     ATHLETE_SESSION_EXERCISE_ROW_FLAT_CAUTION,
+    ATHLETE_SESSION_EXERCISE_ROW_HEAD,
     ATHLETE_SESSION_EXERCISE_SECONDARY,
-    ATHLETE_SESSION_AMRAP_KIND_LABEL,
-    ATHLETE_SESSION_GROUP_KIND_LABEL,
+    ATHLETE_SESSION_PRESCRIPTION_KIND_LABEL,
     ATHLETE_SESSION_PREVIEW_BLOCK,
-    ATHLETE_SESSION_SERIES_TOGGLE,
-    ATHLETE_SESSION_SET_TABLE,
-    ATHLETE_SESSION_SET_TABLE_CELL,
-    ATHLETE_SESSION_SET_TABLE_CELL_MUTED,
-    ATHLETE_SESSION_SET_TABLE_HEAD,
-    ATHLETE_SESSION_SET_TABLE_ROW,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
+import {
+    AthletePrescriptionSeriesToggle,
+    AthletePrescriptionTrainerNotes,
+} from "@/components/athlete/sessions/AthletePrescriptionSetLinesTable";
 import type { SessionBlockView } from "@nexia/shared/sessionProgramming/sessionBlockView";
 import {
     getBlockDisplayName,
     type SessionExerciseGroupView,
+    type SessionGroupKind,
 } from "@nexia/shared/sessionProgramming/sessionBlockView";
 import {
     buildAthletePreviewExerciseCards,
     countExercisesInBlock,
     type AthletePreviewExerciseCard,
-    type AthletePreviewSetLine,
 } from "@nexia/shared/utils/athlete/athleteSessionPreviewUtils";
+import { formatAthletePreviewGroupKindLabel } from "@nexia/shared/utils/athlete/athleteStrengthPrescriptionPresentation";
+import { AthleteAmrapPrescriptionPanel } from "@/components/athlete/sessions/AthleteAmrapPrescriptionPanel";
+import { AthleteEmomPrescriptionPanel } from "@/components/athlete/sessions/AthleteEmomPrescriptionPanel";
+import { AthleteForTimePrescriptionPanel } from "@/components/athlete/sessions/AthleteForTimePrescriptionPanel";
 import { formatInjuryPrecautionCount } from "@nexia/shared/utils/athlete/athleteInjuryAlertUtils";
-import {
-    formatTrainerNoteForAthlete,
-    hasHumanTrainerNote,
-} from "@nexia/shared/utils/athlete/athleteSessionNotesUtils";
+import { hasHumanTrainerNote } from "@nexia/shared/utils/athlete/athleteSessionNotesUtils";
 import { shouldShowPrescriptionBlockTitle } from "@nexia/shared/utils/athlete/athleteSessionPrescriptionMapUtils";
 import { cn } from "@/lib/utils";
 
-const GROUP_KIND_LABEL: Record<SessionExerciseGroupView["kind"], string | null> = {
-    single_set: null,
-    superset: "Superset",
-    giant_set: "Giant set",
-    dropset: "Drop set",
-    amrap: "AMRAP",
-    emom: "EMOM",
-    for_time: "For Time",
-};
-
-function cellOrDash(value: string | null, muted = false): React.ReactNode {
-    const text = value?.trim() ? value : "—";
-    return (
-        <td className={muted ? ATHLETE_SESSION_SET_TABLE_CELL_MUTED : ATHLETE_SESSION_SET_TABLE_CELL}>
-            {text}
-        </td>
-    );
-}
-
-const SetLinesTable: React.FC<{ lines: AthletePreviewSetLine[] }> = ({ lines }) => {
-    if (lines.length === 0) return null;
-    return (
-        <div className="overflow-x-auto -mx-1 px-1">
-            <table className={ATHLETE_SESSION_SET_TABLE}>
-                <thead>
-                    <tr>
-                        <th scope="col" className={ATHLETE_SESSION_SET_TABLE_HEAD}>
-                            Serie
-                        </th>
-                        <th scope="col" className={ATHLETE_SESSION_SET_TABLE_HEAD}>
-                            Reps
-                        </th>
-                        <th scope="col" className={ATHLETE_SESSION_SET_TABLE_HEAD}>
-                            Carga
-                        </th>
-                        <th scope="col" className={ATHLETE_SESSION_SET_TABLE_HEAD}>
-                            RIR/RPE
-                        </th>
-                        <th scope="col" className={ATHLETE_SESSION_SET_TABLE_HEAD}>
-                            Descanso
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {lines.map((line) => (
-                        <tr key={line.label} className={ATHLETE_SESSION_SET_TABLE_ROW}>
-                            {cellOrDash(line.label)}
-                            {cellOrDash(line.reps)}
-                            {cellOrDash(line.load)}
-                            {cellOrDash(line.effort)}
-                            {cellOrDash(line.rest, true)}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-            {lines.some((l) => l.extras) ? (
-                <p className="mt-2 text-xs text-muted-foreground">
-                    {lines
-                        .filter((l) => l.extras)
-                        .map((l) => `${l.label}: ${l.extras}`)
-                        .join(" · ")}
-                </p>
-            ) : null}
-        </div>
-    );
-};
-
-const ExerciseNotes: React.FC<{ notes: string }> = ({ notes }) => {
-    const [open, setOpen] = useState(false);
-    return (
-        <div className="w-full">
-            <button
-                type="button"
-                className={ATHLETE_SESSION_EXERCISE_NOTES_TOGGLE_PROMINENT}
-                aria-expanded={open}
-                onClick={() => setOpen((v) => !v)}
-            >
-                {open ? "Ocultar nota" : "Ver nota del entrenador"}
-                {open ? (
-                    <ChevronUp className="size-4 shrink-0" aria-hidden />
-                ) : (
-                    <ChevronDown className="size-4 shrink-0" aria-hidden />
-                )}
-            </button>
-            {open ? (
-                <p className={cn(ATHLETE_SESSION_EXERCISE_NOTES_BODY, "text-center")}>{notes}</p>
-            ) : null}
-        </div>
-    );
-};
-
 const ExerciseRow: React.FC<{
     card: AthletePreviewExerciseCard;
+    groupKind: SessionGroupKind;
     hasConflict: boolean;
     onInfo: (id: number, title: string) => void;
-}> = ({ card, hasConflict, onInfo }) => {
-    const [seriesOpen, setSeriesOpen] = useState(false);
+}> = ({ card, groupKind, hasConflict, onInfo }) => {
     const infoExerciseId = card.exerciseIds.length === 1 ? card.exerciseIds[0] : null;
-    const hasSeries = card.setLines.length > 0;
     const showTrainerNote = hasHumanTrainerNote(card.notes);
 
     return (
@@ -164,57 +71,45 @@ const ExerciseRow: React.FC<{
                     aria-label="Precaución por lesión activa"
                 />
             ) : null}
-            <div className="flex min-w-0 flex-1 items-start gap-2">
-                <div className="min-w-0 flex-1">
-                    <span
-                        className={
-                            card.hasCompoundLayout
-                                ? "block text-xs font-semibold uppercase tracking-wide text-primary/85"
-                                : ATHLETE_SESSION_EXERCISE_NAME
-                        }
-                    >
-                        {card.title}
-                    </span>
-                    <p className={ATHLETE_SESSION_EXERCISE_DETAIL}>{card.detail}</p>
-                    {card.secondaryDetail ? (
-                        <p className={ATHLETE_SESSION_EXERCISE_SECONDARY}>{card.secondaryDetail}</p>
+            <div className={ATHLETE_SESSION_EXERCISE_ROW_BODY}>
+                <div className={ATHLETE_SESSION_EXERCISE_ROW_HEAD}>
+                    <div className="min-w-0 flex-1">
+                        <span
+                            className={
+                                card.hasCompoundLayout
+                                    ? "block text-xs font-semibold uppercase tracking-wide text-primary/85"
+                                    : ATHLETE_SESSION_EXERCISE_NAME
+                            }
+                        >
+                            {card.title}
+                        </span>
+                        {card.detail ? (
+                            <p className={ATHLETE_SESSION_EXERCISE_DETAIL}>{card.detail}</p>
+                        ) : null}
+                        {card.secondaryDetail ? (
+                            <p className={ATHLETE_SESSION_EXERCISE_SECONDARY}>{card.secondaryDetail}</p>
+                        ) : null}
+                    </div>
+                    {infoExerciseId != null ? (
+                        <AthleteExercisePerformanceInfoButton
+                            exerciseId={infoExerciseId}
+                            exerciseTitle={card.title}
+                            onOpen={onInfo}
+                        />
                     ) : null}
-                    {hasSeries ? (
-                        <>
-                            <button
-                                type="button"
-                                className={ATHLETE_SESSION_SERIES_TOGGLE}
-                                aria-expanded={seriesOpen}
-                                onClick={() => setSeriesOpen((v) => !v)}
-                            >
-                                {seriesOpen ? "Ocultar series" : "Ver series"}
-                            </button>
-                            {seriesOpen ? (
-                                <div className="mt-2">
-                                    <SetLinesTable lines={card.setLines} />
-                                </div>
-                            ) : null}
-                        </>
-                    ) : null}
+                </div>
+                <div className={ATHLETE_SESSION_EXERCISE_ROW_EXPAND}>
+                    <AthletePrescriptionSeriesToggle groupKind={groupKind} lines={card.setLines} />
                     {showTrainerNote ? (
                         <>
                             <NexiaPremiumDivider
                                 tone="glow"
                                 className={ATHLETE_SESSION_EXERCISE_ACTIONS_DIVIDER}
                             />
-                            <ExerciseNotes
-                                notes={formatTrainerNoteForAthlete(card.notes!)}
-                            />
+                            <AthletePrescriptionTrainerNotes notes={card.notes} />
                         </>
                     ) : null}
                 </div>
-                {infoExerciseId != null ? (
-                    <AthleteExercisePerformanceInfoButton
-                        exerciseId={infoExerciseId}
-                        exerciseTitle={card.title}
-                        onOpen={onInfo}
-                    />
-                ) : null}
             </div>
         </li>
     );
@@ -225,31 +120,43 @@ const GroupSection: React.FC<{
     conflictByExerciseId: Map<number, unknown>;
     onInfo: (id: number, title: string) => void;
 }> = ({ group, conflictByExerciseId, onInfo }) => {
-    const kindLabel = GROUP_KIND_LABEL[group.kind];
+    if (group.kind === "emom") {
+        return (
+            <AthleteEmomPrescriptionPanel
+                group={group}
+                conflictByExerciseId={conflictByExerciseId}
+                onInfo={onInfo}
+            />
+        );
+    }
+
+    if (group.kind === "amrap") {
+        return (
+            <AthleteAmrapPrescriptionPanel
+                group={group}
+                conflictByExerciseId={conflictByExerciseId}
+                onInfo={onInfo}
+            />
+        );
+    }
+
+    if (group.kind === "for_time") {
+        return (
+            <AthleteForTimePrescriptionPanel
+                group={group}
+                conflictByExerciseId={conflictByExerciseId}
+                onInfo={onInfo}
+            />
+        );
+    }
+
+    const kindLabel = formatAthletePreviewGroupKindLabel(group.kind, group.rounds);
     const cards = buildAthletePreviewExerciseCards(group);
 
     return (
         <div className="space-y-1.5">
             {kindLabel ? (
-                <p
-                    className={
-                        group.kind === "amrap"
-                            ? ATHLETE_SESSION_AMRAP_KIND_LABEL
-                            : ATHLETE_SESSION_GROUP_KIND_LABEL
-                    }
-                >
-                    {kindLabel}
-                    {group.kind === "amrap" ? (
-                        group.timeCapMinutes != null ? ` · ${group.timeCapMinutes} min` : null
-                    ) : (
-                        <>
-                            {group.rounds != null && group.rounds > 0
-                                ? ` · ${group.rounds} rondas`
-                                : null}
-                            {group.timeCapMinutes != null ? ` · ${group.timeCapMinutes} min` : null}
-                        </>
-                    )}
-                </p>
+                <p className={ATHLETE_SESSION_PRESCRIPTION_KIND_LABEL}>{kindLabel}</p>
             ) : null}
             <ul className="space-y-0">
                 {cards.map((card) => {
@@ -258,6 +165,7 @@ const GroupSection: React.FC<{
                         <ExerciseRow
                             key={card.key}
                             card={card}
+                            groupKind={group.kind}
                             hasConflict={hasConflict}
                             onInfo={onInfo}
                         />

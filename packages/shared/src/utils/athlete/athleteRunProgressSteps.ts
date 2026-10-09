@@ -108,6 +108,18 @@ export function allRunStepsResolved(
     return findFirstPendingStepIndex(runSteps, progress) >= runSteps.length;
 }
 
+/** Preview / CTA: entrenamiento guiado empezado pero no terminado. */
+export function shouldOfferContinueAthleteRun(
+    runSteps: readonly AthleteRunStep[],
+    progress: AthleteRunProgress | null | undefined
+): boolean {
+    if (!progress || runSteps.length === 0) return false;
+    const pendingIndex = findFirstPendingStepIndex(runSteps, progress);
+    if (pendingIndex >= runSteps.length) return false;
+    const hasRegistered = progress.steps.some((row) => row.status === "registered");
+    return pendingIndex > 0 || hasRegistered;
+}
+
 export function collectResolvedStepKeysFromProgress(
     progress: AthleteRunProgress | null | undefined
 ): Set<string> {

@@ -59,6 +59,9 @@ import {
     shouldFetchAthleteSessionLogProgress,
 } from "@nexia/shared/utils/athlete/athleteSessionRegistrationPolicy";
 import { resolveAgendaTrainingHeadline } from "@nexia/shared/utils/athlete/athleteAgendaViewUtils";
+import { useGetAthleteRunProgressQuery } from "@nexia/shared/api/athleteApi";
+import { buildAthleteRunSteps } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
+import { shouldOfferContinueAthleteRun } from "@nexia/shared/utils/athlete/athleteRunProgressSteps";
 import { cn } from "@/lib/utils";
 
 export const AthleteSessionPreviewPage: React.FC = () => {
@@ -102,6 +105,20 @@ export const AthleteSessionPreviewPage: React.FC = () => {
         session?.status === "completed" ? session.session_date : null
     );
     const { view, isLoading: loadingStructure } = useSessionStructureView(sessionId);
+
+    const runSteps = useMemo(
+        () => (view.blocks.length > 0 ? buildAthleteRunSteps(view) : []),
+        [view]
+    );
+    const { data: runProgress, isFetching: loadingRunProgress } = useGetAthleteRunProgressQuery(
+        sessionId,
+        { skip: !sessionId || view.blocks.length === 0 }
+    );
+    const continueGuidedRun = useMemo(
+        () => shouldOfferContinueAthleteRun(runSteps, runProgress),
+        [runProgress, runSteps]
+    );
+    const startRunLabel = continueGuidedRun ? "Continuar entrenamiento" : "Empezar entrenamiento";
 
     const sessionLog = useAthleteSessionLog({
         sessionId,
@@ -193,7 +210,11 @@ export const AthleteSessionPreviewPage: React.FC = () => {
             : null;
 
     const isLoading =
-        loadingSession || loadingStructure || loadingInjuries || sessionLog.isProgressLoading;
+        loadingSession ||
+        loadingStructure ||
+        loadingInjuries ||
+        sessionLog.isProgressLoading ||
+        loadingRunProgress;
     const canStart = session?.status !== "completed" && view.totalExercises > 0;
     const hasPartialLogProgress = useMemo(
         () =>
@@ -411,8 +432,11 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                             variant="primary"
                             className={ATHLETE_PRIMARY_CTA}
                             onClick={() => {
-                                if (!sessionLog.logMode) requestEnterLogMode();
-                                else if (sessionLog.pendingBlockCount === 0) {
+                                if (!sessionLog.logMode) {
+                                    requestEnterLogMode();
+                                    return;
+                                }
+                                if (sessionLog.pendingBlockCount === 0) {
                                     void sessionLog
                                         .completeSessionIfReady()
                                         .then((ok) => {
@@ -422,7 +446,13 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                                                 );
                                             }
                                         });
+                                    return;
                                 }
+                                const nextPending = sessionLog.logBlocks.find(
+                                    (b) =>
+                                        b.hasRegisterableSteps && b.status === "pending"
+                                );
+                                if (nextPending) sessionLog.openBlock(nextPending);
                             }}
                         >
                             {sessionLog.logMode && sessionLog.pendingBlockCount === 0
@@ -436,7 +466,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                                 disabled={!canStart}
                                 onClick={handleStartClick}
                             >
-                                Empezar entrenamiento
+                                {startRunLabel}
                             </Button>
                         ) : (
                             <Button
@@ -465,7 +495,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                             disabled={!canStart}
                             onClick={handleStartClick}
                         >
-                            Empezar entrenamiento
+                            {startRunLabel}
                         </Button>
                         {sessionLog.registrationEditable ? (
                             <Button

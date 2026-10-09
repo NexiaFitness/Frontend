@@ -15,6 +15,7 @@ import {
     ATHLETE_RUN_SLOT_LOGGER_LABEL,
     ATHLETE_RUN_SLOT_LOGGER_NAME,
 } from "@/components/athlete/execution/athleteRunPresentation";
+import { formatAthleteLogSlotSecondaryLabel } from "@nexia/shared/utils/athlete/athleteRunLabelPresentation";
 
 export interface SlotLogValues {
     weight: number;
@@ -41,7 +42,7 @@ export const AthleteMultiSlotLogger: React.FC<AthleteMultiSlotLoggerProps> = ({
 }) => {
     return (
         <div className={`space-y-3 ${ATHLETE_RUN_LOGGER_REVEAL}`}>
-            {slots.map((slot) => {
+            {slots.map((slot, slotIndex) => {
                 const log = slotLogs[slot.stepKey] ?? {
                     weight: slot.defaultWeight,
                     reps: slot.defaultReps,
@@ -54,7 +55,10 @@ export const AthleteMultiSlotLogger: React.FC<AthleteMultiSlotLoggerProps> = ({
                         <div className="relative z-[1] space-y-3">
                             <div className="min-w-0">
                                 <p className={ATHLETE_RUN_SLOT_LOGGER_LABEL}>
-                                    Registro · {slot.slotLabel}
+                                    {formatAthleteLogSlotSecondaryLabel({
+                                        slotLabel: slot.slotLabel,
+                                        slotIndexZeroBased: slotIndex,
+                                    })}
                                 </p>
                                 <p className={ATHLETE_RUN_SLOT_LOGGER_NAME}>
                                     {slot.exerciseName}

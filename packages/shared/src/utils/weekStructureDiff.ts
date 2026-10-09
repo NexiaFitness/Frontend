@@ -119,6 +119,56 @@ export function classifyWeeksByTemplate(
     );
 }
 
+function cloneWeekAsOrdinal(
+    week: WeeklyStructureWeekCreate,
+    weekOrdinal: number,
+): WeeklyStructureWeekCreate {
+    return {
+        week_ordinal: weekOrdinal,
+        label: week.label ?? null,
+        days: week.days.map((d) => ({
+            day_of_week: d.day_of_week,
+            patterns: d.patterns.map((p) => ({
+                movement_pattern_id: p.movement_pattern_id,
+                sub_pattern: p.sub_pattern ?? null,
+            })),
+        })),
+    };
+}
+
+/**
+ * D-ST: aplica en el draft un cambio de la semana tipo a las semanas que la
+ * seguían justo antes del cambio (iguales a la semana tipo previa).
+ * Las semanas que ya divergían (personalizadas) no se tocan.
+ *
+ * Paridad con el servidor (sync-recurring + D-REP-4): las heredadas del baseline
+ * reciben la semana tipo; una heredada editada localmente viaja como excepción.
+ */
+export function propagateTemplateWeekEdit(
+    previous: readonly WeeklyStructureWeekCreate[],
+    next: readonly WeeklyStructureWeekCreate[],
+    templateOrdinal = 1,
+): WeeklyStructureWeekCreate[] {
+    const prevTemplate = previous.find((w) => w.week_ordinal === templateOrdinal);
+    const nextTemplate = next.find((w) => w.week_ordinal === templateOrdinal);
+    if (
+        prevTemplate == null ||
+        nextTemplate == null ||
+        weeksStructureEqual(prevTemplate, nextTemplate)
+    ) {
+        return [...next];
+    }
+    const previousByOrdinal = new Map(previous.map((w) => [w.week_ordinal, w]));
+    return next.map((week) => {
+        if (week.week_ordinal === templateOrdinal) return week;
+        const before = previousByOrdinal.get(week.week_ordinal);
+        if (before == null || !weeksStructureEqual(before, prevTemplate)) {
+            return week;
+        }
+        return cloneWeekAsOrdinal(nextTemplate, week.week_ordinal);
+    });
+}
+
 /**
  * Clasifica usando el snapshot de referencia (baseline persistido si existe).
  * Para propagación setActiveDays / patrones: no pisa personalizadas del servidor

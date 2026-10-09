@@ -99,6 +99,21 @@ export function getDeleteTrainingSessionInvalidationTags(
     return tags;
 }
 
+/**
+ * Copias masivas de sesiones (replicar sesión, repetir semana): crean y pueden
+ * sustituir sesiones en varias fechas y tocar la estructura semanal del bloque.
+ * Las listas se etiquetan por PLAN_/CLIENT_/LIST_<trainer> y por id; el
+ * resultado no trae todos esos ids (las sesiones sustituidas ya no existen), así
+ * que se invalida el tipo completo. Acción poco frecuente: coste aceptable.
+ */
+export const SESSION_COPY_INVALIDATION_TAGS = [
+    'TrainingSession',
+    'WeeklyStructure',
+    { type: 'CalendarEvent', id: 'LIST' },
+    { type: 'TrainingPlanWeeklySummary', id: 'LIST' },
+    { type: 'SessionRecommendations', id: 'LIST' },
+] as const;
+
 export function exerciseSelectionAnalyzeTag(sessionId: number) {
     return { type: 'ExerciseSelectionAnalyze' as const, id: sessionId };
 }
@@ -437,20 +452,13 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 method: 'POST',
                 body,
             }),
-            invalidatesTags: (result) => {
-                const tags: Array<{ type: 'TrainingSession' | 'PlanPeriodBlock' | 'WeeklyStructure'; id: string | number }> = [
-                    { type: 'TrainingSession', id: 'LIST' },
-                ];
-                if (result?.created_sessions) {
-                    result.created_sessions.forEach((s) => {
-                        tags.push({ type: 'TrainingSession', id: s.id });
-                        if (s.period_block_id) {
-                            tags.push({ type: 'PlanPeriodBlock', id: s.period_block_id });
-                        }
-                    });
-                }
-                return tags;
-            },
+            invalidatesTags: (result) => [
+                ...SESSION_COPY_INVALIDATION_TAGS,
+                ...(result?.created_sessions ?? []).map((s) => ({
+                    type: 'PlanPeriodBlock' as const,
+                    id: s.period_block_id,
+                })),
+            ],
         }),
 
         /**

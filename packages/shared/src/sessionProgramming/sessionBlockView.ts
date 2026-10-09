@@ -462,7 +462,7 @@ function buildSequentialGroups(
             badgeLabel: `${options.badgePrefix} A`,
             rounds,
             timeCapMinutes:
-                options.kind === "amrap"
+                options.kind === "amrap" || options.kind === "for_time"
                     ? timeCapSecondsToMinutes(options.block.time_cap)
                     : null,
             intervalSeconds: null,

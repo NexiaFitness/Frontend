@@ -3,11 +3,15 @@
  *
  * Responsabilidades:
  * - Cargar el bloque de periodizacion asociado a la sesion.
- * - Calcular las semanas disponibles para replicacion (excluyendo la origen).
+ * - Obtener las semanas destino validas desde shared (ancladas al lunes, como el BE).
  * - Gestionar seleccion de semanas destino.
  * - Ejecutar la primera mutacion con force=false.
- * - Si hay conflictos, abrir modal de confirmacion secundaria.
- * - Ejecutar la segunda mutacion con force=true y ordinales de conflictos.
+ * - Si hay huecos con sesion sustituible, abrir la confirmacion secundaria.
+ * - Ejecutar la segunda mutacion con force=true solo para esos huecos.
+ *
+ * Notas de mantenimiento: reglas en @nexia/shared (sessionReplication.ts) y copy en
+ * replicateSessionPresentation.ts. Las sesiones entrenadas nunca se ofrecen para
+ * sustituir (D-REP-1).
  *
  * @author Frontend Team
  * @since v6.5.0
@@ -16,11 +20,19 @@
 import { useState, useMemo, useCallback } from "react";
 import { skipToken } from "@reduxjs/toolkit/query";
 import {
+    buildSessionReplicationWeekOptions,
+    partitionReplicationSkips,
     useReplicateTrainingSessionMutation,
     useGetPeriodBlockQuery,
 } from "@nexia/shared";
-import type { SkippedConflictItem } from "@nexia/shared/types/trainingSessions";
 import { useToast } from "@/components/ui/feedback";
+
+import {
+    EMPTY_REPLICATE_CONFLICT_OUTCOME,
+    buildReplicateOutcomeMessage,
+    formatReplicationDate,
+    type ReplicateConflictOutcome,
+} from "./replicateSessionPresentation";
 
 interface SessionInfo {
     id: number;
@@ -42,8 +54,9 @@ export function useReplicateSessionFlow(session: SessionInfo) {
     const [isOpen, setIsOpen] = useState(false);
     const [isConflictOpen, setIsConflictOpen] = useState(false);
     const [selectedWeeks, setSelectedWeeks] = useState<number[]>([]);
-    const [pendingConflicts, setPendingConflicts] = useState<SkippedConflictItem[]>([]);
-    const [createdCount, setCreatedCount] = useState(0);
+    const [conflictOutcome, setConflictOutcome] = useState<ReplicateConflictOutcome>(
+        EMPTY_REPLICATE_CONFLICT_OUTCOME
+    );
 
     const blockQueryArg =
         session.training_plan_id && session.period_block_id
@@ -56,32 +69,15 @@ export function useReplicateSessionFlow(session: SessionInfo) {
 
     const weeks: WeekOption[] = useMemo(() => {
         if (!block || !session.session_date) return [];
-
-        const start = new Date(block.start_date);
-        const end = new Date(block.end_date);
-        const originDate = new Date(session.session_date);
-
-        const daysSinceStart = Math.floor(
-            (originDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
-        );
-        const originOrdinal = Math.floor(daysSinceStart / 7) + 1;
-
-        const blockDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        const totalWeeks = Math.floor(blockDays / 7) + 1;
-
-        const options: WeekOption[] = [];
-        for (let o = 1; o <= totalWeeks; o++) {
-            if (o === originOrdinal) continue;
-            const monday = new Date(start);
-            monday.setDate(start.getDate() + (o - 1) * 7);
-            const dateStr = monday.toISOString().split("T")[0];
-            options.push({
-                ordinal: o,
-                label: `Semana ${o}`,
-                date: dateStr,
-            });
-        }
-        return options;
+        return buildSessionReplicationWeekOptions({
+            blockStartISO: block.start_date,
+            blockEndISO: block.end_date,
+            sessionDateISO: session.session_date,
+        }).map((option) => ({
+            ordinal: option.ordinal,
+            label: `Semana ${option.ordinal}`,
+            date: formatReplicationDate(option.targetDate),
+        }));
     }, [block, session.session_date]);
 
     const openModal = useCallback(() => {
@@ -95,40 +91,43 @@ export function useReplicateSessionFlow(session: SessionInfo) {
                 sessionId: session.id,
                 body: { target_week_ordinals: selectedWeeks, force: false },
             }).unwrap();
+            const skips = partitionReplicationSkips(result.conflicts_skipped);
 
-            if (result.conflicts_skipped.length > 0) {
-                setCreatedCount(result.count);
-                setPendingConflicts(result.conflicts_skipped);
-                setIsOpen(false);
+            setIsOpen(false);
+            if (skips.replaceable.length > 0) {
+                setConflictOutcome({
+                    createdCount: result.count,
+                    replaceable: skips.replaceable,
+                    protectedItems: skips.protectedItems,
+                });
                 setIsConflictOpen(true);
-            } else {
-                setIsOpen(false);
-                showSuccess(`${result.count} sesiones replicadas correctamente.`);
+                return;
             }
+            showSuccess(buildReplicateOutcomeMessage(result.count, skips, "replicate"));
         } catch {
             showError("No se pudieron replicar las sesiones. Intenta de nuevo.");
         }
     }, [replicate, session.id, selectedWeeks, showSuccess, showError]);
 
+    const resetConflicts = useCallback(() => {
+        setIsConflictOpen(false);
+        setConflictOutcome(EMPTY_REPLICATE_CONFLICT_OUTCOME);
+    }, []);
+
     const handleConfirmReplace = useCallback(async () => {
         try {
-            const ordinals = pendingConflicts.map((c) => c.week_ordinal);
+            const ordinals = conflictOutcome.replaceable.map((c) => c.week_ordinal);
             const result = await replicate({
                 sessionId: session.id,
                 body: { target_week_ordinals: ordinals, force: true },
             }).unwrap();
-            setIsConflictOpen(false);
-            setPendingConflicts([]);
-            showSuccess(`${result.count} sesiones reemplazadas correctamente.`);
+            const skips = partitionReplicationSkips(result.conflicts_skipped);
+            resetConflicts();
+            showSuccess(buildReplicateOutcomeMessage(result.count, skips, "replace"));
         } catch {
-            showError("No se pudieron reemplazar las sesiones. Intenta de nuevo.");
+            showError("No se pudieron sustituir las sesiones. Intenta de nuevo.");
         }
-    }, [replicate, session.id, pendingConflicts, showSuccess, showError]);
-
-    const handleCancelConflict = useCallback(() => {
-        setIsConflictOpen(false);
-        setPendingConflicts([]);
-    }, []);
+    }, [replicate, session.id, conflictOutcome, resetConflicts, showSuccess, showError]);
 
     const toggleWeek = useCallback((ordinal: number) => {
         setSelectedWeeks((prev) =>
@@ -148,9 +147,8 @@ export function useReplicateSessionFlow(session: SessionInfo) {
         openModal,
         handleReplicate,
         handleConfirmReplace,
-        handleCancelConflict,
-        pendingConflicts,
-        createdCount,
+        handleCancelConflict: resetConflicts,
+        conflictOutcome,
         hasBlock: !!block,
     };
 }

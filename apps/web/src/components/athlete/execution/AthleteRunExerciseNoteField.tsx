@@ -16,6 +16,8 @@ import { ATHLETE_EXERCISE_NOTE_MAX_LENGTH } from "@nexia/shared/utils/athlete/at
 export interface AthleteRunExerciseNoteFieldProps {
     value: string;
     onChange: (value: string) => void;
+    /** Si hay varios ejercicios en el bloque, identifica cuál nota es. */
+    exerciseName?: string | null;
     disabled?: boolean;
     className?: string;
 }
@@ -23,6 +25,7 @@ export interface AthleteRunExerciseNoteFieldProps {
 export const AthleteRunExerciseNoteField: React.FC<AthleteRunExerciseNoteFieldProps> = ({
     value,
     onChange,
+    exerciseName = null,
     disabled = false,
     className,
 }) => {
@@ -38,7 +41,9 @@ export const AthleteRunExerciseNoteField: React.FC<AthleteRunExerciseNoteFieldPr
                 aria-expanded={open}
                 disabled={disabled}
             >
-                Añadir nota para tu entrenador
+                {exerciseName?.trim()
+                    ? `Nota · ${exerciseName.trim()}`
+                    : "Añadir nota para tu entrenador"}
                 <ChevronDown
                     className={cn("size-4 transition-transform", open && "rotate-180")}
                     aria-hidden

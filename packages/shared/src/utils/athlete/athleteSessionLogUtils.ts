@@ -36,7 +36,9 @@ import {
     buildEmomTimedResultPayload,
     buildForTimeTimedResultPayload,
 } from "./timedBlockRunUtils";
-import { getEmomTemplateSlots, resolveEmomFailureState } from "./emomResult";
+import { buildAmrapSavePayloads } from "./amrapResult";
+import { buildForTimeSavePayloads } from "./forTimeResult";
+import { buildEmomSavePayloads, getEmomTemplateSlots, resolveEmomFailureState } from "./emomResult";
 import {
     amrapPartialRepsFromDetail,
     amrapPartialTotalFromDetail,
@@ -64,6 +66,7 @@ export interface AthleteSessionLogSetDraft {
     stepKey: string;
     weight: number;
     reps: number;
+    rpe?: number | null;
     skipped: boolean;
 }
 
@@ -71,6 +74,7 @@ export interface AthleteSessionLogRoundDraft {
     stepKey: string;
     slotLogs: Record<string, AthleteSessionLogSlotValues>;
     skipped: boolean;
+    roundRpe?: number | null;
 }
 
 export interface AthleteSessionLogTimedDraft {
@@ -80,6 +84,7 @@ export interface AthleteSessionLogTimedDraft {
     amrapPartialReps: Record<string, number>;
     emomAsPlanned: boolean | null;
     emomAthleteNote: string;
+    roundRpe: number | null;
     forTimeTotalSeconds: number;
     skipped: boolean;
 }
@@ -103,6 +108,19 @@ function progressStepMap(progress?: AthleteRunProgress | null): Map<string, Athl
         map.set(step.step_key, step);
     }
     return map;
+}
+
+/** RPE en progress puede vivir en el step agregado (ronda/timed) o en ejecuciones por slot. */
+function resolveProgressStepRpe(
+    byKey: Map<string, AthleteRunProgressStep>,
+    ...stepKeys: string[]
+): number | null {
+    for (const key of stepKeys) {
+        if (!key) continue;
+        const saved = byKey.get(key);
+        if (saved?.rpe != null && Number.isFinite(saved.rpe)) return saved.rpe;
+    }
+    return null;
 }
 
 function formatExecutionSummary(step: AthleteRunProgressStep, name?: string): string {
@@ -263,14 +281,15 @@ function defaultSetDraft(step: AthleteRunStep, saved?: AthleteRunProgressStep): 
         stepKey: step.stepKey,
         weight: resolveLogDraftSetWeight(step, saved),
         reps: saved?.reps ?? step.defaultReps ?? 8,
+        rpe: saved?.rpe ?? null,
         skipped: saved?.status === "not_performed",
     };
 }
 
 function defaultRoundDraft(
     step: AthleteRunStep,
-    saved?: AthleteRunProgressStep,
-    progressByKey?: Map<string, AthleteRunProgressStep>
+    saved: AthleteRunProgressStep | undefined,
+    progressByKey: Map<string, AthleteRunProgressStep>
 ): AthleteSessionLogRoundDraft {
     const slotLogs: Record<string, AthleteSessionLogSlotValues> = {};
     for (const slot of step.slots ?? []) {
@@ -281,14 +300,20 @@ function defaultRoundDraft(
             durationSeconds: slotSaved?.duration_seconds ?? slot.defaultReps,
         };
     }
+    const slotKeys = (step.slots ?? []).map((slot) => slot.stepKey);
     return {
         stepKey: step.stepKey,
         slotLogs,
         skipped: saved?.status === "not_performed",
+        roundRpe: resolveProgressStepRpe(progressByKey, step.stepKey, ...slotKeys),
     };
 }
 
-function defaultTimedDraft(step: AthleteRunStep, saved?: AthleteRunProgressStep): AthleteSessionLogTimedDraft {
+function defaultTimedDraft(
+    step: AthleteRunStep,
+    saved: AthleteRunProgressStep | undefined,
+    progressByKey: Map<string, AthleteRunProgressStep>
+): AthleteSessionLogTimedDraft {
     let emomAsPlanned: boolean | null = null;
     let emomAthleteNote = "";
     if (saved?.detail?.kind === "emom" && step.groupKind === "emom") {
@@ -305,6 +330,11 @@ function defaultTimedDraft(step: AthleteRunStep, saved?: AthleteRunProgressStep)
         amrapPartialReps,
         emomAsPlanned,
         emomAthleteNote,
+        roundRpe: resolveProgressStepRpe(
+            progressByKey,
+            step.stepKey,
+            ...(step.slots ?? []).map((slot) => slot.stepKey)
+        ),
         forTimeTotalSeconds: saved?.total_seconds ?? 0,
         skipped: saved?.status === "not_performed",
     };
@@ -324,14 +354,14 @@ export function buildInitialBlockDraft(
     for (const step of block.steps) {
         const saved = byKey.get(step.stepKey);
         if (step.kind === "timed_block") {
-            timed = defaultTimedDraft(step, saved);
+            timed = defaultTimedDraft(step, saved, byKey);
             continue;
         }
         if (step.kind === "group_round") {
             if (step.groupKind === "dropset") {
-                dropsetRounds.push(defaultRoundDraft(step, saved, byKey));
+                dropsetRounds.push(defaultRoundDraft(step, saved ?? undefined, byKey));
             } else {
-                groupRounds.push(defaultRoundDraft(step, saved, byKey));
+                groupRounds.push(defaultRoundDraft(step, saved ?? undefined, byKey));
             }
             continue;
         }
@@ -446,7 +476,7 @@ export function buildBlockSavePayloads(
             buildAthleteRunExecutionPayload(sessionId, flat, {
                 weight,
                 reps: setDraft.reps,
-                rpe: null,
+                rpe: setDraft.rpe ?? null,
                 durationSeconds: setDraft.reps,
             })
         );
@@ -464,7 +494,7 @@ export function buildBlockSavePayloads(
                 buildAthleteRunExecutionPayloadFromSlot(sessionId, step, slot, {
                     weight: log.weight,
                     reps: log.reps,
-                    rpe: null,
+                    rpe: round.roundRpe ?? null,
                     durationSeconds: log.durationSeconds ?? log.reps,
                 })
             );
@@ -487,19 +517,49 @@ export function buildBlockSavePayloads(
             markNotPerformed(draft.timed.stepKey);
         } else if (step) {
             if (step.groupKind === "amrap") {
+                const slots = step.slots ?? [];
                 timed = buildAmrapTimedResultPayload({
                     sessionId,
                     runStep: step,
                     fullRounds: draft.timed.amrapRounds,
-                    slots: step.slots ?? [],
+                    slots,
                     partialReps: draft.timed.amrapPartialReps,
                 });
+
+                const amrapPlans = buildAmrapSavePayloads({
+                    fullRounds: draft.timed.amrapRounds,
+                    slots: slots.map((slot) => ({
+                        stepKey: slot.stepKey,
+                        blockExerciseId: slot.blockExerciseId,
+                        plannedRepsPerRound: slot.defaultReps,
+                        defaultWeight: slot.defaultWeight,
+                        loggedSets: slot.loggedSets,
+                    })),
+                    partialReps: draft.timed.amrapPartialReps,
+                    roundRpe: draft.timed.roundRpe,
+                    getNextActualSets: (_blockExerciseId, loggedSets) =>
+                        Math.max(0, loggedSets) + 1,
+                });
+                for (const plan of amrapPlans) {
+                    const slot = slots.find(
+                        (item) => item.blockExerciseId === plan.blockExerciseId
+                    );
+                    if (!slot) continue;
+                    executions.push(
+                        buildAthleteRunExecutionPayloadFromSlot(sessionId, step, slot, {
+                            weight: plan.data.actual_weight,
+                            reps: Number.parseInt(plan.data.actual_reps, 10) || 0,
+                            rpe: plan.data.actual_effort_value ?? draft.timed.roundRpe,
+                        })
+                    );
+                }
             } else if (step.groupKind === "emom") {
                 const asPlanned = draft.timed.emomAsPlanned === true;
                 const intervals = step.emomIntervals ?? [];
+                const templateSlots = getEmomTemplateSlots(intervals);
                 const { failedCount } = resolveEmomFailureState({
                     intervals,
-                    templateSlots: getEmomTemplateSlots(intervals),
+                    templateSlots,
                     asPlanned,
                 });
                 timed = buildEmomTimedResultPayload({
@@ -510,13 +570,76 @@ export function buildBlockSavePayloads(
                     failedCount,
                     athleteNote: draft.timed.emomAthleteNote,
                 });
+
+                const emomPlans = buildEmomSavePayloads({
+                    intervals,
+                    asPlanned,
+                    failedCount,
+                    failureEntries: [],
+                    templateSlots,
+                    roundRpe: draft.timed.roundRpe,
+                });
+                for (const plan of emomPlans) {
+                    const interval = intervals.find((item) => item.intervalKey === plan.intervalKey);
+                    const slot =
+                        interval?.slots.find(
+                            (item) => item.blockExerciseId === plan.blockExerciseId
+                        ) ?? null;
+                    if (!slot) continue;
+                    executions.push(
+                        buildAthleteRunExecutionPayloadFromSlot(sessionId, step, slot, {
+                            weight: plan.data.actual_weight,
+                            reps: Number.parseInt(plan.data.actual_reps, 10) || 0,
+                            rpe: plan.data.actual_effort_value ?? draft.timed.roundRpe,
+                        })
+                    );
+                }
             } else if (step.groupKind === "for_time") {
+                const forTimeRounds = step.forTimeRounds ?? [];
                 timed = buildForTimeTimedResultPayload({
                     sessionId,
                     runStep: step,
                     totalSeconds: draft.timed.forTimeTotalSeconds,
                     cumulativeSplits: [],
                 });
+
+                if (forTimeRounds.length > 0 && draft.timed.forTimeTotalSeconds > 0) {
+                    const forTimePlans = buildForTimeSavePayloads({
+                        rounds: forTimeRounds,
+                        cumulativeSplits: [],
+                        totalSeconds: draft.timed.forTimeTotalSeconds,
+                        roundRpe: draft.timed.roundRpe,
+                        getNextActualSets: (_blockExerciseId, loggedSets = 0) =>
+                            Math.max(0, loggedSets) + 1,
+                    });
+                    for (const plan of forTimePlans) {
+                        const round = forTimeRounds.find(
+                            (item) => item.roundKey === plan.roundKey
+                        );
+                        const slot =
+                            round?.slots.find(
+                                (item) => item.blockExerciseId === plan.blockExerciseId
+                            ) ?? null;
+                        if (!slot) continue;
+                        const executionValues = {
+                            weight: plan.data.actual_weight,
+                            reps: Number.parseInt(plan.data.actual_reps, 10) || 0,
+                            rpe: plan.data.actual_effort_value ?? draft.timed.roundRpe,
+                            ...(plan.data.actual_duration != null
+                                ? { durationSeconds: plan.data.actual_duration }
+                                : {}),
+                        };
+                        executions.push({
+                            ...buildAthleteRunExecutionPayloadFromSlot(
+                                sessionId,
+                                step,
+                                slot,
+                                executionValues
+                            ),
+                            input_mode: "duration",
+                        });
+                    }
+                }
             }
         }
     }

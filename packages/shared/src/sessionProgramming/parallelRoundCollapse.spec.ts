@@ -88,6 +88,26 @@ describe("inferRoundSlotLayout — superset / giant (minSlots=2)", () => {
     });
 });
 
+describe("inferRoundSlotLayout — orden intercalado por ronda (for_time / circuito)", () => {
+    it("6 filas A/B alternadas × 3 rondas → cada slot homogéneo por exercise_id", () => {
+        const lines = [
+            { exercise_id: 1, order_in_block: 1 },
+            { exercise_id: 2, order_in_block: 2 },
+            { exercise_id: 1, order_in_block: 3 },
+            { exercise_id: 2, order_in_block: 4 },
+            { exercise_id: 1, order_in_block: 5 },
+            { exercise_id: 2, order_in_block: 6 },
+        ];
+
+        const layout = inferRoundSlotLayout(lines, 3, 2);
+
+        expect(layout.rounds).toBe(3);
+        expect(layout.slotLines).toHaveLength(2);
+        expect(layout.slotLines[0].every((line) => line.exercise_id === 1)).toBe(true);
+        expect(layout.slotLines[1].every((line) => line.exercise_id === 2)).toBe(true);
+    });
+});
+
 describe("mapBlocksToSessionStructureView — for_time (forTimeMinSlots en caller)", () => {
     const forTimeBlock = (rounds: number, blockId = 178): SessionBlock => ({
         id: blockId,

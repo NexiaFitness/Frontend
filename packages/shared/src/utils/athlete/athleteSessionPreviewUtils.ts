@@ -12,6 +12,12 @@ import type {
     SessionExerciseSlotView,
 } from "../../sessionProgramming/sessionBlockView";
 import type { EffortCharacter } from "../../types/sessionProgramming";
+import { formatAthleteSetLabel } from "./athleteRunLabelPresentation";
+import {
+    formatPrescriptionTableLoad,
+    formatPrescriptionTableRest,
+} from "./athletePrescriptionTableFormat";
+import { isStrengthPrescriptionMapKind } from "./athleteStrengthPrescriptionPresentation";
 
 export interface AthletePreviewGroupRow {
     key: string;
@@ -273,6 +279,8 @@ export function buildAthletePreviewGroupRows(
 /** Una fila de prescripción por serie (V04 expandido). */
 export interface AthletePreviewSetLine {
     label: string;
+    /** Copy atleta (Serie 1, Escalón 1, …). */
+    displayLabel: string;
     reps: string | null;
     load: string | null;
     effort: string | null;
@@ -284,7 +292,8 @@ export interface AthletePreviewExerciseCard extends AthletePreviewGroupRow {
     setLines: AthletePreviewSetLine[];
 }
 
-function buildAthletePreviewSetLines(
+/** Filas de tabla «Ver series» (prescripción completa del slot). */
+export function buildAthletePreviewSetLines(
     slot: SessionExerciseSlotView,
     group: SessionExerciseGroupView
 ): AthletePreviewSetLine[] {
@@ -298,10 +307,11 @@ function buildAthletePreviewSetLines(
         const repsRaw = set.plannedReps?.trim();
         return {
             label: set.label,
+            displayLabel: formatAthleteSetLabel(set.label),
             reps: repsRaw ? repsRaw : null,
-            load: formatWeight(set.plannedWeight),
+            load: formatPrescriptionTableLoad(set.plannedWeight),
             effort: formatEffort(set.effortCharacter, set.effortValue),
-            rest: formatRestSeconds(set.plannedRest ?? group.restBetweenSeconds),
+            rest: formatPrescriptionTableRest(set.plannedRest ?? group.restBetweenSeconds),
             extras: extrasParts.length ? extrasParts.join(" · ") : null,
         };
     });
@@ -313,10 +323,15 @@ function exerciseCardFromSlot(
     options?: { roundsLabel?: string | null; kindHint?: string | null; compound?: boolean }
 ): AthletePreviewExerciseCard {
     const row = rowFromSlot(group, slot, options);
-    return {
+    const card: AthletePreviewExerciseCard = {
         ...row,
         setLines: buildAthletePreviewSetLines(slot, group),
     };
+    if (isStrengthPrescriptionMapKind(group.kind)) {
+        card.detail = "";
+        card.secondaryDetail = null;
+    }
+    return card;
 }
 
 /** Tarjetas de ejercicio con detalle por serie (mapa V04). */

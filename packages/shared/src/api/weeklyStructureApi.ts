@@ -26,6 +26,7 @@ import type {
     WeeklyStructureSyncRecurringIn,
     WeeklyStructureSyncRecurringOut,
 } from "../types/weeklyStructure";
+import { SESSION_COPY_INVALIDATION_TAGS } from "./trainingSessionsApi";
 
 const SESSION_RECOMMENDATIONS_LIST_TAG = {
     type: "SessionRecommendations" as const,
@@ -125,7 +126,7 @@ export const weeklyStructureApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (_result, _error, arg) => [
                 ...weeklyStructureMutationInvalidates(arg),
-                { type: "TrainingSession", id: "LIST" },
+                ...SESSION_COPY_INVALIDATION_TAGS,
             ],
         }),
 

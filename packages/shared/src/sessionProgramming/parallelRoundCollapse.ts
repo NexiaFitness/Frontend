@@ -41,6 +41,44 @@ function maxLinesPerExerciseId(lines: ParallelRoundLineLike[]): number {
     return values.length > 0 ? Math.max(...values) : 1;
 }
 
+function slotLinesAreHomogeneousByExercise<T extends ParallelRoundLineLike>(
+    slotLines: T[][]
+): boolean {
+    return slotLines.every((slot) => {
+        if (slot.length === 0) return true;
+        const exerciseId = slot[0].exercise_id;
+        return slot.every((line) => line.exercise_id === exerciseId);
+    });
+}
+
+function buildSlotMajorSlotLines<T extends ParallelRoundLineLike>(
+    sorted: T[],
+    rounds: number,
+    slotCount: number
+): T[][] {
+    const slotLines: T[][] = [];
+    for (let slotIdx = 0; slotIdx < slotCount; slotIdx++) {
+        slotLines.push(sorted.slice(slotIdx * rounds, (slotIdx + 1) * rounds));
+    }
+    return slotLines;
+}
+
+/** Circuito intercalado: A·R1, B·R1, A·R2, B·R2… */
+function buildRoundMajorSlotLines<T extends ParallelRoundLineLike>(
+    sorted: T[],
+    rounds: number,
+    slotCount: number
+): T[][] {
+    const slotLines: T[][] = Array.from({ length: slotCount }, () => []);
+    for (let roundIdx = 0; roundIdx < rounds; roundIdx += 1) {
+        for (let slotIdx = 0; slotIdx < slotCount; slotIdx += 1) {
+            const line = sorted[roundIdx * slotCount + slotIdx];
+            if (line) slotLines[slotIdx].push(line);
+        }
+    }
+    return slotLines;
+}
+
 function roundCandidates(
     lines: ParallelRoundLineLike[],
     blockRounds: number | null | undefined,
@@ -98,11 +136,15 @@ export function inferRoundSlotLayout<T extends ParallelRoundLineLike>(
         if (rounds > 0 && lineCount % rounds === 0) {
             const slotCount = lineCount / rounds;
             if (slotCount >= minSlots) {
-                const slotLines: T[][] = [];
-                for (let slotIdx = 0; slotIdx < slotCount; slotIdx++) {
-                    slotLines.push(sorted.slice(slotIdx * rounds, (slotIdx + 1) * rounds));
+                const slotMajor = buildSlotMajorSlotLines(sorted, rounds, slotCount);
+                if (slotLinesAreHomogeneousByExercise(slotMajor)) {
+                    return { rounds, slotLines: slotMajor };
                 }
-                return { rounds, slotLines };
+                const roundMajor = buildRoundMajorSlotLines(sorted, rounds, slotCount);
+                if (slotLinesAreHomogeneousByExercise(roundMajor)) {
+                    return { rounds, slotLines: roundMajor };
+                }
+                return { rounds, slotLines: slotMajor };
             }
         }
     }

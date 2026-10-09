@@ -228,6 +228,7 @@ export type {
     TrainingSessionReplicateResponse,
     ReplicatedSessionItem,
     SkippedConflictItem,
+    ReplicateSkipReason,
 } from "./types/trainingSessions";
 export {
     SESSION_TYPE_LABELS,
@@ -449,6 +450,7 @@ export {
     classifyWeeksWithBaseline,
     resolveStructureClassificationReference,
     findTemplateWeek,
+    propagateTemplateWeekEdit,
     type WeekStructureKind,
 } from "./utils/weekStructureDiff";
 export {
@@ -477,11 +479,19 @@ export {
     type PhaseReadinessChecklist,
 } from "./utils/phaseReadiness";
 export {
+    addDaysToLocalISO,
     getMondayOfWeekLocal,
     getBlockCalendarWeekOrdinal,
     getBlockCalendarWeekCount,
     formatCalendarWeekRange,
 } from "./utils/calendarWeekForBlock";
+export {
+    buildSessionReplicationWeekOptions,
+    partitionReplicationSkips,
+    type SessionReplicationWeekOption,
+    type SessionReplicationWeekInput,
+    type ReplicationSkipPartition,
+} from "./utils/sessionReplication";
 export {
     getPhysicalQualityColor,
     resetFallbackCache,

@@ -80,6 +80,10 @@ vi.mock("@nexia/shared/api/athleteApi", () => ({
         isFetching: false,
         isError: false,
     }),
+    useGetAthleteRunProgressQuery: () => ({
+        data: undefined,
+        isFetching: false,
+    }),
 }));
 
 vi.mock("@/hooks/athlete/useAthleteInjuries", () => ({

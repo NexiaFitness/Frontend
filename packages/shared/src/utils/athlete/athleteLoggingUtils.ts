@@ -196,9 +196,17 @@ export function resolveExecutionFieldsForInputMode(
             weight_kg: null,
         };
     }
+    const weight = clampWeightKg(values.weightKg);
+    if (weight <= 0) {
+        return {
+            input_mode: "reps_only",
+            reps: Math.max(0, values.reps),
+            weight_kg: null,
+        };
+    }
     return {
         input_mode: "weight_reps",
-        weight_kg: clampWeightKg(values.weightKg),
+        weight_kg: weight,
         reps: Math.max(0, values.reps),
     };
 }

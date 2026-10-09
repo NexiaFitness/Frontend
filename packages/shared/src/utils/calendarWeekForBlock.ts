@@ -26,6 +26,16 @@ function toLocalISO(dt: Date): string {
 }
 
 /**
+ * Suma `days` (puede ser negativo) a una fecha local YYYY-MM-DD.
+ */
+export function addDaysToLocalISO(dateISO: string, days: number): string {
+    const dt = parseLocalDate(dateISO);
+    if (!dt) return dateISO;
+    dt.setDate(dt.getDate() + days);
+    return toLocalISO(dt);
+}
+
+/**
  * Devuelve el lunes (ISO) de la semana calendario que contiene `dateISO`.
  */
 export function getMondayOfWeekLocal(dateISO: string): string {
@@ -49,7 +59,9 @@ export function getBlockCalendarWeekOrdinal(
     const dateMonday = parseLocalDate(getMondayOfWeekLocal(dateISO));
     if (!anchorMonday || !dateMonday) return 1;
     const diffMs = dateMonday.getTime() - anchorMonday.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    // Medianoches locales: un cambio de horario deja días de 23/25 h; redondear,
+    // no truncar (floor restaba una semana al cruzar el cambio de marzo).
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
     return Math.floor(diffDays / 7) + 1;
 }
 

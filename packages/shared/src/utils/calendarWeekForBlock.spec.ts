@@ -48,3 +48,16 @@ describe("formatCalendarWeekRange", () => {
         expect(w2).toContain("31");
     });
 });
+
+describe("getBlockCalendarWeekOrdinal — cambio de horario", () => {
+    // 2026-03-29 (domingo) entra el horario de verano en Europa: el lunes 30
+    // está a 28 días menos 1 h del lunes 2 en hora local. Debe seguir siendo semana 5.
+    it("lunes 30 mar 2026 en bloque que empieza el 4 mar → semana 5", () => {
+        expect(getBlockCalendarWeekOrdinal("2026-03-30", "2026-03-04")).toBe(5);
+        expect(getBlockCalendarWeekCount("2026-03-04", "2026-03-31")).toBe(5);
+    });
+
+    it("cambio de octubre (25 oct 2026) no suma semanas", () => {
+        expect(getBlockCalendarWeekOrdinal("2026-10-26", "2026-10-19")).toBe(2);
+    });
+});

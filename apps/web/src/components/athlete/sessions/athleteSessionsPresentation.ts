@@ -128,13 +128,27 @@ export const ATHLETE_SESSION_BLOCK_BODY = "space-y-2 pt-2";
 /** Cuerpo de bloque sin cabecera (solo AMRAP + filas): sin padding superior extra. */
 export const ATHLETE_SESSION_BLOCK_BODY_COMPACT = "space-y-2 pt-0";
 
-/** Superset, EMOM, For Time, etc. — V04 mapa. */
-export const ATHLETE_SESSION_GROUP_KIND_LABEL =
-    "text-[11px] font-semibold uppercase tracking-wide text-primary/70";
-
-/** Solo cabecera AMRAP (rondas van en la fila del ejercicio). */
-export const ATHLETE_SESSION_AMRAP_KIND_LABEL =
+/** Cabecera modalidad en mapa V04 (Single set, AMRAP, Giant set, …). */
+export const ATHLETE_SESSION_PRESCRIPTION_KIND_LABEL =
     "text-sm font-semibold uppercase tracking-wide text-primary/70";
+
+/** @deprecated Usar ATHLETE_SESSION_PRESCRIPTION_KIND_LABEL */
+export const ATHLETE_SESSION_GROUP_KIND_LABEL = ATHLETE_SESSION_PRESCRIPTION_KIND_LABEL;
+
+/** @deprecated Alias — misma tipografía que fuerza / timed. */
+export const ATHLETE_SESSION_AMRAP_KIND_LABEL = ATHLETE_SESSION_PRESCRIPTION_KIND_LABEL;
+
+/** Cabecera EMOM · Intervalos (mapa V04). */
+export const ATHLETE_SESSION_EMOM_KIND_LABEL = ATHLETE_SESSION_AMRAP_KIND_LABEL;
+
+export const ATHLETE_SESSION_EMOM_META =
+    "text-xs leading-relaxed text-muted-foreground";
+
+export const ATHLETE_SESSION_EMOM_INTERVAL_HEAD =
+    "mt-2.5 text-sm font-medium text-foreground/90";
+
+export const ATHLETE_SESSION_EMOM_EXERCISE_LINE =
+    "py-0.5 pl-1 text-sm leading-snug text-foreground/90";
 
 /** @deprecated V04-MAP-UI — usar BLOCK_SECTION_HEADER (filas planas). */
 export const ATHLETE_SESSION_DISCLOSURE_TRIGGER = ATHLETE_SESSION_BLOCK_SECTION_HEADER;
@@ -142,18 +156,38 @@ export const ATHLETE_SESSION_DISCLOSURE_TRIGGER = ATHLETE_SESSION_BLOCK_SECTION_
 /** @deprecated V04-MAP-UI — usar BLOCK_BODY. */
 export const ATHLETE_SESSION_DISCLOSURE_PANEL = ATHLETE_SESSION_BLOCK_BODY;
 
-export const ATHLETE_SESSION_SET_TABLE = "w-full text-left text-xs";
+/** Tabla prescripción expandible — cabe en ancho móvil sin scroll horizontal. */
+export const ATHLETE_SESSION_SET_TABLE = "w-full table-fixed border-collapse text-left text-xs";
 
-export const ATHLETE_SESSION_SET_TABLE_HEAD =
-    "text-[10px] font-semibold uppercase tracking-wide text-muted-foreground";
+export const ATHLETE_SESSION_SET_TABLE_WRAP = "w-full max-w-full overflow-hidden pt-1";
+
+export const ATHLETE_SESSION_SET_TABLE_HEAD = cn(
+    "pb-1.5 px-0.5 text-left text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+);
 
 export const ATHLETE_SESSION_SET_TABLE_ROW =
     "border-b border-border/35 last:border-0";
 
-export const ATHLETE_SESSION_SET_TABLE_CELL = "py-2 pr-2 align-top text-foreground/90";
+export const ATHLETE_SESSION_SET_TABLE_CELL = cn(
+    "py-1.5 px-0.5 align-top tabular-nums text-foreground/90 break-words"
+);
 
-export const ATHLETE_SESSION_SET_TABLE_CELL_MUTED =
-    "py-2 pr-2 align-top text-muted-foreground";
+export const ATHLETE_SESSION_SET_TABLE_CELL_FIRST = cn(
+    "py-1.5 pl-0 pr-1 align-top text-[11px] font-normal leading-snug text-foreground/90 break-words"
+);
+
+export const ATHLETE_SESSION_SET_TABLE_CELL_REST = cn(
+    "py-1.5 px-0.5 align-top tabular-nums text-muted-foreground break-words"
+);
+
+/** Lista clave-valor «Ver prescripción» (AMRAP/EMOM sin tabla). */
+export const ATHLETE_SESSION_PRESCRIPTION_DETAIL_LIST =
+    "space-y-2 text-xs leading-relaxed text-foreground/90";
+
+export const ATHLETE_SESSION_PRESCRIPTION_DETAIL_TERM =
+    "shrink-0 text-muted-foreground";
+
+export const ATHLETE_SESSION_PRESCRIPTION_EXPAND_PANEL = "mt-2 w-full min-w-0";
 
 export const ATHLETE_SESSION_PREVIEW_HEADLINE =
     "text-2xl font-bold tracking-tight text-foreground";
@@ -219,6 +253,14 @@ export const ATHLETE_SESSION_EXERCISE_ROW_FLAT = cn(
     "flex items-start gap-2.5 border-b border-border/40 py-2 last:border-b-0"
 );
 
+/** Cuerpo de fila V04: cabecera (nombre + ℹ️) y bloque expand a ancho completo. */
+export const ATHLETE_SESSION_EXERCISE_ROW_BODY = "flex min-w-0 flex-1 flex-col gap-0";
+
+export const ATHLETE_SESSION_EXERCISE_ROW_HEAD = "flex w-full min-w-0 items-start gap-2";
+
+/** Toggle + tabla «Ver series» / «Ver prescripción» — mismo ancho que la fila. */
+export const ATHLETE_SESSION_EXERCISE_ROW_EXPAND = "mt-0 w-full min-w-0";
+
 export const ATHLETE_SESSION_EXERCISE_ROW_FLAT_CAUTION = cn(
     ATHLETE_SESSION_EXERCISE_ROW_FLAT,
     "border-l-2 border-l-warning/55 pl-2.5"
@@ -237,7 +279,7 @@ export const ATHLETE_SESSION_EXERCISE_ITEM_CAUTION = cn(
 );
 
 export const ATHLETE_SESSION_SERIES_TOGGLE = cn(
-    "mt-1 min-h-7 w-full text-right text-xs font-medium text-primary/90",
+    "mt-1.5 block min-h-8 w-full text-left text-xs font-medium text-primary/90",
     "underline-offset-2 hover:underline"
 );
 

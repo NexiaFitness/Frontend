@@ -631,8 +631,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                 isOpen={replicateFlow.isConflictOpen}
                 onClose={replicateFlow.handleCancelConflict}
                 onConfirmReplace={replicateFlow.handleConfirmReplace}
-                conflicts={replicateFlow.pendingConflicts}
-                createdCount={replicateFlow.createdCount}
+                outcome={replicateFlow.conflictOutcome}
                 isLoading={replicateFlow.isReplicating}
             />
 

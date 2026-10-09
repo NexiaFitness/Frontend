@@ -123,7 +123,6 @@ function buildPlannedLabel(set: SessionExerciseSetView): string {
 
 function resolveInputMode(set: SessionExerciseSetView): AthleteRunInputMode {
     if (set.plannedDuration != null) return "duration";
-    if (set.plannedWeight == null && set.plannedReps != null) return "reps_only";
     return "weight_reps";
 }
 

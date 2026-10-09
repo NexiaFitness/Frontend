@@ -347,6 +347,86 @@ describe("resolveLogDraftSetWeight (registro al final · carga programada)", () 
     });
 });
 
+describe("buildInitialBlockDraft · RPE hidratación", () => {
+    it("timed AMRAP: toma RPE del step de slot si el timed step no lo trae", () => {
+        const timedStep: AthleteRunStep = {
+            stepKey: "block-1-amrap-timed",
+            kind: "timed_block",
+            groupKind: "amrap",
+            blockId: 1,
+            blockName: "Fuerza",
+            groupId: "block-1-amrap",
+            badgeLabel: "AMRAP",
+            roundIndex: 1,
+            roundTotal: 1,
+            slotLabel: "",
+            exerciseId: 10,
+            exerciseName: "Curl",
+            setLabel: "",
+            setIndex: 1,
+            instruction: "",
+            plannedLabel: "",
+            restAfterSeconds: null,
+            inputMode: "rounds_reps",
+            blockExerciseId: 100,
+            defaultWeight: 0,
+            defaultReps: 8,
+            defaultRpe: null,
+            loggedSets: 0,
+            slots: [
+                {
+                    stepKey: "block-1-amrap-slot-a",
+                    slotLabel: "1",
+                    exerciseId: 10,
+                    exerciseName: "Curl",
+                    setLabel: "1",
+                    setIndex: 1,
+                    plannedLabel: "8",
+                    blockExerciseId: 100,
+                    inputMode: "rounds_reps",
+                    defaultWeight: 0,
+                    defaultReps: 8,
+                    defaultRpe: null,
+                    loggedSets: 1,
+                },
+            ],
+        };
+        const block: AthleteSessionLogBlockModel = {
+            sessionBlockId: 1,
+            blockTypeName: "Fuerza",
+            setType: "amrap",
+            status: "registered",
+            expectedStepKeys: [timedStep.stepKey],
+            steps: [timedStep],
+            summaryLine: "AMRAP 1 rondas",
+            isPendingHighlight: false,
+            hasRegisterableSteps: true,
+        };
+        const p = progress({
+            steps: [
+                {
+                    step_key: timedStep.stepKey,
+                    status: "registered",
+                    kind: "timed",
+                    session_block_id: 1,
+                    rounds_completed: 1,
+                    timed_mode: "amrap",
+                },
+                {
+                    step_key: "block-1-amrap-slot-a",
+                    status: "registered",
+                    kind: "execution",
+                    session_block_id: 1,
+                    rpe: 8,
+                    reps: 8,
+                },
+            ],
+        });
+        const draft = buildInitialBlockDraft(block, p);
+        expect(draft.timed?.roundRpe).toBe(8);
+    });
+});
+
 describe("buildBlockSavePayloads skipped steps", () => {
     it("marca step_key en notPerformedSteps", () => {
         const block: AthleteSessionLogBlockModel = {

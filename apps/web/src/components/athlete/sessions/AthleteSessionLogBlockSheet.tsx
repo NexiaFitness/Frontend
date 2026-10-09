@@ -17,6 +17,7 @@ import {
     type SlotLogValues,
 } from "@/components/athlete/logging";
 import { AthleteForTimeCompletionReview } from "@/components/athlete/execution/AthleteForTimeCompletionReview";
+import { AthleteRoundEffortSection } from "@/components/athlete/execution/AthleteRoundEffortSection";
 import type {
     AthleteSessionLogBlockDraft,
     AthleteSessionLogBlockModel,
@@ -30,6 +31,7 @@ import {
 import { useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { AthleteRunExerciseNoteField } from "@/components/athlete/execution/AthleteRunExerciseNoteField";
+import { formatAthleteLogExerciseSetHeading } from "@nexia/shared/utils/athlete/athleteRunLabelPresentation";
 
 export interface AthleteSessionLogBlockSheetProps {
     isOpen: boolean;
@@ -65,17 +67,24 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
         [block?.steps]
     );
 
-    const noteSlotIds = useMemo(() => {
+    const noteSlots = useMemo(() => {
         if (!block) return [];
-        const ids = new Set<number>();
+        const byId = new Map<number, string>();
         for (const step of block.steps) {
             if (step.groupKind === "emom") continue;
-            if (step.blockExerciseId) ids.add(step.blockExerciseId);
+            if (step.blockExerciseId && step.exerciseName) {
+                byId.set(step.blockExerciseId, step.exerciseName);
+            }
             for (const slot of step.slots ?? []) {
-                ids.add(slot.blockExerciseId);
+                if (slot.blockExerciseId && slot.exerciseName) {
+                    byId.set(slot.blockExerciseId, slot.exerciseName);
+                }
             }
         }
-        return [...ids];
+        return [...byId.entries()].map(([blockExerciseId, exerciseName]) => ({
+            blockExerciseId,
+            exerciseName,
+        }));
     }, [block]);
 
     const handleWeightChange = useCallback(
@@ -184,7 +193,10 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                         >
                             <div className="flex items-start justify-between gap-2">
                                 <p className="text-sm font-medium text-foreground">
-                                    {step.exerciseName} · {step.setLabel}
+                                    {formatAthleteLogExerciseSetHeading(
+                                        step.exerciseName ?? "Ejercicio",
+                                        step.setLabel
+                                    )}
                                 </p>
                                 <Button
                                     type="button"
@@ -219,7 +231,15 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                                             ),
                                         })
                                     }
-                                    showRpe={false}
+                                    rpe={row.rpe ?? null}
+                                    onRpeChange={(rpe) =>
+                                        onDraftChange({
+                                            ...draft,
+                                            singleSets: draft.singleSets.map((s) =>
+                                                s.stepKey === row.stepKey ? { ...s, rpe } : s
+                                            ),
+                                        })
+                                    }
                                 />
                             ) : (
                                 <p className="text-xs text-muted-foreground">Marcado como no realizado.</p>
@@ -282,8 +302,15 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                                             ),
                                         })
                                     }
-                                    roundRpe={null}
-                                    onRoundRpeChange={() => undefined}
+                                    roundRpe={round.roundRpe ?? null}
+                                    onRoundRpeChange={(roundRpe) =>
+                                        onDraftChange({
+                                            ...draft,
+                                            groupRounds: draft.groupRounds.map((r) =>
+                                                r.stepKey === round.stepKey ? { ...r, roundRpe } : r
+                                            ),
+                                        })
+                                    }
                                 />
                             ) : (
                                 <p className="text-xs text-muted-foreground">Ronda no realizada.</p>
@@ -345,8 +372,15 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                                             ),
                                         })
                                     }
-                                    roundRpe={null}
-                                    onRoundRpeChange={() => undefined}
+                                    roundRpe={round.roundRpe ?? null}
+                                    onRoundRpeChange={(roundRpe) =>
+                                        onDraftChange({
+                                            ...draft,
+                                            dropsetRounds: draft.dropsetRounds.map((r) =>
+                                                r.stepKey === round.stepKey ? { ...r, roundRpe } : r
+                                            ),
+                                        })
+                                    }
                                 />
                             ) : (
                                 <p className="text-xs text-muted-foreground">Ronda no realizada.</p>
@@ -358,30 +392,42 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                 {draft.timed && timedStep ? (
                     <>
                         {draft.timed.groupKind === "amrap" && timedStep.slots ? (
-                            <AthleteAmrapResultLogger
-                                slots={timedStep.slots}
-                                targetRounds={null}
-                                fullRounds={draft.timed.amrapRounds}
-                                onFullRoundsChange={(fullRounds) =>
-                                    onDraftChange({
-                                        ...draft,
-                                        timed: { ...draft.timed!, amrapRounds: fullRounds },
-                                    })
-                                }
-                                partialReps={draft.timed.amrapPartialReps}
-                                onPartialRepsChange={(stepKey, value) =>
-                                    onDraftChange({
-                                        ...draft,
-                                        timed: {
-                                            ...draft.timed!,
-                                            amrapPartialReps: {
-                                                ...draft.timed!.amrapPartialReps,
-                                                [stepKey]: value,
+                            <>
+                                <AthleteAmrapResultLogger
+                                    slots={timedStep.slots}
+                                    targetRounds={timedStep.roundTotal ?? null}
+                                    fullRounds={draft.timed.amrapRounds}
+                                    onFullRoundsChange={(fullRounds) =>
+                                        onDraftChange({
+                                            ...draft,
+                                            timed: { ...draft.timed!, amrapRounds: fullRounds },
+                                        })
+                                    }
+                                    partialReps={draft.timed.amrapPartialReps}
+                                    onPartialRepsChange={(stepKey, value) =>
+                                        onDraftChange({
+                                            ...draft,
+                                            timed: {
+                                                ...draft.timed!,
+                                                amrapPartialReps: {
+                                                    ...draft.timed!.amrapPartialReps,
+                                                    [stepKey]: value,
+                                                },
                                             },
-                                        },
-                                    })
-                                }
-                            />
+                                        })
+                                    }
+                                />
+                                <AthleteRoundEffortSection
+                                    variant="block"
+                                    value={draft.timed.roundRpe}
+                                    onChange={(value) =>
+                                        onDraftChange({
+                                            ...draft,
+                                            timed: { ...draft.timed!, roundRpe: value },
+                                        })
+                                    }
+                                />
+                            </>
                         ) : null}
                         {draft.timed.groupKind === "emom" ? (
                             <AthleteEmomCompletionReview
@@ -407,38 +453,54 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                                         timed: { ...draft.timed!, emomAthleteNote: note },
                                     })
                                 }
-                                roundRpe={null}
-                                onRoundRpeChange={() => undefined}
+                                roundRpe={draft.timed.roundRpe}
+                                onRoundRpeChange={(value) =>
+                                    onDraftChange({
+                                        ...draft,
+                                        timed: { ...draft.timed!, roundRpe: value },
+                                    })
+                                }
                             />
                         ) : null}
                         {draft.timed.groupKind === "for_time" ? (
-                            <AthleteForTimeCompletionReview
-                                totalSeconds={draft.timed.forTimeTotalSeconds}
-                                onTotalSecondsChange={(totalSeconds) =>
-                                    onDraftChange({
-                                        ...draft,
-                                        timed: { ...draft.timed!, forTimeTotalSeconds: totalSeconds },
-                                    })
-                                }
-                                roundRpe={null}
-                                onRoundRpeChange={() => undefined}
-                            />
+                            <>
+                                <AthleteForTimeCompletionReview
+                                    totalSeconds={draft.timed.forTimeTotalSeconds}
+                                    onTotalSecondsChange={(totalSeconds) =>
+                                        onDraftChange({
+                                            ...draft,
+                                            timed: {
+                                                ...draft.timed!,
+                                                forTimeTotalSeconds: totalSeconds,
+                                            },
+                                        })
+                                    }
+                                    roundRpe={draft.timed.roundRpe}
+                                    onRoundRpeChange={(value) =>
+                                        onDraftChange({
+                                            ...draft,
+                                            timed: { ...draft.timed!, roundRpe: value },
+                                        })
+                                    }
+                                />
+                            </>
                         ) : null}
                     </>
                 ) : null}
 
-                {draft && noteSlotIds.length > 0 ? (
+                {draft && noteSlots.length > 0 ? (
                     <div className="space-y-3 border-t border-border/60 pt-4">
-                        {noteSlotIds.map((slotId) => (
+                        {noteSlots.map(({ blockExerciseId, exerciseName }) => (
                             <AthleteRunExerciseNoteField
-                                key={slotId}
-                                value={draft.exerciseNotes?.[slotId] ?? ""}
+                                key={blockExerciseId}
+                                exerciseName={exerciseName}
+                                value={draft.exerciseNotes?.[blockExerciseId] ?? ""}
                                 onChange={(value) =>
                                     onDraftChange({
                                         ...draft,
                                         exerciseNotes: {
                                             ...(draft.exerciseNotes ?? {}),
-                                            [slotId]: value,
+                                            [blockExerciseId]: value,
                                         },
                                     })
                                 }
