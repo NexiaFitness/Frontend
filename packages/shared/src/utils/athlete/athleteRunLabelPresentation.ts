@@ -22,6 +22,20 @@ export function formatAthleteSetLabel(setLabel: string): string {
     return trimmed;
 }
 
+/** Fila de tabla en preview V04 (dropset: Drop 1…; resto igual que run salvo drops). */
+export function formatAthletePrescriptionTableRowLabel(
+    setLabel: string,
+    groupKind: SessionGroupKind | string
+): string {
+    const trimmed = setLabel.trim();
+    if (groupKind === "dropset") {
+        if (trimmed.toUpperCase() === "MAIN") return "Serie principal";
+        const dropMatch = /^DROP\s*(\d+)$/i.exec(trimmed);
+        if (dropMatch) return `Drop ${dropMatch[1]}`;
+    }
+    return formatAthleteSetLabel(setLabel);
+}
+
 /** A1 / índice numérico → Ejercicio N (superset, giant, AMRAP…). */
 export function formatAthleteSlotCaption(
     slotLabel: string,

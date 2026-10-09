@@ -12,7 +12,7 @@ import type {
     SessionExerciseSlotView,
 } from "../../sessionProgramming/sessionBlockView";
 import type { EffortCharacter } from "../../types/sessionProgramming";
-import { formatAthleteSetLabel } from "./athleteRunLabelPresentation";
+import { formatAthletePrescriptionTableRowLabel } from "./athleteRunLabelPresentation";
 import {
     formatPrescriptionTableLoad,
     formatPrescriptionTableRest,
@@ -200,19 +200,14 @@ function rowFromSlot(
     options?: { roundsLabel?: string | null; kindHint?: string | null; compound?: boolean }
 ): AthletePreviewGroupRow {
     const prescription = buildSlotPrescription(slot, group, options);
-    const compound = options?.compound ?? false;
-    const title = compound
-        ? `${slot.slotLabel} · ${slot.exerciseName}`
-        : slot.exerciseName;
-
     return {
         key: `${group.groupId}-${slot.slotLabel}-${slot.exerciseId}`,
-        title,
+        title: slot.exerciseName,
         detail: prescription.detail,
         secondaryDetail: prescription.secondaryDetail,
         notes: prescription.notes,
         exerciseIds: [slot.exerciseId],
-        hasCompoundLayout: compound,
+        hasCompoundLayout: false,
     };
 }
 
@@ -307,7 +302,7 @@ export function buildAthletePreviewSetLines(
         const repsRaw = set.plannedReps?.trim();
         return {
             label: set.label,
-            displayLabel: formatAthleteSetLabel(set.label),
+            displayLabel: formatAthletePrescriptionTableRowLabel(set.label, group.kind),
             reps: repsRaw ? repsRaw : null,
             load: formatPrescriptionTableLoad(set.plannedWeight),
             effort: formatEffort(set.effortCharacter, set.effortValue),

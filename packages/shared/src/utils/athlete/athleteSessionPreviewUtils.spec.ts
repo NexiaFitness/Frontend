@@ -77,6 +77,71 @@ describe("athleteSessionPreviewUtils", () => {
         expect(cards[0].secondaryDetail).toBeNull();
     });
 
+    it("superset preview uses exercise name only (no A1/A2 slot codes)", () => {
+        const group = baseGroup({
+            kind: "superset",
+            rounds: 3,
+            slots: [
+                {
+                    slotLabel: "A1",
+                    exerciseId: 10,
+                    exerciseName: "Curl martillo",
+                    notes: null,
+                    plannedAssistanceKg: null,
+                    plannedDistance: null,
+                    sets: [
+                        {
+                            label: "R1",
+                            index: 1,
+                            plannedReps: "10",
+                            plannedWeight: 30,
+                            plannedDuration: null,
+                            plannedRest: 60,
+                            effortCharacter: "rir",
+                            effortValue: 2,
+                            actualReps: null,
+                            actualWeight: null,
+                            actualEffortValue: null,
+                            rowLoggedSets: 0,
+                            sourceLineId: 1,
+                        },
+                    ],
+                },
+                {
+                    slotLabel: "A2",
+                    exerciseId: 11,
+                    exerciseName: "Extensión de tríceps en polea (alta)",
+                    notes: null,
+                    plannedAssistanceKg: null,
+                    plannedDistance: null,
+                    sets: [
+                        {
+                            label: "R1",
+                            index: 1,
+                            plannedReps: "10",
+                            plannedWeight: 25,
+                            plannedDuration: null,
+                            plannedRest: 60,
+                            effortCharacter: "rir",
+                            effortValue: 2,
+                            actualReps: null,
+                            actualWeight: null,
+                            actualEffortValue: null,
+                            rowLoggedSets: 0,
+                            sourceLineId: 2,
+                        },
+                    ],
+                },
+            ],
+        });
+        const cards = buildAthletePreviewExerciseCards(group);
+        expect(cards.map((c) => c.title)).toEqual([
+            "Curl martillo",
+            "Extensión de tríceps en polea (alta)",
+        ]);
+        expect(cards.every((c) => !c.hasCompoundLayout)).toBe(true);
+    });
+
     it("keeps compact row detail for list fallback", () => {
         const group = baseGroup({
             slots: [
