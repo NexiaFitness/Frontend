@@ -100,13 +100,13 @@ export function getDeleteTrainingSessionInvalidationTags(
 }
 
 /**
- * Copias masivas de sesiones (replicar sesión, repetir semana): crean y pueden
- * sustituir sesiones en varias fechas y tocar la estructura semanal del bloque.
+ * Cambios masivos de sesiones (replicar sesión, repetir semana, borrar o archivar
+ * un bloque): crean o eliminan sesiones en varias fechas y tocan la estructura.
  * Las listas se etiquetan por PLAN_/CLIENT_/LIST_<trainer> y por id; el
  * resultado no trae todos esos ids (las sesiones sustituidas ya no existen), así
  * que se invalida el tipo completo. Acción poco frecuente: coste aceptable.
  */
-export const SESSION_COPY_INVALIDATION_TAGS = [
+export const SESSION_BULK_CHANGE_INVALIDATION_TAGS = [
     'TrainingSession',
     'WeeklyStructure',
     { type: 'CalendarEvent', id: 'LIST' },
@@ -453,7 +453,7 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 body,
             }),
             invalidatesTags: (result) => [
-                ...SESSION_COPY_INVALIDATION_TAGS,
+                ...SESSION_BULK_CHANGE_INVALIDATION_TAGS,
                 ...(result?.created_sessions ?? []).map((s) => ({
                     type: 'PlanPeriodBlock' as const,
                     id: s.period_block_id,

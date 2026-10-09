@@ -8,6 +8,8 @@
  *   3. Estado del cliente (fatiga · vol/int día legacy · chip L2 alineación fase → review)
  *
  * Barras vol/int: BlockLevelMeter (mismo patrón que SessionCard / review).
+ * Fase archivada (D-BLQ-2): el bloque sigue legible por id y se etiqueta «(archivada)».
+ * Notas: >400 líneas por cohesión de las 3 zonas del panel; cálculos en @nexia/shared.
  * Patrones: PatternBadge con tinte por ui_bucket (reconocimiento entrenador).
  *
  * @author Frontend Team
@@ -32,6 +34,7 @@ import {
     computeWeekOfBlock,
     computeSessionPosition,
     coherenceLevelFor,
+    formatPhaseNameWithStatus,
 } from "@nexia/shared";
 import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
@@ -268,7 +271,9 @@ export const SessionContextStrip: React.FC<SessionContextStripProps> = ({
             : null;
 
     // --- zona 1: posición -----------------------------------------------
-    const blockTitle = block?.name ?? plan?.name ?? "Sin bloque asignado";
+    const blockTitle = block?.name
+        ? formatPhaseNameWithStatus(block.name, block.is_active)
+        : (plan?.name ?? "Sin bloque asignado");
     const blockSub = (() => {
         const parts: string[] = [];
         if (weekInfo) parts.push(`Semana ${weekInfo.current}/${weekInfo.total}`);

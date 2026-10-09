@@ -493,6 +493,12 @@ export {
     type ReplicationSkipPartition,
 } from "./utils/sessionReplication";
 export {
+    resolveBlockRemovalVariant,
+    formatPhaseNameWithStatus,
+    type BlockRemovalVariant,
+} from "./utils/blockLifecycle";
+export { shouldReapplyPlannedLoadPrefill } from "./utils/sessionPlannedLoadPrefill";
+export {
     getPhysicalQualityColor,
     resetFallbackCache,
     resolvePhysicalQualitySlug,

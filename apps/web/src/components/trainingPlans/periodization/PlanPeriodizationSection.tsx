@@ -1,10 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
-import {
-  useGetPeriodBlocksQuery,
-  useDeletePeriodBlockMutation,
-} from "@nexia/shared/api/periodBlocksApi";
+import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetTrainingSessionsQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { useGetMovementPatternsQuery } from "@nexia/shared/api/exercisesApi";
 import {
@@ -27,7 +24,9 @@ import {
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
 import { ResourceQueryState } from "@/components/ui/feedback/ResourceQueryState";
 import { Button } from "@/components/ui/buttons";
+import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 import { usePeriodBlockForm } from "./usePeriodBlockForm";
+import { usePeriodBlockDeletion } from "./usePeriodBlockDeletion";
 import { usePeriodizationVolumeRecommendations } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
 import { PlanBlockAuthoringSurface } from "./PlanBlockAuthoringSurface";
 import { BlockWeeksManageSurface } from "./BlockWeeksManageSurface";
@@ -145,7 +144,6 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   );
   const [structureDriftRefreshKey, setStructureDriftRefreshKey] = useState(0);
   const wasDapAuthoringRef = useRef(isDapAuthoring);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: number; label: string } | null>(null);
   const [exceptionModal, setExceptionModal] = useState<{ date: string } | null>(null);
   const [exceptionNote, setExceptionNote] = useState("");
   const { data: clientProfile } = useGetClientQuery(clientId!, { skip: !clientId });
@@ -222,7 +220,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
       sessions.length > 0,
   });
 
-  const [deleteBlock, { isLoading: isDeleting }] = useDeletePeriodBlockMutation();
+  const blockRemoval = usePeriodBlockDeletion(planId);
   const [createException, { isLoading: isCreatingException }] = useCreateDayExceptionMutation();
   const [removeException] = useDeleteDayExceptionMutation();
 
@@ -663,20 +661,6 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     }
   }, [exceptionModal, clientId, exceptionNote, createException, showSuccess, showError]);
 
-  const handleConfirmDelete = useCallback(async () => {
-    if (!deleteTarget) {
-      return;
-    }
-    const blockId = deleteTarget.id;
-    try {
-      await deleteBlock({ planId, blockId }).unwrap();
-      setDeleteTarget(null);
-      showSuccess("Bloque de periodización eliminado.");
-    } catch (err) {
-      showError(getMutationErrorMessage(err));
-    }
-  }, [deleteTarget, planId, deleteBlock, showSuccess, showError]);
-
   const pickRangeWeekCount =
     form.startDate && form.endDate
       ? getBlockCalendarWeekCount(form.startDate, form.endDate)
@@ -849,7 +833,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         onAddPhase={handleStartCreateBlock}
         onEditBlock={handleEditBlockNavigate}
         onViewWeeks={handleViewWeeks}
-        onDeleteBlock={(id, label) => setDeleteTarget({ id, label })}
+        onDeleteBlock={blockRemoval.requestRemoval}
         onCreateSessionForBlock={handleCreateSessionForBlock}
         focusedBlockId={focusedBlockId}
         onFocusBlock={handleFocusBlock}
@@ -868,57 +852,18 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         structureCoverageWeeklyStructurePath={structureCoverageWeeklyStructurePath}
       />
 
-      {deleteTarget != null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setDeleteTarget(null)}
-          />
-          <div className="relative rounded-lg bg-surface border border-border/50 p-6 shadow-xl w-full max-w-sm space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-destructive/15 flex items-center justify-center shrink-0">
-                <svg
-                  className="h-5 w-5 text-destructive"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">Eliminar bloque</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  ¿Eliminar &quot;{deleteTarget.label}&quot;? No se puede deshacer.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDeleteTarget(null)}
-                disabled={isDeleting}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? "Eliminando…" : "Eliminar"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <NexiaPremiumConfirmModal
+        isOpen={blockRemoval.isOpen}
+        onClose={blockRemoval.cancel}
+        onConfirm={() => void blockRemoval.confirm()}
+        title={blockRemoval.copy?.title ?? ""}
+        description={blockRemoval.copy?.description}
+        confirmLabel={blockRemoval.copy?.confirmLabel ?? ""}
+        loadingConfirmLabel={blockRemoval.copy?.loadingConfirmLabel}
+        confirmVariant={blockRemoval.copy?.confirmVariant}
+        isLoading={blockRemoval.isLoading}
+        data-testid="period-block-removal-modal"
+      />
 
       {exceptionModal != null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

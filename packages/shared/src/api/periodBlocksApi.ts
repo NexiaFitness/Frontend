@@ -1,5 +1,9 @@
 import { baseApi } from "./baseApi";
+import { SESSION_BULK_CHANGE_INVALIDATION_TAGS } from "./trainingSessionsApi";
 import type {
+  BlockArchiveResult,
+  BlockDeleteResult,
+  BlockDeletionPreview,
   PlanPeriodBlock,
   PlanPeriodBlockCreate,
   PlanPeriodBlockUpdate,
@@ -116,8 +120,21 @@ export const periodBlocksApi = baseApi.injectEndpoints({
       ],
     }),
 
+    /** D-BLQ-2: recuento de sesiones y acción (borrar o archivar) antes de confirmar. */
+    getPeriodBlockDeletionPreview: builder.query<
+      BlockDeletionPreview,
+      { planId: number; blockId: number }
+    >({
+      query: ({ planId, blockId }) => ({
+        url: `/training-plans/${planId}/period-blocks/${blockId}/deletion-preview`,
+        method: "GET",
+      }),
+      keepUnusedDataFor: 0,
+    }),
+
+    /** Borra el bloque y sus sesiones planificadas; 409 si alguna tiene registro. */
     deletePeriodBlock: builder.mutation<
-      { message: string },
+      BlockDeleteResult,
       { planId: number; blockId: number }
     >({
       query: ({ planId, blockId }) => ({
@@ -127,6 +144,23 @@ export const periodBlocksApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { planId, blockId }) => [
         { type: "PlanPeriodBlock", id: blockId },
         { type: "PlanPeriodBlock", id: `LIST-${planId}` },
+        ...SESSION_BULK_CHANGE_INVALIDATION_TAGS,
+      ],
+    }),
+
+    /** Archiva el bloque: borra planificadas, las entrenadas conservan la fase. */
+    archivePeriodBlock: builder.mutation<
+      BlockArchiveResult,
+      { planId: number; blockId: number }
+    >({
+      query: ({ planId, blockId }) => ({
+        url: `/training-plans/${planId}/period-blocks/${blockId}/archive`,
+        method: "POST",
+      }),
+      invalidatesTags: (_result, _error, { planId, blockId }) => [
+        { type: "PlanPeriodBlock", id: blockId },
+        { type: "PlanPeriodBlock", id: `LIST-${planId}` },
+        ...SESSION_BULK_CHANGE_INVALIDATION_TAGS,
       ],
     }),
   }),
@@ -141,4 +175,6 @@ export const {
   useCreatePeriodBlockWithStructureMutation,
   useUpdatePeriodBlockMutation,
   useDeletePeriodBlockMutation,
+  useGetPeriodBlockDeletionPreviewQuery,
+  useArchivePeriodBlockMutation,
 } = periodBlocksApi;

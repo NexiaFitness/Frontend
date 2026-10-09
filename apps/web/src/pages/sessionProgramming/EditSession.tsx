@@ -52,6 +52,7 @@ import {
     resolveSessionBlockQualitySlugs,
     useDefaultSessionName,
     listStructureDriftPlannedSessionIds,
+    shouldReapplyPlannedLoadPrefill,
 } from "@nexia/shared";
 import { formatLocalDateOnly } from "@nexia/shared/training/activePeriodBlock";
 import {
@@ -243,10 +244,9 @@ export const EditSession: React.FC = () => {
         enabled: !!session?.client_id && trainerId > 0,
     });
 
-    const shouldApplyVolumeIntensityPrefill =
-        !volumeIntensityTouched &&
-        originalSessionDate != null &&
-        formData.sessionDate !== originalSessionDate;
+    // D-BLQ-3: foto fija; solo se rellena de nuevo si cambia la fecha y no se tocaron los sliders.
+    const shouldApplyVolumeIntensityPrefill = shouldReapplyPlannedLoadPrefill(
+        volumeIntensityTouched, originalSessionDate, formData.sessionDate);
 
     useEffect(() => {
         if (!shouldApplyVolumeIntensityPrefill || volumeIntensityPrefill.isLoading) return;
@@ -262,10 +262,9 @@ export const EditSession: React.FC = () => {
         volumeIntensityPrefill.intensity,
     ]);
 
-    const editSliderValueNote =
-        !volumeIntensityTouched && shouldApplyVolumeIntensityPrefill
-            ? getVolumeIntensityPrefillSourceLabel(volumeIntensityPrefill.source)
-            : undefined;
+    const editSliderValueNote = shouldApplyVolumeIntensityPrefill
+        ? getVolumeIntensityPrefillSourceLabel(volumeIntensityPrefill.source)
+        : undefined;
 
     const editVolumeRecComplete =
         editRecommendationsData?.status === "complete"

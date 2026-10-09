@@ -153,3 +153,24 @@ export interface PlanPeriodBlockWithStructureOut {
   template_week_ordinal: number | null;
   applied_week_ordinals: number[];
 }
+
+/** Hito 2 (D-BLQ-2): qué haría borrar el bloque. `archive` si hay sesiones entrenadas. */
+export type BlockRemovalAction = "delete" | "archive";
+
+export interface BlockDeletionPreview {
+  block_id: number;
+  total_sessions: number;
+  planned_sessions: number;
+  protected_sessions: number;
+  action: BlockRemovalAction;
+}
+
+export interface BlockDeleteResult {
+  message: string;
+  deleted_sessions: number;
+}
+
+export interface BlockArchiveResult {
+  block: PlanPeriodBlock;
+  deleted_planned_sessions: number;
+}
