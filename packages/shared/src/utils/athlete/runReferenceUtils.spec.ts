@@ -1,130 +1,97 @@
-/**
- * runReferenceUtils.spec.ts — SIG-06 snapshot en payload execution.
- */
-
 import { describe, expect, it } from "vitest";
-import type { AthleteRunSuggestion } from "../../types/athleteRunSuggestion";
-import {
-    attachSuggestionSnapshotToExecutionPayload,
-    buildAthleteRunExecutionPayload,
-    buildSuggestionSnapshotFromRunSuggestion,
-} from "./runReferenceUtils";
+import { resolveRunLoggerDefaults } from "./runReferenceUtils";
 
-const visibleWeightSuggestion: AthleteRunSuggestion = {
-    metric: "weight_kg",
-    suggested_value: 42.5,
-    reference_value: 40,
-    delta: 2.5,
-    action: "increase",
-    confidence: "high",
-    exposure_count: 6,
-    explanation: "Sube carga",
-    basis_label: "40 kg",
-    show_card: true,
-};
+describe("resolveRunLoggerDefaults (P-SIMPLE autofill)", () => {
+    const base = {
+        prescribedReps: 8,
+        prescribedRpe: 7 as number | null,
+        defaultWeight: 40,
+    };
 
-describe("buildSuggestionSnapshotFromRunSuggestion", () => {
-    it("returns undefined when show_card is false", () => {
-        expect(
-            buildSuggestionSnapshotFromRunSuggestion({
-                ...visibleWeightSuggestion,
-                show_card: false,
-            })
-        ).toBeUndefined();
-    });
-
-    it("maps visible weight suggestion to SIG-06 snapshot", () => {
-        expect(buildSuggestionSnapshotFromRunSuggestion(visibleWeightSuggestion)).toEqual({
-            suggestion_shown: true,
-            suggested_weight_kg: 42.5,
-            reference_weight_kg: 40,
-            suggestion_action: "increase",
-            load_step_kg: 2.5,
-            confidence: "high",
+    it("prefiere peso prescrito del entrenador sobre referencia", () => {
+        const result = resolveRunLoggerDefaults({
+            ...base,
+            setIndex: 1,
+            plannedWeight: 60,
+            reference: {
+                source: "last_session",
+                weight_kg: 52.5,
+                reps: 9,
+                rpe: 7,
+                rounds_completed: null,
+                total_seconds: null,
+                performed_at: null,
+                session_date_label: null,
+            },
         });
+        expect(result.weight).toBe(60);
     });
 
-    it("ignores non-weight metrics", () => {
-        expect(
-            buildSuggestionSnapshotFromRunSuggestion({
-                ...visibleWeightSuggestion,
-                metric: "rounds",
-            })
-        ).toBeUndefined();
-    });
-});
-
-describe("buildAthleteRunExecutionPayload", () => {
-    it("omits suggestion_snapshot when suggestion not shown", () => {
-        const payload = buildAthleteRunExecutionPayload(
-            99,
-            {
-                stepKey: "SBE:1:S1",
-                blockExerciseId: 1,
-                exerciseId: 2,
-                name: "Curl",
-                blockName: "Bloque",
-                groupKind: "single_set",
-                setLabel: "S1",
-                setIndex: 1,
-                totalSetsInSlot: 4,
-                plannedLabel: "4×10",
-                plannedWeight: 20,
-                defaultWeight: 20,
-                defaultReps: 10,
-                restSeconds: 90,
-                defaultRpe: 8,
-                videoUrl: null,
-                loggedSets: 0,
+    it("serie 1 sin prescrito usa referencia (última vez)", () => {
+        const result = resolveRunLoggerDefaults({
+            ...base,
+            setIndex: 1,
+            plannedWeight: null,
+            reference: {
+                source: "last_session",
+                weight_kg: 52.5,
+                reps: 9,
+                rpe: 7,
+                rounds_completed: null,
+                total_seconds: null,
+                performed_at: null,
+                session_date_label: null,
             },
-            { weight: 40, reps: 10, rpe: 8 }
-        );
-        expect(payload.suggestion_snapshot).toBeUndefined();
+        });
+        expect(result.weight).toBe(52.5);
     });
 
-    it("embeds suggestion_snapshot when card was visible", () => {
-        const payload = buildAthleteRunExecutionPayload(
-            99,
-            {
-                stepKey: "SBE:1:S1",
-                blockExerciseId: 1,
-                exerciseId: 2,
-                name: "Curl",
-                blockName: "Bloque",
-                groupKind: "single_set",
-                setLabel: "S1",
-                setIndex: 1,
-                totalSetsInSlot: 4,
-                plannedLabel: "4×10",
-                plannedWeight: 20,
-                defaultWeight: 20,
-                defaultReps: 10,
-                restSeconds: 90,
-                defaultRpe: 8,
-                videoUrl: null,
-                loggedSets: 0,
+    it("serie 1 sin prescrito ni referencia usa defaultWeight", () => {
+        const result = resolveRunLoggerDefaults({
+            ...base,
+            setIndex: 1,
+            plannedWeight: null,
+            reference: null,
+        });
+        expect(result.weight).toBe(40);
+    });
+
+    it("ignora referencia con peso 0 y usa defaultWeight del paso", () => {
+        const result = resolveRunLoggerDefaults({
+            ...base,
+            setIndex: 1,
+            plannedWeight: null,
+            reference: {
+                source: "previous_session_same_set",
+                weight_kg: 0,
+                reps: 5,
+                rpe: 2,
+                rounds_completed: null,
+                total_seconds: null,
+                performed_at: null,
+                session_date_label: null,
             },
-            { weight: 42.5, reps: 10, rpe: 8 },
-            visibleWeightSuggestion
-        );
-        expect(payload.suggestion_snapshot?.suggested_weight_kg).toBe(42.5);
-        expect(payload.source).toBe("run_live");
+        });
+        expect(result.weight).toBe(40);
     });
-});
 
-describe("attachSuggestionSnapshotToExecutionPayload", () => {
-    it("preserves existing fields when attaching snapshot", () => {
-        const base = {
-            training_session_id: 1,
-            step_key: "SBE:1:S1",
-            exercise_id: 2,
-            weight_kg: 40,
-        };
-        const next = attachSuggestionSnapshotToExecutionPayload(
-            base,
-            visibleWeightSuggestion
-        );
-        expect(next.weight_kg).toBe(40);
-        expect(next.suggestion_snapshot?.suggestion_shown).toBe(true);
+    it("serie 2+ sin prescrito usa referencia contextual (p. ej. serie anterior hoy)", () => {
+        const result = resolveRunLoggerDefaults({
+            ...base,
+            setIndex: 3,
+            plannedWeight: null,
+            reference: {
+                source: "same_session_previous_set",
+                weight_kg: 52.5,
+                reps: 8,
+                rpe: 7,
+                rounds_completed: null,
+                total_seconds: null,
+                performed_at: null,
+                session_date_label: "Hoy · Serie 2",
+            },
+        });
+        expect(result.weight).toBe(52.5);
+        expect(result.rpe).toBe(7);
     });
 });

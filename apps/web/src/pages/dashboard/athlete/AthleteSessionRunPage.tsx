@@ -130,8 +130,6 @@ export const AthleteSessionRunPage: React.FC = () => {
         isTimedRunReferenceLoading,
         slotReferences,
         isSlotReferencesLoading,
-        applyReferenceValues,
-        applySuggestionValues,
         progressPendingStepCount,
         sessionName,
         finishSession,
@@ -453,6 +451,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                         getExerciseNote={getDraftForSlot}
                         onExerciseNoteChange={setDraftForSlot}
                         exerciseNoteDisabled={exerciseNoteDisabled}
+                        hideSessionProgressHeader={!isDesktop}
                     />
                 ) : isGroupRound && groupContext ? (
                     <GroupRoundStepView
@@ -475,6 +474,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                         getExerciseNote={getDraftForSlot}
                         onExerciseNoteChange={setDraftForSlot}
                         exerciseNoteDisabled={exerciseNoteDisabled}
+                        hideSessionProgressHeader={!isDesktop}
                     />
                 ) : current ? (
                     <ExerciseStepView
@@ -501,8 +501,6 @@ export const AthleteSessionRunPage: React.FC = () => {
                         }
                         runReference={runReference}
                         isRunReferenceLoading={isRunReferenceLoading}
-                        onApplyReference={applyReferenceValues}
-                        onApplySuggestion={applySuggestionValues}
                         groupContext={groupContext}
                         showLogger={restFlow.showLogger}
                         onViewTechnique={setTechniqueTarget}
@@ -518,6 +516,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                                 : undefined
                         }
                         exerciseNoteDisabled={exerciseNoteDisabled}
+                        hideSessionProgressHeader={!isDesktop}
                     />
                 ) : null}
             </AthleteRunStepShell>
@@ -527,6 +526,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                     remainingSeconds={restFlow.remainingSeconds}
                     totalSeconds={restFlow.restTotalSeconds}
                     onSkip={restFlow.skipRest}
+                    onEditData={restFlow.editRestFromOverlay}
                 />
             ) : null}
 

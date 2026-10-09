@@ -1,5 +1,5 @@
 /**
- * WeekStripPremium.tsx — Calendario semanal glass + segmentos + ring draw-in (V01 canónico).
+ * WeekStripPremium.tsx — Calendario semanal glass + ring (V01 canónico).
  * Respaldo plano: `WeekStripClassic.tsx`.
  */
 
@@ -13,24 +13,16 @@ import {
     getDayProgressState,
     type WeekProgressDotState,
 } from "@nexia/shared/utils/athlete/athleteWeekInsightUtils";
-import { AthleteWeekProgressRing } from "./AthleteWeekProgressRing";
-import { WeekSessionSegmentBar } from "./WeekSessionSegmentBar";
+import { AthleteProgressRing } from "@/components/athlete/AthleteProgressRing";
 import {
     WEEK_STRIP_SECTION_LABEL,
     WEEK_STRIP_SHELL,
+    weekStripSectionAriaLabel,
 } from "./weekStripPresentation";
 
 export interface WeekStripPremiumProps {
     days: WeekDayStripItem[];
     onDayClick?: (day: WeekDayStripItem) => void;
-}
-
-function sessionCountLabel(done: number, planned: number): string {
-    if (planned === 0) return "Sin sesiones";
-    if (planned === 1) {
-        return done === 1 ? "1/1 hecha" : "1 sesión";
-    }
-    return `${done}/${planned}`;
 }
 
 function dayDateBoxClass(
@@ -78,20 +70,14 @@ export const WeekStripPremium: React.FC<WeekStripPremiumProps> = ({ days, onDayC
     };
 
     return (
-        <section aria-label="Esta semana" className="space-y-2">
-            <div className="flex items-baseline justify-between gap-2 px-0.5">
-                <h2 className={WEEK_STRIP_SECTION_LABEL}>Esta semana</h2>
-                <p className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
-                    {sessionCountLabel(done, planned)}
-                </p>
-            </div>
+        <section
+            aria-label={weekStripSectionAriaLabel(done, planned)}
+            className="space-y-2"
+        >
+            <h2 className={cn(WEEK_STRIP_SECTION_LABEL, "px-0.5")}>Esta semana</h2>
 
             <div className={WEEK_STRIP_SHELL}>
                 <NexiaGlassAccentRim />
-
-                {planned > 0 && (
-                    <WeekSessionSegmentBar done={done} planned={planned} className="relative" />
-                )}
 
                 <div className="relative flex items-center gap-2 sm:gap-3">
                     <div className="grid min-w-0 flex-1 grid-cols-7 gap-0.5">
@@ -140,7 +126,14 @@ export const WeekStripPremium: React.FC<WeekStripPremiumProps> = ({ days, onDayC
                         })}
                     </div>
 
-                    {planned > 0 && <AthleteWeekProgressRing done={done} planned={planned} />}
+                    {planned > 0 && (
+                        <AthleteProgressRing
+                            progress={done / planned}
+                            displayValue={`${done}/${planned}`}
+                            ariaLabel={`${done} de ${planned} sesiones completadas esta semana`}
+                            size="md"
+                        />
+                    )}
                 </div>
             </div>
         </section>

@@ -1,13 +1,25 @@
 /**
  * athleteProgressUtils.ts — Agregaciones de progreso atleta (F2 V10/V11).
- * Sin DOM — reutilizable en hooks.
+ * Contexto: builders puros para el hook de Mi progreso; sin DOM.
+ * Notas: primer peso no es PR; adherencia excluye futuras y skipped/cancelled.
+ * L-1: ~430 líneas de un circuito tracking/sesiones; partirlo duplicaría agrupación.
+ * @author Frontend Team
+ * @since v6.1.0
  */
 
 import type { ProgressTracking } from "../../types/progress";
 import type { TrainingSession } from "../../types/trainingSessions";
-import { parseSessionDateLocal, toLocalDateKey } from "./athleteSessionUtils";
+import { getMondayOfWeekLocal } from "../calendarWeekForBlock";
+import {
+    type AthleteDateRange,
+    formatWeekAxisLabel,
+    isDateInAthleteRange,
+    iterateMondaysInclusive,
+} from "./athleteProgressPeriod";
+import { toLocalDateKey } from "./athleteSessionUtils";
 
 export interface WeeklyActivityBar {
+    weekKey: string;
     week: string;
     count: number;
 }
@@ -26,176 +38,248 @@ export interface RecentRecordRow {
     maxWeight: number | null;
     maxReps: number | null;
     trackingDate: string;
+    previousMaxWeight: number | null;
     isPersonalBest: boolean;
 }
 
-const MS_30_DAYS = 30 * 24 * 60 * 60 * 1000;
-
-function isoWeekLabel(date: Date): string {
-    const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-    const monday = new Date(date);
-    monday.setDate(diff);
-    const month = monday.getMonth() + 1;
-    return `${monday.getDate()}/${month}`;
+export interface AdherenceSnapshot {
+    percent: number | null;
+    completed: number;
+    planned: number;
 }
 
-/** Barras sesiones completadas por semana (últimas 8 semanas con datos). */
+export interface NamedProgressRows<T> {
+    rows: T[];
+    unresolvedIds: number[];
+}
+
+const EXCLUDED_ADHERENCE_STATUSES = new Set(["skipped", "cancelled"]);
+const MAX_WEEK_BARS = 12;
+
+function trackingDateKey(row: ProgressTracking): string | null {
+    if (!row.tracking_date) return null;
+    return row.tracking_date.slice(0, 10);
+}
+
+function isCountablePlannedSession(session: TrainingSession, todayKey: string): boolean {
+    if (!session.session_date) return false;
+    if (session.is_active === false) return false;
+    const dateKey = session.session_date.slice(0, 10);
+    if (dateKey > todayKey) return false;
+    const status = session.status ?? "";
+    if (EXCLUDED_ADHERENCE_STATUSES.has(status)) return false;
+    return true;
+}
+
+/** Adherencia: vencidas no skipped/cancelled en el rango; % y fracción de la misma cuenta. */
+export function computeAdherence(
+    sessions: TrainingSession[],
+    range: AthleteDateRange,
+    todayKey: string
+): AdherenceSnapshot {
+    const plannedSessions = sessions.filter(
+        (session) =>
+            isCountablePlannedSession(session, todayKey) &&
+            isDateInAthleteRange(session.session_date, range)
+    );
+    const planned = plannedSessions.length;
+    if (planned === 0) {
+        return { percent: null, completed: 0, planned: 0 };
+    }
+    const completed = plannedSessions.filter((s) => s.status === "completed").length;
+    return {
+        percent: Math.round((completed / planned) * 100),
+        completed,
+        planned,
+    };
+}
+
+/** @deprecated Usar computeAdherence con rango explícito. */
+export function computeAdherence30d(
+    sessions: TrainingSession[],
+    today: Date = new Date()
+): AdherenceSnapshot {
+    const todayKey = toLocalDateKey(today);
+    const start = toLocalDateKey(
+        new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29)
+    );
+    return computeAdherence(sessions, { start, end: todayKey }, todayKey);
+}
+
+/** Barras de sesiones completadas, semanas continuas (incluye ceros). */
 export function buildWeeklyActivityBars(
     sessions: TrainingSession[],
-    weeks = 8
+    range: AthleteDateRange,
+    maxWeeks = MAX_WEEK_BARS
 ): WeeklyActivityBar[] {
-    const completed = sessions.filter(
-        (s) => s.status === "completed" && s.session_date
-    );
-
-    const counts = new Map<string, { sortKey: string; count: number }>();
-
-    for (const session of completed) {
-        const date = parseSessionDateLocal(session.session_date!);
-        const label = isoWeekLabel(date);
-        const sortKey = toLocalDateKey(date);
-        const existing = counts.get(label);
-        if (existing) {
-            existing.count += 1;
-            if (sortKey < existing.sortKey) existing.sortKey = sortKey;
-        } else {
-            counts.set(label, { sortKey, count: 1 });
-        }
+    const counts = new Map<string, number>();
+    for (const session of sessions) {
+        if (session.status !== "completed" || !session.session_date) continue;
+        if (!isDateInAthleteRange(session.session_date, range)) continue;
+        const monday = getMondayOfWeekLocal(session.session_date.slice(0, 10));
+        counts.set(monday, (counts.get(monday) ?? 0) + 1);
     }
 
-    return [...counts.entries()]
-        .sort((a, b) => a[1].sortKey.localeCompare(b[1].sortKey))
-        .slice(-weeks)
-        .map(([week, { count }]) => ({ week, count }));
+    const mondays = iterateMondaysInclusive(range.start, range.end);
+    const bars = mondays.map((weekKey) => ({
+        weekKey,
+        week: formatWeekAxisLabel(weekKey),
+        count: counts.get(weekKey) ?? 0,
+    }));
+    return bars.length > maxWeeks ? bars.slice(-maxWeeks) : bars;
 }
 
-function withinLast30Days(isoDate: string): boolean {
-    const t = parseSessionDateLocal(isoDate).getTime();
-    return Date.now() - t <= MS_30_DAYS;
+/** Semanas seguidas con >= 1 sesión; ignora un 0 final (semana en curso vacía). */
+export function countTrailingTrainingWeeks(bars: WeeklyActivityBar[]): number {
+    if (bars.length === 0) return 0;
+    let index = bars.length - 1;
+    if (bars[index].count === 0) index -= 1;
+    let streak = 0;
+    while (index >= 0 && bars[index].count >= 1) {
+        streak += 1;
+        index -= 1;
+    }
+    return streak;
 }
 
-/** Top ejercicios por Δ peso en ventana 30d (desde ProgressTracking). */
-export function buildTopExercises(
+function groupTrackingByExercise(
     tracking: ProgressTracking[],
-    exerciseNames: Map<number, string>,
-    limit = 5
-): TopExerciseRow[] {
+    range?: AthleteDateRange
+): Map<number, ProgressTracking[]> {
     const byExercise = new Map<number, ProgressTracking[]>();
-
     for (const row of tracking) {
-        if (!row.is_active) continue;
+        if (row.is_active === false) continue;
+        const dateKey = trackingDateKey(row);
+        if (!dateKey) continue;
+        if (range && !isDateInAthleteRange(dateKey, range)) continue;
         const list = byExercise.get(row.exercise_id) ?? [];
         list.push(row);
         byExercise.set(row.exercise_id, list);
     }
+    return byExercise;
+}
 
+/** Top ejercicios: delta neto primer vs último del periodo. Sin nombre → omitir. */
+export function buildTopExercises(
+    tracking: ProgressTracking[],
+    exerciseNames: Map<number, string>,
+    range: AthleteDateRange,
+    limit = 5
+): NamedProgressRows<TopExerciseRow> {
+    const unresolvedIds: number[] = [];
     const rows: TopExerciseRow[] = [];
 
-    for (const [exerciseId, records] of byExercise) {
-        const sorted = [...records].sort((a, b) =>
-            a.tracking_date.localeCompare(b.tracking_date)
-        );
-        const recent = sorted.filter((r) => withinLast30Days(r.tracking_date));
-        if (recent.length === 0) continue;
+    for (const [exerciseId, records] of groupTrackingByExercise(tracking, range)) {
+        const name = exerciseNames.get(exerciseId)?.trim();
+        if (!name) {
+            unresolvedIds.push(exerciseId);
+            continue;
+        }
 
-        const meaningful = recent.filter((r) => (r.max_weight ?? 0) > 0);
-        const pool = meaningful.length > 0 ? meaningful : recent;
-        const latest = pool[pool.length - 1];
-        const previous =
-            pool.length >= 2 ? pool[pool.length - 2] : null;
+        const sorted = [...records].sort((a, b) =>
+            (a.tracking_date ?? "").localeCompare(b.tracking_date ?? "")
+        );
+        const withWeight = sorted.filter((r) => (r.max_weight ?? 0) > 0);
+        if (withWeight.length === 0) continue;
+
+        const first = withWeight[0];
+        const latest = withWeight[withWeight.length - 1];
         const latestWeight = latest.max_weight;
         let weightDelta: number | null = null;
         if (
+            withWeight.length >= 2 &&
             latestWeight != null &&
-            previous?.max_weight != null
+            first.max_weight != null
         ) {
-            weightDelta = Math.round((latestWeight - previous.max_weight) * 10) / 10;
+            weightDelta = Math.round((latestWeight - first.max_weight) * 10) / 10;
         }
 
         rows.push({
             exerciseId,
-            exerciseName: exerciseNames.get(exerciseId) ?? `Ejercicio #${exerciseId}`,
+            exerciseName: name,
             latestWeight,
             weightDelta,
-            lastDate: latest.tracking_date,
+            lastDate: latest.tracking_date ?? "",
         });
     }
 
-    return rows
-        .sort((a, b) => Math.abs(b.weightDelta ?? 0) - Math.abs(a.weightDelta ?? 0))
-        .slice(0, limit);
+    const ranked = [...rows].sort((a, b) => {
+        const aGain = a.weightDelta != null && a.weightDelta > 0 ? a.weightDelta : -1;
+        const bGain = b.weightDelta != null && b.weightDelta > 0 ? b.weightDelta : -1;
+        if (bGain !== aGain) return bGain - aGain;
+        return (b.latestWeight ?? 0) - (a.latestWeight ?? 0);
+    });
+
+    return { rows: ranked.slice(0, limit), unresolvedIds };
 }
 
-/** PRs recientes: registros donde max_weight alcanza máximo histórico del ejercicio. */
+function collectPersonalRecordEvents(tracking: ProgressTracking[]): RecentRecordRow[] {
+    const events: RecentRecordRow[] = [];
+    const byExercise = groupTrackingByExercise(tracking);
+
+    for (const [exerciseId, records] of byExercise) {
+        const sorted = [...records]
+            .filter((r) => r.max_weight != null)
+            .sort((a, b) => (a.tracking_date ?? "").localeCompare(b.tracking_date ?? ""));
+        let runningMax = 0;
+        for (const row of sorted) {
+            const weight = row.max_weight ?? 0;
+            if (weight <= runningMax) continue;
+            const previousMax = runningMax > 0 ? runningMax : null;
+            runningMax = weight;
+            if (previousMax == null) continue;
+            events.push({
+                exerciseId,
+                exerciseName: "",
+                maxWeight: row.max_weight,
+                maxReps: row.max_reps,
+                trackingDate: row.tracking_date ?? "",
+                previousMaxWeight: previousMax,
+                isPersonalBest: true,
+            });
+        }
+    }
+
+    return events;
+}
+
+/** PRs: exige marca previa del mismo ejercicio. Sin tope de conteo. */
+export function countPersonalRecords(
+    tracking: ProgressTracking[],
+    range?: AthleteDateRange,
+    exerciseNames?: Map<number, string>
+): number {
+    return collectPersonalRecordEvents(tracking).filter((row) => {
+        if (range && !isDateInAthleteRange(row.trackingDate, range)) return false;
+        if (exerciseNames && !exerciseNames.get(row.exerciseId)?.trim()) return false;
+        return true;
+    }).length;
+}
+
+/** PRs recientes para lista (tope visual). Omite ejercicios sin nombre. */
 export function buildRecentRecords(
     tracking: ProgressTracking[],
     exerciseNames: Map<number, string>,
+    range?: AthleteDateRange,
     limit = 5
-): RecentRecordRow[] {
-    const byExercise = new Map<number, ProgressTracking[]>();
-    const maxWeightByExercise = new Map<number, number>();
-
-    for (const row of tracking) {
-        if (!row.is_active || row.max_weight == null) continue;
-        const list = byExercise.get(row.exercise_id) ?? [];
-        list.push(row);
-        byExercise.set(row.exercise_id, list);
-        const prev = maxWeightByExercise.get(row.exercise_id) ?? 0;
-        if (row.max_weight > prev) {
-            maxWeightByExercise.set(row.exercise_id, row.max_weight);
+): NamedProgressRows<RecentRecordRow> {
+    const unresolvedIds: number[] = [];
+    const named: RecentRecordRow[] = [];
+    for (const event of collectPersonalRecordEvents(tracking)) {
+        if (range && !isDateInAthleteRange(event.trackingDate, range)) continue;
+        const name = exerciseNames.get(event.exerciseId)?.trim();
+        if (!name) {
+            unresolvedIds.push(event.exerciseId);
+            continue;
         }
+        named.push({ ...event, exerciseName: name });
     }
-
-    const prEvents: RecentRecordRow[] = [];
-
-    for (const [exerciseId, records] of byExercise) {
-        const sorted = [...records].sort((a, b) =>
-            a.tracking_date.localeCompare(b.tracking_date)
-        );
-        let runningMax = 0;
-        for (const r of sorted) {
-            const w = r.max_weight ?? 0;
-            const isPb = w > runningMax;
-            if (isPb) {
-                runningMax = w;
-                prEvents.push({
-                    exerciseId,
-                    exerciseName:
-                        exerciseNames.get(exerciseId) ?? `Ejercicio #${exerciseId}`,
-                    maxWeight: r.max_weight,
-                    maxReps: r.max_reps,
-                    trackingDate: r.tracking_date,
-                    isPersonalBest: true,
-                });
-            }
-        }
-    }
-
-    return prEvents
-        .sort((a, b) => b.trackingDate.localeCompare(a.trackingDate))
-        .slice(0, limit);
-}
-
-/** Adherencia 30d desde sesiones planificadas vs completadas. */
-export function computeAdherence30d(sessions: TrainingSession[]): {
-    percent: number | null;
-    completed: number;
-    planned: number;
-} {
-    const cutoff = Date.now() - MS_30_DAYS;
-    const inWindow = sessions.filter((s) => {
-        if (!s.session_date) return false;
-        return parseSessionDateLocal(s.session_date).getTime() >= cutoff;
-    });
-
-    if (inWindow.length === 0) {
-        return { percent: null, completed: 0, planned: 0 };
-    }
-
-    const completed = inWindow.filter((s) => s.status === "completed").length;
-    const percent = Math.round((completed / inWindow.length) * 100);
-    return { percent, completed, planned: inWindow.length };
+    return {
+        rows: named
+            .sort((a, b) => b.trackingDate.localeCompare(a.trackingDate))
+            .slice(0, limit),
+        unresolvedIds: [...new Set(unresolvedIds)],
+    };
 }
 
 export interface ExerciseProgressChartPoint {

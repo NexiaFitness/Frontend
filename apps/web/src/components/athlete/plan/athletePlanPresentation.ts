@@ -11,7 +11,11 @@ import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentati
 
 export const ATHLETE_PLAN_HERO = cn(NEXIA_GLASS_CARD, "relative space-y-5 p-4 pt-5");
 
-export const ATHLETE_PLAN_RING = "relative flex size-[4.5rem] shrink-0 items-center justify-center";
+/** Fila / tarjeta compacta calidades (reutilizado en editor plantilla). */
+export const ATHLETE_PLAN_QUALITY_ROW = cn(
+    NEXIA_GLASS_CARD,
+    "relative space-y-3 p-4"
+);
 
 export const ATHLETE_PLAN_LOAD_TRACK = ATHLETE_PROGRESS_TRACK;
 
@@ -19,15 +23,23 @@ export const ATHLETE_PLAN_LOAD_FILL_PRIMARY = ATHLETE_PROGRESS_FILL.primary;
 
 export const ATHLETE_PLAN_LOAD_FILL_WARNING = ATHLETE_PROGRESS_FILL.warning;
 
-export const ATHLETE_PLAN_QUALITY_ROW = cn(
-    NEXIA_GLASS_CARD,
-    "relative space-y-2 p-3"
-);
-
 export const ATHLETE_PLAN_TIMELINE_ITEM = cn(
-    "flex min-w-[3.25rem] flex-col items-center gap-1 rounded-lg border px-1.5 py-2 text-center transition-colors",
+    "flex min-w-0 flex-col gap-1.5 rounded-lg border px-2 py-2 transition-colors",
     "border-border/60 bg-card/40"
 );
+
+export const ATHLETE_PLAN_TIMELINE_MONTH = "text-[10px] font-semibold uppercase tracking-wide";
+
+export const ATHLETE_PLAN_TIMELINE_LOAD_ROW = "flex items-baseline justify-between gap-1";
+
+export const ATHLETE_PLAN_TIMELINE_LOAD_LABEL =
+    "text-[9px] font-semibold uppercase tracking-wide text-muted-foreground";
+
+export const ATHLETE_PLAN_TIMELINE_LOAD_VOL =
+    "text-[10px] font-bold tabular-nums text-primary";
+
+export const ATHLETE_PLAN_TIMELINE_LOAD_INT =
+    "text-[10px] font-bold tabular-nums text-warning";
 
 export const ATHLETE_PLAN_TIMELINE_ITEM_CURRENT = cn(
     ATHLETE_PLAN_TIMELINE_ITEM,

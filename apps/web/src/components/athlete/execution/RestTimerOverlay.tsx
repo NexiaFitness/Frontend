@@ -18,6 +18,7 @@ import {
     ATHLETE_RUN_REST_OVERLAY_RING_PROGRESS,
     ATHLETE_RUN_REST_OVERLAY_RING_TRACK,
     ATHLETE_RUN_REST_OVERLAY_RING_URGENT,
+    ATHLETE_RUN_REST_OVERLAY_EDIT,
     ATHLETE_RUN_REST_OVERLAY_SKIP,
     ATHLETE_RUN_REST_OVERLAY_TIME,
     ATHLETE_RUN_REST_OVERLAY_TIME_PULSE,
@@ -29,6 +30,7 @@ export interface RestTimerOverlayProps {
     /** Descanso prescrito total — base del anillo (puede ser > remaining si hubo logging_rest). */
     totalSeconds: number;
     onSkip: () => void;
+    onEditData: () => void;
 }
 
 const RING_RADIUS = 78;
@@ -38,6 +40,7 @@ export const RestTimerOverlay: React.FC<RestTimerOverlayProps> = ({
     remainingSeconds,
     totalSeconds,
     onSkip,
+    onEditData,
 }) => {
     const display = Math.max(0, remainingSeconds);
     const urgent = display > 0 && display <= 10;
@@ -125,13 +128,22 @@ export const RestTimerOverlay: React.FC<RestTimerOverlayProps> = ({
                         Recupera antes del siguiente paso
                     </p>
 
-                    <button
-                        type="button"
-                        className={ATHLETE_RUN_REST_OVERLAY_SKIP}
-                        onClick={onSkip}
-                    >
-                        Saltar descanso
-                    </button>
+                    <div className="mt-6 flex w-full max-w-xs flex-col gap-3">
+                        <button
+                            type="button"
+                            className={ATHLETE_RUN_REST_OVERLAY_EDIT}
+                            onClick={onEditData}
+                        >
+                            Editar datos
+                        </button>
+                        <button
+                            type="button"
+                            className={ATHLETE_RUN_REST_OVERLAY_SKIP}
+                            onClick={onSkip}
+                        >
+                            Saltar descanso
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,5 +1,9 @@
 /**
- * AthleteSessionListItem.tsx — Fila sesión premium en lista V02.
+ * AthleteSessionListItem.tsx — Fila sesión canónica (V02 + historial V10).
+ * Contexto: misma card en Mis sesiones y Mi progreso; copy de V04 (cualidad / músculos).
+ * Notas: sin barra de cumplimiento a ancho; el % va en badge. VOL/INT decorativos (la fila es el hit).
+ * @author Frontend Team
+ * @since v6.1.0
  */
 
 import React from "react";
@@ -7,16 +11,24 @@ import { ChevronRight, Clock } from "lucide-react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { NEXIA_ROW_CHEVRON } from "@/components/ui/surface/platformPremiumPresentation";
 import { cn } from "@/lib/utils";
-import { AthleteProgressBar } from "@/components/athlete/AthleteProgressBar";
+import { AthleteSessionPlannedLoadBars } from "@/components/athlete/AthleteSessionPlannedLoadBars";
 import {
     ATHLETE_SESSION_COMPLETION_BADGE,
+    ATHLETE_SESSION_LIST_BODY,
     ATHLETE_SESSION_LIST_ITEM,
     ATHLETE_SESSION_LIST_ITEM_TODAY,
+    ATHLETE_SESSION_LIST_META,
+    ATHLETE_SESSION_LIST_TITLE,
     ATHLETE_SESSION_STATUS_BADGE,
+    resolveAthleteSessionCompletionTone,
     resolveAthleteSessionStatusBadge,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
 import type { AthleteRunSessionRegistrationMetaRow } from "@nexia/shared/types/athleteRunProgress";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
+import {
+    resolveAgendaTrainingHeadline,
+    resolveAgendaTrainingSubline,
+} from "@nexia/shared/utils/athlete/athleteAgendaViewUtils";
 import {
     athleteSessionListRegistrationLabel,
     resolveAthleteSessionListRegistrationCue,
@@ -29,26 +41,13 @@ import {
     isPartiallyClosedSession,
     isSessionToday,
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
+import { hasAthleteSessionPlannedLoad } from "@nexia/shared/utils/athlete/athleteSessionPlannedLoad";
 
 export interface AthleteSessionListItemProps {
     session: TrainingSession;
     onSelect: (sessionId: number) => void;
     registrationMeta?: AthleteRunSessionRegistrationMetaRow;
     hasActivePlan?: boolean;
-}
-
-function statusBadgeVariant(session: TrainingSession) {
-    return resolveAthleteSessionStatusBadge(session);
-}
-
-function completionTone(
-    completion: number,
-    isPartial: boolean
-): "success" | "warning" | "primary" {
-    if (isPartial) return "warning";
-    if (completion >= 90) return "success";
-    if (completion >= 70) return "primary";
-    return "warning";
 }
 
 export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
@@ -66,8 +65,14 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
     const completion = getCompletedSessionCompletionPercent(session);
     const isPartial = isPartiallyClosedSession(session);
     const isToday = isSessionToday(session);
-    const tone = completion != null ? completionTone(completion, isPartial) : null;
-    const statusVariant = statusBadgeVariant(session);
+    const tone =
+        completion != null
+            ? resolveAthleteSessionCompletionTone(completion, isPartial)
+            : null;
+    const statusVariant = resolveAthleteSessionStatusBadge(session);
+    const title = resolveAgendaTrainingHeadline(session) ?? session.session_name;
+    const muscles = resolveAgendaTrainingSubline(session);
+    const showLoad = hasAthleteSessionPlannedLoad(session);
 
     return (
         <button
@@ -79,10 +84,19 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
                 isToday && cn(ATHLETE_SESSION_LIST_ITEM_TODAY, "pt-5"),
                 !isToday && "pt-4"
             )}
+            aria-label={[
+                statusLabel,
+                title,
+                session.session_date ? formatAthleteDate(session.session_date) : null,
+                muscles,
+                completion != null ? `${Math.round(completion)} por ciento` : null,
+            ]
+                .filter(Boolean)
+                .join(", ")}
         >
             {isToday && <NexiaGlassAccentRim />}
 
-            <div className="relative min-w-0 flex-1 space-y-2.5">
+            <div className={ATHLETE_SESSION_LIST_BODY}>
                 <div className="flex flex-wrap items-center gap-2">
                     <span className={ATHLETE_SESSION_STATUS_BADGE[statusVariant]}>
                         {statusLabel}
@@ -93,7 +107,7 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
                         </span>
                     )}
                     {session.session_date && (
-                        <span className="text-caption text-muted-foreground">
+                        <span className={ATHLETE_SESSION_LIST_META}>
                             {formatAthleteDate(session.session_date)}
                         </span>
                     )}
@@ -104,9 +118,9 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
                     )}
                 </div>
 
-                <p className="truncate text-left font-semibold leading-snug text-foreground">
-                    {session.session_name}
-                </p>
+                <p className={ATHLETE_SESSION_LIST_TITLE}>{title}</p>
+
+                {muscles ? <p className={ATHLETE_SESSION_LIST_META}>{muscles}</p> : null}
 
                 {registrationLabel ? (
                     <p
@@ -122,21 +136,17 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
                     </p>
                 ) : null}
 
-                {session.planned_duration != null && (
+                {session.planned_duration != null ? (
                     <p className="flex items-center gap-1.5 text-caption text-muted-foreground">
                         <Clock className="size-3.5 text-primary/60" aria-hidden />
                         {session.planned_duration} min
                     </p>
-                )}
-
-                {completion != null && tone && (
-                    <AthleteProgressBar
-                        value={completion}
-                        tone={tone}
-                        aria-label={`Cumplimiento ${Math.round(completion)} por ciento`}
-                    />
-                )}
+                ) : null}
             </div>
+
+            {showLoad ? (
+                <AthleteSessionPlannedLoadBars session={session} interactive={false} />
+            ) : null}
 
             <ChevronRight className={cn("relative", NEXIA_ROW_CHEVRON)} aria-hidden />
         </button>

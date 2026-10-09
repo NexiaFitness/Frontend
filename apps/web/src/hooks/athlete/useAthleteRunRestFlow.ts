@@ -1,6 +1,7 @@
 /**
  * useAthleteRunRestFlow.ts — Máquina de descanso V05 (§5a spec).
  * B6: countdown por deadline Date.now(); recálculo en visibilitychange.
+ * D-REST-01: «Empezar descanso» manual; D-REST-02: overlay tras «Guardar» (single_set) con timer activo.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -8,13 +9,20 @@ import {
     remainingSecondsUntil,
     useAthleteWallClockTick,
 } from "@/hooks/athlete/athleteWallClock";
+import type { AthleteRunRestPhase } from "@nexia/shared/utils/athlete/athleteRunRestPhase";
+import {
+    restPhaseAfterConfirmSaved,
+    shouldShowRestChip,
+    shouldShowRestOverlay,
+    shouldShowRunLogger,
+} from "@nexia/shared/utils/athlete/athleteRunRestPhase";
 
-export type AthleteRunRestPhase = "doing" | "logging_rest" | "rest_overlay";
+export type { AthleteRunRestPhase } from "@nexia/shared/utils/athlete/athleteRunRestPhase";
 
 export interface UseAthleteRunRestFlowOptions {
     /** Segundos prescritos tras confirmar; null/0 = sin chip ni overlay */
     restAfterSeconds: number | null;
-    /** Tap 2: «Serie completada», «Ronda completada», etc. */
+    /** Tap 2: «Guardar» (single_set), «Ronda completada», etc. */
     confirmLabel: string;
     /** Estable entre pasos — reinicia fase al cambiar */
     stepKey: string | null;
@@ -112,16 +120,31 @@ export function useAthleteRunRestFlow({
         }
         if (!shouldAdvance) return;
         restFlowHaptic(20);
-        // Tras guardar, permanecer en logging_rest (logger visible) para re-edición B2;
-        // el chip de descanso sigue; overlay fullscreen solo si el atleta lo pide aparte.
-        if (hasRestTimer && remainingSeconds > 0) {
-            setPhase("logging_rest");
-        } else {
-            restDeadlineMsRef.current = null;
-            setPhase("doing");
-            onRestCompleteRef.current();
+
+        const deadline = restDeadlineMsRef.current;
+        const remainingNow =
+            deadline != null ? remainingSecondsUntil(deadline) : 0;
+        setRemainingSeconds(remainingNow);
+
+        const restWasActive =
+            deadline != null &&
+            (phase === "logging_rest" || phase === "rest_overlay");
+
+        const next = restPhaseAfterConfirmSaved({
+            hasRestTimer,
+            remainingSeconds: remainingNow,
+            restCountdownWasActive: restWasActive,
+        });
+
+        if (next === "rest_overlay") {
+            setPhase("rest_overlay");
+            return;
         }
-    }, [confirmLoading, hasRestTimer, isConfirmValid, onConfirm, remainingSeconds]);
+
+        restDeadlineMsRef.current = null;
+        setPhase("doing");
+        onRestCompleteRef.current();
+    }, [confirmLoading, hasRestTimer, isConfirmValid, onConfirm, phase]);
 
     const skipRest = useCallback(() => {
         restDeadlineMsRef.current = null;
@@ -130,13 +153,15 @@ export function useAthleteRunRestFlow({
         onRestCompleteRef.current();
     }, []);
 
-    const showLogger =
-        phase === "logging_rest" ||
-        (phase === "doing" && !requireStartBeforeLog);
+    const editRestFromOverlay = useCallback(() => {
+        if (phase !== "rest_overlay") return;
+        setPhase("logging_rest");
+        tickRest();
+    }, [phase, tickRest]);
 
-    const showRestChip = phase === "logging_rest" && hasRestTimer && remainingSeconds > 0;
-
-    const showRestOverlay = phase === "rest_overlay" && remainingSeconds > 0;
+    const showLogger = shouldShowRunLogger(phase, requireStartBeforeLog);
+    const showRestChip = shouldShowRestChip(phase, hasRestTimer, remainingSeconds);
+    const showRestOverlay = shouldShowRestOverlay(phase, remainingSeconds);
 
     let stickyPrimaryLabel: string | undefined;
     let stickyPrimaryAction: (() => void) | undefined;
@@ -165,6 +190,7 @@ export function useAthleteRunRestFlow({
         stickyPrimaryLoading: confirmLoading,
         skipRest,
         startRest,
+        editRestFromOverlay,
     };
 }
 

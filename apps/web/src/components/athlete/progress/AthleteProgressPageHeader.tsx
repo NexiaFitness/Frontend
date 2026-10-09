@@ -1,5 +1,8 @@
 /**
  * AthleteProgressPageHeader.tsx — Cabecera premium V10 progreso.
+ * Contexto: volver, chip de bloque (PROG-3) y selector de periodo.
+ * @author Frontend Team
+ * @since v6.1.0
  */
 
 import React from "react";
@@ -10,13 +13,20 @@ import {
     ATHLETE_SECTION_LABEL,
 } from "@/components/athlete/account/athleteSettingsPresentation";
 import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
+import { ATHLETE_PROGRESS_BLOCK_CHIP } from "./athleteProgressViewPresentation";
 
 export interface AthleteProgressPageHeaderProps {
     onBack: () => void;
+    blockChipLabel?: string | null;
+    onBlockChipClick?: () => void;
+    periodSelector?: React.ReactNode;
 }
 
 export const AthleteProgressPageHeader: React.FC<AthleteProgressPageHeaderProps> = ({
     onBack,
+    blockChipLabel,
+    onBlockChipClick,
+    periodSelector,
 }) => {
     return (
         <header className="space-y-4">
@@ -38,6 +48,16 @@ export const AthleteProgressPageHeader: React.FC<AthleteProgressPageHeaderProps>
                     </p>
                 </div>
             </div>
+            {blockChipLabel && onBlockChipClick && (
+                <button
+                    type="button"
+                    className={ATHLETE_PROGRESS_BLOCK_CHIP}
+                    onClick={onBlockChipClick}
+                >
+                    <span className="truncate">{blockChipLabel}</span>
+                </button>
+            )}
+            {periodSelector}
             <NexiaPremiumDivider className="w-full" />
         </header>
     );

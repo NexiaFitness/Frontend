@@ -16,8 +16,6 @@ import {
     usePostAthleteRunTimedResultMutation,
     usePutAthleteExerciseNoteMutation,
 } from "@nexia/shared/api/athleteApi";
-import { shouldShowRunSuggestion } from "@nexia/shared/types/athleteRunSuggestion";
-import { hasAthleteRunReferencePoint } from "@nexia/shared/types/athleteRunReference";
 import type {
     AthleteRunExecutionCreate,
     AthleteRunTimedResultCreate,
@@ -51,6 +49,7 @@ import {
     isRunStepSavedForUi,
     touchRunStepKeysForPersist,
 } from "@nexia/shared/utils/athlete/athleteRunProgressSteps";
+import { shouldAllowRestReconfirmSticky } from "@nexia/shared/utils/athlete/athleteRunRestPhase";
 import {
     buildAthleteRunGroupContext,
     buildAthleteRunGroupContextFromForTimeRound,
@@ -214,6 +213,12 @@ export function useAthleteSessionRun({
     const [weight, setWeight] = useState(0);
     const [reps, setReps] = useState(8);
     const [rpe, setRpe] = useState<number | null>(null);
+    const weightRef = useRef(weight);
+    const repsRef = useRef(reps);
+    const rpeRef = useRef(rpe);
+    weightRef.current = weight;
+    repsRef.current = reps;
+    rpeRef.current = rpe;
     const [slotLogs, setSlotLogs] = useState<Record<string, SlotLogValues>>({});
     const [roundRpe, setRoundRpe] = useState<number | null>(null);
     const [forTimeTotalSeconds, setForTimeTotalSeconds] = useState(0);
@@ -362,28 +367,6 @@ export function useAthleteSessionRun({
     const isTimedRunReferenceLoading =
         isOnline && Boolean(timedReferenceQueryArg) && isTimedRunReferenceQueryLoading;
 
-    const applyReferenceValues = useCallback(() => {
-        const ref = effectiveRunReference?.reference;
-        if (!hasAthleteRunReferencePoint(ref)) return;
-        setWeight(ref.weight_kg);
-        if (ref.reps != null) setReps(ref.reps);
-        if (ref.rpe != null) setRpe(ref.rpe);
-    }, [effectiveRunReference?.reference]);
-
-    const applySuggestionValues = useCallback(() => {
-        const suggestion = effectiveRunReference?.suggestion ?? runReference?.suggestion;
-        if (!shouldShowRunSuggestion(suggestion)) return;
-        setWeight(suggestion.suggested_value);
-        const ref = effectiveRunReference?.reference ?? runReference?.reference;
-        if (ref?.reps != null) setReps(ref.reps);
-        if (ref?.rpe != null) setRpe(ref.rpe);
-    }, [
-        effectiveRunReference?.reference,
-        effectiveRunReference?.suggestion,
-        runReference?.reference,
-        runReference?.suggestion,
-    ]);
-
     const currentRunSuggestion =
         effectiveRunReference?.suggestion ?? runReference?.suggestion ?? null;
 
@@ -510,22 +493,6 @@ export function useAthleteSessionRun({
         setAmrapValidationVisible((prev) => (prev === false ? prev : false));
     }, [currentStepKey]);
 
-    useEffect(() => {
-        if (!currentStepKey || isBatchStep) return;
-        const exercise = flatExercisesRef.current.find((item) => item.stepKey === currentStepKey);
-        if (!exercise) {
-            const fromRun = runStepsRef.current.find((item) => item.stepKey === currentStepKey);
-            if (!fromRun) return;
-            setWeight(fromRun.defaultWeight);
-            setReps(fromRun.defaultReps);
-            setRpe(fromRun.defaultRpe);
-            return;
-        }
-        setWeight(exercise.defaultWeight);
-        setReps(exercise.defaultReps);
-        setRpe(exercise.defaultRpe);
-    }, [currentStepKey, isBatchStep]);
-
     const blockTimerRef = useRef(0);
     const forTimeDataRef = useRef<{ totalSeconds: number }>({
         totalSeconds: 0,
@@ -602,9 +569,9 @@ export function useAthleteSessionRun({
             return;
         }
 
-        const payloadWeight = weight;
-        const payloadReps = reps;
-        const payloadRpe = rpe;
+        const payloadWeight = weightRef.current;
+        const payloadReps = repsRef.current;
+        const payloadRpe = rpeRef.current;
 
         setSaving(true);
         try {
@@ -979,7 +946,7 @@ export function useAthleteSessionRun({
           ? isDropsetRound
               ? "Dropset completado"
               : "Ronda completada"
-          : "Serie completada";
+          : "Guardar";
 
     const isConfirmValid = useMemo(() => {
         if (isBatchStep && currentRunStep) {
@@ -1048,8 +1015,6 @@ export function useAthleteSessionRun({
         runProgress,
         touchedWeightStepKeysRef.current
     );
-    const showStepActions = Boolean(currentRunStep) && !isCurrentStepSaved;
-
     const handleForTimeTotalSecondsChange = useCallback(
         (seconds: number) => {
             const clamped = clampForTimeTotalSeconds(seconds);
@@ -1079,6 +1044,24 @@ export function useAthleteSessionRun({
         isForTimeBlock,
         afterStepConfirm,
     });
+
+    const showStepActions = useMemo(
+        () =>
+            Boolean(currentRunStep) &&
+            (!isCurrentStepSaved ||
+                shouldAllowRestReconfirmSticky(
+                    restFlow.phase,
+                    restFlow.hasRestTimer,
+                    restFlow.remainingSeconds
+                )),
+        [
+            currentRunStep,
+            isCurrentStepSaved,
+            restFlow.phase,
+            restFlow.hasRestTimer,
+            restFlow.remainingSeconds,
+        ]
+    );
 
     useAthleteRunLoggerDefaultEffects({
         currentStepKey,
@@ -1397,8 +1380,6 @@ export function useAthleteSessionRun({
         isTimedRunReferenceLoading,
         slotReferences,
         isSlotReferencesLoading,
-        applyReferenceValues,
-        applySuggestionValues,
         runProgress,
         progressPendingStepCount: runProgress?.pending_count ?? 0,
         sessionName: session?.session_name ?? "Entrenamiento",

@@ -222,7 +222,7 @@ function SessionsListSkeleton() {
 
 function ProgressSkeleton() {
     return (
-        <div className="space-y-6">
+        <div className="space-y-7">
             <Block className="h-5 w-20" />
             <div className="flex gap-3">
                 <Block className="size-11 shrink-0 rounded-xl" />
@@ -232,16 +232,18 @@ function ProgressSkeleton() {
                     <Block className="h-4 w-56" />
                 </div>
             </div>
+            <Block className="h-12 w-full rounded-xl" />
             <Block className="h-px w-full" />
+            <Block className="h-20 w-full rounded-xl" />
             <div className="grid gap-3 sm:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, i) => (
                     <Block key={i} className="h-32 rounded-xl" />
                 ))}
             </div>
-            <Block className="h-[260px] w-full rounded-xl" />
+            <Block className="h-[208px] w-full rounded-xl" />
+            <Block className="h-24 w-full rounded-xl" />
             <Block className="h-40 w-full rounded-xl" />
-            <Block className="h-40 w-full rounded-xl" />
-            <Block className="h-[260px] w-full rounded-xl" />
+            <Block className="h-[208px] w-full rounded-xl" />
             <Block className="h-36 w-full rounded-xl" />
         </div>
     );

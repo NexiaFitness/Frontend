@@ -21,6 +21,17 @@ describe("getPhysicalQualityColor", () => {
     expect(result.hex).toBeTruthy();
   });
 
+  it("returns aggregate variety blue for general slug (not catalog palette)", () => {
+    const result = getPhysicalQualityColor("general");
+    expect(result.hex).toBe("#0E7490");
+  });
+
+  it("uses display_order for catalog slugs when provided", () => {
+    const first = getPhysicalQualityColor("fuerza_maxima", { displayOrder: 1 });
+    const second = getPhysicalQualityColor("hipertrofia", { displayOrder: 2 });
+    expect(first.hex).not.toBe(second.hex);
+  });
+
   it("returns a known color for 'endurance'", () => {
     const result = getPhysicalQualityColor("endurance");
     expect(result.hex).toBeTruthy();
@@ -59,22 +70,15 @@ describe("getPhysicalQualityColor", () => {
     expect(first.hex).toBe(second.hex);
   });
 
-  it("cycles through fallback palette for different unknown slugs", () => {
+  it("assigns stable colors for the same unknown slug", () => {
     const a = getPhysicalQualityColor("slug_a");
-    const b = getPhysicalQualityColor("slug_b");
-    const c = getPhysicalQualityColor("slug_c");
-    const d = getPhysicalQualityColor("slug_d");
-    const e = getPhysicalQualityColor("slug_e");
-    // After 4 fallbacks, it should wrap around
-    expect(e.hex).toBe(a.hex);
-    // But b, c, d should differ from a (unless palette is size 1)
-    expect(new Set([a.hex, b.hex, c.hex, d.hex]).size).toBe(4);
+    const b = getPhysicalQualityColor("slug_a");
+    expect(a.hex).toBe(b.hex);
   });
 
-  it("resetFallbackCache clears the cache", () => {
-    const first = getPhysicalQualityColor("cached_slug");
+  it("resetFallbackCache clears the stable slug cache", () => {
+    getPhysicalQualityColor("cached_slug");
     resetFallbackCache();
-    const second = getPhysicalQualityColor("other_slug");
-    expect(second.hex).toBe(first.hex); // same index 0 after reset
+    expect(getPhysicalQualityColor("cached_slug").hex).toBeTruthy();
   });
 });

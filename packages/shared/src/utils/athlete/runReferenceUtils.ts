@@ -194,15 +194,23 @@ export function buildAthleteRunExecutionPayload(
     return attachSuggestionSnapshotToExecutionPayload(payload, suggestion);
 }
 
-/** Defaults al entrar en logging_rest (SPEC §10). */
+/** Defaults al entrar en logging_rest (P-SIMPLE §10 — autofill silencioso, sin chips). */
 export function resolveRunLoggerDefaults(input: RunLoggerDefaultsInput): RunLoggerDefaults {
     const ref = input.reference;
-    const fallbackWeight = input.plannedWeight ?? input.defaultWeight ?? 0;
-    const weight = ref?.weight_kg ?? fallbackWeight;
+    const prescribedWeight =
+        input.plannedWeight != null && input.plannedWeight > 0
+            ? input.plannedWeight
+            : null;
+    const referenceWeight =
+        ref?.weight_kg != null && ref.weight_kg > 0 ? ref.weight_kg : null;
+    const weight =
+        prescribedWeight ??
+        referenceWeight ??
+        (input.defaultWeight > 0 ? input.defaultWeight : 0);
     const reps = input.prescribedReps > 0 ? input.prescribedReps : 8;
 
     let rpe = input.prescribedRpe;
-    if (input.setIndex > 1 && ref?.rpe != null) {
+    if (input.setIndex > 1 && ref?.rpe != null && prescribedWeight == null) {
         rpe = ref.rpe;
     }
 

@@ -111,3 +111,12 @@ export function athleteLoadBarPercent(level: number, max = 10): number {
     if (!Number.isFinite(level) || level <= 0) return 0;
     return Math.min(100, Math.round((level / max) * 100));
 }
+
+/** Etiqueta legible en Mi plan (analytics devuelve nombres de catálogo o legacy). */
+export function athletePlanQualityDisplayName(apiName: string): string {
+    const key = apiName.trim().toLowerCase();
+    if (key === "general") {
+        return "Variedad (sin foco único)";
+    }
+    return apiName;
+}

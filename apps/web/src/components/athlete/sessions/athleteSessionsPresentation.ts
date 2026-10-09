@@ -20,6 +20,24 @@ export const ATHLETE_SESSION_LIST_ITEM = cn(
 export const ATHLETE_SESSION_LIST_ITEM_TODAY =
     "border-primary/25 shadow-[0_12px_40px_-14px] shadow-primary/15";
 
+export const ATHLETE_SESSION_LIST_BODY = "relative min-w-0 flex-1 space-y-1.5";
+
+export const ATHLETE_SESSION_LIST_TITLE =
+    "truncate text-left font-semibold leading-snug text-foreground";
+
+export const ATHLETE_SESSION_LIST_META =
+    "text-left text-caption leading-snug text-muted-foreground";
+
+export function resolveAthleteSessionCompletionTone(
+    completion: number,
+    isPartial: boolean
+): "success" | "warning" | "primary" {
+    if (isPartial) return "warning";
+    if (completion >= 90) return "success";
+    if (completion >= 70) return "primary";
+    return "warning";
+}
+
 /** Badge base meta en card sesión (estado + %). */
 export const ATHLETE_SESSION_META_BADGE = cn(
     "inline-flex items-center rounded-md border px-2 py-0.5 backdrop-blur-sm",

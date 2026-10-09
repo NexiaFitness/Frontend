@@ -40,7 +40,13 @@ export const AthletePlanLoadBar: React.FC<AthletePlanLoadBarProps> = ({
             >
                 <span className={isCompact ? undefined : "text-foreground/90"}>{label}</span>
                 {!isCompact && showValue ? (
-                    <span className="shrink-0 font-semibold tabular-nums text-foreground">
+                    <span
+                        className={
+                            tone === "warning"
+                                ? "shrink-0 font-semibold tabular-nums text-warning"
+                                : "shrink-0 font-semibold tabular-nums text-primary"
+                        }
+                    >
                         {levelLabel}
                     </span>
                 ) : null}

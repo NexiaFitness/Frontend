@@ -17,6 +17,7 @@ import { formatAthleteDateLong } from "@nexia/shared/utils/athlete/athleteSessio
 import {
     ATHLETE_CHART_AXIS,
     ATHLETE_CHART_GRID_STROKE,
+    ATHLETE_CHART_MARGIN,
     ATHLETE_PROGRESS_CHART_HEIGHT,
 } from "./athleteProgressViewPresentation";
 import { AthleteProgressChartPanel } from "./AthleteProgressChartPanel";
@@ -24,10 +25,12 @@ import { AthleteProgressChartTooltip } from "./AthleteProgressChartTooltip";
 
 export interface AthleteProgressWeightChartProps {
     data: Array<{ date: string; weight: number | null }>;
+    subtitle?: string;
 }
 
 export const AthleteProgressWeightChart: React.FC<AthleteProgressWeightChartProps> = ({
     data,
+    subtitle = "Registros que introduce tu entrenador en revisiones",
 }) => {
     const areaGradientId = useId().replace(/:/g, "");
     const points = useMemo(
@@ -37,7 +40,7 @@ export const AthleteProgressWeightChart: React.FC<AthleteProgressWeightChartProp
 
     const yDomain = useMemo(() => {
         if (points.length === 0) return [0, 100];
-        const weights = points.map((p) => p.weight as number);
+        const weights = points.flatMap((p) => (p.weight != null ? [p.weight] : []));
         const min = Math.min(...weights);
         const max = Math.max(...weights);
         const pad = Math.max(2, (max - min) * 0.15);
@@ -48,7 +51,7 @@ export const AthleteProgressWeightChart: React.FC<AthleteProgressWeightChartProp
         <AthleteProgressChartPanel
             label="Composición"
             title="Evolución de peso"
-            subtitle="Registros que introduce tu entrenador en revisiones"
+            subtitle={subtitle}
             isEmpty={points.length < 2}
             emptyMessage="Aún no hay suficientes mediciones de peso. Tu entrenador las añadirá en las revisiones periódicas."
         >
@@ -56,7 +59,7 @@ export const AthleteProgressWeightChart: React.FC<AthleteProgressWeightChartProp
                 <ResponsiveContainer width="100%" height={ATHLETE_PROGRESS_CHART_HEIGHT}>
                     <ComposedChart
                         data={points}
-                        margin={{ top: 8, right: 8, left: -8, bottom: 0 }}
+                        margin={ATHLETE_CHART_MARGIN}
                     >
                         <defs>
                             <linearGradient id={areaGradientId} x1="0" y1="0" x2="0" y2="1">

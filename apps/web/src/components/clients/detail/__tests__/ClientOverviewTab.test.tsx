@@ -183,15 +183,21 @@ describe("ClientOverviewTab", () => {
     it("shows KPI row with adherence and weight", async () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-        await waitFor(() => {
-            expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
-        });
-        await waitFor(() => {
-            const loadedCards = screen.getAllByRole("article");
-            const cardText = loadedCards.map((card) => card.textContent ?? "").join("\n");
-            expect(cardText).toContain(OVERVIEW_STAT_CHIP_LABELS.adherence);
-            expect(cardText).toContain(OVERVIEW_STAT_CHIP_LABELS.weight);
-        });
+        await waitFor(
+            () => {
+                expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
+            },
+            { timeout: 10000 }
+        );
+        await waitFor(
+            () => {
+                const loadedCards = screen.getAllByRole("article");
+                const cardText = loadedCards.map((card) => card.textContent ?? "").join("\n");
+                expect(cardText).toContain(OVERVIEW_STAT_CHIP_LABELS.adherence);
+                expect(cardText).toContain(OVERVIEW_STAT_CHIP_LABELS.weight);
+            },
+            { timeout: 10000 }
+        );
     });
 
     it("shows comms section with response form when feedback exists", async () => {

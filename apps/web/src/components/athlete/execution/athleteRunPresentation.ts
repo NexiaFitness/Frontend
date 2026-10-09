@@ -106,19 +106,9 @@ export const ATHLETE_RUN_SUGGESTION_VALUE = cn(
     "text-sm font-semibold tabular-nums text-primary"
 );
 
-export const ATHLETE_RUN_LOGGER_CHIP = cn(
-    "inline-flex min-h-9 items-center justify-center rounded-lg border px-3 py-2",
-    "border-border/60 bg-background/35 text-xs font-medium text-foreground",
-    "transition-colors hover:border-primary/35 hover:bg-primary/8 hover:text-primary",
-    "motion-safe:active:scale-[0.98] motion-reduce:active:scale-100",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-);
-
-export const ATHLETE_RUN_LOGGER_CHIPS_ROW = "flex flex-wrap gap-2";
-
 export const ATHLETE_RUN_REST_CHIP = cn(
-    "mx-auto flex w-fit items-center gap-2",
-    "rounded-full border border-primary/45 bg-card/80 px-4 py-2",
+    "mx-auto flex w-full max-w-md items-center justify-center gap-2.5",
+    "rounded-full border border-primary/45 bg-card/80 px-5 py-3",
     "text-sm font-semibold text-primary backdrop-blur-md",
     "shadow-[0_0_24px_-4px] shadow-primary/50"
 );
@@ -180,8 +170,15 @@ export const ATHLETE_RUN_REST_OVERLAY_RING_URGENT = cn(
     "stroke-warning drop-shadow-[0_0_8px_hsl(var(--warning)/0.45)]"
 );
 
+export const ATHLETE_RUN_REST_OVERLAY_EDIT = cn(
+    "inline-flex min-h-touch-athlete w-full items-center justify-center rounded-lg px-6",
+    "border border-border/60 bg-card/80 text-sm font-semibold text-foreground",
+    "backdrop-blur-sm transition-colors hover:bg-card",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+);
+
 export const ATHLETE_RUN_REST_OVERLAY_SKIP = cn(
-    "mt-8 inline-flex min-h-touch-athlete items-center justify-center rounded-lg px-6",
+    "inline-flex min-h-touch-athlete w-full items-center justify-center rounded-lg px-6",
     "border border-primary/40 bg-primary/12 text-sm font-semibold text-primary",
     "shadow-[0_0_24px_-6px] shadow-primary/40 backdrop-blur-sm",
     "transition-colors hover:border-primary/55 hover:bg-primary/20",

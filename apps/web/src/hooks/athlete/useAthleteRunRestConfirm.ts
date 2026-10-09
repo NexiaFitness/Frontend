@@ -82,6 +82,9 @@ export function useAthleteRunRestConfirm({
         setAmrapValidationVisible,
     ]);
 
+    const hasPrescribedRest =
+        restAfterSeconds != null && restAfterSeconds > 0;
+
     const restFlow = useAthleteRunRestFlow({
         restAfterSeconds,
         confirmLabel,
@@ -89,7 +92,11 @@ export function useAthleteRunRestConfirm({
         onConfirm,
         onRestComplete: advanceAfterRest,
         isConfirmValid: isAmrapBlock ? true : isConfirmValid,
-        requireStartBeforeLog: isDropsetRound || isTimedBlock,
+        // D-REST-01: single_set con descanso — logger solo tras «Empezar descanso».
+        requireStartBeforeLog:
+            isDropsetRound ||
+            isTimedBlock ||
+            (!isBatchStep && hasPrescribedRest),
         startRestLabel: isDropsetRound
             ? "Registrar dropset"
             : isAmrapBlock

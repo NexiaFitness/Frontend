@@ -51,6 +51,7 @@ export interface GroupRoundStepViewProps {
     getExerciseNote?: (blockExerciseId: number) => string;
     onExerciseNoteChange?: (blockExerciseId: number, value: string) => void;
     exerciseNoteDisabled?: boolean;
+    hideSessionProgressHeader?: boolean;
 }
 
 export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
@@ -73,6 +74,7 @@ export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
     getExerciseNote,
     onExerciseNoteChange,
     exerciseNoteDisabled = false,
+    hideSessionProgressHeader = false,
 }) => {
     const isDoingPhase = restPhase === "doing";
     const isLoggingRest = restPhase === "logging_rest";
@@ -140,11 +142,13 @@ export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
 
     return (
         <div className="space-y-4">
-            <AthleteRunProgressHeader
-                step={step}
-                totalSteps={totalSteps}
-                blockName={runStep.blockName}
-            />
+            {!hideSessionProgressHeader ? (
+                <AthleteRunProgressHeader
+                    step={step}
+                    totalSteps={totalSteps}
+                    blockName={runStep.blockName}
+                />
+            ) : null}
 
             {isDoingPhase ? (
                     <div className="space-y-4">

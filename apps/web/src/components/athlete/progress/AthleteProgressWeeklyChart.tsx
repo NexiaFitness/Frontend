@@ -1,5 +1,8 @@
 /**
  * AthleteProgressWeeklyChart.tsx — Actividad semanal premium (bar chart).
+ * Contexto: semanas continuas del periodo; racha N ≥ 2 en el subtítulo.
+ * @author Frontend Team
+ * @since v6.1.0
  */
 
 import React, { useId, useMemo } from "react";
@@ -17,6 +20,7 @@ import type { WeeklyActivityBar } from "@nexia/shared/utils/athlete/athleteProgr
 import {
     ATHLETE_CHART_AXIS,
     ATHLETE_CHART_GRID_STROKE,
+    ATHLETE_CHART_MARGIN,
     ATHLETE_PROGRESS_CHART_HEIGHT,
 } from "./athleteProgressViewPresentation";
 import { AthleteProgressChartPanel } from "./AthleteProgressChartPanel";
@@ -24,24 +28,31 @@ import { AthleteProgressChartTooltip } from "./AthleteProgressChartTooltip";
 
 export interface AthleteProgressWeeklyChartProps {
     data: WeeklyActivityBar[];
+    consecutiveWeeks?: number;
 }
 
 export const AthleteProgressWeeklyChart: React.FC<AthleteProgressWeeklyChartProps> = ({
     data,
+    consecutiveWeeks = 0,
 }) => {
     const gradientId = useId().replace(/:/g, "");
     const maxCount = useMemo(() => Math.max(...data.map((d) => d.count), 1), [data]);
+    const activeWeeks = data.filter((bar) => bar.count > 0).length;
+    if (activeWeeks < 2) return null;
 
-    if (data.length === 0) return null;
+    const subtitle =
+        consecutiveWeeks >= 2
+            ? `${consecutiveWeeks} semanas seguidas · sesiones completadas por semana`
+            : "Sesiones completadas por semana";
 
     return (
         <AthleteProgressChartPanel
             label="Consistencia"
             title="Actividad semanal"
-            subtitle="Sesiones completadas por semana"
+            subtitle={subtitle}
         >
             <ResponsiveContainer width="100%" height={ATHLETE_PROGRESS_CHART_HEIGHT}>
-                <BarChart data={data} margin={{ top: 8, right: 4, left: -18, bottom: 0 }}>
+                <BarChart data={data} margin={ATHLETE_CHART_MARGIN}>
                     <defs>
                         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.95} />
@@ -59,7 +70,7 @@ export const AthleteProgressWeeklyChart: React.FC<AthleteProgressWeeklyChartProp
                         axisLine={false}
                         tickLine={false}
                         tick={ATHLETE_CHART_AXIS.tick}
-                        width={28}
+                        width={36}
                         domain={[0, Math.max(maxCount + 1, 4)]}
                     />
                     <Tooltip
@@ -76,7 +87,7 @@ export const AthleteProgressWeeklyChart: React.FC<AthleteProgressWeeklyChartProp
                     <Bar dataKey="count" radius={[6, 6, 2, 2]} maxBarSize={36}>
                         {data.map((entry) => (
                             <Cell
-                                key={entry.week}
+                                key={entry.weekKey}
                                 fill={`url(#${gradientId})`}
                                 fillOpacity={0.45 + (entry.count / maxCount) * 0.55}
                             />

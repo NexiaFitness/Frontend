@@ -1,6 +1,6 @@
 /**
- * athleteProgressPresentation.ts — Barras de progreso premium portal atleta.
- * Fuente única: cumplimiento sesión (V02), carga plan (V08), énfasis plan.
+ * athleteProgressPresentation.ts — Barras y anillos de progreso premium portal atleta.
+ * Fuente única: cumplimiento sesión (V02), carga plan (V08), énfasis plan, week strip.
  */
 
 import { cn } from "@/lib/utils";
@@ -49,3 +49,45 @@ export const ATHLETE_PROGRESS_FILL: Record<AthleteProgressTone, string> = {
         "shadow-[0_0_16px_-4px] shadow-destructive/45"
     ),
 };
+
+export type AthleteProgressRingSize = "md" | "lg";
+
+/**
+ * Caja transparente más grande que el anillo: el drop-shadow del arco respira fuera
+ * del size fijo del SVG sin recorte en forma de cuadrado (padding + margen negativo).
+ */
+export const ATHLETE_PROGRESS_RING_SHELL: Record<AthleteProgressRingSize, string> = {
+    md: cn(
+        "inline-flex shrink-0 items-center justify-center overflow-visible bg-transparent",
+        "p-3 -m-3"
+    ),
+    lg: cn(
+        "inline-flex shrink-0 items-center justify-center overflow-visible bg-transparent",
+        "p-4 -m-4"
+    ),
+};
+
+export const ATHLETE_PROGRESS_RING = cn(
+    "relative flex items-center justify-center overflow-visible bg-transparent"
+);
+
+export const ATHLETE_PROGRESS_RING_SIZE: Record<AthleteProgressRingSize, string> = {
+    md: "size-14",
+    lg: "size-[4.5rem]",
+};
+
+export const ATHLETE_PROGRESS_RING_TRACK = "stroke-border/55";
+
+export const ATHLETE_PROGRESS_RING_PROGRESS_PRIMARY = cn(
+    "stroke-primary transition-[stroke-dashoffset] duration-700 ease-out",
+    "drop-shadow-[0_0_6px] drop-shadow-primary/35"
+);
+
+export const ATHLETE_PROGRESS_RING_PROGRESS_SUCCESS = cn(
+    "stroke-success transition-[stroke-dashoffset] duration-700 ease-out",
+    "drop-shadow-[0_0_6px] drop-shadow-success/35"
+);
+
+export const ATHLETE_PROGRESS_RING_LABEL_PRIMARY = "text-primary";
+
+export const ATHLETE_PROGRESS_RING_LABEL_SUCCESS = "text-success";

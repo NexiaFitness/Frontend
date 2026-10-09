@@ -1,5 +1,6 @@
 /**
  * AthleteRestTimerChip.tsx — Countdown compacto durante logging_rest (§5a/§5b.1).
+ * Toda la pastilla salta el descanso (D-REST-01); no abre overlay.
  */
 
 import React from "react";
@@ -25,31 +26,49 @@ export const AthleteRestTimerChip: React.FC<AthleteRestTimerChipProps> = ({
 }) => {
     const urgent = remainingSeconds > 0 && remainingSeconds <= 10;
     const pulse = remainingSeconds > 0 && remainingSeconds <= 3;
+    const label = formatAthleteRestCountdown(remainingSeconds);
+
+    if (!onSkip) {
+        return (
+            <div
+                className={cn(
+                    ATHLETE_RUN_REST_CHIP,
+                    urgent && ATHLETE_RUN_REST_CHIP_URGENT,
+                    pulse && ATHLETE_RUN_REST_CHIP_PULSE,
+                    className
+                )}
+                role="timer"
+                aria-live="polite"
+                aria-label={`Descanso ${label}`}
+            >
+                <Timer className="size-5 shrink-0 opacity-80" aria-hidden />
+                <span className="text-sm font-medium text-muted-foreground">Descanso</span>
+                <span className="text-base tabular-nums">{label}</span>
+            </div>
+        );
+    }
 
     return (
-        <div
+        <button
+            type="button"
             className={cn(
                 ATHLETE_RUN_REST_CHIP,
+                "min-h-touch-athlete cursor-pointer transition-opacity hover:opacity-90",
                 urgent && ATHLETE_RUN_REST_CHIP_URGENT,
                 pulse && ATHLETE_RUN_REST_CHIP_PULSE,
                 className
             )}
             role="timer"
             aria-live="polite"
-            aria-label={`Descanso ${formatAthleteRestCountdown(remainingSeconds)}`}
+            aria-label={`Descanso ${label}. Tocar para saltar.`}
+            onClick={onSkip}
         >
-            <Timer className="size-4 shrink-0 opacity-80" aria-hidden />
-            <span className="text-xs font-medium text-muted-foreground">Descanso</span>
-            <span className="tabular-nums">{formatAthleteRestCountdown(remainingSeconds)}</span>
-            {onSkip ? (
-                <button
-                    type="button"
-                    className="ml-auto text-xs font-medium text-primary underline-offset-2 hover:underline"
-                    onClick={onSkip}
-                >
-                    Saltar
-                </button>
-            ) : null}
-        </div>
+            <Timer className="size-5 shrink-0 opacity-80" aria-hidden />
+            <span className="text-sm font-medium text-muted-foreground">Descanso</span>
+            <span className="text-base font-semibold tabular-nums">{label}</span>
+            <span className="ml-1 text-xs font-medium text-primary underline-offset-2">
+                Saltar
+            </span>
+        </button>
     );
 };

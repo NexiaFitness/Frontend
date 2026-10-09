@@ -65,7 +65,19 @@ export function useAthleteRunLoggerDefaultEffects({
 
     useEffect(() => {
         if (!restShowLogger || !current || isBatchStep) return;
-        const defaultsKey = current.stepKey;
+
+        const ref = effectiveRunReference?.reference;
+        const refToken =
+            ref == null
+                ? "pending"
+                : ref.weight_kg != null && ref.weight_kg > 0
+                  ? String(ref.weight_kg)
+                  : "ref-empty";
+        const plannedToken =
+            current.plannedWeight != null && current.plannedWeight > 0
+                ? `p${current.plannedWeight}`
+                : "np";
+        const defaultsKey = `${current.stepKey}:${plannedToken}:${refToken}`;
         if (loggerDefaultsStepRef.current === defaultsKey) return;
 
         const defaults = resolveRunLoggerDefaults({
@@ -74,13 +86,16 @@ export function useAthleteRunLoggerDefaultEffects({
             prescribedRpe: current.defaultRpe,
             plannedWeight: current.plannedWeight,
             defaultWeight: current.defaultWeight,
-            reference: effectiveRunReference?.reference,
+            reference: ref,
         });
 
         const seriesPosition = Math.max(current.setIndex, current.roundIndex ?? 1);
+        const hasCoachWeight =
+            current.plannedWeight != null && current.plannedWeight > 0;
         let nextWeight = defaults.weight;
         if (
             seriesPosition > 1 &&
+            !hasCoachWeight &&
             !touchedWeightStepKeysRef.current.has(current.stepKey)
         ) {
             const autofill = seriesAutofillWeightRef.current.get(

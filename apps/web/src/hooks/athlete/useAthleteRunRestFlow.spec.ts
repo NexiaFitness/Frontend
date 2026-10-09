@@ -77,11 +77,71 @@ describe("useAthleteRunRestFlow (B6 wall clock)", () => {
         });
 
         expect(onConfirm).toHaveBeenCalledTimes(1);
-        // B2: tras guardar el logger sigue visible en logging_rest (no rest_overlay).
-        expect(result.current.phase).toBe("logging_rest");
-        expect(result.current.showRestOverlay).toBe(false);
+        // D-REST-02: tras guardar abre overlay sin reiniciar deadline.
+        expect(result.current.phase).toBe("rest_overlay");
+        expect(result.current.showRestOverlay).toBe(true);
+        expect(result.current.showRestChip).toBe(false);
         expect(result.current.remainingSeconds).toBe(55);
         expect(onRestComplete).not.toHaveBeenCalled();
+    });
+
+    it("editRestFromOverlay vuelve a logging_rest sin reiniciar el countdown", async () => {
+        const onConfirm = vi.fn(async () => true);
+        const onRestComplete = vi.fn();
+
+        const { result } = renderHook(() =>
+            useAthleteRunRestFlow({
+                restAfterSeconds: 90,
+                confirmLabel: "Serie completada",
+                stepKey: "step-1",
+                onConfirm,
+                onRestComplete,
+            })
+        );
+
+        act(() => {
+            result.current.startRest();
+        });
+        act(() => {
+            vi.advanceTimersByTime(20_000);
+        });
+
+        await act(async () => {
+            await result.current.stickyPrimaryAction?.();
+        });
+        expect(result.current.phase).toBe("rest_overlay");
+
+        act(() => {
+            result.current.editRestFromOverlay();
+        });
+
+        expect(result.current.phase).toBe("logging_rest");
+        expect(result.current.showRestOverlay).toBe(false);
+        expect(result.current.showLogger).toBe(true);
+        expect(result.current.remainingSeconds).toBe(70);
+    });
+
+    it("requireStartBeforeLog oculta logger en doing hasta Empezar descanso (D-REST-01)", () => {
+        const { result } = renderHook(() =>
+            useAthleteRunRestFlow({
+                restAfterSeconds: 90,
+                confirmLabel: "Serie completada",
+                stepKey: "single-1",
+                onConfirm: vi.fn(async () => true),
+                onRestComplete: vi.fn(),
+                requireStartBeforeLog: true,
+            })
+        );
+
+        expect(result.current.phase).toBe("doing");
+        expect(result.current.showLogger).toBe(false);
+        expect(result.current.stickyPrimaryLabel).toBe("Empezar descanso");
+
+        act(() => {
+            result.current.startRest();
+        });
+
+        expect(result.current.showLogger).toBe(true);
     });
 
     it("skipRest durante logging_rest avanza sin overlay", () => {

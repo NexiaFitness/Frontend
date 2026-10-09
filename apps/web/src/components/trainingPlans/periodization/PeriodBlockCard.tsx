@@ -226,7 +226,9 @@ export const PeriodBlockCard: React.FC<Props> = ({
                                 catItem?.name ??
                                 q.physical_quality_name ??
                                 `#${q.physical_quality_id}`;
-                            const color = getPhysicalQualityColor(slug);
+                            const color = getPhysicalQualityColor(slug, {
+                                displayOrder: catItem?.display_order,
+                            });
 
                             return (
                                 <QualityShareBar

@@ -1,14 +1,19 @@
 /**
- * AthletePlanQualitiesSection.tsx — Énfasis del plan con barras (V08).
+ * AthletePlanQualitiesSection.tsx — Enfoque del mes (gráfico premium + colores catálogo).
  */
 
-import React from "react";
-import { TrendingUp } from "lucide-react";
-import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
-import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
+import React, { useMemo } from "react";
+import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import type { TrainingPlanDistributionItem } from "@nexia/shared/types/trainingAnalytics";
-import { AthleteProgressBar } from "@/components/athlete/AthleteProgressBar";
-import { ATHLETE_PLAN_QUALITY_ROW } from "./athletePlanPresentation";
+import { athletePlanQualityDisplayName } from "@nexia/shared/utils/athlete/athletePlanViewUtils";
+import {
+    getPhysicalQualityColor,
+    resolvePhysicalQualitySlug,
+} from "@nexia/shared/utils/physicalQualityColors";
+import {
+    AthletePlanQualityFocusChart,
+    type AthletePlanQualityChartItem,
+} from "./AthletePlanQualityFocusChart";
 
 export interface AthletePlanQualitiesSectionProps {
     qualities: TrainingPlanDistributionItem[];
@@ -17,32 +22,38 @@ export interface AthletePlanQualitiesSectionProps {
 export const AthletePlanQualitiesSection: React.FC<AthletePlanQualitiesSectionProps> = ({
     qualities,
 }) => {
-    if (qualities.length === 0) return null;
+    const { data: catalog = [] } = useGetPhysicalQualitiesQuery();
+
+    const items = useMemo((): AthletePlanQualityChartItem[] => {
+        return qualities
+            .filter((q) => q.percentage > 0)
+            .map((q) => {
+                const slug = resolvePhysicalQualitySlug(q.name, catalog);
+                const catalogEntry = catalog.find(
+                    (c) =>
+                        c.slug === slug ||
+                        c.name.trim().toLowerCase() === q.name.trim().toLowerCase()
+                );
+                const color = getPhysicalQualityColor(slug, {
+                    displayOrder: catalogEntry?.display_order,
+                });
+                const label = athletePlanQualityDisplayName(q.name);
+                return {
+                    key: slug,
+                    label,
+                    shortLabel: label,
+                    percentage: Math.round(q.percentage),
+                    colorHex: color.hex,
+                };
+            })
+            .sort((a, b) => b.percentage - a.percentage);
+    }, [qualities, catalog]);
+
+    if (items.length === 0) return null;
 
     return (
-        <section className="space-y-3" aria-label="Énfasis del plan">
-            <AthleteSectionHeading
-                title="Énfasis del plan"
-                icon={<TrendingUp className="size-3.5" aria-hidden />}
-            />
-            <ul className="space-y-2">
-                {qualities.map((quality) => (
-                    <li key={quality.name} className={`${ATHLETE_PLAN_QUALITY_ROW} relative`}>
-                        <NexiaGlassAccentRim />
-                        <div className="relative flex items-center justify-between gap-2 text-sm">
-                            <span className="font-medium text-foreground">{quality.name}</span>
-                            <span className="shrink-0 font-semibold tabular-nums text-primary">
-                                {Math.round(quality.percentage)}%
-                            </span>
-                        </div>
-                        <AthleteProgressBar
-                            value={quality.percentage}
-                            tone="primary"
-                            aria-label={`${quality.name} ${Math.round(quality.percentage)} por ciento`}
-                        />
-                    </li>
-                ))}
-            </ul>
+        <section aria-label="Enfoque del mes">
+            <AthletePlanQualityFocusChart items={items} />
         </section>
     );
 };

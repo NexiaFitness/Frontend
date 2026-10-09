@@ -1,5 +1,7 @@
 /**
- * AthleteProgressTopExercisesSection.tsx — Top ejercicios con progreso de carga.
+ * AthleteProgressTopExercisesSection.tsx — Top ejercicios con delta del periodo.
+ * @author Frontend Team
+ * @since v6.1.0
  */
 
 import React from "react";
@@ -13,16 +15,17 @@ import { ATHLETE_PROGRESS_LIST_ROW } from "./athleteProgressViewPresentation";
 
 export interface AthleteProgressTopExercisesSectionProps {
     rows: TopExerciseRow[];
+    deltaWindowLabel: string;
     onSelectExercise: (row: TopExerciseRow) => void;
 }
 
 export const AthleteProgressTopExercisesSection: React.FC<
     AthleteProgressTopExercisesSectionProps
-> = ({ rows, onSelectExercise }) => {
+> = ({ rows, deltaWindowLabel, onSelectExercise }) => {
     if (rows.length === 0) return null;
 
     return (
-        <section className="space-y-3" aria-label="Top ejercicios">
+        <section className="space-y-3" aria-label="Progreso por ejercicio">
             <AthleteSectionHeading
                 title="Progreso por ejercicio"
                 icon={<TrendingUp className="size-3.5" aria-hidden />}
@@ -48,14 +51,14 @@ export const AthleteProgressTopExercisesSection: React.FC<
                                         {row.weightDelta != null && (
                                             <span
                                                 className={
-                                                    row.weightDelta >= 0
+                                                    row.weightDelta > 0
                                                         ? " text-success"
-                                                        : " text-warning"
+                                                        : " text-muted-foreground"
                                                 }
                                             >
                                                 {" "}
-                                                ({row.weightDelta >= 0 ? "+" : ""}
-                                                {row.weightDelta} kg · 30d)
+                                                ({row.weightDelta > 0 ? "+" : ""}
+                                                {row.weightDelta} kg {deltaWindowLabel})
                                             </span>
                                         )}
                                     </p>

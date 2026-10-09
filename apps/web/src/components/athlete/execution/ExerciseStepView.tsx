@@ -17,7 +17,6 @@ import {
 import { AthleteSetInputLogger } from "@/components/athlete/logging";
 import type { AthleteRunInputMode } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
 import { AthleteRunReferenceCard } from "./AthleteRunReferenceCard";
-import { AthleteRunLoggerChips } from "./AthleteRunLoggerChips";
 import { AthleteRunProgressHeader } from "./AthleteRunProgressHeader";
 import { AthleteRunLoggingSummary } from "./AthleteRunLoggingSummary";
 import { AthleteRunGroupHero } from "./AthleteRunGroupHero";
@@ -54,8 +53,6 @@ export interface ExerciseStepViewProps {
     };
     runReference?: AthleteRunReference;
     isRunReferenceLoading?: boolean;
-    onApplyReference?: () => void;
-    onApplySuggestion?: () => void;
     groupContext?: AthleteRunGroupContextView | null;
     showLogger?: boolean;
     onViewTechnique?: (target: AthleteExerciseTechniqueTarget) => void;
@@ -63,6 +60,8 @@ export interface ExerciseStepViewProps {
     exerciseNote?: string;
     onExerciseNoteChange?: (value: string) => void;
     exerciseNoteDisabled?: boolean;
+    /** Móvil: progreso ya está en AthleteRunChromeHeader. */
+    hideSessionProgressHeader?: boolean;
 }
 
 export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
@@ -82,8 +81,6 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
     injuryConflict,
     runReference,
     isRunReferenceLoading = false,
-    onApplyReference,
-    onApplySuggestion,
     groupContext,
     showLogger = true,
     onViewTechnique,
@@ -91,6 +88,7 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
     exerciseNote = "",
     onExerciseNoteChange,
     exerciseNoteDisabled = false,
+    hideSessionProgressHeader = false,
 }) => {
     const isDoingPhase = restPhase === "doing";
     const isLoggingRest = restPhase === "logging_rest";
@@ -124,11 +122,13 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
 
     return (
         <div className="space-y-4">
-            <AthleteRunProgressHeader
-                step={step}
-                totalSteps={totalSteps}
-                blockName={exercise.blockName}
-            />
+            {!hideSessionProgressHeader ? (
+                <AthleteRunProgressHeader
+                    step={step}
+                    totalSteps={totalSteps}
+                    blockName={exercise.blockName}
+                />
+            ) : null}
 
             {isDoingPhase ? (
                 <div className="space-y-4">
@@ -161,16 +161,6 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
             {showLogger ? (
                 <div className={`space-y-2 ${ATHLETE_RUN_LOGGER_REVEAL}`}>
                     <p className={ATHLETE_RUN_LOGGER_SECTION_LABEL}>Registro de serie</p>
-                    {isLoggingRest && onApplyReference && onApplySuggestion ? (
-                        <AthleteRunLoggerChips
-                            setIndex={exercise.setIndex}
-                            reference={runReference?.reference}
-                            suggestion={runReference?.suggestion}
-                            onApplyReference={onApplyReference}
-                            onApplyPreviousSet={onApplyReference}
-                            onApplySuggestion={onApplySuggestion}
-                        />
-                    ) : null}
                     <div className={ATHLETE_RUN_LOGGER_CARD}>
                         <NexiaGlassAccentRim />
                         <div className="relative z-[1]">

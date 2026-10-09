@@ -79,6 +79,7 @@ export interface TimedBlockStepViewProps {
     getExerciseNote?: (blockExerciseId: number) => string;
     onExerciseNoteChange?: (blockExerciseId: number, value: string) => void;
     exerciseNoteDisabled?: boolean;
+    hideSessionProgressHeader?: boolean;
 }
 
 export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
@@ -122,6 +123,7 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
     getExerciseNote,
     onExerciseNoteChange,
     exerciseNoteDisabled = false,
+    hideSessionProgressHeader = false,
 }) => {
     const isDoingPhase = restPhase === "doing";
     const isLoggingRest = restPhase === "logging_rest";
@@ -191,11 +193,13 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
 
     return (
         <div className="space-y-4">
-            <AthleteRunProgressHeader
-                step={step}
-                totalSteps={totalSteps}
-                blockName={runStep.blockName}
-            />
+            {!hideSessionProgressHeader ? (
+                <AthleteRunProgressHeader
+                    step={step}
+                    totalSteps={totalSteps}
+                    blockName={runStep.blockName}
+                />
+            ) : null}
 
             {isDoingPhase ? (
                 <div className="space-y-4">
