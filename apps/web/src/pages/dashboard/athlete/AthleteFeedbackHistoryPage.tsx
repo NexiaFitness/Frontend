@@ -4,6 +4,7 @@
 
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 import { markTrainerResponsesSeen } from "@nexia/shared/utils/athlete/athleteFeedbackUtils";
 import { FeedbackHistoryCard } from "@/components/athlete/FeedbackHistoryCard";
 import { AthleteFeedbackHistoryHeader } from "@/components/athlete/feedback/AthleteFeedbackHistoryHeader";
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 export const AthleteFeedbackHistoryPage: React.FC = () => {
     const navigate = useNavigate();
+    const { goBack } = useReturnToOrigin({ fallbackPath: "/dashboard" });
     const { sorted, isLoading, getSessionName } = useAthleteFeedbackHistory(50);
 
     useEffect(() => {
@@ -31,7 +33,7 @@ export const AthleteFeedbackHistoryPage: React.FC = () => {
 
     return (
         <div className={cn(ATHLETE_PAGE, "space-y-5")}>
-            <AthleteFeedbackHistoryHeader onBack={() => navigate("/dashboard")} />
+            <AthleteFeedbackHistoryHeader onBack={() => goBack()} />
 
             {sorted.length === 0 ? (
                 <AthleteEmptyState

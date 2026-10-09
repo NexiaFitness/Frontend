@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 import { AthletePlanOverview } from "@/components/athlete/plan/AthletePlanOverview";
 import { AthleteEmptyState } from "@/components/athlete/empty/AthleteEmptyState";
 import { Alert } from "@/components/ui/feedback";
@@ -14,7 +14,7 @@ import { useAthletePlan } from "@/hooks/athlete/useAthletePlan";
 import { ATHLETE_PAGE } from "@/components/athlete/layout/athleteLayoutClasses";
 
 export const AthletePlanPage: React.FC = () => {
-    const navigate = useNavigate();
+    const { goBack } = useReturnToOrigin({ fallbackPath: "/dashboard" });
     const plan = useAthletePlan();
 
     if (plan.isLoading) {
@@ -42,9 +42,9 @@ export const AthletePlanPage: React.FC = () => {
                         <Button
                             variant="primary"
                             className={ATHLETE_PRIMARY_CTA}
-                            onClick={() => navigate("/dashboard")}
+                            onClick={() => goBack()}
                         >
-                            Volver al inicio
+                            Volver
                         </Button>
                     }
                 />

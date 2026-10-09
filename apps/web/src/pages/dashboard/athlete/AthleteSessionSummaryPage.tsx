@@ -19,11 +19,15 @@ import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider
 import { cn } from "@/lib/utils";
 import { useAthletePostSessionCelebration } from "@/hooks/athlete/useAthletePostSessionCelebration";
 import { useAthleteSessionShare } from "@/hooks/athlete/useAthleteSessionShare";
+import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 
 export const AthleteSessionSummaryPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const sessionId = Number(id);
     const navigate = useNavigate();
+    const { goBack } = useReturnToOrigin({
+        fallbackPath: `/dashboard/sessions/${sessionId}`,
+    });
 
     const {
         report,
@@ -82,9 +86,9 @@ export const AthleteSessionSummaryPage: React.FC = () => {
                 <Button
                     variant="primary"
                     className={cn(ATHLETE_PRIMARY_CTA, "font-semibold")}
-                    onClick={() => navigate("/dashboard")}
+                    onClick={() => goBack()}
                 >
-                    Volver al inicio
+                    Volver
                 </Button>
                 {report.has_feedback && (
                     <Button
