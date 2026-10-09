@@ -7,6 +7,21 @@ const navigate = vi.fn();
 const submit = vi.fn();
 const showToast = vi.fn();
 
+const previewSessionMock = vi.hoisted(() => ({
+    status: "planned" as "planned" | "completed",
+}));
+
+const sessionLogMock = vi.hoisted(() => ({
+    logMode: false,
+    pendingBlockCount: 0,
+    logBlocks: [] as {
+        sessionBlockId: number;
+        status: string;
+        hasRegisterableSteps: boolean;
+    }[],
+    registrationEditable: false,
+}));
+
 vi.mock("react-router-dom", async () => {
     const actual = await vi.importActual<typeof import("react-router-dom")>(
         "react-router-dom"
@@ -40,7 +55,7 @@ vi.mock("@nexia/shared/api/trainingSessionsApi", () => ({
     useGetTrainingSessionQuery: () => ({
         data: {
             id: 42,
-            status: "planned",
+            status: previewSessionMock.status,
             session_name: "QA Preview",
             notes: null,
             session_date: "2026-10-05",
@@ -108,11 +123,11 @@ vi.mock("@/hooks/useMediaQuery", () => ({
 
 vi.mock("@/hooks/athlete/useAthleteSessionLog", () => ({
     useAthleteSessionLog: () => ({
-        logMode: false,
+        logMode: sessionLogMock.logMode,
         enterLogMode: vi.fn(),
         exitLogMode: vi.fn(),
-        logBlocks: [],
-        pendingBlockCount: 0,
+        logBlocks: sessionLogMock.logBlocks,
+        pendingBlockCount: sessionLogMock.pendingBlockCount,
         isProgressLoading: false,
         isOnline: true,
         syncPendingCount: 0,
@@ -125,7 +140,7 @@ vi.mock("@/hooks/athlete/useAthleteSessionLog", () => ({
         markBlockNotPerformed: vi.fn(),
         saveError: null,
         isSavingBlock: false,
-        registrationEditable: false,
+        registrationEditable: sessionLogMock.registrationEditable,
         forceCompleteSession: vi.fn().mockResolvedValue(true),
         completeSessionIfReady: vi.fn(),
         refetchProgress: vi.fn(),
@@ -140,12 +155,18 @@ function renderPage() {
     );
 }
 
+beforeEach(() => {
+    navigate.mockClear();
+    submit.mockClear();
+    showToast.mockClear();
+    previewSessionMock.status = "planned";
+    sessionLogMock.logMode = false;
+    sessionLogMock.pendingBlockCount = 0;
+    sessionLogMock.logBlocks = [];
+    sessionLogMock.registrationEditable = false;
+});
+
 describe("AthleteSessionPreviewPage wellbeing (B7)", () => {
-    beforeEach(() => {
-        navigate.mockClear();
-        submit.mockClear();
-        showToast.mockClear();
-    });
 
     it("Omitir navega al run sin llamar a la API", () => {
         renderPage();
@@ -206,5 +227,27 @@ describe("AthleteSessionPreviewPage planned load (AGENDA spec)", () => {
         expect(
             screen.getByRole("button", { name: /Volumen 8 de 10, intensidad 3 de 10/i })
         ).toBeInTheDocument();
+    });
+});
+
+describe("AthleteSessionPreviewPage registro FE-9", () => {
+    it("sesión completada con bloques pendientes muestra Completar registro, no solo feedback", () => {
+        previewSessionMock.status = "completed";
+        sessionLogMock.logMode = true;
+        sessionLogMock.pendingBlockCount = 2;
+        sessionLogMock.registrationEditable = true;
+        sessionLogMock.logBlocks = [
+            { sessionBlockId: 1, status: "registered", hasRegisterableSteps: true },
+            { sessionBlockId: 2, status: "pending", hasRegisterableSteps: true },
+        ];
+
+        renderPage();
+
+        expect(
+            screen.getByRole("button", { name: /Completar registro \(2\)/i })
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: /Enviar feedback/i })
+        ).not.toBeInTheDocument();
     });
 });

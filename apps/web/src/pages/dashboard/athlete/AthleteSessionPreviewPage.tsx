@@ -223,9 +223,11 @@ export const AthleteSessionPreviewPage: React.FC = () => {
         [sessionLog.logBlocks]
     );
     const showLogFooter =
-        session?.status !== "completed" &&
         sessionLog.registrationEditable &&
         (sessionLog.logMode || hasPartialLogProgress);
+
+    const showCompletedFeedbackFooter =
+        session?.status === "completed" && !showLogFooter;
 
     const handleOpenInjurySheet = () => {
         setInjurySheetOpen(true);
@@ -412,7 +414,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
             </div>
 
             <AthleteFixedFooter size="single">
-                {session.status === "completed" ? (
+                {showCompletedFeedbackFooter ? (
                     <Button
                         variant="primary"
                         className={ATHLETE_PRIMARY_CTA}
@@ -437,6 +439,12 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                                     return;
                                 }
                                 if (sessionLog.pendingBlockCount === 0) {
+                                    if (session.status === "completed") {
+                                        navigate(
+                                            `/dashboard/sessions/${sessionId}/feedback`
+                                        );
+                                        return;
+                                    }
                                     void sessionLog
                                         .completeSessionIfReady()
                                         .then((ok) => {
@@ -459,7 +467,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                                 ? "Ir al feedback"
                                 : `Completar registro (${sessionLog.pendingBlockCount})`}
                         </Button>
-                        {!sessionLog.logMode ? (
+                        {!sessionLog.logMode && session.status !== "completed" ? (
                             <Button
                                 variant="secondary"
                                 className="min-h-touch-athlete w-full"
@@ -468,15 +476,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                             >
                                 {startRunLabel}
                             </Button>
-                        ) : (
-                            <Button
-                                variant="ghost"
-                                className="min-h-touch-athlete w-full text-muted-foreground"
-                                onClick={sessionLog.exitLogMode}
-                            >
-                                Ver detalle de la sesión
-                            </Button>
-                        )}
+                        ) : null}
                         {sessionLog.logMode && sessionLog.pendingBlockCount > 0 ? (
                             <Button
                                 variant="ghost"
