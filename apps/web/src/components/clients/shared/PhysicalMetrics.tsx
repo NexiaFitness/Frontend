@@ -83,7 +83,7 @@ export const PhysicalMetrics: React.FC<PhysicalMetricsProps> = ({
                     </div>
                     <div>
                         <label className={labelClass}>IMC</label>
-                        <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 flex items-center justify-between pointer-events-none text-sm text-foreground">
+                        <div className="flex pointer-events-none items-center justify-between rounded-md border border-primary/20 bg-black/30 px-3 py-2 text-sm text-foreground backdrop-blur-sm">
                             <span className="text-muted-foreground">Auto-calculado</span>
                             {bmi !== null ? (
                                 <span>{bmi.toFixed(1)}</span>

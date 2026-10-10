@@ -97,6 +97,66 @@ export const PLATFORM_FORM_NESTED_PANEL = cn(
     "relative space-y-4 border border-dashed border-primary/25 bg-black/40 p-4 sm:p-5",
 );
 
+/** Onboarding cliente / completar perfil entrenador — cards de sección (paridad modal premium). */
+export const PLATFORM_ONBOARDING_SECTION = cn(
+    PLATFORM_FORM_SHELL,
+    "border-primary/25 shadow-primary/10",
+);
+
+export const PLATFORM_ONBOARDING_SECTION_BODY = cn(
+    "relative z-[1] space-y-4 p-5 sm:p-6",
+);
+
+export const PLATFORM_ONBOARDING_SECTION_HEADER = cn(
+    "mb-5 flex items-start gap-3 border-b border-primary/15 pb-4",
+);
+
+export const PLATFORM_ONBOARDING_SECTION_ICON = cn(
+    "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+    "border border-primary/30 bg-primary/10 text-primary",
+    "shadow-[0_0_20px_-8px] shadow-primary/45",
+);
+
+export const PLATFORM_ONBOARDING_SECTION_TITLE = cn(
+    "text-base font-semibold tracking-tight text-foreground sm:text-lg",
+);
+
+export const PLATFORM_ONBOARDING_SECTION_FOOTER = cn(
+    "mt-6 flex justify-end border-t border-primary/15 pt-4",
+);
+
+export const PLATFORM_ONBOARDING_SIDEBAR_CARD = cn(
+    PLATFORM_ONBOARDING_SECTION,
+    "p-4 sm:p-5",
+);
+
+export const PLATFORM_ONBOARDING_PAGE_EYEBROW = cn(
+    NEXIA_PORTAL_PAGE_EYEBROW,
+    "text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/90",
+);
+
+export const PLATFORM_ONBOARDING_PAGE_TITLE = cn(
+    "text-xl font-bold tracking-tight text-foreground sm:text-2xl",
+);
+
+export const PLATFORM_ONBOARDING_PAGE_SUBTITLE = "mt-1 text-sm text-muted-foreground";
+
+export const PLATFORM_ONBOARDING_PROGRESS_DIVIDER = cn(
+    "h-px flex-1 bg-gradient-to-r from-transparent via-primary/35 to-transparent",
+);
+
+export const PLATFORM_ONBOARDING_DANGER_ZONE = cn(
+    "relative overflow-hidden rounded-xl border border-destructive/35 bg-destructive/5 p-6",
+    "shadow-[0_12px_40px_-16px] shadow-destructive/20",
+    "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px",
+    "before:bg-gradient-to-r before:from-transparent before:via-destructive/30 before:to-transparent",
+);
+
+export const PLATFORM_ONBOARDING_LIST_ITEM = cn(
+    "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/15",
+    "bg-black/35 px-3 py-2 backdrop-blur-sm",
+);
+
 export function platformFormLabelClass(
     variant: PlatformFormControlVariant,
 ): string {

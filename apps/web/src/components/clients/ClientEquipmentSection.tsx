@@ -8,7 +8,10 @@
  */
 
 import React, { useState } from "react";
+import { Dumbbell } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
+import { FormSection } from "@/components/ui/forms/FormSection";
+import { PLATFORM_ONBOARDING_LIST_ITEM } from "@/components/ui/forms/platformFormPresentation";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { NexiaPremiumModal } from "@/components/ui/modals";
@@ -114,25 +117,28 @@ export const ClientEquipmentSection: React.FC<ClientEquipmentSectionProps> = ({ 
 
     if (error) {
         return (
-            <div className="rounded-lg border border-border bg-surface p-6">
+            <FormSection
+                icon={<Dumbbell className="h-4 w-4" />}
+                title="Equipo del cliente"
+                eyebrow="Material"
+            >
                 <Alert variant="error">No se pudo cargar el equipo del cliente.</Alert>
-            </div>
+            </FormSection>
         );
     }
 
     return (
-        <div className="rounded-lg border border-border bg-surface p-6">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                <h3 className="text-lg font-semibold text-foreground">
-                    Equipo del cliente
-                </h3>
+        <FormSection
+            icon={<Dumbbell className="h-4 w-4" />}
+            title="Equipo del cliente"
+            eyebrow="Material"
+            description="Material o equipo que tiene disponible el cliente. Se usa para filtrar ejercicios y alternativas."
+        >
+            <div className="mb-4 flex flex-wrap items-center justify-end gap-4">
                 <Button variant="primary" onClick={openCreate} disabled={isLoading}>
                     Añadir equipo
                 </Button>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">
-                Material o equipo que tiene disponible el cliente. Se usa para filtrar ejercicios y alternativas.
-            </p>
 
             {isLoading ? (
                 <div className="flex justify-center py-8">
@@ -145,7 +151,7 @@ export const ClientEquipmentSection: React.FC<ClientEquipmentSectionProps> = ({ 
                     {items.map((item) => (
                         <li
                             key={item.id}
-                            className="flex flex-wrap items-center justify-between gap-2 py-2 px-3 rounded-lg border border-border bg-muted/30"
+                            className={PLATFORM_ONBOARDING_LIST_ITEM}
                         >
                             <div className="flex-1 min-w-0">
                                 <span className="font-medium text-foreground">{item.name}</span>
@@ -264,6 +270,6 @@ export const ClientEquipmentSection: React.FC<ClientEquipmentSectionProps> = ({ 
                     </div>
                 </form>
             </NexiaPremiumModal>
-        </div>
+        </FormSection>
     );
 };

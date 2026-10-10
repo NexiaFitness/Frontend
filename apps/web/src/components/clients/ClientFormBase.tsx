@@ -9,7 +9,7 @@
  *
  * Arquitectura:
  * - Lógica: useClientForm (packages/shared)
- * - UI: Componentes desde clients/shared/
+ * - UI: Componentes desde clients/shared/ + FormSection premium
  * - Validaciones: validateClientForm (packages/shared)
  *
  * @author Frontend Team
@@ -17,9 +17,11 @@
  */
 
 import React from "react";
+import { Activity, Ruler, Target, User } from "lucide-react";
 import type { ClientFormData } from "@nexia/shared/types/client";
 import { useClientForm } from "@nexia/shared/hooks/clients/useClientForm";
 import { Button } from "@/components/ui/buttons";
+import { FormSection } from "@/components/ui/forms/FormSection";
 import { PersonalInfo } from "./shared/PersonalInfo";
 import { PhysicalMetrics } from "./shared/PhysicalMetrics";
 import { AnthropometricMetrics } from "./shared/AnthropometricMetrics";
@@ -62,76 +64,57 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
         }
     };
 
-    const sectionWrapperClass = "rounded-lg border border-border bg-surface p-6";
-    const sectionHeadingClass = "text-lg font-semibold text-foreground mb-4";
+    const saveButton = (label: string) => (
+        <Button
+            type="button"
+            variant="primary"
+            size="md"
+            onClick={handleSectionSave}
+            disabled={isSubmitting}
+            isLoading={isSubmitting}
+        >
+            {isSubmitting ? "Guardando..." : label}
+        </Button>
+    );
 
-    // En modo create, mantener el formulario tradicional con botón al final
+    const stepProps = { formData, errors, updateField };
+
     if (mode === "create") {
         return (
-            <form onSubmit={onSubmit} className="space-y-8">
-                {/* Datos personales */}
-                <div className={sectionWrapperClass}>
-                    <h3 className={sectionHeadingClass}>Datos personales</h3>
-                    <PersonalInfo
-                        formData={formData}
-                        errors={errors}
-                        updateField={updateField}
-                        isEditMode={false}
-                    />
-                </div>
+            <form onSubmit={onSubmit} className="space-y-6">
+                <FormSection
+                    icon={<User className="h-4 w-4" />}
+                    title="Datos personales"
+                    eyebrow="Identidad"
+                >
+                    <PersonalInfo {...stepProps} isEditMode={false} hideHeading />
+                </FormSection>
 
-                {/* Métricas físicas básicas */}
-                <div className={sectionWrapperClass}>
-                    <h3 className={sectionHeadingClass}>Métricas físicas</h3>
-                    <PhysicalMetrics
-                        formData={formData}
-                        errors={errors}
-                        updateField={updateField}
-                    />
-                </div>
+                <FormSection
+                    icon={<Ruler className="h-4 w-4" />}
+                    title="Métricas físicas"
+                    eyebrow="Antropometría"
+                >
+                    <PhysicalMetrics {...stepProps} />
+                </FormSection>
 
-                {/* Métricas antropométricas */}
-                <div className={sectionWrapperClass}>
-                    <h3 className={sectionHeadingClass}>Antropometría</h3>
-                    <AnthropometricMetrics
-                        formData={formData}
-                        errors={errors}
-                        updateField={updateField}
-                    />
-                </div>
+                <FormSection icon={<Ruler className="h-4 w-4" />} title="Antropometría" eyebrow="Medidas">
+                    <AnthropometricMetrics {...stepProps} />
+                </FormSection>
 
-                {/* Objetivos */}
-                <div className={sectionWrapperClass}>
-                    <h3 className={sectionHeadingClass}>Objetivos</h3>
-                    <TrainingGoals
-                        formData={formData}
-                        errors={errors}
-                        updateField={updateField}
-                    />
-                </div>
+                <FormSection icon={<Target className="h-4 w-4" />} title="Objetivos" eyebrow="Entrenamiento">
+                    <TrainingGoals {...stepProps} />
+                </FormSection>
 
-                {/* Experiencia */}
-                <div className={sectionWrapperClass}>
-                    <h3 className={sectionHeadingClass}>Experiencia</h3>
-                    <Experience
-                        formData={formData}
-                        errors={errors}
-                        updateField={updateField}
-                    />
-                </div>
+                <FormSection icon={<Target className="h-4 w-4" />} title="Experiencia" eyebrow="Nivel">
+                    <Experience {...stepProps} />
+                </FormSection>
 
-                {/* Información de salud */}
-                <div className={sectionWrapperClass}>
-                    <h3 className={sectionHeadingClass}>Salud</h3>
-                    <HealthInfo
-                        formData={formData}
-                        errors={errors}
-                        updateField={updateField}
-                    />
-                </div>
+                <FormSection icon={<Activity className="h-4 w-4" />} title="Salud" eyebrow="Historial">
+                    <HealthInfo {...stepProps} />
+                </FormSection>
 
-                {/* Botón de submit */}
-                <div className="flex justify-end pt-4">
+                <div className="flex justify-end pt-2">
                     <Button
                         type="submit"
                         variant="primary"
@@ -146,139 +129,51 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
         );
     }
 
-    // En modo edit, cada sección tiene su propio botón de guardar.
-    // Estructura semántica: <section role="region" aria-labelledby> para accesibilidad y tests E2E.
-    const editSectionClass = "rounded-lg border border-border bg-surface p-6";
-    const editHeadingClass = "text-lg font-semibold text-foreground mb-4";
-
     return (
-        <div className="space-y-8">
-            {/* Información Personal */}
-            <section
-                role="region"
-                aria-labelledby="personal-info-heading"
-                className={editSectionClass}
+        <div className="space-y-6">
+            <FormSection
+                icon={<User className="h-4 w-4" />}
+                title="Información Personal"
+                eyebrow="Identidad"
+                headingId="personal-info-heading"
+                footer={saveButton("Guardar cambios")}
             >
-                <h3 id="personal-info-heading" className={editHeadingClass}>
-                    Información Personal
-                </h3>
-                <PersonalInfo
-                    formData={formData}
-                    errors={errors}
-                    updateField={updateField}
-                    isEditMode={true}
-                    hideHeading
-                />
-                <div className="flex justify-end pt-4 mt-6 border-t border-border">
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="md"
-                        onClick={handleSectionSave}
-                        disabled={isSubmitting}
-                        isLoading={isSubmitting}
-                    >
-                        {isSubmitting ? "Guardando..." : "Guardar cambios"}
-                    </Button>
-                </div>
-            </section>
+                <PersonalInfo {...stepProps} isEditMode hideHeading />
+            </FormSection>
 
-            {/* Datos Antropométricos */}
-            <section
-                role="region"
-                aria-labelledby="anthropometric-heading"
-                className={editSectionClass}
+            <FormSection
+                icon={<Ruler className="h-4 w-4" />}
+                title="Datos Antropométricos"
+                eyebrow="Medidas"
+                headingId="anthropometric-heading"
+                footer={saveButton("Guardar cambios")}
             >
-                <h3 id="anthropometric-heading" className={editHeadingClass}>
-                    Datos Antropométricos
-                </h3>
-                <PhysicalMetrics
-                    formData={formData}
-                    errors={errors}
-                    updateField={updateField}
-                />
-                <AnthropometricMetrics
-                    formData={formData}
-                    errors={errors}
-                    updateField={updateField}
-                    isEditMode={true}
-                />
-                <div className="flex justify-end pt-4 mt-6 border-t border-border">
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="md"
-                        onClick={handleSectionSave}
-                        disabled={isSubmitting}
-                        isLoading={isSubmitting}
-                    >
-                        {isSubmitting ? "Guardando..." : "Guardar cambios"}
-                    </Button>
-                </div>
-            </section>
+                <PhysicalMetrics {...stepProps} />
+                <AnthropometricMetrics {...stepProps} isEditMode />
+            </FormSection>
 
-            {/* Parámetros de Entrenamiento */}
-            <section
-                role="region"
-                aria-labelledby="training-params-heading"
-                className={editSectionClass}
+            <FormSection
+                icon={<Target className="h-4 w-4" />}
+                title="Parámetros de Entrenamiento"
+                eyebrow="Planificación"
+                headingId="training-params-heading"
+                footer={saveButton("Guardar cambios")}
             >
-                <h3 id="training-params-heading" className={editHeadingClass}>
-                    Parámetros de Entrenamiento
-                </h3>
-                <TrainingGoals
-                    formData={formData}
-                    errors={errors}
-                    updateField={updateField}
-                />
-                <Experience
-                    formData={formData}
-                    errors={errors}
-                    updateField={updateField}
-                />
-                <div className="flex justify-end pt-4 mt-6 border-t border-border">
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="md"
-                        onClick={handleSectionSave}
-                        disabled={isSubmitting}
-                        isLoading={isSubmitting}
-                    >
-                        {isSubmitting ? "Guardando..." : "Guardar cambios"}
-                    </Button>
+                <TrainingGoals {...stepProps} hideHeading />
+                <div className="mt-6 border-t border-primary/15 pt-6">
+                    <Experience {...stepProps} />
                 </div>
-            </section>
+            </FormSection>
 
-            {/* Información de Salud */}
-            <section
-                role="region"
-                aria-labelledby="health-info-heading"
-                className={editSectionClass}
+            <FormSection
+                icon={<Activity className="h-4 w-4" />}
+                title="Información de Salud"
+                eyebrow="Notas clínicas"
+                headingId="health-info-heading"
+                footer={saveButton("Guardar cambios")}
             >
-                <h3 id="health-info-heading" className={editHeadingClass}>
-                    Información de Salud
-                </h3>
-                <HealthInfo
-                    formData={formData}
-                    errors={errors}
-                    updateField={updateField}
-                />
-                <div className="flex justify-end pt-4 mt-6 border-t border-border">
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="md"
-                        onClick={handleSectionSave}
-                        disabled={isSubmitting}
-                        isLoading={isSubmitting}
-                    >
-                        {isSubmitting ? "Guardando..." : "Guardar cambios"}
-                    </Button>
-                </div>
-            </section>
+                <HealthInfo {...stepProps} />
+            </FormSection>
         </div>
     );
 };
-
-

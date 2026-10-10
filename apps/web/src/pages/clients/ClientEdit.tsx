@@ -22,6 +22,10 @@ import { Button } from "@/components/ui/buttons";
 import { DeleteClientModal } from "@/components/clients/modals/DeleteClientModal";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { PageTitle } from "@/components/dashboard/shared/PageTitle";
+import {
+    PLATFORM_ONBOARDING_DANGER_ZONE,
+    PLATFORM_ONBOARDING_PAGE_EYEBROW,
+} from "@/components/ui/forms/platformFormPresentation";
 export const ClientEdit: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -90,6 +94,7 @@ export const ClientEdit: React.FC = () => {
         <div className="space-y-8 pb-8 pt-1">
             <div className="flex min-w-0 flex-col gap-4">
                 <Breadcrumbs items={breadcrumbItems} />
+                <p className={PLATFORM_ONBOARDING_PAGE_EYEBROW}>Onboarding · Cliente</p>
                 <PageTitle
                     title="Editar perfil"
                     subtitle="Modifica los datos personales, métricas antropométricas, parámetros de entrenamiento y notas del cliente. También puedes desvincular el cliente de tu lista."
@@ -101,7 +106,10 @@ export const ClientEdit: React.FC = () => {
             <ClientEquipmentSection clientId={clientId} />
 
             {/* Zona de Peligro - Desvincular Cliente */}
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-6">
+            <div className={PLATFORM_ONBOARDING_DANGER_ZONE}>
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-destructive/80">
+                    Acciones irreversibles
+                </p>
                 <h3 className="text-lg font-semibold text-destructive mb-2">
                     Zona de peligro
                 </h3>

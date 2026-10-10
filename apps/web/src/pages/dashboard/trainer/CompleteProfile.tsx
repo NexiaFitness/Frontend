@@ -13,6 +13,12 @@ import { CompleteProfileForm } from "@/components/dashboard/trainer";
 import { useCompleteProfile } from "@nexia/shared";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { CheckCircle2 } from "lucide-react";
+import {
+    PLATFORM_ONBOARDING_PAGE_EYEBROW,
+    PLATFORM_ONBOARDING_PAGE_SUBTITLE,
+    PLATFORM_ONBOARDING_PAGE_TITLE,
+    PLATFORM_ONBOARDING_PROGRESS_DIVIDER,
+} from "@/components/ui/forms/platformFormPresentation";
 
 export const CompleteProfile: React.FC = () => {
     const navigate = useNavigate();
@@ -31,26 +37,22 @@ export const CompleteProfile: React.FC = () => {
 
     return (
         <div className="space-y-6 pb-12">
-            {/* Header */}
             <div>
-                <h1 className="text-xl font-bold text-foreground sm:text-2xl">
-                    Completa tu perfil profesional
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className={PLATFORM_ONBOARDING_PAGE_EYEBROW}>Onboarding · Entrenador</p>
+                <h1 className={PLATFORM_ONBOARDING_PAGE_TITLE}>Completa tu perfil profesional</h1>
+                <p className={PLATFORM_ONBOARDING_PAGE_SUBTITLE}>
                     Solo necesitamos algunos datos más para personalizar tu experiencia
                 </p>
             </div>
 
-            {/* Progress stepper */}
             <div className="flex items-center gap-3">
                 <StepBadge step={1} label="Cuenta creada" status="done" />
-                <div className="h-px flex-1 bg-border" />
+                <div className={PLATFORM_ONBOARDING_PROGRESS_DIVIDER} />
                 <StepBadge step={2} label="Perfil profesional" status="active" />
-                <div className="h-px flex-1 bg-border" />
+                <div className={PLATFORM_ONBOARDING_PROGRESS_DIVIDER} />
                 <StepBadge step={3} label="Dashboard" status="pending" />
             </div>
 
-            {/* Form */}
             <CompleteProfileForm />
         </div>
     );
@@ -68,22 +70,22 @@ function StepBadge({
     return (
         <div className="flex items-center gap-2">
             {status === "done" ? (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success/20 text-success">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-success/40 bg-success/15 text-success shadow-[0_0_16px_-6px] shadow-success/50">
                     <CheckCircle2 className="h-4 w-4" />
                 </div>
             ) : status === "active" ? (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-primary/15 text-sm font-bold text-primary">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-primary/15 text-sm font-bold text-primary shadow-[0_0_18px_-6px] shadow-primary/50">
                     {step}
                 </div>
             ) : (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border text-sm font-medium text-muted-foreground">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/20 text-sm font-medium text-muted-foreground">
                     {step}
                 </div>
             )}
             <span
                 className={`hidden text-sm font-medium sm:inline ${
                     status === "active"
-                        ? "text-foreground"
+                        ? "text-primary"
                         : status === "done"
                           ? "text-muted-foreground"
                           : "text-muted-foreground/60"

@@ -19,7 +19,13 @@ import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
-import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
+import {
+    PLATFORM_DASHBOARD_FOOTER_ROW,
+    PLATFORM_ONBOARDING_PAGE_EYEBROW,
+    PLATFORM_ONBOARDING_PAGE_SUBTITLE,
+    PLATFORM_ONBOARDING_PAGE_TITLE,
+    PLATFORM_ONBOARDING_SIDEBAR_CARD,
+} from "@/components/ui/forms/platformFormPresentation";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Badge } from "@/components/ui/Badge";
 import { FormSection } from "@/components/ui/forms/FormSection";
@@ -125,13 +131,12 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
                 {/* Header */}
                 <div>
                     <Breadcrumbs items={BREADCRUMB_ITEMS} className="mb-3" />
-                    <div className="flex flex-wrap items-center gap-3">
-                        <h1 className="text-xl font-bold text-foreground sm:text-2xl">
-                            Nuevo Cliente
-                        </h1>
+                    <p className={PLATFORM_ONBOARDING_PAGE_EYEBROW}>Onboarding · Cliente</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-3">
+                        <h1 className={PLATFORM_ONBOARDING_PAGE_TITLE}>Nuevo Cliente</h1>
                         <Badge variant="subtle">Borrador</Badge>
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className={PLATFORM_ONBOARDING_PAGE_SUBTITLE}>
                         Completa la información para registrar al cliente
                     </p>
                 </div>
@@ -143,6 +148,7 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
                         <FormSection
                             icon={<User className="h-4 w-4" />}
                             title="Información Personal"
+                            eyebrow="Identidad"
                         >
                             <PersonalInfo {...stepProps} isEditMode={false} hideHeading />
                         </FormSection>
@@ -150,6 +156,7 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
                         <FormSection
                             icon={<Ruler className="h-4 w-4" />}
                             title="Datos Antropométricos"
+                            eyebrow="Medidas"
                         >
                             <PhysicalMetrics {...stepProps} hideHeading />
                             <AnthropometricMetrics {...stepProps} collapsible />
@@ -158,9 +165,10 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
                         <FormSection
                             icon={<Target className="h-4 w-4" />}
                             title="Parámetros de Entrenamiento"
+                            eyebrow="Planificación"
                         >
                             <TrainingGoals {...stepProps} hideHeading />
-                            <div className="mt-6 border-t border-border pt-6">
+                            <div className="mt-6 border-t border-primary/15 pt-6">
                                 <Experience {...stepProps} />
                             </div>
                         </FormSection>
@@ -168,7 +176,8 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
 
                     {/* Sidebar */}
                     <div className="w-full space-y-6 lg:w-80 lg:shrink-0">
-                        <div className="flex items-center gap-3 rounded-xl border border-border bg-surface p-4">
+                        <div className={PLATFORM_ONBOARDING_SIDEBAR_CARD}>
+                            <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-primary text-sm font-bold text-primary">
                                 {filledCount}/{REQUIRED_FIELDS.length}
                             </div>
@@ -176,9 +185,10 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
                                 <p className="text-sm font-medium text-foreground">campos</p>
                                 <p className="text-xs text-muted-foreground">Requeridos completados</p>
                             </div>
+                            </div>
                         </div>
 
-                        <div className="rounded-xl border border-border bg-surface p-5">
+                        <div className={PLATFORM_ONBOARDING_SIDEBAR_CARD}>
                             <div className="mb-4 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <StickyNote className="h-4 w-4 text-warning" />
@@ -219,10 +229,10 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
                             </div>
                         </div>
 
-                        <div className="rounded-xl border border-border bg-surface p-5">
+                        <div className={PLATFORM_ONBOARDING_SIDEBAR_CARD}>
                             <div className="mb-4 flex items-center gap-2">
                                 <Sparkles className="h-4 w-4 text-primary" />
-                                <h3 className="text-sm font-semibold text-foreground">Resumen</h3>
+                                <h3 className="text-sm font-semibold text-primary/90">Resumen</h3>
                             </div>
                             <dl className="space-y-2.5 text-sm">
                                 <SummaryRow label="Nombre" value={formData.nombre && formData.apellidos ? `${formData.nombre} ${formData.apellidos}` : undefined} />

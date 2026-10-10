@@ -204,7 +204,11 @@ export const CompleteProfileForm: React.FC = () => {
         <form onSubmit={onSubmit} className="space-y-6">
             {serverError && <ServerErrorBanner error={serverError} />}
 
-            <FormSection icon={<Briefcase className="h-4 w-4" />} title="Información profesional">
+            <FormSection
+                icon={<Briefcase className="h-4 w-4" />}
+                title="Información profesional"
+                eyebrow="Perfil"
+            >
                 <p className="mb-5 -mt-2 text-sm text-muted-foreground">
                     Cuéntanos sobre tu experiencia y modalidad de trabajo
                 </p>
@@ -246,7 +250,7 @@ export const CompleteProfileForm: React.FC = () => {
                 </div>
             </FormSection>
 
-            <FormSection icon={<MapPin className="h-4 w-4" />} title="Ubicación">
+            <FormSection icon={<MapPin className="h-4 w-4" />} title="Ubicación" eyebrow="Localización">
                 <p className="mb-5 -mt-2 text-sm text-muted-foreground">
                     ¿Dónde ofreces tus servicios?
                 </p>
@@ -281,7 +285,7 @@ export const CompleteProfileForm: React.FC = () => {
                 </div>
             </FormSection>
 
-            <FormSection icon={<Phone className="h-4 w-4" />} title="Contacto">
+            <FormSection icon={<Phone className="h-4 w-4" />} title="Contacto" eyebrow="Comunicación">
                 <p className="mb-5 -mt-2 text-sm text-muted-foreground">
                     Para que tus clientes puedan comunicarse contigo
                 </p>
