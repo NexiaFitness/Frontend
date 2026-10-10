@@ -10,8 +10,20 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import type { Page, Response } from "@playwright/test";
 import { expect } from "@playwright/test";
+import { loginAsTrainer } from "../fixtures/auth";
 
 export const H7_QA_CLIENT_ID = 346;
+
+/** Evita reutilizar sesión atleta: `loginAsTrainer` no cambia rol si ya hay `/dashboard`. */
+export async function loginAsTrainerFresh(page: Page) {
+  await page.context().clearCookies();
+  try {
+    await loginAsTrainer(page);
+  } catch {
+    await page.waitForTimeout(2000);
+    await loginAsTrainer(page);
+  }
+}
 
 export type H7SessionKind = "superset" | "giant" | "dropset";
 
@@ -189,6 +201,7 @@ export async function trainerCreateSessionForClient(
   sessionNamePrefix: string,
   kind: H7SessionKind
 ): Promise<H7SessionMeta> {
+  await loginAsTrainerFresh(page);
   const today = new Date().toISOString().slice(0, 10);
   await page.goto(
     `/dashboard/session-programming/create-session?clientId=${clientId}&date=${today}`
@@ -255,4 +268,59 @@ export async function trainerCreateSessionForClient(
   };
   writeH7SessionMeta(meta, kind);
   return meta;
+}
+
+export async function trainerCreateSingleExerciseSession(
+  page: Page,
+  clientId: number,
+  sessionNamePrefix: string
+): Promise<H7SessionMeta> {
+  await loginAsTrainerFresh(page);
+  const today = new Date().toISOString().slice(0, 10);
+  await page.goto(
+    `/dashboard/session-programming/create-session?clientId=${clientId}&date=${today}`
+  );
+  await expect(page.getByPlaceholder(/ej: fuerza/i)).toBeVisible({ timeout: 30_000 });
+  const sessionName = `${sessionNamePrefix} ${Date.now()}`;
+  await page.getByPlaceholder(/ej: fuerza/i).fill(sessionName);
+  await trainerAddFuerzaBlock(page);
+  const card = page.locator("[data-constructor-row-id]").first();
+  await card.getByRole("button", { name: /Buscar ejercicio/i }).click();
+  await page
+    .locator("div.space-y-0\\.5 button")
+    .filter({ hasNot: page.getByText("LESION") })
+    .first()
+    .click({ timeout: 20_000 });
+  await page.getByRole("button", { name: /crear sesión/i }).click();
+  await page.waitForTimeout(2500);
+  const entendido = page.getByRole("button", { name: /entendido/i });
+  if (await entendido.isVisible().catch(() => false)) await entendido.click();
+  await expect(page).toHaveURL(/session-programming\/sessions\/\d+\/review/, {
+    timeout: 30_000,
+  });
+  const match = page.url().match(/sessions\/(\d+)\/review/);
+  expect(match?.[1]).toBeTruthy();
+  const sessionId = Number(match![1]);
+  return {
+    sessionId,
+    sessionName,
+    createdAt: new Date().toISOString(),
+    note: "RM-13: sesión H7 single — C9/C10",
+  };
+}
+
+/** Orden estable: un POST por slot en la misma ronda. */
+export function postWeightKgList(posts: ExecutionPost[]): number[] {
+  return posts.map((p) => p.weight_kg ?? NaN);
+}
+
+export function assertPostWeightsMatchTyped(
+  posts: ExecutionPost[],
+  typedWeights: number[]
+): void {
+  expect(posts.length).toBe(typedWeights.length);
+  const fromPosts = posts.map((p) => p.weight_kg);
+  expect([...fromPosts].sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual(
+    [...typedWeights].sort((a, b) => a - b)
+  );
 }

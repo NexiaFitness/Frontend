@@ -6,13 +6,14 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { loginAsTrainer } from "../fixtures/auth";
 import { loginAsAthlete } from "../fixtures/athlete-auth";
 import {
+  assertPostWeightsMatchTyped,
   attachExecutionCapture,
   confirmGroupRound,
   H7_QA_CLIENT_ID,
   openRunForSession,
+  postWeightKgList,
   startRestAfterFill,
   trainerCreateSessionForClient,
   typePeso,
@@ -27,7 +28,6 @@ test("QA-H7-C8-giant POST weight_kg = UI", async ({ page }) => {
     if (m.type() === "error") consoleErrors.push(m.text());
   });
 
-  await loginAsTrainer(page);
   const meta = await trainerCreateSessionForClient(
     page,
     H7_QA_CLIENT_ID,
@@ -65,9 +65,11 @@ test("QA-H7-C8-giant POST weight_kg = UI", async ({ page }) => {
   );
   await confirmGroupRound(page);
   await postWait;
-  await cap.waitForAtLeastPosts(1, 25_000);
+  await cap.waitForAtLeastPosts(weights.length, 25_000);
   cap.detach();
 
-  expect(cap.posts.some((p) => p.weight_kg === Number(weights[0]))).toBe(true);
-  expect(consoleErrors.join("; ") || "sin errores").toMatch(/sin errores|^$/);
+  const typedNums = weights.map((w) => Number(w));
+  assertPostWeightsMatchTyped(cap.posts, typedNums);
+  expect([...postWeightKgList(cap.posts)].sort()).toEqual([...typedNums].sort());
+  expect(consoleErrors).toHaveLength(0);
 });

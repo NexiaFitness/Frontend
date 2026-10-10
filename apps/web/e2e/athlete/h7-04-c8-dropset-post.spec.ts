@@ -6,7 +6,6 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { loginAsTrainer } from "../fixtures/auth";
 import { loginAsAthlete } from "../fixtures/athlete-auth";
 import {
   attachExecutionCapture,
@@ -14,6 +13,7 @@ import {
   confirmGroupRound,
   H7_QA_CLIENT_ID,
   openRunForSession,
+  postWeightKgList,
   trainerCreateSessionForClient,
   typePeso,
   typeReps,
@@ -27,7 +27,6 @@ test("QA-H7-C8-dropset POST weight_kg = UI", async ({ page }) => {
     if (m.type() === "error") consoleErrors.push(m.text());
   });
 
-  await loginAsTrainer(page);
   const meta = await trainerCreateSessionForClient(
     page,
     H7_QA_CLIENT_ID,
@@ -63,6 +62,8 @@ test("QA-H7-C8-dropset POST weight_kg = UI", async ({ page }) => {
   await cap.waitForAtLeastPosts(1, 25_000);
   cap.detach();
 
-  expect(cap.posts.some((p) => p.weight_kg === 48)).toBe(true);
-  expect(consoleErrors.join("; ") || "sin errores").toMatch(/sin errores|^$/);
+  const postWeights = postWeightKgList(cap.posts).filter((w) => !Number.isNaN(w));
+  expect(postWeights.every((w) => w === 48)).toBe(true);
+  expect(postWeights.length).toBeGreaterThanOrEqual(1);
+  expect(consoleErrors).toHaveLength(0);
 });
