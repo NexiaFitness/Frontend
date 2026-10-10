@@ -298,13 +298,14 @@ export interface ReplicatedSessionItem {
 }
 
 /**
- * Motivo por el que una semana no se replico (D-REP-1..3).
+ * Motivo por el que una semana no se replico (D-REP-1..3, D11 past_target_date).
  * Solo `session_already_exists` es sustituible con force=true.
  */
 export type ReplicateSkipReason =
     | "session_already_exists"
     | "protected_session"
-    | "outside_block_range";
+    | "outside_block_range"
+    | "past_target_date";
 
 /**
  * Item de conflicto omitido en la replicacion
@@ -313,7 +314,8 @@ export interface SkippedConflictItem {
     week_ordinal: number;
     period_block_id: number;
     session_date: string | null;
-    reason: ReplicateSkipReason;
+    /** Valores conocidos en ReplicateSkipReason; el BE puede añadir otros. */
+    reason: ReplicateSkipReason | string;
     existing_session_name?: string | null;
 }
 

@@ -21,10 +21,13 @@ import { cn } from "@/lib/utils";
 
 import {
     REPLICATE_CONFLICT_KEEP_LABEL,
+    REPLICATE_CONFLICT_OTHER_SKIPS_TITLE,
+    REPLICATE_CONFLICT_PAST_TITLE,
     REPLICATE_CONFLICT_PROTECTED_TITLE,
     REPLICATE_CONFLICT_REPLACE_HINT,
     REPLICATE_CONFLICT_REPLACE_LABEL,
     formatReplicationDate,
+    replicateSkipReasonLabel,
     type ReplicateConflictOutcome,
 } from "./replicateSessionPresentation";
 
@@ -36,10 +39,11 @@ interface ReplicateSessionConflictModalProps {
     isLoading: boolean;
 }
 
-const ConflictRow: React.FC<{ item: SkippedConflictItem; isProtected: boolean }> = ({
-    item,
-    isProtected,
-}) => (
+const ConflictRow: React.FC<{
+    item: SkippedConflictItem;
+    isProtected: boolean;
+    reasonHint?: string;
+}> = ({ item, isProtected, reasonHint }) => (
     <li
         className={cn(
             "flex items-center gap-2 rounded-md px-2 py-1.5",
@@ -58,6 +62,8 @@ const ConflictRow: React.FC<{ item: SkippedConflictItem; isProtected: boolean }>
             <span className="truncate text-xs text-muted-foreground">
                 {item.existing_session_name}
             </span>
+        ) : reasonHint ? (
+            <span className="truncate text-xs text-muted-foreground">{reasonHint}</span>
         ) : null}
         <span className="ml-auto shrink-0 text-xs text-muted-foreground">
             {formatReplicationDate(item.session_date)}
@@ -125,6 +131,47 @@ export const ReplicateSessionConflictModal: React.FC<
                                 key={`protected-${item.week_ordinal}`}
                                 item={item}
                                 isProtected
+                                reasonHint={replicateSkipReasonLabel(item.reason)}
+                            />
+                        ))}
+                    </ul>
+                </section>
+            ) : null}
+            {outcome.pastTargetDate.length > 0 ? (
+                <section aria-labelledby="replicate-past-title" className="space-y-2">
+                    <h3
+                        id="replicate-past-title"
+                        className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                    >
+                        {REPLICATE_CONFLICT_PAST_TITLE}
+                    </h3>
+                    <ul className="space-y-2 rounded-lg border border-border/50 p-3">
+                        {outcome.pastTargetDate.map((item) => (
+                            <ConflictRow
+                                key={`past-${item.week_ordinal}`}
+                                item={item}
+                                isProtected
+                                reasonHint={replicateSkipReasonLabel(item.reason)}
+                            />
+                        ))}
+                    </ul>
+                </section>
+            ) : null}
+            {outcome.outsideBlock.length > 0 || outcome.unknown.length > 0 ? (
+                <section aria-labelledby="replicate-other-skips-title" className="space-y-2">
+                    <h3
+                        id="replicate-other-skips-title"
+                        className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                    >
+                        {REPLICATE_CONFLICT_OTHER_SKIPS_TITLE}
+                    </h3>
+                    <ul className="space-y-2 rounded-lg border border-border/50 p-3">
+                        {[...outcome.outsideBlock, ...outcome.unknown].map((item) => (
+                            <ConflictRow
+                                key={`other-${item.week_ordinal}-${item.reason}`}
+                                item={item}
+                                isProtected
+                                reasonHint={replicateSkipReasonLabel(String(item.reason))}
                             />
                         ))}
                     </ul>

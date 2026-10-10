@@ -1,5 +1,5 @@
 /**
- * sessionReplication.spec.ts — Semanas destino y partición de omisiones (APB-01, D-REP-1..3).
+ * sessionReplication.spec.ts — Semanas destino y partición de omisiones (APB-01, D-REP-1..3, D11).
  *
  * Contexto: regresión del cálculo de 7 días desde start_date en useReplicateSessionFlow.
  * @author Frontend Team
@@ -12,6 +12,7 @@ import type { SkippedConflictItem } from "../types/trainingSessions";
 import {
     buildSessionReplicationWeekOptions,
     partitionReplicationSkips,
+    resolveReplicationSkipBucket,
 } from "./sessionReplication";
 
 describe("buildSessionReplicationWeekOptions", () => {
@@ -20,6 +21,7 @@ describe("buildSessionReplicationWeekOptions", () => {
             blockStartISO: "2026-03-02",
             blockEndISO: "2026-03-29",
             sessionDateISO: "2026-03-02",
+            asOfDateISO: "2026-01-01",
         });
         expect(options).toEqual([
             { ordinal: 2, targetDate: "2026-03-09" },
@@ -29,11 +31,11 @@ describe("buildSessionReplicationWeekOptions", () => {
     });
 
     it("bloque mié→mar: ordinales anclados al lunes, como el backend", () => {
-        // 2026-03-04 (mié) .. 2026-03-31 (mar) = 5 semanas calendario.
         const options = buildSessionReplicationWeekOptions({
             blockStartISO: "2026-03-04",
             blockEndISO: "2026-03-31",
-            sessionDateISO: "2026-03-09", // lunes, semana 2
+            sessionDateISO: "2026-03-09",
+            asOfDateISO: "2026-01-01",
         });
         expect(options.map((o) => o.ordinal)).toEqual([3, 4, 5]);
         expect(options.map((o) => o.targetDate)).toEqual([
@@ -47,11 +49,22 @@ describe("buildSessionReplicationWeekOptions", () => {
         const options = buildSessionReplicationWeekOptions({
             blockStartISO: "2026-03-04",
             blockEndISO: "2026-03-31",
-            sessionDateISO: "2026-03-12", // jueves, semana 2
+            sessionDateISO: "2026-03-12",
+            asOfDateISO: "2026-01-01",
         });
         expect(options[0]).toEqual({ ordinal: 1, targetDate: "2026-03-05" });
-        // Semana 5 (jueves 2026-04-02) cae fuera del bloque.
         expect(options.map((o) => o.ordinal)).toEqual([1, 3, 4]);
+    });
+
+    it("D11: no ofrece semanas con fecha destino anterior a asOfDateISO", () => {
+        const options = buildSessionReplicationWeekOptions({
+            blockStartISO: "2026-03-02",
+            blockEndISO: "2026-03-29",
+            sessionDateISO: "2026-03-02",
+            asOfDateISO: "2026-03-16",
+        });
+        expect(options.map((o) => o.ordinal)).toEqual([3, 4]);
+        expect(options.map((o) => o.targetDate)).toEqual(["2026-03-16", "2026-03-23"]);
     });
 
     it("rango inválido no ofrece semanas", () => {
@@ -76,14 +89,23 @@ describe("partitionReplicationSkips", () => {
         reason,
     });
 
-    it("separa sustituibles, protegidas y fuera de bloque", () => {
+    it("separa sustituibles, protegidas, fuera de bloque y fechas pasadas", () => {
         const result = partitionReplicationSkips([
             item(2, "session_already_exists"),
             item(3, "protected_session"),
             item(1, "outside_block_range"),
+            item(4, "past_target_date"),
         ]);
         expect(result.replaceable.map((i) => i.week_ordinal)).toEqual([2]);
         expect(result.protectedItems.map((i) => i.week_ordinal)).toEqual([3]);
         expect(result.outsideBlock.map((i) => i.week_ordinal)).toEqual([1]);
+        expect(result.pastTargetDate.map((i) => i.week_ordinal)).toEqual([4]);
+        expect(result.unknown).toEqual([]);
+    });
+
+    it("motivo desconocido va a unknown sin lanzar", () => {
+        const result = partitionReplicationSkips([item(5, "future_backend_reason")]);
+        expect(result.unknown.map((i) => i.week_ordinal)).toEqual([5]);
+        expect(resolveReplicationSkipBucket("future_backend_reason")).toBe("unknown");
     });
 });

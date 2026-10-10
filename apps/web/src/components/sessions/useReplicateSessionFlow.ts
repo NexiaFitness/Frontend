@@ -31,6 +31,7 @@ import {
     EMPTY_REPLICATE_CONFLICT_OUTCOME,
     buildReplicateOutcomeMessage,
     formatReplicationDate,
+    replicationSkipPartitionToConflictOutcome,
     type ReplicateConflictOutcome,
 } from "./replicateSessionPresentation";
 
@@ -95,11 +96,9 @@ export function useReplicateSessionFlow(session: SessionInfo) {
 
             setIsOpen(false);
             if (skips.replaceable.length > 0) {
-                setConflictOutcome({
-                    createdCount: result.count,
-                    replaceable: skips.replaceable,
-                    protectedItems: skips.protectedItems,
-                });
+                setConflictOutcome(
+                    replicationSkipPartitionToConflictOutcome(result.count, skips)
+                );
                 setIsConflictOpen(true);
                 return;
             }
