@@ -63,7 +63,7 @@ export function useAthleteRunLoggerDefaultEffects({
     setRoundRpeState,
 }: UseAthleteRunLoggerDefaultEffectsOptions): void {
     useAthleteRunGroupLoggerDefaults({
-        restPhase,
+        restShowLogger,
         isGroupRound,
         currentRunStep,
         slotReferences,

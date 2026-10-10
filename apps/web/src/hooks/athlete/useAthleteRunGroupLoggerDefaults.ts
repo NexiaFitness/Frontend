@@ -23,7 +23,8 @@ import type { AthleteRunReferencePoint } from "@nexia/shared/types/athleteRunRef
 import type { SlotLogValues } from "@/components/athlete/logging/AthleteMultiSlotLogger";
 
 export interface UseAthleteRunGroupLoggerDefaultsOptions {
-    restPhase: string;
+    /** Misma señal que serie simple: hidratar cuando el logger es visible (doing o logging_rest). */
+    restShowLogger: boolean;
     isGroupRound: boolean;
     currentRunStep: AthleteRunStep | undefined;
     slotReferences: Record<string, Pick<AthleteRunReference, "reference">>;
@@ -35,7 +36,7 @@ export interface UseAthleteRunGroupLoggerDefaultsOptions {
 }
 
 export function useAthleteRunGroupLoggerDefaults({
-    restPhase,
+    restShowLogger,
     isGroupRound,
     currentRunStep,
     slotReferences,
@@ -54,7 +55,7 @@ export function useAthleteRunGroupLoggerDefaults({
     }, [currentRunStep?.stepKey]);
 
     useEffect(() => {
-        if (restPhase !== "logging_rest" || !isGroupRound || !currentRunStep?.slots?.length) {
+        if (!restShowLogger || !isGroupRound || !currentRunStep?.slots?.length) {
             return;
         }
 
@@ -135,7 +136,7 @@ export function useAthleteRunGroupLoggerDefaults({
             setRoundRpeState(mergedRpe);
         }
     }, [
-        restPhase,
+        restShowLogger,
         isGroupRound,
         currentRunStep,
         slotReferences,
