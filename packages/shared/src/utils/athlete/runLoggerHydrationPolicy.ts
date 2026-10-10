@@ -134,7 +134,7 @@ export function mergeRoundRpeWithDefaults(
 /** Confirmación batch: lo visible debe ser válido (D-LOG-TOUCH-01). */
 export function isRunLoggerSlotConfirmValid(
     log: RunLoggerSlotLogShape,
-    inputMode: "weight_reps" | "reps_only" | "duration" = "weight_reps"
+    inputMode: string = "weight_reps"
 ): boolean {
     if (inputMode === "duration") {
         return (log.durationSeconds ?? log.reps) > 0;

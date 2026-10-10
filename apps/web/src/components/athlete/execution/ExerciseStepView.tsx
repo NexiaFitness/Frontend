@@ -172,7 +172,9 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
                                 plannedWeight={plannedWeight}
                                 referenceWeightKg={referenceWeightKg}
                                 rpe={rpe}
-                                onWeightChange={onWeightChange}
+                                onWeightChange={(value) => {
+                                    if (value != null) onWeightChange(value);
+                                }}
                                 onRepsChange={onRepsChange}
                                 onRpeChange={onRpeChange}
                             />

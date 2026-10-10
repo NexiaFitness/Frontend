@@ -13,10 +13,10 @@ import { AthleteLoggingNumericField } from "./AthleteLoggingNumericField";
 
 export interface AthleteSetInputLoggerProps {
     inputMode?: AthleteRunInputMode;
-    weight: number;
+    weight: number | null;
     reps: number;
     durationSeconds?: number;
-    onWeightChange: (value: number) => void;
+    onWeightChange: (value: number | null) => void;
     onRepsChange: (value: number) => void;
     onDurationSecondsChange?: (value: number) => void;
     plannedWeight?: number | null;
@@ -43,7 +43,7 @@ export const AthleteSetInputLogger: React.FC<AthleteSetInputLoggerProps> = ({
     const weightStep = useMemo(
         () =>
             resolveWeightIncrementStepKg({
-                currentKg: weight,
+                currentKg: weight ?? 0,
                 plannedKg: plannedWeight,
                 referenceKg: referenceWeightKg,
             }),
@@ -95,7 +95,9 @@ export const AthleteSetInputLogger: React.FC<AthleteSetInputLoggerProps> = ({
                 label="Peso"
                 unit="kg"
                 value={weight}
-                onChange={onWeightChange}
+                onChange={(value) => onWeightChange(value)}
+                onClearValue={() => onWeightChange(null)}
+                allowEmpty
                 step={weightStep}
                 min={0}
                 inputMode="decimal"

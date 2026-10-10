@@ -222,7 +222,9 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                                     weight={weight}
                                     plannedWeight={step.plannedWeight}
                                     reps={row.reps}
-                                    onWeightChange={(v) => handleWeightChange(row.stepKey, flat, v)}
+                                    onWeightChange={(v) => {
+                                        if (v != null) handleWeightChange(row.stepKey, flat, v);
+                                    }}
                                     onRepsChange={(reps) =>
                                         onDraftChange({
                                             ...draft,

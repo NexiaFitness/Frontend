@@ -50,7 +50,7 @@ export const AthleteDropsetBatchLogger: React.FC<AthleteDropsetBatchLoggerProps>
 
             {slots.map((slot) => {
                 const log = slotLogs[slot.stepKey] ?? {
-                    weight: slot.defaultWeight,
+                    weight: slot.defaultWeight > 0 ? slot.defaultWeight : null,
                     reps: slot.defaultReps,
                 };
                 const stepTitle = formatRunSetLabel(slot.setLabel || slot.slotLabel);

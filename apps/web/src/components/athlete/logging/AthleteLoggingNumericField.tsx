@@ -23,8 +23,12 @@ import {
 
 export interface AthleteLoggingNumericFieldProps {
     label: string;
-    value: number;
+    value: number | null;
     onChange: (value: number) => void;
+    placeholder?: string;
+    /** Si true, blur con campo vacío no fuerza min (peso sin referencia). */
+    allowEmpty?: boolean;
+    onClearValue?: () => void;
     unit?: string;
     step?: number;
     min?: number;
@@ -48,14 +52,22 @@ export const AthleteLoggingNumericField: React.FC<AthleteLoggingNumericFieldProp
     inputMode = "numeric",
     allowDecimal = false,
     className,
+    placeholder = "—",
+    allowEmpty = false,
+    onClearValue,
 }) => {
     const inputId = useId();
-    const [draft, setDraft] = useState(String(value));
+    const [draft, setDraft] = useState(value == null ? "" : String(value));
     const [focused, setFocused] = useState(false);
+    const numericValue = value ?? 0;
 
     useEffect(() => {
         if (!focused) {
-            setDraft(allowDecimal ? String(value) : String(Math.round(value)));
+            if (value == null) {
+                setDraft("");
+            } else {
+                setDraft(allowDecimal ? String(value) : String(Math.round(value)));
+            }
         }
     }, [allowDecimal, focused, value]);
 
@@ -75,7 +87,7 @@ export const AthleteLoggingNumericField: React.FC<AthleteLoggingNumericFieldProp
     );
 
     const adjust = (delta: number) => {
-        let next = value + delta;
+        let next = numericValue + delta;
         if (next < min) next = min;
         if (max != null && next > max) next = max;
         if (allowDecimal) next = clampWeightKg(next);
@@ -98,7 +110,7 @@ export const AthleteLoggingNumericField: React.FC<AthleteLoggingNumericFieldProp
                     type="button"
                     className={cn(ATHLETE_RUN_STEPPER_BTN, "min-h-11 min-w-11")}
                     onClick={() => adjust(-step)}
-                    disabled={value <= min}
+                    disabled={numericValue <= min}
                     aria-label={`Reducir ${label.toLowerCase()}`}
                 >
                     <Minus className="size-5" aria-hidden />
@@ -111,6 +123,7 @@ export const AthleteLoggingNumericField: React.FC<AthleteLoggingNumericFieldProp
                     enterKeyHint="done"
                     className={cn(ATHLETE_RUN_VALUE_PILL, INPUT_CLASS, "flex-1")}
                     value={draft}
+                    placeholder={placeholder}
                     onChange={(event) => {
                         const raw = event.target.value;
                         const normalized = allowDecimal
@@ -124,6 +137,10 @@ export const AthleteLoggingNumericField: React.FC<AthleteLoggingNumericFieldProp
                     onFocus={() => setFocused(true)}
                     onBlur={() => {
                         setFocused(false);
+                        if (allowEmpty && draft.trim() === "") {
+                            onClearValue?.();
+                            return;
+                        }
                         commitDraft(draft);
                     }}
                     aria-label={label}
@@ -132,7 +149,7 @@ export const AthleteLoggingNumericField: React.FC<AthleteLoggingNumericFieldProp
                     type="button"
                     className={cn(ATHLETE_RUN_STEPPER_BTN, "min-h-11 min-w-11")}
                     onClick={() => adjust(step)}
-                    disabled={max != null && value >= max}
+                    disabled={max != null && numericValue >= max}
                     aria-label={`Aumentar ${label.toLowerCase()}`}
                 >
                     <Plus className="size-5" aria-hidden />

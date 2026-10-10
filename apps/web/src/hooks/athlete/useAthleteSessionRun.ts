@@ -78,6 +78,12 @@ import { useAthleteForTimeFlow } from "@/hooks/athlete/useAthleteForTimeFlow";
 import { useAthleteEmomRunPhase } from "@/hooks/athlete/useAthleteEmomRunPhase";
 import { useAthleteRunProgressResume } from "@/hooks/athlete/useAthleteRunProgressResume";
 import { useAthleteRunLoggerDefaultEffects } from "@/hooks/athlete/useAthleteRunLoggerDefaultEffects";
+import { useAthleteRunLoggerTouchState } from "@/hooks/athlete/useAthleteRunLoggerTouchState";
+import { useAthleteRunBatchStepOnStepKeyChange } from "@/hooks/athlete/useAthleteRunBatchStepOnStepKeyChange";
+import {
+    isRunLoggerSlotConfirmValid,
+    resolveInitialSlotWeight,
+} from "@nexia/shared/utils/athlete/runLoggerHydrationPolicy";
 export interface AthletePrCelebration {
     exerciseName: string;
     weight: number;
@@ -275,6 +281,8 @@ export function useAthleteSessionRun({
 
     const currentRunStep: AthleteRunStep | undefined = runSteps[step];
     const currentStepKey = currentRunStep?.stepKey ?? null;
+    const { markSlotField, markRoundRpe, getTouchedSnapshot } =
+        useAthleteRunLoggerTouchState(currentStepKey ?? undefined);
     const isGroupRound = currentRunStep?.kind === "group_round";
     const isTimedBlock = currentRunStep?.kind === "timed_block";
     const isBatchStep = isGroupRound || isTimedBlock;
@@ -412,86 +420,27 @@ export function useAthleteSessionRun({
     const handleRoundRpeChange = useCallback(
         (value: number | null) => {
             setRoundRpe(value);
+            if (currentStepKey) markRoundRpe(currentStepKey);
             touchRunStepForPersist(currentRunStep ?? undefined);
         },
-        [currentRunStep, touchRunStepForPersist]
+        [currentStepKey, currentRunStep, markRoundRpe, touchRunStepForPersist]
     );
 
     useEffect(() => {
         setPrCelebration(null);
     }, [currentStepKey]);
 
-    useEffect(() => {
-        if (!currentStepKey) return;
-
-        const runStep = runStepsRef.current.find((item) => item.stepKey === currentStepKey);
-        if (!runStep || (runStep.kind !== "group_round" && runStep.kind !== "timed_block") || (!runStep.slots?.length && !runStep.emomIntervals?.length)) {
-            setSlotLogs((prev) => (Object.keys(prev).length === 0 ? prev : {}));
-            setRoundRpe((prev) => (prev === null ? prev : null));
-            setAmrapRounds((prev) => (prev === 0 ? prev : 0));
-            setAmrapPartialReps((prev) => (Object.keys(prev).length === 0 ? prev : {}));
-            setEmomAsPlanned((prev) => (prev === null ? prev : null));
-            setEmomAthleteNote((prev) => (prev === "" ? prev : ""));
-            return;
-        }
-
-        if (runStep.groupKind === "emom" && runStep.emomIntervals?.length) {
-            setEmomAsPlanned((prev) => (prev === null ? prev : null));
-            setEmomAthleteNote((prev) => (prev === "" ? prev : ""));
-        }
-
-        if (!runStep.slots?.length) return;
-
-        const partialSlots = runStep.slots.map((slot) => ({
-            stepKey: slot.stepKey,
-            maxReps: slot.defaultReps,
-        }));
-        const initialPartial = buildInitialAmrapPartial(partialSlots);
-        const initial: Record<string, SlotLogValues> = {};
-        for (const slot of runStep.slots) {
-            initial[slot.stepKey] = {
-                weight: slot.defaultWeight,
-                reps: slot.defaultReps,
-            };
-        }
-
-        const prescribedRpe =
-            runStep.slots.find((slot) => slot.defaultRpe != null)?.defaultRpe ?? null;
-
-        setSlotLogs((prev) => {
-            const keys = Object.keys(initial);
-            if (
-                keys.length === Object.keys(prev).length &&
-                keys.every((key) => {
-                    const previous = prev[key];
-                    const next = initial[key];
-                    return (
-                        previous &&
-                        next &&
-                        previous.weight === next.weight &&
-                        previous.reps === next.reps
-                    );
-                })
-            ) {
-                return prev;
-            }
-            return initial;
-        });
-
-        setRoundRpe((prev) => (prev === prescribedRpe ? prev : prescribedRpe));
-        setAmrapRounds((prev) => (prev === 0 ? prev : 0));
-        setAmrapPartialReps((prev) => {
-            const keys = Object.keys(initialPartial);
-            if (
-                keys.length === Object.keys(prev).length &&
-                keys.every((key) => (prev[key] ?? 0) === (initialPartial[key] ?? 0))
-            ) {
-                return prev;
-            }
-            return initialPartial;
-        });
-        setAmrapValidationVisible((prev) => (prev === false ? prev : false));
-    }, [currentStepKey]);
+    useAthleteRunBatchStepOnStepKeyChange({
+        currentStepKey,
+        runStepsRef,
+        setSlotLogs,
+        setRoundRpe,
+        setAmrapRounds,
+        setAmrapPartialReps,
+        setAmrapValidationVisible,
+        setEmomAsPlanned,
+        setEmomAthleteNote,
+    });
 
     const blockTimerRef = useRef(0);
     const forTimeDataRef = useRef<{ totalSeconds: number }>({
@@ -500,7 +449,16 @@ export function useAthleteSessionRun({
 
     const updateSlotLog = useCallback(
         (slotKey: string, patch: Partial<SlotLogValues>) => {
-            if (patch.weight != null || patch.reps != null) {
+            if (patch.weight !== undefined) {
+                markSlotField(slotKey, "weight");
+            }
+            if (patch.reps != null) {
+                markSlotField(slotKey, "reps");
+            }
+            if (patch.durationSeconds != null) {
+                markSlotField(slotKey, "durationSeconds");
+            }
+            if (patch.weight !== undefined || patch.reps != null || patch.durationSeconds != null) {
                 touchedWeightStepKeysRef.current.add(slotKey);
                 touchRunStepForPersist(currentRunStep ?? undefined);
             }
@@ -510,7 +468,7 @@ export function useAthleteSessionRun({
                 return { ...prev, [slotKey]: { ...current, ...patch } };
             });
         },
-        [currentRunStep, touchRunStepForPersist]
+        [currentRunStep, markSlotField, touchRunStepForPersist]
     );
 
     const updateAmrapPartialReps = useCallback(
@@ -847,9 +805,10 @@ export function useAthleteSessionRun({
                     if (completedStepKeysRef.current.has(slot.stepKey)) continue;
 
                     const log = slotLogs[slot.stepKey] ?? {
-                        weight: slot.defaultWeight,
+                        weight: resolveInitialSlotWeight(slot.defaultWeight),
                         reps: slot.defaultReps,
                     };
+                    if (log.weight == null) continue;
 
                     const nextSets = getNextActualSets(slot.blockExerciseId, slot.loggedSets);
                     loggedSetsRef.current.set(slot.blockExerciseId, nextSets);
@@ -973,17 +932,14 @@ export function useAthleteSessionRun({
 
             const slotsValid = currentRunStep.slots.every((slot) => {
                 const log = slotLogs[slot.stepKey] ?? {
-                    weight: slot.defaultWeight,
+                    weight: resolveInitialSlotWeight(slot.defaultWeight),
                     reps: slot.defaultReps,
                     durationSeconds: slot.defaultReps,
                 };
-                if (slot.inputMode === "duration") {
-                    return (log.durationSeconds ?? log.reps) > 0;
-                }
-                if (slot.inputMode === "reps_only") {
-                    return log.reps > 0;
-                }
-                return log.reps > 0 && log.weight >= 0;
+                return isRunLoggerSlotConfirmValid(
+                    log,
+                    slot.inputMode ?? "weight_reps"
+                );
             });
             return slotsValid;
         }
@@ -1076,11 +1032,13 @@ export function useAthleteSessionRun({
         localExecutions,
         touchedWeightStepKeysRef,
         seriesAutofillWeightRef,
+        getTouchedSnapshot,
+        roundRpe,
         setWeight,
         setReps,
         setRpe,
         setSlotLogs,
-        setRoundRpe: handleRoundRpeChange,
+        setRoundRpeState: setRoundRpe,
     });
 
     const blockWork = useAthleteBlockWorkPhase(
@@ -1091,11 +1049,8 @@ export function useAthleteSessionRun({
     const timedGroupKind = currentRunStep?.groupKind ?? "";
 
     const beginLoggingRest = useCallback(() => {
-        if (currentStepKey) {
-            touchedWeightStepKeysRef.current.delete(currentStepKey);
-        }
         restFlow.startRest();
-    }, [currentStepKey, restFlow]);
+    }, [restFlow]);
 
     const restFlowForUi = useMemo(
         () => ({ ...restFlow, startRest: beginLoggingRest }),

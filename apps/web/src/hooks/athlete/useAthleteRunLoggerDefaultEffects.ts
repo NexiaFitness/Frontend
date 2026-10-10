@@ -1,9 +1,8 @@
 /**
- * useAthleteRunLoggerDefaultEffects.ts — Defaults de logger guiado (single + group round).
+ * useAthleteRunLoggerDefaultEffects.ts — Orquestador defaults logger guiado (single + group).
  *
- * Propósito: hidratar peso/reps/RPE y slotLogs al abrir logger o descanso post-ronda.
- * Contexto: useAthleteSessionRun (FE-4/FE-5); no duplica buildAthleteRunSteps.
- * Notas de mantenimiento: refs autofill serie a serie; no crecer — extraer si añade modos.
+ * Propósito: delega ronda grupal a useAthleteRunGroupLoggerDefaults; serie simple aquí (H4).
+ * Contexto: useAthleteSessionRun (FE-4/FE-5); D-LOG-TOUCH-01.
  *
  * @author Frontend Team
  * @since v8.4.0
@@ -13,11 +12,12 @@ import { useEffect, useRef, type Dispatch, type MutableRefObject, type SetStateA
 import type { LocalSetExecution } from "@nexia/shared/offline/athleteSessionTypes";
 import type { AthleteFlatExercise } from "@nexia/shared/offline/athleteSessionTypes";
 import { resolveRunLoggerDefaults } from "@nexia/shared/utils/athlete/runReferenceUtils";
-import { resolveLocalRunReference } from "@nexia/shared/utils/athlete/localRunReferenceUtils";
 import { resolveSeriesWeightAutofillKey } from "@nexia/shared/utils/athlete/athleteLoggingUtils";
 import type { AthleteRunStep } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
 import type { AthleteRunReference } from "@nexia/shared/types/athleteRunReference";
-import type { SlotLogValues } from "@/components/athlete/execution/AthleteMultiSlotLogger";
+import type { SlotLogValues } from "@/components/athlete/logging/AthleteMultiSlotLogger";
+import { useAthleteRunGroupLoggerDefaults } from "@/hooks/athlete/useAthleteRunGroupLoggerDefaults";
+
 export interface UseAthleteRunLoggerDefaultEffectsOptions {
     currentStepKey: string | undefined;
     current: AthleteFlatExercise | null;
@@ -31,11 +31,13 @@ export interface UseAthleteRunLoggerDefaultEffectsOptions {
     localExecutions: LocalSetExecution[];
     touchedWeightStepKeysRef: MutableRefObject<Set<string>>;
     seriesAutofillWeightRef: MutableRefObject<Map<string, number>>;
+    getTouchedSnapshot: () => ReadonlySet<string>;
+    roundRpe: number | null;
     setWeight: (v: number) => void;
     setReps: (v: number) => void;
     setRpe: (v: number | null) => void;
     setSlotLogs: Dispatch<SetStateAction<Record<string, SlotLogValues>>>;
-    setRoundRpe: (v: number | null) => void;
+    setRoundRpeState: (v: number | null) => void;
 }
 
 export function useAthleteRunLoggerDefaultEffects({
@@ -51,17 +53,31 @@ export function useAthleteRunLoggerDefaultEffects({
     localExecutions,
     touchedWeightStepKeysRef,
     seriesAutofillWeightRef,
+    getTouchedSnapshot,
+    roundRpe,
     setWeight,
     setReps,
     setRpe,
     setSlotLogs,
-    setRoundRpe,
+    setRoundRpeState,
 }: UseAthleteRunLoggerDefaultEffectsOptions): void {
-    const loggerDefaultsStepRef = useRef<string | null>(null);
+    const singleLoggerDefaultsStepRef = useRef<string | null>(null);
 
     useEffect(() => {
-        loggerDefaultsStepRef.current = null;
+        singleLoggerDefaultsStepRef.current = null;
     }, [currentStepKey]);
+
+    useAthleteRunGroupLoggerDefaults({
+        restPhase,
+        isGroupRound,
+        currentRunStep,
+        slotReferences,
+        localExecutions,
+        getTouchedSnapshot,
+        setSlotLogs,
+        roundRpe,
+        setRoundRpeState,
+    });
 
     useEffect(() => {
         if (!restShowLogger || !current || isBatchStep) return;
@@ -78,7 +94,7 @@ export function useAthleteRunLoggerDefaultEffects({
                 ? `p${current.plannedWeight}`
                 : "np";
         const defaultsKey = `${current.stepKey}:${plannedToken}:${refToken}`;
-        if (loggerDefaultsStepRef.current === defaultsKey) return;
+        if (singleLoggerDefaultsStepRef.current === defaultsKey) return;
 
         const defaults = resolveRunLoggerDefaults({
             setIndex: current.setIndex,
@@ -112,7 +128,7 @@ export function useAthleteRunLoggerDefaultEffects({
                 : defaults.reps;
         setReps(nextReps);
         setRpe(defaults.rpe);
-        loggerDefaultsStepRef.current = defaultsKey;
+        singleLoggerDefaultsStepRef.current = defaultsKey;
     }, [
         restShowLogger,
         current,
@@ -123,78 +139,5 @@ export function useAthleteRunLoggerDefaultEffects({
         setRpe,
         setWeight,
         touchedWeightStepKeysRef,
-    ]);
-
-    useEffect(() => {
-        if (restPhase !== "logging_rest" || !isGroupRound || !currentRunStep?.slots?.length) {
-            return;
-        }
-
-        const refFingerprint = currentRunStep.slots
-            .map((slot) => {
-                const apiRef = slotReferences[slot.stepKey]?.reference;
-                const localRef = resolveLocalRunReference({
-                    exerciseId: slot.exerciseId,
-                    roundIndex: currentRunStep.roundIndex,
-                    slotLabel: slot.slotLabel,
-                    groupKind: currentRunStep.groupKind,
-                    localExecutions,
-                });
-                const weight = apiRef?.weight_kg ?? localRef?.weight_kg ?? "pending";
-                return `${slot.stepKey}:${weight}`;
-            })
-            .join("|");
-        const defaultsKey = `${currentRunStep.stepKey}:${refFingerprint}`;
-        if (loggerDefaultsStepRef.current === defaultsKey) return;
-
-        setSlotLogs((prev) => {
-            const next = { ...prev };
-            for (const slot of currentRunStep.slots!) {
-                const reference =
-                    slotReferences[slot.stepKey]?.reference ??
-                    resolveLocalRunReference({
-                        exerciseId: slot.exerciseId,
-                        roundIndex: currentRunStep.roundIndex,
-                        slotLabel: slot.slotLabel,
-                        groupKind: currentRunStep.groupKind,
-                        localExecutions,
-                    });
-                const defaults = resolveRunLoggerDefaults({
-                    setIndex: currentRunStep.roundIndex,
-                    prescribedReps: slot.defaultReps,
-                    prescribedRpe: slot.defaultRpe,
-                    plannedWeight: null,
-                    defaultWeight: slot.defaultWeight,
-                    reference,
-                });
-                next[slot.stepKey] = {
-                    weight: defaults.weight,
-                    reps: defaults.reps,
-                };
-            }
-            return next;
-        });
-
-        const prescribedRpe =
-            currentRunStep.slots.find((slot) => slot.defaultRpe != null)?.defaultRpe ??
-            null;
-        const refRpe = currentRunStep.slots
-            .map((slot) => slotReferences[slot.stepKey]?.reference?.rpe)
-            .find((value) => value != null);
-        if (currentRunStep.roundIndex > 1 && refRpe != null) {
-            setRoundRpe(refRpe);
-        } else if (prescribedRpe != null) {
-            setRoundRpe(prescribedRpe);
-        }
-
-        loggerDefaultsStepRef.current = defaultsKey;
-    }, [
-        restPhase,
-        isGroupRound,
-        currentRunStep,
-        slotReferences,
-        localExecutions,
-        setRoundRpe,
-        setSlotLogs,
     ]);
 }

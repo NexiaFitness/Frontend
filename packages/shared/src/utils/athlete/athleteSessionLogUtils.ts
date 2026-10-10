@@ -45,7 +45,7 @@ import {
 } from "../../types/timedBlockResultDetail";
 
 export interface AthleteSessionLogSlotValues {
-    weight: number;
+    weight: number | null;
     reps: number;
     durationSeconds?: number;
 }
@@ -489,7 +489,7 @@ export function buildBlockSavePayloads(
         }
         for (const slot of step.slots ?? []) {
             const log = round.slotLogs[slot.stepKey];
-            if (!log) continue;
+            if (!log || log.weight == null) continue;
             executions.push(
                 buildAthleteRunExecutionPayloadFromSlot(sessionId, step, slot, {
                     weight: log.weight,
@@ -687,7 +687,11 @@ export function validateBlockDraft(
         (s) => !s.skipped && (s.weight > 0 || s.reps > 0)
     );
     const hasRound = [...draft.groupRounds, ...draft.dropsetRounds].some(
-        (r) => !r.skipped && Object.values(r.slotLogs).some((l) => l.reps > 0 || l.weight > 0)
+        (r) =>
+            !r.skipped &&
+            Object.values(r.slotLogs).some(
+                (l) => l.reps > 0 || (l.weight != null && l.weight > 0)
+            )
     );
     const hasTimed =
         draft.timed &&
