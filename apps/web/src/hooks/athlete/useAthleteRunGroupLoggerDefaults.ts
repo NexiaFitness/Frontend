@@ -8,7 +8,7 @@
  * @since v8.5.0
  */
 
-import { useEffect, useRef, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import type { LocalSetExecution } from "@nexia/shared/offline/athleteSessionTypes";
 import { resolveLocalRunReference } from "@nexia/shared/utils/athlete/localRunReferenceUtils";
 import {

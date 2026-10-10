@@ -44,7 +44,7 @@ export function useAthleteRunLoggerDefaultEffects({
     current,
     isBatchStep,
     restShowLogger,
-    restPhase,
+    restPhase: _restPhase,
     isGroupRound,
     currentRunStep,
     effectiveRunReference,
