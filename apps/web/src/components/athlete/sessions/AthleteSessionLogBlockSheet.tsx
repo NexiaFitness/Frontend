@@ -32,11 +32,25 @@ import { useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { AthleteRunExerciseNoteField } from "@/components/athlete/execution/AthleteRunExerciseNoteField";
 import { formatAthleteLogExerciseSetHeading } from "@nexia/shared/utils/athlete/athleteRunLabelPresentation";
+import {
+    ATHLETE_REGISTRATION_CLOSED_BODY,
+    ATHLETE_REGISTRATION_CLOSED_TITLE,
+    ATHLETE_REGISTRATION_PROGRESS_ERROR_BODY,
+    ATHLETE_REGISTRATION_PROGRESS_ERROR_TITLE,
+} from "@/components/athlete/sessions/athleteSessionRegistrationPresentation";
+
+export type AthleteSessionLogBlockSheetState =
+    | "loading"
+    | "error"
+    | "closed"
+    | "ready";
 
 export interface AthleteSessionLogBlockSheetProps {
     isOpen: boolean;
+    sheetState: AthleteSessionLogBlockSheetState | null;
     block: AthleteSessionLogBlockModel | null;
     draft: AthleteSessionLogBlockDraft | null;
+    onRetryProgress?: () => void;
     onDraftChange: (draft: AthleteSessionLogBlockDraft) => void;
     onClose: () => void;
     onSave: () => void;
@@ -48,8 +62,10 @@ export interface AthleteSessionLogBlockSheetProps {
 
 export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetProps> = ({
     isOpen,
+    sheetState,
     block,
     draft,
+    onRetryProgress,
     onDraftChange,
     onClose,
     onSave,
@@ -100,7 +116,42 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
         [draft, onDraftChange]
     );
 
-    if (!block || !draft) {
+    if (sheetState === "error") {
+        return (
+            <BottomSheet isOpen={isOpen} onClose={onClose} title={title}>
+                <p className="text-sm font-medium text-foreground">
+                    {ATHLETE_REGISTRATION_PROGRESS_ERROR_TITLE}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                    {ATHLETE_REGISTRATION_PROGRESS_ERROR_BODY}
+                </p>
+                {onRetryProgress ? (
+                    <Button
+                        variant="secondary"
+                        className="mt-4 min-h-touch-athlete w-full"
+                        onClick={() => onRetryProgress()}
+                    >
+                        Reintentar
+                    </Button>
+                ) : null}
+            </BottomSheet>
+        );
+    }
+
+    if (sheetState === "closed") {
+        return (
+            <BottomSheet isOpen={isOpen} onClose={onClose} title={title}>
+                <p className="text-sm font-medium text-foreground">
+                    {ATHLETE_REGISTRATION_CLOSED_TITLE}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                    {ATHLETE_REGISTRATION_CLOSED_BODY}
+                </p>
+            </BottomSheet>
+        );
+    }
+
+    if (!block || !draft || sheetState !== "ready") {
         return (
             <BottomSheet isOpen={isOpen} onClose={onClose} title={title}>
                 <p className="text-sm text-muted-foreground">Cargando bloque…</p>

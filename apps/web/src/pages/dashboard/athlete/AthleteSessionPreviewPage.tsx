@@ -2,7 +2,7 @@
  * AthleteSessionPreviewPage.tsx — Vista previa sesión atleta (F1 / F3b-FE-01).
  */
 
-import React, { useEffect, useId, useMemo, useState } from "react";
+import React, { useId, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
@@ -41,6 +41,8 @@ import { AthleteSessionPrescriptionMap } from "@/components/athlete/sessions/Ath
 import { AthleteSessionLogBlockList } from "@/components/athlete/sessions/AthleteSessionLogBlockList";
 import { AthleteSessionLogBlockSheet } from "@/components/athlete/sessions/AthleteSessionLogBlockSheet";
 import { useAthleteSessionLog } from "@/hooks/athlete/useAthleteSessionLog";
+import { useAthleteSessionLogDeepLink } from "@/hooks/athlete/useAthleteSessionLogDeepLink";
+import { AthleteSessionRegistrationAlerts } from "@/components/athlete/sessions/AthleteSessionRegistrationAlerts";
 import { AthleteSessionLoadsPanel } from "@/components/athlete/sessions/AthleteSessionLoadsPanel";
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
 import {
@@ -69,7 +71,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     const sessionId = Number(id);
     const navigate = useNavigate();
     const location = useLocation();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const backLabel =
         (location.state as { from?: string } | null)?.from === ATHLETE_SESSION_NAV_FROM_AGENDA
             ? ATHLETE_SESSION_BACK_FROM_AGENDA_LABEL
@@ -132,14 +134,18 @@ export const AthleteSessionPreviewPage: React.FC = () => {
         ),
     });
 
-    const { enterLogMode, registrationEditable: logRegistrationEditable } = sessionLog;
+    const { enterLogMode } = sessionLog;
+
+    const canRegisterFromProgress =
+        sessionLog.hasProgressSnapshot &&
+        sessionLog.registrationEditable &&
+        !sessionLog.isProgressError;
 
     const needsWellbeingBeforeLog =
         !skipWellbeingLookup && !wellbeingCheckIn && !loadingWellbeingCheckIn;
 
     const requestEnterLogMode = React.useCallback(() => {
-        if (!logRegistrationEditable) {
-            enterLogMode();
+        if (!canRegisterFromProgress) {
             return;
         }
         if (needsWellbeingBeforeLog) {
@@ -148,29 +154,16 @@ export const AthleteSessionPreviewPage: React.FC = () => {
             return;
         }
         enterLogMode();
-    }, [needsWellbeingBeforeLog, enterLogMode, logRegistrationEditable]);
+    }, [canRegisterFromProgress, needsWellbeingBeforeLog, enterLogMode]);
 
-    const autoLogFromQueryRef = React.useRef(false);
-    useEffect(() => {
-        if (searchParams.get("mode") !== "log") {
-            autoLogFromQueryRef.current = false;
-            return;
-        }
-        if (!logRegistrationEditable || autoLogFromQueryRef.current) {
-            return;
-        }
-        if (!skipWellbeingLookup && loadingWellbeingCheckIn) {
-            return;
-        }
-        autoLogFromQueryRef.current = true;
-        requestEnterLogMode();
-    }, [
-        searchParams,
-        logRegistrationEditable,
-        skipWellbeingLookup,
-        loadingWellbeingCheckIn,
-        requestEnterLogMode,
-    ]);
+    useAthleteSessionLogDeepLink({
+        modeLog: searchParams.get("mode") === "log",
+        registrationEditable: canRegisterFromProgress,
+        registrationKnown: sessionLog.registrationKnown,
+        wellbeingReady: skipWellbeingLookup || !loadingWellbeingCheckIn,
+        setSearchParams,
+        onOpenLogMode: requestEnterLogMode,
+    });
 
     const { data: feedbackList = [] } = useGetClientFeedbackQuery(
         { clientId: clientId ?? 0, limit: 50 },
@@ -213,8 +206,13 @@ export const AthleteSessionPreviewPage: React.FC = () => {
         loadingSession ||
         loadingStructure ||
         loadingInjuries ||
-        sessionLog.isProgressLoading ||
-        loadingRunProgress;
+        (loadingRunProgress && !sessionLog.isProgressError) ||
+        (!sessionLog.registrationKnown && !sessionLog.isProgressError);
+    const showRegistrationClosed =
+        sessionLog.registrationKnown &&
+        !sessionLog.registrationEditable &&
+        !sessionLog.isProgressError &&
+        sessionLog.hasProgressSnapshot;
     const canStart = session?.status !== "completed" && view.totalExercises > 0;
     const hasPartialLogProgress = useMemo(
         () =>
@@ -223,8 +221,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
         [sessionLog.logBlocks]
     );
     const showLogFooter =
-        sessionLog.registrationEditable &&
-        (sessionLog.logMode || hasPartialLogProgress);
+        canRegisterFromProgress && (sessionLog.logMode || hasPartialLogProgress);
 
     const showCompletedFeedbackFooter =
         session?.status === "completed" && !showLogFooter;
@@ -313,13 +310,11 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                     setCount={view.totalSets}
                 />
 
-                {session.status !== "completed" && !sessionLog.registrationEditable ? (
-                    <Alert
-                        variant="warning"
-                        title="Plazo de registro cerrado"
-                        description="Solo puedes registrar o editar una sesión hasta 7 días después de su fecha."
-                    />
-                ) : null}
+                <AthleteSessionRegistrationAlerts
+                    showClosed={showRegistrationClosed}
+                    showProgressError={sessionLog.isProgressError}
+                    onRetryProgress={() => void sessionLog.refetchProgress()}
+                />
 
                 {sessionLog.saveError && !sessionLog.activeBlock ? (
                     <Alert variant="error" title="Registro" description={sessionLog.saveError} />
@@ -373,6 +368,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                             <AthleteSessionLogBlockList
                                 blocks={sessionLog.logBlocks}
                                 onBlockPress={sessionLog.openBlock}
+                                allowRegisterInteraction={canRegisterFromProgress}
                             />
                         ) : (
                             <AthleteSessionPrescriptionMap
@@ -513,8 +509,10 @@ export const AthleteSessionPreviewPage: React.FC = () => {
 
             <AthleteSessionLogBlockSheet
                 isOpen={sessionLog.activeBlock != null}
+                sheetState={sessionLog.blockSheetState}
                 block={sessionLog.activeBlock}
                 draft={sessionLog.blockDraft}
+                onRetryProgress={() => void sessionLog.refetchProgress()}
                 onDraftChange={sessionLog.setBlockDraft}
                 onClose={sessionLog.closeBlock}
                 onSave={() => void sessionLog.saveActiveBlock()}

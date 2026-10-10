@@ -33,7 +33,9 @@ import {
     type AthleteSessionLogBlockModel,
 } from "@nexia/shared/utils/athlete/athleteSessionLogUtils";
 import { flattenRunStepsToFlatExercises, buildAthleteRunSteps } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
-import { isAthleteSessionRegistrationEditable } from "@nexia/shared/utils/athlete/athleteSessionRegistrationPolicy";
+import {
+    resolveAthleteSessionRegistrationEditable,
+} from "@nexia/shared/utils/athlete/athleteSessionRegistrationPolicy";
 import { flattenAthleteExercises } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import type { AthleteExerciseNoteUpsert } from "@nexia/shared/utils/athlete/athleteExerciseNoteUtils";
 
@@ -66,10 +68,19 @@ export function useAthleteSessionLog({
         data: progress,
         isLoading: isProgressLoading,
         isFetching: isProgressFetching,
+        isError: isProgressError,
         refetch: refetchProgress,
     } = useGetAthleteRunProgressQuery(sessionId, {
         skip: !sessionId || !enabled,
     });
+
+    useEffect(() => {
+        setLogMode(false);
+        setActiveBlockId(null);
+        setBlockDraft(null);
+        setSaveError(null);
+        setOptimisticBlockStatus(new Map());
+    }, [sessionId]);
 
     const [postExecution] = usePostAthleteRunExecutionMutation();
     const [postTimedResult] = usePostAthleteRunTimedResultMutation();
@@ -182,20 +193,40 @@ export function useAthleteSessionLog({
         [activeBlockId, logBlocks]
     );
 
-    const openBlock = useCallback((block: AthleteSessionLogBlockModel) => {
-        setSaveError(null);
-        setActiveBlockId(block.sessionBlockId);
-        // No hidratar hasta tener progress BE-1: evita mostrar reps prescritas y pisar guardado.
-        setBlockDraft(null);
-    }, []);
+    const registrationEditable = resolveAthleteSessionRegistrationEditable({
+        sessionDate,
+        progressRegistrationEditable: progress?.registration_editable,
+    });
+
+    const registrationKnown =
+        !enabled || isProgressError || (!isProgressLoading && progress != null);
+
+    const openBlock = useCallback(
+        (block: AthleteSessionLogBlockModel) => {
+            if (!registrationEditable) {
+                return;
+            }
+            setSaveError(null);
+            setActiveBlockId(block.sessionBlockId);
+            setBlockDraft(null);
+        },
+        [registrationEditable]
+    );
 
     useEffect(() => {
-        if (!activeBlock || isProgressLoading || !progress) return;
+        if (!activeBlock || isProgressLoading || isProgressError || !progress) return;
+        if (!registrationEditable) return;
         setBlockDraft((prev) => {
             if (prev !== null) return prev;
             return buildInitialBlockDraft(activeBlock, progress);
         });
-    }, [activeBlock, isProgressLoading, progress]);
+    }, [
+        activeBlock,
+        isProgressLoading,
+        isProgressError,
+        progress,
+        registrationEditable,
+    ]);
 
     const closeBlock = useCallback(() => {
         setActiveBlockId(null);
@@ -203,24 +234,41 @@ export function useAthleteSessionLog({
         setSaveError(null);
     }, []);
 
-    const registrationEditable =
-        progress != null
-            ? progress.registration_editable !== false
-            : isAthleteSessionRegistrationEditable(sessionDate);
+    const hasProgressSnapshot = progress != null;
 
     const enterLogMode = useCallback(() => {
-        if (!registrationEditable) {
-            setSaveError(
-                "El plazo para registrar o editar esta sesión ha cerrado (máximo 7 días después)."
-            );
+        if (!registrationEditable || isProgressError || !hasProgressSnapshot) {
             return;
         }
         setLogMode(true);
-    }, [registrationEditable]);
+    }, [hasProgressSnapshot, isProgressError, registrationEditable]);
+
+    const blockSheetState = useMemo((): null | "loading" | "error" | "closed" | "ready" => {
+        if (activeBlockId == null) return null;
+        if (isProgressError) return "error";
+        if (!registrationEditable) return "closed";
+        if (isProgressLoading || !progress || !blockDraft) return "loading";
+        return "ready";
+    }, [
+        activeBlockId,
+        blockDraft,
+        isProgressError,
+        isProgressLoading,
+        progress,
+        registrationEditable,
+    ]);
     const exitLogMode = useCallback(() => {
         setLogMode(false);
         closeBlock();
     }, [closeBlock]);
+
+    useEffect(() => {
+        if (!registrationEditable) {
+            setLogMode(false);
+            setActiveBlockId(null);
+            setBlockDraft(null);
+        }
+    }, [registrationEditable]);
 
     const saveActiveBlock = useCallback(async () => {
         if (!activeBlock) return;
@@ -434,6 +482,9 @@ export function useAthleteSessionLog({
         pendingBlockCount,
         progressPendingStepCount: progress?.pending_count ?? 0,
         isProgressLoading: isProgressLoading || isProgressFetching,
+        isProgressError,
+        registrationKnown,
+        blockSheetState,
         isOnline,
         syncPendingCount,
         activeBlock,
@@ -446,6 +497,7 @@ export function useAthleteSessionLog({
         saveError,
         isSavingBlock,
         registrationEditable,
+        hasProgressSnapshot,
         completeSessionIfReady,
         forceCompleteSession,
         refetchProgress,

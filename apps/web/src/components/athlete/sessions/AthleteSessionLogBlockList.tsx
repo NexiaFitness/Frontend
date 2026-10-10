@@ -19,6 +19,8 @@ import {
 export interface AthleteSessionLogBlockListProps {
     blocks: AthleteSessionLogBlockModel[];
     onBlockPress: (block: AthleteSessionLogBlockModel) => void;
+    /** false en sesión cerrada: sin «Toca para registrar» ni tap. */
+    allowRegisterInteraction?: boolean;
 }
 
 function blockCardClass(status: AthleteSessionLogBlockModel["status"], pending: boolean): string {
@@ -31,11 +33,13 @@ function blockCardClass(status: AthleteSessionLogBlockModel["status"], pending: 
 export const AthleteSessionLogBlockList: React.FC<AthleteSessionLogBlockListProps> = ({
     blocks,
     onBlockPress,
+    allowRegisterInteraction = true,
 }) => {
     return (
         <div className="space-y-3">
             {blocks.map((block) => {
-                const isPending = block.isPendingHighlight;
+                const isPending =
+                    allowRegisterInteraction && block.isPendingHighlight;
                 const statusLabel =
                     block.status === "registered"
                         ? "Registrado"
@@ -51,7 +55,10 @@ export const AthleteSessionLogBlockList: React.FC<AthleteSessionLogBlockListProp
                             "w-full text-left",
                             blockCardClass(block.status, isPending)
                         )}
-                        onClick={() => onBlockPress(block)}
+                        onClick={() => {
+                            if (allowRegisterInteraction) onBlockPress(block);
+                        }}
+                        disabled={!allowRegisterInteraction}
                         aria-label={`${block.blockTypeName}, ${statusLabel}`}
                     >
                         <div className="flex items-start justify-between gap-3">
