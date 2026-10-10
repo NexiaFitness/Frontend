@@ -1,0 +1,146 @@
+/**
+ * runLoggerHydrationPolicy.ts — Merge de defaults del logger guiado sin pisar campos tocados.
+ *
+ * Contexto: superset/giant/dropset (slotLogs) y serie simple; D-LOG-TOUCH-01.
+ * Notas: lógica pura; display ref en UI no pasa por aquí.
+ *
+ * @author Frontend Team
+ * @since v8.5.0
+ */
+
+import type { RunLoggerDefaults } from "./runReferenceUtils";
+
+export type RunLoggerTouchField = "weight" | "reps" | "durationSeconds" | "roundRpe";
+
+export interface RunLoggerSlotLogShape {
+    weight: number | null;
+    reps: number;
+    durationSeconds?: number;
+}
+
+export interface MergeSlotLogInput {
+    prev: RunLoggerSlotLogShape | undefined;
+    defaults: RunLoggerDefaults;
+    touched: ReadonlySet<string>;
+    slotStepKey: string;
+    prescribedDefaultWeight: number;
+    prescribedDefaultReps: number;
+}
+
+/** Clave estable de campo tocado (slot / ronda / single). */
+export function buildRunLoggerFieldTouchKey(
+    scope: "slot" | "round" | "single",
+    id: string,
+    field: RunLoggerTouchField
+): string {
+    return `${scope}:${id}:${field}`;
+}
+
+/** Token de referencia por slot para idempotencia incremental. */
+export function runLoggerReferenceTokenForSlot(
+    referenceWeightKg: number | null | undefined,
+    localWeightKg: number | null | undefined
+): string {
+    const weight = referenceWeightKg ?? localWeightKg;
+    if (weight == null || weight <= 0) return "pending";
+    return String(weight);
+}
+
+/** Peso inicial al abrir paso: prescripción o vacío (nunca 0 implícito). */
+export function resolveInitialSlotWeight(prescribedDefaultWeight: number): number | null {
+    return prescribedDefaultWeight > 0 ? prescribedDefaultWeight : null;
+}
+
+/** Peso aplicable desde defaults sin forzar 0 cuando no hay dato. */
+export function resolveApplicableSlotWeight(
+    defaults: RunLoggerDefaults,
+    prescribedDefaultWeight: number,
+    prevWeight: number | null | undefined
+): number | null {
+    if (defaults.weight > 0) return defaults.weight;
+    if (prescribedDefaultWeight > 0) return prescribedDefaultWeight;
+    if (prevWeight != null && prevWeight > 0) return prevWeight;
+    return null;
+}
+
+function isSlotFieldTouched(
+    touched: ReadonlySet<string>,
+    slotStepKey: string,
+    field: "weight" | "reps" | "durationSeconds"
+): boolean {
+    return touched.has(buildRunLoggerFieldTouchKey("slot", slotStepKey, field));
+}
+
+/** Fusiona defaults en un slot respetando campos tocados (R-LOG-01–04). */
+export function mergeSlotLogWithDefaults(input: MergeSlotLogInput): RunLoggerSlotLogShape {
+    const {
+        prev,
+        defaults,
+        touched,
+        slotStepKey,
+        prescribedDefaultWeight,
+        prescribedDefaultReps,
+    } = input;
+
+    const baseReps =
+        prev?.reps != null && prev.reps > 0
+            ? prev.reps
+            : prescribedDefaultReps > 0
+              ? prescribedDefaultReps
+              : defaults.reps;
+
+    const next: RunLoggerSlotLogShape = {
+        weight: prev?.weight ?? resolveInitialSlotWeight(prescribedDefaultWeight),
+        reps: baseReps,
+        durationSeconds: prev?.durationSeconds,
+    };
+
+    if (!isSlotFieldTouched(touched, slotStepKey, "weight")) {
+        next.weight = resolveApplicableSlotWeight(
+            defaults,
+            prescribedDefaultWeight,
+            prev?.weight
+        );
+    }
+
+    if (!isSlotFieldTouched(touched, slotStepKey, "reps")) {
+        next.reps = defaults.reps > 0 ? defaults.reps : prescribedDefaultReps;
+    }
+
+    if (
+        prev?.durationSeconds != null &&
+        !isSlotFieldTouched(touched, slotStepKey, "durationSeconds")
+    ) {
+        next.durationSeconds = defaults.reps > 0 ? defaults.reps : prev.durationSeconds;
+    }
+
+    return next;
+}
+
+/** RPE de ronda: conservar si el atleta lo tocó (R-LOG-05). */
+export function mergeRoundRpeWithDefaults(
+    prev: number | null,
+    defaultsRpe: number | null | undefined,
+    runStepKey: string,
+    touched: ReadonlySet<string>
+): number | null {
+    if (touched.has(buildRunLoggerFieldTouchKey("round", runStepKey, "roundRpe"))) {
+        return prev;
+    }
+    if (defaultsRpe != null) return defaultsRpe;
+    return prev;
+}
+
+/** Confirmación batch: lo visible debe ser válido (D-LOG-TOUCH-01). */
+export function isRunLoggerSlotConfirmValid(
+    log: RunLoggerSlotLogShape,
+    inputMode: "weight_reps" | "reps_only" | "duration" = "weight_reps"
+): boolean {
+    if (inputMode === "duration") {
+        return (log.durationSeconds ?? log.reps) > 0;
+    }
+    if (inputMode === "reps_only") {
+        return log.reps > 0;
+    }
+    return log.reps > 0 && log.weight != null && log.weight >= 0;
+}
