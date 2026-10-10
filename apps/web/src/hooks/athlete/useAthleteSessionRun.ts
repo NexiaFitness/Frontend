@@ -611,11 +611,8 @@ export function useAthleteSessionRun({
         currentRunStep,
         evaluatePr,
         postRunExecution,
-        reps,
-        rpe,
         sessionId,
         skipPersistForCurrentStep,
-        weight,
     ]);
 
     const handleSaveBatch = useCallback(async () => {
