@@ -36,6 +36,15 @@ export function useAthleteRunLoggerTouchState(currentStepKey: string | undefined
         );
     }, []);
 
+    const markSingleField = useCallback(
+        (stepKey: string, field: "weight" | "reps" | "rpe") => {
+            touchedFieldsRef.current.add(
+                buildRunLoggerFieldTouchKey("single", stepKey, field)
+            );
+        },
+        []
+    );
+
     const getTouchedSnapshot = useCallback((): ReadonlySet<string> => {
         return touchedFieldsRef.current;
     }, []);
@@ -44,6 +53,7 @@ export function useAthleteRunLoggerTouchState(currentStepKey: string | undefined
         touchedFieldsRef,
         markSlotField,
         markRoundRpe,
+        markSingleField,
         getTouchedSnapshot,
     };
 }

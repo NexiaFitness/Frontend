@@ -3,6 +3,7 @@ import {
     buildRunLoggerFieldTouchKey,
     isRunLoggerSlotConfirmValid,
     mergeRoundRpeWithDefaults,
+    mergeSingleLoggerWithDefaults,
     mergeSlotLogWithDefaults,
     resolveApplicableSlotWeight,
     resolveInitialSlotWeight,
@@ -119,5 +120,26 @@ describe("runLoggerHydrationPolicy (D-LOG-TOUCH-01)", () => {
     it("reference token pending vs value", () => {
         expect(runLoggerReferenceTokenForSlot(null, null)).toBe("pending");
         expect(runLoggerReferenceTokenForSlot(41, null)).toBe("41");
+    });
+
+    it("R-LOG-07 single: touched weight ignores late reference", () => {
+        const stepKey = "block-single-1";
+        const touched = new Set([
+            buildRunLoggerFieldTouchKey("single", stepKey, "weight"),
+        ]);
+        const merged = mergeSingleLoggerWithDefaults({
+            prev: { weight: 33, reps: 9, rpe: null },
+            defaults: { weight: 41, reps: 12, rpe: 7 },
+            touched,
+            stepKey,
+            prescribedDefaultWeight: 0,
+            plannedWeight: null,
+            seriesPosition: 1,
+            seriesAutofillWeight: null,
+            durationFallbackReps: 9,
+            inputMode: "weight_reps",
+        });
+        expect(merged.weight).toBe(33);
+        expect(merged.reps).toBe(12);
     });
 });

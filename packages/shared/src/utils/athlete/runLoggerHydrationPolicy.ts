@@ -10,7 +10,12 @@
 
 import type { RunLoggerDefaults } from "./runReferenceUtils";
 
-export type RunLoggerTouchField = "weight" | "reps" | "durationSeconds" | "roundRpe";
+export type RunLoggerTouchField =
+    | "weight"
+    | "reps"
+    | "durationSeconds"
+    | "roundRpe"
+    | "rpe";
 
 export interface RunLoggerSlotLogShape {
     weight: number | null;
@@ -69,6 +74,84 @@ function isSlotFieldTouched(
     field: "weight" | "reps" | "durationSeconds"
 ): boolean {
     return touched.has(buildRunLoggerFieldTouchKey("slot", slotStepKey, field));
+}
+
+function isSingleFieldTouched(
+    touched: ReadonlySet<string>,
+    stepKey: string,
+    field: "weight" | "reps" | "rpe"
+): boolean {
+    return touched.has(buildRunLoggerFieldTouchKey("single", stepKey, field));
+}
+
+export interface SingleLoggerStateShape {
+    weight: number;
+    reps: number;
+    rpe: number | null;
+}
+
+export interface MergeSingleLoggerInput {
+    prev: SingleLoggerStateShape;
+    defaults: RunLoggerDefaults;
+    touched: ReadonlySet<string>;
+    stepKey: string;
+    prescribedDefaultWeight: number;
+    plannedWeight: number | null;
+    seriesPosition: number;
+    seriesAutofillWeight: number | null;
+    durationFallbackReps: number;
+    inputMode: string;
+}
+
+/** Serie simple: merge por campo (R-LOG-07 single). */
+export function mergeSingleLoggerWithDefaults(input: MergeSingleLoggerInput): SingleLoggerStateShape {
+    const {
+        prev,
+        defaults,
+        touched,
+        stepKey,
+        prescribedDefaultWeight,
+        plannedWeight,
+        seriesPosition,
+        seriesAutofillWeight,
+        durationFallbackReps,
+        inputMode,
+    } = input;
+
+    const hasCoachWeight = plannedWeight != null && plannedWeight > 0;
+    let nextWeight = defaults.weight;
+    if (
+        seriesPosition > 1 &&
+        !hasCoachWeight &&
+        !isSingleFieldTouched(touched, stepKey, "weight")
+    ) {
+        if (seriesAutofillWeight != null && seriesAutofillWeight > 0) {
+            nextWeight = seriesAutofillWeight;
+        }
+    }
+    if (!isSingleFieldTouched(touched, stepKey, "weight")) {
+        const applicable = resolveApplicableSlotWeight(
+            { ...defaults, weight: nextWeight },
+            prescribedDefaultWeight,
+            prev.weight > 0 ? prev.weight : null
+        );
+        nextWeight = applicable ?? prev.weight;
+    } else {
+        nextWeight = prev.weight;
+    }
+
+    let nextReps =
+        inputMode === "duration" ? durationFallbackReps : defaults.reps;
+    if (isSingleFieldTouched(touched, stepKey, "reps")) {
+        nextReps = prev.reps;
+    }
+
+    let nextRpe = defaults.rpe;
+    if (isSingleFieldTouched(touched, stepKey, "rpe")) {
+        nextRpe = prev.rpe;
+    }
+
+    return { weight: nextWeight, reps: nextReps, rpe: nextRpe };
 }
 
 /** Fusiona defaults en un slot respetando campos tocados (R-LOG-01–04). */

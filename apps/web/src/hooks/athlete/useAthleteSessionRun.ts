@@ -281,7 +281,7 @@ export function useAthleteSessionRun({
 
     const currentRunStep: AthleteRunStep | undefined = runSteps[step];
     const currentStepKey = currentRunStep?.stepKey ?? null;
-    const { markSlotField, markRoundRpe, getTouchedSnapshot } =
+    const { markSlotField, markRoundRpe, markSingleField, getTouchedSnapshot } =
         useAthleteRunLoggerTouchState(currentStepKey ?? undefined);
     const isGroupRound = currentRunStep?.kind === "group_round";
     const isTimedBlock = currentRunStep?.kind === "timed_block";
@@ -387,6 +387,7 @@ export function useAthleteSessionRun({
         (value: number) => {
             setWeight(value);
             if (!current) return;
+            markSingleField(current.stepKey, "weight");
             touchRunStepForPersist(currentRunStep ?? undefined);
             touchedWeightStepKeysRef.current.add(current.stepKey);
             if (value > 0) {
@@ -396,25 +397,27 @@ export function useAthleteSessionRun({
                 );
             }
         },
-        [current, currentRunStep, touchRunStepForPersist]
+        [current, currentRunStep, markSingleField, touchRunStepForPersist]
     );
 
     const handleRepsChange = useCallback(
         (value: number) => {
             setReps(value);
+            if (current) markSingleField(current.stepKey, "reps");
             touchRunStepForPersist(currentRunStep ?? undefined);
             if (current) touchedWeightStepKeysRef.current.add(current.stepKey);
         },
-        [current, currentRunStep, touchRunStepForPersist]
+        [current, currentRunStep, markSingleField, touchRunStepForPersist]
     );
 
     const handleRpeChange = useCallback(
         (value: number | null) => {
             setRpe(value);
+            if (current) markSingleField(current.stepKey, "rpe");
             touchRunStepForPersist(currentRunStep ?? undefined);
             if (current) touchedWeightStepKeysRef.current.add(current.stepKey);
         },
-        [current, currentRunStep, touchRunStepForPersist]
+        [current, currentRunStep, markSingleField, touchRunStepForPersist]
     );
 
     const handleRoundRpeChange = useCallback(
@@ -1020,7 +1023,6 @@ export function useAthleteSessionRun({
     );
 
     useAthleteRunLoggerDefaultEffects({
-        currentStepKey,
         current: current ?? null,
         isBatchStep,
         restShowLogger: restFlow.showLogger,
@@ -1030,10 +1032,12 @@ export function useAthleteSessionRun({
         effectiveRunReference,
         slotReferences,
         localExecutions,
-        touchedWeightStepKeysRef,
         seriesAutofillWeightRef,
         getTouchedSnapshot,
         roundRpe,
+        weight,
+        reps,
+        rpe,
         setWeight,
         setReps,
         setRpe,
