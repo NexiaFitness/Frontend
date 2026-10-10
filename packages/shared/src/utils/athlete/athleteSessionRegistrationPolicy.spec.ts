@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     ATHLETE_REGISTRATION_EDIT_DAYS,
     daysAfterSessionDate,
@@ -83,23 +83,24 @@ describe("athleteSessionRegistrationPolicy", () => {
 });
 
 describe("shouldFetchAthleteSessionLogProgress", () => {
-    const today = new Date("2026-10-05T12:00:00");
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2026-10-05T12:00:00"));
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
 
     it("fetches for in-progress sessions", () => {
-        expect(
-            shouldFetchAthleteSessionLogProgress(1, "planned", "2026-10-05", today)
-        ).toBe(true);
+        expect(shouldFetchAthleteSessionLogProgress(1, "planned", "2026-10-05")).toBe(true);
     });
 
     it("fetches for completed within edit window", () => {
-        expect(
-            shouldFetchAthleteSessionLogProgress(4445, "completed", "2026-10-02", today)
-        ).toBe(true);
+        expect(shouldFetchAthleteSessionLogProgress(4445, "completed", "2026-10-02")).toBe(true);
     });
 
     it("skips for completed outside edit window", () => {
-        expect(
-            shouldFetchAthleteSessionLogProgress(4456, "completed", "2026-09-26", today)
-        ).toBe(false);
+        expect(shouldFetchAthleteSessionLogProgress(4456, "completed", "2026-09-26")).toBe(false);
     });
 });
