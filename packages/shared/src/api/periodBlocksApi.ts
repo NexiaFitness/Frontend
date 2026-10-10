@@ -160,7 +160,36 @@ export const periodBlocksApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { planId, blockId }) => [
         { type: "PlanPeriodBlock", id: blockId },
         { type: "PlanPeriodBlock", id: `LIST-${planId}` },
+        { type: "PlanPeriodBlock", id: `ARCHIVED-${planId}` },
         ...SESSION_BULK_CHANGE_INVALIDATION_TAGS,
+      ],
+    }),
+
+    /** D-BLQ-5: bloques archivados del plan (lista mínima con «Reactivar»). */
+    getArchivedPeriodBlocks: builder.query<PlanPeriodBlock[], number>({
+      query: (planId) => ({
+        url: `/training-plans/${planId}/period-blocks/archived`,
+        method: "GET",
+      }),
+      providesTags: (_result, _error, planId) => [
+        { type: "PlanPeriodBlock", id: `ARCHIVED-${planId}` },
+      ],
+    }),
+
+    /** D-BLQ-5: reactiva (idempotente); 409 si solapa o queda fuera del plan. */
+    reactivatePeriodBlock: builder.mutation<
+      PlanPeriodBlock,
+      { planId: number; blockId: number }
+    >({
+      query: ({ planId, blockId }) => ({
+        url: `/training-plans/${planId}/period-blocks/${blockId}/reactivate`,
+        method: "POST",
+      }),
+      invalidatesTags: (_result, _error, { planId, blockId }) => [
+        { type: "PlanPeriodBlock", id: blockId },
+        { type: "PlanPeriodBlock", id: `LIST-${planId}` },
+        { type: "PlanPeriodBlock", id: `ARCHIVED-${planId}` },
+        { type: "SessionRecommendations", id: "LIST" },
       ],
     }),
   }),
@@ -177,4 +206,6 @@ export const {
   useDeletePeriodBlockMutation,
   useGetPeriodBlockDeletionPreviewQuery,
   useArchivePeriodBlockMutation,
+  useGetArchivedPeriodBlocksQuery,
+  useReactivatePeriodBlockMutation,
 } = periodBlocksApi;

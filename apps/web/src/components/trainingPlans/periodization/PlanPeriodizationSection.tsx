@@ -809,6 +809,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   return (
     <>
       <PlanningExploreShell
+        planId={planId}
         blocks={blocks}
         catalog={catalog}
         sessionsByBlock={sessionsByBlock}

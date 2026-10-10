@@ -21,6 +21,7 @@ import {
     canAddPeriodPhase,
     resolveNextPhaseStartDate,
 } from "./planningShellUtils";
+import { ArchivedPeriodBlocksSection } from "./ArchivedPeriodBlocksSection";
 import { BlockCalendarRangeHint } from "./BlockCalendarRangeHint";
 import { PlanningProgramSummaryCard } from "./PlanningProgramSummaryCard";
 import { PlanningShellBodyLayout } from "./PlanningShellBodyLayout";
@@ -38,6 +39,8 @@ import {
 } from "./planningShellPresentation";
 
 interface Props {
+    /** Plan mostrado; lista sus bloques archivados (D-BLQ-5). */
+    planId: number;
     blocks: PlanPeriodBlock[];
     catalog: PhysicalQuality[];
     sessionsByBlock: Map<number, TrainingSession[]>;
@@ -81,6 +84,7 @@ interface Props {
 }
 
 export const PlanningExploreShell: React.FC<Props> = ({
+    planId,
     blocks,
     catalog,
     sessionsByBlock,
@@ -238,6 +242,8 @@ export const PlanningExploreShell: React.FC<Props> = ({
                     ) : null}
                 </div>
             ) : null}
+
+            {!isPickingPhaseRange ? <ArchivedPeriodBlocksSection planId={planId} /> : null}
 
             <PlanningShellBodyLayout
                 variant="createWhen"
