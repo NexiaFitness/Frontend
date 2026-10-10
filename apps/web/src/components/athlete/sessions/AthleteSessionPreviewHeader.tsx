@@ -3,8 +3,7 @@
  */
 
 import React from "react";
-import { ClipboardList, Clock, Dumbbell } from "lucide-react";
-import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
+import { Clock, Dumbbell } from "lucide-react";
 import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
 import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
 import {
@@ -47,11 +46,6 @@ export const AthleteSessionPreviewHeader: React.FC<AthleteSessionPreviewHeaderPr
     const muscleSubline = resolveAgendaTrainingSublineForPreview(session);
     const title = qualityHeadline ?? session.session_name;
 
-    const planId = session.training_plan_id;
-    const { data: plan } = useGetTrainingPlanQuery(planId ?? 0, {
-        skip: planId == null || planId <= 0,
-    });
-
     return (
         <header className="space-y-4">
             <span className={ATHLETE_SESSION_STATUS_BADGE[statusVariant]}>
@@ -82,12 +76,6 @@ export const AthleteSessionPreviewHeader: React.FC<AthleteSessionPreviewHeaderPr
             </div>
 
             <div className="flex flex-wrap gap-2">
-                {planId != null && plan?.name ? (
-                    <span className={ATHLETE_SESSION_META_PILL}>
-                        <ClipboardList className="size-3.5 text-primary/70" aria-hidden />
-                        {plan.name}
-                    </span>
-                ) : null}
                 {session.planned_duration != null && (
                     <span className={ATHLETE_SESSION_META_PILL}>
                         <Clock className="size-3.5 text-primary/70" aria-hidden />
