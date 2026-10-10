@@ -189,7 +189,7 @@ describe("athleteSessionPreviewUtils", () => {
             }],
         });
         const card = buildAthletePreviewExerciseCards(group)[0];
-        expect(card.setLines.map((line) => [line.reps, line.load])).toEqual([["8", "80 kg"], ["6", "85 kg"]]);
+        expect(card.setLines.map((line) => [line.reps, line.load])).toEqual([["8", "80kg"], ["6", "85kg"]]);
     });
 
     it("does not create disclosure data when only the compact reps are prescribed", () => {
