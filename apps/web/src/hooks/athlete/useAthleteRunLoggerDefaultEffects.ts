@@ -30,10 +30,10 @@ export interface UseAthleteRunLoggerDefaultEffectsOptions {
     seriesAutofillWeightRef: MutableRefObject<Map<string, number>>;
     getTouchedSnapshot: () => ReadonlySet<string>;
     roundRpe: number | null;
-    weight: number;
+    weight: number | null;
     reps: number;
     rpe: number | null;
-    setWeight: (v: number) => void;
+    setWeight: (v: number | null) => void;
     setReps: (v: number) => void;
     setRpe: (v: number | null) => void;
     setSlotLogs: Dispatch<SetStateAction<Record<string, SlotLogValues>>>;

@@ -84,6 +84,8 @@ import {
     isRunLoggerSlotConfirmValid,
     resolveInitialSlotWeight,
 } from "@nexia/shared/utils/athlete/runLoggerHydrationPolicy";
+import { shouldSkipSlotOnGroupRoundSave } from "@nexia/shared/utils/athlete/athleteRunGroupRoundPersist";
+import { persistGroupRoundStandardSlots } from "@/hooks/athlete/runAthleteGroupRoundSlotPersist";
 export interface AthletePrCelebration {
     exerciseName: string;
     weight: number;
@@ -216,7 +218,7 @@ export function useAthleteSessionRun({
     runStepsRef.current = runSteps;
 
     const [step, setStep] = useState(0);
-    const [weight, setWeight] = useState(0);
+    const [weight, setWeight] = useState<number | null>(null);
     const [reps, setReps] = useState(8);
     const [rpe, setRpe] = useState<number | null>(null);
     const weightRef = useRef(weight);
@@ -384,13 +386,13 @@ export function useAthleteSessionRun({
     }, []);
 
     const handleWeightChange = useCallback(
-        (value: number) => {
+        (value: number | null) => {
             setWeight(value);
             if (!current) return;
             markSingleField(current.stepKey, "weight");
             touchRunStepForPersist(currentRunStep ?? undefined);
             touchedWeightStepKeysRef.current.add(current.stepKey);
-            if (value > 0) {
+            if (value != null && value > 0) {
                 seriesAutofillWeightRef.current.set(
                     resolveSeriesWeightAutofillKey(current),
                     value
@@ -574,20 +576,22 @@ export function useAthleteSessionRun({
             completedStepKeysRef.current.add(current.stepKey);
             setSavedStepKeys(new Set(completedStepKeysRef.current));
 
-            if (payloadWeight > 0) {
+            if (payloadWeight != null && payloadWeight > 0) {
                 seriesAutofillWeightRef.current.set(
                     resolveSeriesWeightAutofillKey(current),
                     payloadWeight
                 );
             }
 
-            const prResult = evaluatePr(payloadWeight);
-            if (prResult.isPr) {
-                setPrCelebration({
-                    exerciseName: current.name,
-                    weight: payloadWeight,
-                    previousMaxWeight: prResult.previousMaxWeight,
-                });
+            if (payloadWeight != null && payloadWeight > 0) {
+                const prResult = evaluatePr(payloadWeight);
+                if (prResult.isPr) {
+                    setPrCelebration({
+                        exerciseName: current.name,
+                        weight: payloadWeight,
+                        previousMaxWeight: prResult.previousMaxWeight,
+                    });
+                }
             }
 
             onSetSaved?.(result, {
@@ -695,7 +699,16 @@ export function useAthleteSessionRun({
                     const slot = currentRunStep.slots.find(
                         (item) => item.blockExerciseId === payload.blockExerciseId
                     );
-                    if (!slot || completedStepKeysRef.current.has(slot.stepKey)) continue;
+                    if (
+                        !slot ||
+                        shouldSkipSlotOnGroupRoundSave(
+                            slot.stepKey,
+                            completedStepKeysRef.current,
+                            touchedWeightStepKeysRef.current
+                        )
+                    ) {
+                        continue;
+                    }
 
                     loggedSetsRef.current.set(
                         payload.blockExerciseId,
@@ -722,6 +735,7 @@ export function useAthleteSessionRun({
                     }
                     completedStepKeysRef.current.add(slot.stepKey);
                 }
+                completedStepKeysRef.current.add(currentRunStep.stepKey);
             } else if (isEmom && currentRunStep.emomIntervals) {
                 await saveEmomBlockRef.current();
                 return;
@@ -800,44 +814,30 @@ export function useAthleteSessionRun({
                         lastResult = await logSet(payload.blockExerciseId, payload.data);
                     }
                 }
+                completedStepKeysRef.current.add(currentRunStep.stepKey);
             } else if (currentRunStep.slots) {
-                for (const slot of currentRunStep.slots) {
-                    if (completedStepKeysRef.current.has(slot.stepKey)) continue;
-
-                    const log = slotLogs[slot.stepKey] ?? {
-                        weight: resolveInitialSlotWeight(slot.defaultWeight),
-                        reps: slot.defaultReps,
-                    };
-                    if (log.weight == null) continue;
-
-                    const nextSets = getNextActualSets(slot.blockExerciseId, slot.loggedSets);
-                    loggedSetsRef.current.set(slot.blockExerciseId, nextSets);
-
-                    const executionPayload = buildAthleteRunExecutionPayloadFromSlot(
-                        sessionId,
-                        currentRunStep,
-                        slot,
-                        {
-                            weight: log.weight,
-                            reps: log.reps,
-                            rpe: roundRpe,
-                            durationSeconds: log.durationSeconds ?? log.reps,
-                        },
-                        slotReferences[slot.stepKey]?.suggestion
-                    );
-
-                    if (isOnline) {
-                        await postRunExecution(executionPayload).unwrap();
-                        lastResult = "synced";
-                    } else {
-                        lastResult = await logExecution(executionPayload);
-                    }
-
-                    completedStepKeysRef.current.add(slot.stepKey);
+                const groupResult = await persistGroupRoundStandardSlots({
+                    sessionId,
+                    runStep: currentRunStep,
+                    slotLogs,
+                    roundRpe,
+                    completedStepKeys: completedStepKeysRef.current,
+                    touchedKeys: touchedWeightStepKeysRef.current,
+                    slotReferences,
+                    getNextActualSets,
+                    loggedSetsRef,
+                    isOnline,
+                    postRunExecution,
+                    logExecution,
+                });
+                lastResult = groupResult.lastResult;
+                if (groupResult.roundComplete) {
+                    completedStepKeysRef.current.add(currentRunStep.stepKey);
                 }
+            } else {
+                completedStepKeysRef.current.add(currentRunStep.stepKey);
             }
 
-            completedStepKeysRef.current.add(currentRunStep.stepKey);
             setSavedStepKeys(new Set(completedStepKeysRef.current));
             onSetSaved?.(lastResult, {
                 isGroupRound,
@@ -946,7 +946,7 @@ export function useAthleteSessionRun({
         const inputMode = current?.inputMode ?? "weight_reps";
         if (inputMode === "duration") return reps > 0;
         if (inputMode === "reps_only") return reps > 0;
-        return reps > 0 && weight >= 0;
+        return reps > 0 && weight != null && weight >= 0;
     }, [
         amrapPartialTotal,
         amrapRounds,

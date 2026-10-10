@@ -20,11 +20,11 @@ export interface UseAthleteRunSingleLoggerDefaultsOptions {
     isBatchStep: boolean;
     effectiveRunReference: AthleteRunReference | null | undefined;
     getTouchedSnapshot: () => ReadonlySet<string>;
-    weight: number;
+    weight: number | null;
     reps: number;
     rpe: number | null;
     seriesAutofillWeightRef: MutableRefObject<Map<string, number>>;
-    setWeight: (v: number) => void;
+    setWeight: (v: number | null) => void;
     setReps: (v: number) => void;
     setRpe: (v: number | null) => void;
 }
@@ -80,6 +80,8 @@ export function useAthleteRunSingleLoggerDefaults({
             resolveSeriesWeightAutofillKey(current)
         );
 
+        const allowCarryPrevWeight = singleLoggerDefaultsStepRef.current !== null;
+
         const merged = mergeSingleLoggerWithDefaults({
             prev: { weight, reps, rpe },
             defaults,
@@ -92,6 +94,7 @@ export function useAthleteRunSingleLoggerDefaults({
             durationFallbackReps:
                 current.plannedDurationSeconds ?? current.defaultReps,
             inputMode: current.inputMode ?? "weight_reps",
+            allowCarryPrevWeight,
         });
 
         if (merged.weight !== weight) setWeight(merged.weight);

@@ -37,13 +37,13 @@ export interface ExerciseStepViewProps {
     exercise: AthleteFlatExercise;
     step: number;
     totalSteps: number;
-    weight: number;
+    weight: number | null;
     reps: number;
     rpe: number | null;
     inputMode?: AthleteRunInputMode;
     plannedWeight?: number | null;
     referenceWeightKg?: number | null;
-    onWeightChange: (value: number) => void;
+    onWeightChange: (value: number | null) => void;
     onRepsChange: (value: number) => void;
     onRpeChange: (value: number | null) => void;
     restPhase: AthleteRunRestPhase;
@@ -172,9 +172,7 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
                                 plannedWeight={plannedWeight}
                                 referenceWeightKg={referenceWeightKg}
                                 rpe={rpe}
-                                onWeightChange={(value) => {
-                                    if (value != null) onWeightChange(value);
-                                }}
+                                onWeightChange={onWeightChange}
                                 onRepsChange={onRepsChange}
                                 onRpeChange={onRpeChange}
                             />
