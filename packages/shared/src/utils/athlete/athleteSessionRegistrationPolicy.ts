@@ -20,8 +20,27 @@ export function isAthleteSessionRegistrationEditable(
     sessionDate: string | null | undefined,
     today = new Date()
 ): boolean {
-    if (!sessionDate) return true;
+    /** M8 — sin fecha no asumimos ventana abierta. */
+    if (!sessionDate) return false;
     return daysAfterSessionDate(sessionDate, today) <= ATHLETE_REGISTRATION_EDIT_DAYS;
+}
+
+/** Fuente única: progress → meta → cálculo local por fecha. */
+export function resolveAthleteSessionRegistrationEditable(input: {
+    sessionDate: string | null | undefined;
+    progressRegistrationEditable?: boolean | null;
+    metaRegistrationEditable?: boolean | null;
+    today?: Date;
+}): boolean {
+    const { sessionDate, progressRegistrationEditable, metaRegistrationEditable, today } =
+        input;
+    if (progressRegistrationEditable != null) {
+        return progressRegistrationEditable;
+    }
+    if (metaRegistrationEditable != null) {
+        return metaRegistrationEditable;
+    }
+    return isAthleteSessionRegistrationEditable(sessionDate, today);
 }
 
 export function isPastSessionDate(
@@ -92,13 +111,11 @@ export function shouldOpenSessionInLogMode(cue: AthleteSessionListRegistrationCu
     return cue === "register_now" || cue === "complete_registration";
 }
 
-/** FE-3 / E9 — progress API needed for in-progress sessions and completed within edit window. */
+/** FE-3 — progress también fuera de ventana (estado de bloques, registration_editable). */
 export function shouldFetchAthleteSessionLogProgress(
     sessionId: number | undefined,
-    status: string | undefined,
-    sessionDate: string | null | undefined
+    _status?: string | undefined,
+    _sessionDate?: string | null | undefined
 ): boolean {
-    if (!sessionId) return false;
-    if (status !== "completed") return true;
-    return isAthleteSessionRegistrationEditable(sessionDate);
+    return sessionId != null && sessionId > 0;
 }

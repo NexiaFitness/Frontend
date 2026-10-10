@@ -4,6 +4,7 @@ import {
     daysAfterSessionDate,
     isAthleteSessionRegistrationEditable,
     resolveAthleteSessionListRegistrationCue,
+    resolveAthleteSessionRegistrationEditable,
     shouldFetchAthleteSessionLogProgress,
 } from "./athleteSessionRegistrationPolicy";
 import type { TrainingSession } from "../../types/trainingSessions";
@@ -38,6 +39,26 @@ function session(partial: Partial<TrainingSession>): TrainingSession {
 
 describe("athleteSessionRegistrationPolicy", () => {
     const today = new Date(2026, 9, 4); // 4 oct 2026 local
+
+    it("M8: fecha nula no es editable", () => {
+        expect(isAthleteSessionRegistrationEditable(null, today)).toBe(false);
+        expect(isAthleteSessionRegistrationEditable(undefined, today)).toBe(false);
+    });
+
+    it("resolveAthleteSessionRegistrationEditable prioriza progress", () => {
+        expect(
+            resolveAthleteSessionRegistrationEditable({
+                sessionDate: "2026-10-02",
+                progressRegistrationEditable: false,
+            })
+        ).toBe(false);
+        expect(
+            resolveAthleteSessionRegistrationEditable({
+                sessionDate: "2026-09-01",
+                progressRegistrationEditable: true,
+            })
+        ).toBe(true);
+    });
 
     it("ventana de 7 días inclusive", () => {
         expect(daysAfterSessionDate("2026-09-27", today)).toBe(7);
@@ -100,7 +121,9 @@ describe("shouldFetchAthleteSessionLogProgress", () => {
         expect(shouldFetchAthleteSessionLogProgress(4445, "completed", "2026-10-02")).toBe(true);
     });
 
-    it("skips for completed outside edit window", () => {
-        expect(shouldFetchAthleteSessionLogProgress(4456, "completed", "2026-09-26")).toBe(false);
+    it("fetches progress for completed outside edit window (read-only UI)", () => {
+        expect(shouldFetchAthleteSessionLogProgress(4456, "completed", "2026-09-26")).toBe(
+            true
+        );
     });
 });
