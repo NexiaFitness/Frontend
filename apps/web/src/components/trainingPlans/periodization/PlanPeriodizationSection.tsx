@@ -30,6 +30,7 @@ import { usePeriodBlockDeletion } from "./usePeriodBlockDeletion";
 import { usePeriodizationVolumeRecommendations } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
 import { PlanBlockAuthoringSurface } from "./PlanBlockAuthoringSurface";
 import { BlockWeeksManageSurface } from "./BlockWeeksManageSurface";
+import { DayExceptionRestModal } from "./DayExceptionRestModal";
 import { PlanningExploreShell } from "./PlanningExploreShell";
 import { usePlanBlocksStructureDrift } from "./usePlanBlocksStructureDrift";
 import { buildBlockAuthorPath } from "@/lib/trainingPlanNavigation";
@@ -866,72 +867,14 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
       />
 
       {exceptionModal != null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setExceptionModal(null)}
-          />
-          <div className="relative rounded-lg bg-surface border border-border/50 p-6 shadow-xl w-full max-w-sm space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-warning/15 flex items-center justify-center shrink-0">
-                <svg
-                  className="h-5 w-5 text-warning"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">Marcar descanso</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {exceptionModal.date} — no entrenable
-                </p>
-              </div>
-            </div>
-            <div>
-              <label
-                htmlFor="exception-note"
-                className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5"
-              >
-                Nota (opcional)
-              </label>
-              <input
-                id="exception-note"
-                type="text"
-                className="w-full rounded-md bg-surface-2 border border-border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]"
-                placeholder="Ej: Lesión, viaje, descanso programado..."
-                value={exceptionNote}
-                onChange={(e) => setExceptionNote(e.target.value)}
-                autoFocus
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setExceptionModal(null)}
-                disabled={isCreatingException}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleCreateException}
-                disabled={isCreatingException}
-              >
-                {isCreatingException ? "Guardando…" : "Marcar descanso"}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <DayExceptionRestModal
+          date={exceptionModal.date}
+          note={exceptionNote}
+          onNoteChange={setExceptionNote}
+          onCancel={() => setExceptionModal(null)}
+          onConfirm={handleCreateException}
+          isSaving={isCreatingException}
+        />
       )}
     </>
   );
