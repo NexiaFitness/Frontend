@@ -105,6 +105,28 @@
   textarea {
     @apply text-sm leading-normal;
   }
+
+  /* input[type=date|time]: py-0 + leading-none desalinea el edit interno (WebKit/Blink). */
+  input[type="date"],
+  input[type="time"] {
+    display: flex;
+    align-items: center;
+  }
+
+  input[type="date"]::-webkit-datetime-edit,
+  input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  input[type="time"]::-webkit-datetime-edit,
+  input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+    margin: 0;
+    line-height: 1.25rem;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    margin: 0;
+    padding: 0;
+  }
 }
 
 /* Scrollbar premium Nexia — cyan eléctrico, reutilizable (sheets, atleta móvil, modales). */
