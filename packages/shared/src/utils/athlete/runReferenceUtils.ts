@@ -122,7 +122,7 @@ export function buildAthleteRunExecutionPayloadFromSlot(
     runStep: AthleteRunStep,
     slot: AthleteRunRoundSlot,
     values: {
-        weight: number;
+        weight: number | null;
         reps: number;
         rpe: number | null;
         durationSeconds?: number;
@@ -160,7 +160,7 @@ export function buildAthleteRunExecutionPayload(
     sessionId: number,
     exercise: AthleteFlatExercise,
     values: {
-        weight: number;
+        weight: number | null;
         reps: number;
         rpe: number | null;
         durationSeconds?: number;

@@ -174,7 +174,7 @@ export function applySeriesWeightAutofill(input: {
 
 export function resolveExecutionFieldsForInputMode(
     inputMode: AthleteRunInputMode,
-    values: { weightKg: number; reps: number; durationSeconds: number }
+    values: { weightKg: number | null; reps: number; durationSeconds: number }
 ): {
     input_mode: AthleteRunInputMode;
     weight_kg?: number | null;
@@ -196,7 +196,8 @@ export function resolveExecutionFieldsForInputMode(
             weight_kg: null,
         };
     }
-    const weight = clampWeightKg(values.weightKg);
+    const weight =
+        values.weightKg == null ? 0 : clampWeightKg(values.weightKg);
     if (weight <= 0) {
         return {
             input_mode: "reps_only",

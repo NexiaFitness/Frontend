@@ -138,8 +138,48 @@ describe("runLoggerHydrationPolicy (D-LOG-TOUCH-01)", () => {
             seriesAutofillWeight: null,
             durationFallbackReps: 9,
             inputMode: "weight_reps",
+            allowCarryPrevWeight: true,
         });
         expect(merged.weight).toBe(33);
         expect(merged.reps).toBe(12);
+    });
+
+    it("S1: peso vaciado (null) tocado no recupera prescripción 25", () => {
+        const touched = new Set([
+            buildRunLoggerFieldTouchKey("slot", slotKey, "weight"),
+        ]);
+        const result = mergeSlotLogWithDefaults({
+            prev: { weight: null, reps: 10 },
+            defaults: { weight: 41, reps: 12, rpe: null },
+            touched,
+            slotStepKey: slotKey,
+            prescribedDefaultWeight: 25,
+            prescribedDefaultReps: 10,
+        });
+        expect(result.weight).toBeNull();
+    });
+
+    it("S2: cambio de ejercicio no arrastra 80 kg sin carry", () => {
+        const stepKey = "block-single-2";
+        const merged = mergeSingleLoggerWithDefaults({
+            prev: { weight: 80, reps: 8, rpe: null },
+            defaults: { weight: 0, reps: 10, rpe: null },
+            touched: new Set(),
+            stepKey,
+            prescribedDefaultWeight: 0,
+            plannedWeight: null,
+            seriesPosition: 1,
+            seriesAutofillWeight: null,
+            durationFallbackReps: 10,
+            inputMode: "weight_reps",
+            allowCarryPrevWeight: false,
+        });
+        expect(merged.weight).toBeNull();
+    });
+
+    it("S3/S4: reps_only válido sin peso", () => {
+        expect(
+            isRunLoggerSlotConfirmValid({ weight: null, reps: 8 }, "reps_only")
+        ).toBe(true);
     });
 });

@@ -9,6 +9,7 @@
  */
 
 import type { RunLoggerDefaults } from "./runReferenceUtils";
+import { prevWeightForApplicableMerge, readSlotWeightForMerge } from "./runLoggerFieldState";
 
 export type RunLoggerTouchField =
     | "weight"
@@ -85,7 +86,7 @@ function isSingleFieldTouched(
 }
 
 export interface SingleLoggerStateShape {
-    weight: number;
+    weight: number | null;
     reps: number;
     rpe: number | null;
 }
@@ -101,6 +102,8 @@ export interface MergeSingleLoggerInput {
     seriesAutofillWeight: number | null;
     durationFallbackReps: number;
     inputMode: string;
+    /** false al cambiar de ejercicio: no arrastrar peso del paso anterior. */
+    allowCarryPrevWeight: boolean;
 }
 
 /** Serie simple: merge por campo (R-LOG-07 single). */
@@ -116,10 +119,11 @@ export function mergeSingleLoggerWithDefaults(input: MergeSingleLoggerInput): Si
         seriesAutofillWeight,
         durationFallbackReps,
         inputMode,
+        allowCarryPrevWeight,
     } = input;
 
     const hasCoachWeight = plannedWeight != null && plannedWeight > 0;
-    let nextWeight = defaults.weight;
+    let nextWeight: number | null = defaults.weight;
     if (
         seriesPosition > 1 &&
         !hasCoachWeight &&
@@ -133,9 +137,16 @@ export function mergeSingleLoggerWithDefaults(input: MergeSingleLoggerInput): Si
         const applicable = resolveApplicableSlotWeight(
             { ...defaults, weight: nextWeight },
             prescribedDefaultWeight,
-            prev.weight > 0 ? prev.weight : null
+            prevWeightForApplicableMerge(
+                prev.weight != null && prev.weight > 0 ? prev.weight : null,
+                allowCarryPrevWeight
+            )
         );
-        nextWeight = applicable ?? prev.weight;
+        nextWeight =
+            applicable ??
+            (allowCarryPrevWeight
+                ? prev.weight
+                : resolveInitialSlotWeight(prescribedDefaultWeight));
     } else {
         nextWeight = prev.weight;
     }
@@ -172,19 +183,30 @@ export function mergeSlotLogWithDefaults(input: MergeSlotLogInput): RunLoggerSlo
               ? prescribedDefaultReps
               : defaults.reps;
 
+    const weightTouched = isSlotFieldTouched(touched, slotStepKey, "weight");
+    const mergedWeight = readSlotWeightForMerge({
+        prev: prev ? { weight: prev.weight } : undefined,
+        touched: weightTouched,
+    });
+
+    let nextWeight: number | null;
+    if (weightTouched) {
+        nextWeight = mergedWeight ?? null;
+    } else if (mergedWeight === undefined) {
+        nextWeight =
+            resolveApplicableSlotWeight(defaults, prescribedDefaultWeight, undefined) ??
+            resolveInitialSlotWeight(prescribedDefaultWeight);
+    } else {
+        nextWeight =
+            resolveApplicableSlotWeight(defaults, prescribedDefaultWeight, mergedWeight) ??
+            mergedWeight;
+    }
+
     const next: RunLoggerSlotLogShape = {
-        weight: prev?.weight ?? resolveInitialSlotWeight(prescribedDefaultWeight),
+        weight: nextWeight,
         reps: baseReps,
         durationSeconds: prev?.durationSeconds,
     };
-
-    if (!isSlotFieldTouched(touched, slotStepKey, "weight")) {
-        next.weight = resolveApplicableSlotWeight(
-            defaults,
-            prescribedDefaultWeight,
-            prev?.weight
-        );
-    }
 
     if (!isSlotFieldTouched(touched, slotStepKey, "reps")) {
         next.reps = defaults.reps > 0 ? defaults.reps : prescribedDefaultReps;

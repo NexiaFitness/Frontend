@@ -486,6 +486,12 @@ export {
     formatCalendarWeekRange,
 } from "./utils/calendarWeekForBlock";
 export {
+    allGroupRoundSlotsAccountedFor,
+    buildDefaultSlotLog,
+    isSlotReadyToPersist,
+    shouldSkipSlotOnGroupRoundSave,
+} from "./utils/athlete/athleteRunGroupRoundPersist";
+export {
     buildSessionReplicationWeekOptions,
     getLocalTodayISO,
     partitionReplicationSkips,
