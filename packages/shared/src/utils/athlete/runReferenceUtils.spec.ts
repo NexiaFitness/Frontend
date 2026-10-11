@@ -122,4 +122,27 @@ describe("buildAthleteRunExecutionPayload (S1 null weight)", () => {
         expect(payload.weight_kg).toBeNull();
         expect(JSON.parse(JSON.stringify(payload)).weight_kg).toBeNull();
     });
+
+    it("serializa weight_kg 0 cuando el atleta escribe 0 explícito (D1)", () => {
+        const payload = buildAthleteRunExecutionPayload(
+            99,
+            {
+                stepKey: "k1",
+                exerciseId: 1,
+                blockExerciseId: 2,
+                setIndex: 1,
+                setLabel: "S1",
+                slotLabel: null,
+                roundIndex: null,
+                groupKind: "single_set",
+                inputMode: "weight_reps",
+                defaultReps: 10,
+                defaultRpe: null,
+                defaultWeight: 0,
+            },
+            { weight: 0, reps: 10, rpe: null }
+        );
+        expect(payload.input_mode).toBe("weight_reps");
+        expect(payload.weight_kg).toBe(0);
+    });
 });

@@ -261,6 +261,5 @@ export function isRunLoggerSlotConfirmValid(
         return log.reps > 0;
     }
     if (log.reps <= 0) return false;
-    if (log.weight == null) return true;
-    return log.weight >= 0;
+    return log.weight != null && log.weight >= 0;
 }
