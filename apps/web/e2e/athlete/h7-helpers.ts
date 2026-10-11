@@ -17,6 +17,8 @@ export const H7_QA_CLIENT_ID = 346;
 /** Evita reutilizar sesión atleta: `loginAsTrainer` no cambia rol si ya hay `/dashboard`. */
 export async function loginAsTrainerFresh(page: Page) {
   await page.context().clearCookies();
+  await page.goto("/", { waitUntil: "load" }).catch(() => {});
+  await page.evaluate(() => localStorage.clear()).catch(() => {});
   try {
     await loginAsTrainer(page);
   } catch {
@@ -65,6 +67,21 @@ export function isRunContextExecutionPost(url: string, method: string): boolean 
     method === "POST" &&
     /\/api\/v1\/athlete\/run-context\/executions/.test(url)
   );
+}
+
+/** Cuenta POST a run-context/executions (peticiones, no solo 2xx). */
+export function countExecutionPostRequests(page: Page) {
+  let count = 0;
+  page.on("request", (req) => {
+    if (isRunContextExecutionPost(req.url(), req.method())) {
+      count += 1;
+    }
+  });
+  return {
+    get count() {
+      return count;
+    },
+  };
 }
 
 export function attachExecutionRequestCapture(page: Page) {

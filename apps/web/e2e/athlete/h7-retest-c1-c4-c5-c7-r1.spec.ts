@@ -100,7 +100,7 @@ test("QA-H7-C4 giant: peso estable al cambiar reps; vacíos sin 0", async ({
   expect(consoleErrors).toHaveLength(0);
 });
 
-test("QA-H7-C7 giant: confirm habilitado con pesos vacíos y reps válidas (D-LOG-INTEGRITY)", async ({
+test("QA-H7-C7 giant: weight_reps sin peso deshabilita Ronda completada (D-LOG-TOUCH-01)", async ({
   page,
 }) => {
   test.setTimeout(180_000);
@@ -121,6 +121,6 @@ test("QA-H7-C7 giant: confirm habilitado con pesos vacíos y reps válidas (D-LO
     expect(await field.inputValue()).toBe("");
   }
   const confirm = page.getByRole("button", { name: /Ronda completada/i });
-  await expect(confirm).toBeEnabled();
+  await expect(confirm).toBeDisabled();
   expect(consoleErrors).toHaveLength(0);
 });

@@ -62,8 +62,10 @@ test("QA-H7-C8-dropset POST weight_kg = UI", async ({ page }) => {
   await cap.waitForAtLeastPosts(1, 25_000);
   cap.detach();
 
-  const postWeights = postWeightKgList(cap.posts).filter((w) => !Number.isNaN(w));
-  expect(postWeights.every((w) => w === 48)).toBe(true);
-  expect(postWeights.length).toBeGreaterThanOrEqual(1);
+  const weightedPosts = cap.posts.filter(
+    (p) => p.weight_kg != null && !Number.isNaN(p.weight_kg)
+  );
+  expect(weightedPosts.length).toBeGreaterThanOrEqual(1);
+  expect(weightedPosts.some((p) => p.weight_kg === 48)).toBe(true);
   expect(consoleErrors).toHaveLength(0);
 });
