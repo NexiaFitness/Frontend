@@ -44,7 +44,8 @@ export function useAthleteRunSingleLoggerDefaults({
     setRpe,
 }: UseAthleteRunSingleLoggerDefaultsOptions): void {
     const singleLoggerDefaultsStepRef = useRef<string | null>(null);
-    const singleLoggerLastExerciseIdRef = useRef<number | null>(null);
+    const singleLoggerLastAutofillKeyRef = useRef<string | null>(null);
+    const singleLoggerHydratedStepKeyRef = useRef<string | null>(null);
 
     useEffect(() => {
         singleLoggerDefaultsStepRef.current = null;
@@ -52,6 +53,13 @@ export function useAthleteRunSingleLoggerDefaults({
 
     useEffect(() => {
         if (!restShowLogger || !current || isBatchStep) return;
+
+        const stepChanged =
+            singleLoggerHydratedStepKeyRef.current != null &&
+            singleLoggerHydratedStepKeyRef.current !== current.stepKey;
+        if (stepChanged) {
+            singleLoggerLastAutofillKeyRef.current = null;
+        }
 
         const ref = effectiveRunReference?.reference;
         const refToken =
@@ -81,12 +89,22 @@ export function useAthleteRunSingleLoggerDefaults({
             resolveSeriesWeightAutofillKey(current)
         );
 
+        const currentAutofillKey = resolveSeriesWeightAutofillKey({
+            groupKind: current.groupKind,
+            groupId: current.groupId,
+            exerciseId: current.exerciseId,
+            blockExerciseId: current.blockExerciseId,
+        });
         const allowCarryPrevWeight =
-            singleLoggerLastExerciseIdRef.current != null &&
-            singleLoggerLastExerciseIdRef.current === current.exerciseId;
+            singleLoggerLastAutofillKeyRef.current != null &&
+            singleLoggerLastAutofillKeyRef.current === currentAutofillKey;
 
         const merged = mergeSingleLoggerWithDefaults({
-            prev: { weight, reps, rpe },
+            prev: {
+                weight: stepChanged ? null : weight,
+                reps,
+                rpe,
+            },
             defaults,
             touched: getTouchedSnapshot(),
             stepKey: current.stepKey,
@@ -105,7 +123,8 @@ export function useAthleteRunSingleLoggerDefaults({
         if (merged.rpe !== rpe) setRpe(merged.rpe);
 
         singleLoggerDefaultsStepRef.current = defaultsKey;
-        singleLoggerLastExerciseIdRef.current = current.exerciseId;
+        singleLoggerLastAutofillKeyRef.current = currentAutofillKey;
+        singleLoggerHydratedStepKeyRef.current = current.stepKey;
     }, [
         restShowLogger,
         current,

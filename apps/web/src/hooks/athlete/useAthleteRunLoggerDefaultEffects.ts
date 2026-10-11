@@ -8,7 +8,13 @@
  * @since v8.4.0
  */
 
-import { type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import {
+    type Dispatch,
+    type MutableRefObject,
+    type SetStateAction,
+    useEffect,
+    useRef,
+} from "react";
 import type { LocalSetExecution } from "@nexia/shared/offline/athleteSessionTypes";
 import type { AthleteFlatExercise } from "@nexia/shared/offline/athleteSessionTypes";
 import type { AthleteRunStep } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
@@ -60,6 +66,18 @@ export function useAthleteRunLoggerDefaultEffects({
     setSlotLogs,
     setRoundRpeState,
 }: UseAthleteRunLoggerDefaultEffectsOptions): void {
+    const prevSingleStepKeyRef = useRef<string | null>(null);
+    useEffect(() => {
+        if (isBatchStep || !current?.stepKey) return;
+        if (
+            prevSingleStepKeyRef.current != null &&
+            prevSingleStepKeyRef.current !== current.stepKey
+        ) {
+            setWeight(null);
+        }
+        prevSingleStepKeyRef.current = current.stepKey;
+    }, [current?.stepKey, isBatchStep, setWeight]);
+
     useAthleteRunGroupLoggerDefaults({
         restShowLogger,
         isGroupRound,

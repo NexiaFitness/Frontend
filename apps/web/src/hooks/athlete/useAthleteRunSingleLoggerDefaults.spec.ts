@@ -134,4 +134,53 @@ describe("useAthleteRunSingleLoggerDefaults", () => {
             expect(setWeight).toHaveBeenCalledWith(null);
         });
     });
+
+    it("S2: mismo ejercicio en dos bloques no arrastra peso (autofill key distinta)", async () => {
+        const setWeight = vi.fn();
+        const seriesAutofillWeightRef = {
+            current: new Map<string, number>([["block:1", 80]]),
+        };
+        const sharedExerciseId = 10;
+        const exBlock1 = {
+            ...baseExercise,
+            exerciseId: sharedExerciseId,
+            blockExerciseId: 1,
+            groupId: "block-a",
+            stepKey: "block-a-s1",
+        };
+        const exBlock2 = {
+            ...baseExercise,
+            exerciseId: sharedExerciseId,
+            blockExerciseId: 2,
+            groupId: "block-b",
+            stepKey: "block-b-s1",
+        };
+
+        const { rerender } = renderHook(
+            ({ current }: { current: typeof exBlock1 }) =>
+                useAthleteRunSingleLoggerDefaults({
+                    restShowLogger: true,
+                    current,
+                    isBatchStep: false,
+                    effectiveRunReference: undefined,
+                    getTouchedSnapshot: () => new Set(),
+                    weight: 80,
+                    reps: 10,
+                    rpe: null,
+                    seriesAutofillWeightRef,
+                    setWeight,
+                    setReps: vi.fn(),
+                    setRpe: vi.fn(),
+                }),
+            { initialProps: { current: exBlock1 } }
+        );
+
+        await act(async () => {
+            rerender({ current: exBlock2 });
+        });
+
+        await waitFor(() => {
+            expect(setWeight).toHaveBeenCalledWith(null);
+        });
+    });
 });
