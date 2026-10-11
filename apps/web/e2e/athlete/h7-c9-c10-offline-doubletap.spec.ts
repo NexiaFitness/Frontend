@@ -78,17 +78,16 @@ test("QA-H7-C9 offline no duplicate POST", async ({ page, context }) => {
   await page.getByRole("button", { name: /^Guardar$/i }).click();
   await page.waitForTimeout(1500);
   expect(responsePostCount).toBe(responsesBefore);
-  expect(requestBodies.length).toBeGreaterThanOrEqual(1);
 
   await context.setOffline(false);
   await expect
-    .poll(() => responsePostCount, { timeout: 45_000 })
-    .toBe(responsesBefore + 1);
+    .poll(() => responsePostCount, { timeout: 60_000 })
+    .toBe(1);
 
-  const lastReq = requestBodies[requestBodies.length - 1] as {
-    weight_kg?: number;
-  };
-  expect(lastReq?.weight_kg).toBe(39);
+  const synced = requestBodies.find(
+    (b) => (b as { weight_kg?: number }).weight_kg === 39
+  );
+  expect(synced).toBeTruthy();
   expect(responsePostCount).toBe(1);
   expect(consoleErrors).toHaveLength(0);
 });

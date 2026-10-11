@@ -17,6 +17,7 @@ import {
   startRestAfterFill,
   trainerAddFuerzaBlock,
   trainerConfigureModality,
+  trainerCreateSingleExerciseSession,
   typePeso,
   typeReps,
 } from "./h7-helpers";
@@ -80,7 +81,10 @@ async function createTwoExerciseSession(page: import("@playwright/test").Page) {
     .nth(0)
     .click({ timeout: 20_000 });
   await trainerAddFuerzaBlock(page);
-  card = page.locator("[data-constructor-row-id]").nth(1);
+  await expect(page.locator("[data-constructor-row-id]")).toHaveCount(2, {
+    timeout: 20_000,
+  });
+  card = page.locator("[data-constructor-row-id]").last();
   await card.getByRole("button", { name: /Buscar ejercicio/i }).click();
   await page
     .locator("div.space-y-0\\.5 button")
@@ -163,6 +167,7 @@ test("QA-LOG-01 S1 vaciar peso se conserva vacío", async ({ page }) => {
   await peso.press("Backspace");
   await peso.fill("");
   await peso.blur();
+  await typeReps(page, 0, "10");
   await expect(peso).toHaveValue("");
   await page.getByRole("button", { name: /^Guardar$/i }).click();
   await cap.waitForAtLeastPosts(1, 30_000);
@@ -215,7 +220,13 @@ test("QA-LOG-04 S4 superset POST incluye todos los slots", async ({ page }) => {
 test("QA-LOG-05 S5 Editar datos upsert sin duplicar", async ({ page }) => {
   test.setTimeout(240_000);
   const net = attachNetTap(page);
-  const sessionId = await createTwoExerciseSession(page);
+  await loginAsTrainerFresh(page);
+  const { sessionId } = await trainerCreateSingleExerciseSession(
+    page,
+    H7_QA_CLIENT_ID,
+    "QA-LOG-S5"
+  );
+  await page.context().clearCookies();
   await loginAsAthlete(page);
   await openRunForSession(page, sessionId);
   await page.getByRole("button", { name: /Empezar descanso/i }).click({ timeout: 45_000 });
