@@ -12,6 +12,8 @@ import {
   loginTrainerApi,
 } from "../fixtures/planning-qa-api";
 
+test.use({ viewport: { width: 1440, height: 900 } });
+
 test.describe("RM-22 — repetir semana", () => {
   test("API: weeks_skipped past_target_date en semanas terminadas", async () => {
     const session = await loginTrainerApi();
@@ -47,9 +49,7 @@ test.describe("RM-22 — repetir semana", () => {
     expect(JSON.stringify(body)).toMatch(/force=true/i);
   });
 
-  test("UI: 409 sin force en semana con sesiones (solo destinos no terminados)", async ({
-    page,
-  }) => {
+  test("UI: 409 sin force — conflicto en modal Repetir", async ({ page }) => {
     page.on("dialog", (d) => d.accept());
     let repeatPosts = 0;
     page.on("request", (req) => {
@@ -70,21 +70,30 @@ test.describe("RM-22 — repetir semana", () => {
     const editor = page.getByTestId("weekly-structure-editor");
     await expect(editor).toBeVisible({ timeout: 30_000 });
 
-    const repeatBtn = editor.getByRole("button", { name: /^Repetir$/i }).first();
-    await repeatBtn.scrollIntoViewIfNeeded();
-    await expect(repeatBtn).toBeVisible({ timeout: 15_000 });
-    await repeatBtn.click();
+    const repeatFooterBtn = editor
+      .getByTestId("dashboard-fixed-footer")
+      .getByRole("button", { name: "Repetir" });
+    await repeatFooterBtn.scrollIntoViewIfNeeded();
+    await expect(repeatFooterBtn).toBeEnabled({ timeout: 15_000 });
+    await repeatFooterBtn.click();
 
-    await page.getByText(/Semana 4/).first().click();
-    await page.getByRole("button", { name: /Repetir semana/i }).click();
+    const repeatDialog = page.getByRole("dialog", { name: /^Repetir/i });
+    await expect(repeatDialog).toBeVisible({ timeout: 10_000 });
 
+    await repeatDialog
+      .locator("label")
+      .filter({ hasText: /^Semana 4\b/ })
+      .click();
+    await repeatDialog.getByRole("button", { name: "Repetir semana" }).click();
+
+    await expect(repeatDialog.getByText("Conflicto detectado")).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(
-      page
-        .getByText(/Conflicto detectado|Sesiones ya existen|existen en las semanas/i)
-        .or(page.getByText(/Sobrescribir existentes/i)),
-    ).toBeVisible({ timeout: 20_000 });
+      repeatDialog.getByText(/Sobrescribir semanas existentes/i),
+    ).toBeVisible();
 
-    expect(repeatPosts).toBeGreaterThanOrEqual(1);
+    expect(repeatPosts).toBe(1);
 
     await page.screenshot({
       path: "test-results/qa-rm22-repeat-409-ui.png",

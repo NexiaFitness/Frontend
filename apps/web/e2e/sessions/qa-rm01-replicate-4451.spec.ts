@@ -7,6 +7,8 @@ import { loginAsTrainer } from "../fixtures/auth";
 
 const SESSION_ID = 4451;
 
+test.use({ viewport: { width: 1280, height: 800 } });
+
 test.describe("RM-01 — replicate 4451", () => {
   test("API: protected_session no crea copia ni con force", async () => {
     const { loginTrainerApi } = await import("../fixtures/planning-qa-api");
@@ -38,7 +40,7 @@ test.describe("RM-01 — replicate 4451", () => {
     ).toBe(true);
   });
 
-  test("UI: copy Con registro del atleta al replicar", async ({ page }) => {
+  test("UI: copy protegida y fechas omitidas (D10)", async ({ page }) => {
     page.on("dialog", (d) => d.accept());
     let replicatePosts = 0;
     page.on("request", (req) => {
@@ -56,34 +58,62 @@ test.describe("RM-01 — replicate 4451", () => {
       { waitUntil: "load" },
     );
 
-    const replicateBtn = page.getByRole("button", {
-      name: /replicar|copiar a/i,
-    }).first();
-    await expect(replicateBtn).toBeVisible({ timeout: 20_000 });
-    await replicateBtn.click();
+    const footerReplicar = page
+      .getByTestId("dashboard-fixed-footer")
+      .getByRole("button", { name: "Replicar" });
+    await footerReplicar.scrollIntoViewIfNeeded();
+    await footerReplicar.click();
 
-    const weekToggle = page.getByText(/Semana \d+/).first();
-    if (await weekToggle.isVisible().catch(() => false)) {
-      await weekToggle.click();
+    const replicateDialog = page.getByRole("dialog", {
+      name: /Replicar/i,
+    });
+    await expect(replicateDialog).toBeVisible({ timeout: 15_000 });
+
+    await replicateDialog.getByRole("button", { name: "Replicar" }).click();
+
+    const conflictModal = page.getByRole("dialog", {
+      name: "Semanas que ya tienen sesión",
+    });
+    const outcomeToast = page.getByRole("alert");
+
+    await expect
+      .poll(async () => {
+        if (await conflictModal.isVisible().catch(() => false)) return "conflict";
+        const toastVisible = await outcomeToast
+          .filter({ hasText: /replicad|modificado|sesión/i })
+          .first()
+          .isVisible()
+          .catch(() => false);
+        return toastVisible ? "toast" : "pending";
+      }, { timeout: 25_000 })
+      .not.toBe("pending");
+
+    if (await conflictModal.isVisible()) {
+      await expect(
+        conflictModal.getByText(/Con registro del atleta — no se modifican/i),
+      ).toBeVisible();
+      await expect(
+        conflictModal.getByText(/Con registro del atleta: no se modifica/i).first(),
+      ).toBeVisible();
+      if (
+        (await conflictModal.getByText(/Fechas pasadas — no se replican/i).count()) >
+        0
+      ) {
+        await expect(
+          conflictModal.getByText(/Fecha anterior a hoy: no se replica/i).first(),
+        ).toBeVisible();
+      }
+    } else {
+      const toast = outcomeToast.filter({ hasText: /registro del atleta/i });
+      await expect(toast).toBeVisible();
+      await expect(toast).toContainText(/registro del atleta/i);
+      // D-REP-6: el modal solo ofrece semanas con fecha ≥ hoy; 4451 → solo protected en toast.
     }
 
-    const confirm = page.getByRole("button", {
-      name: /replicar|confirmar|sustituir/i,
-    }).first();
-    if (await confirm.isEnabled().catch(() => false)) {
-      await confirm.click();
-    }
-
-    await expect(
-      page.getByText(/Con registro del atleta: no se modifica/i).or(
-        page.getByText(/con registro del atleta/i),
-      ),
-    ).toBeVisible({ timeout: 25_000 });
-
-    expect(replicatePosts).toBeLessThanOrEqual(1);
+    expect(replicatePosts).toBe(1);
 
     await page.screenshot({
-      path: "test-results/qa-rm01-4451-replicate.png",
+      path: "test-results/qa-rm01-4451-replicate-ui.png",
       fullPage: true,
     });
   });
