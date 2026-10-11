@@ -8,11 +8,31 @@
 import { describe, expect, it } from "vitest";
 
 import type { LocalSetExecution } from "../../offline/athleteSessionTypes";
-import { resolveLocalRoundRpeFromExecutions } from "./localRunReferenceUtils";
+import {
+    resolveLocalRoundRpeFromExecutions,
+    stepKeyBelongsToGroup,
+} from "./localRunReferenceUtils";
+
+/** step_key real (buildAthleteRunSteps.makeStepKey): `${groupId}-r${round}-${slot}-${set}-${index}`. */
+const slotStepKey = (groupId: string, round: number, slot = "A1") =>
+    `${groupId}-r${round}-${slot}-R${round}-1`;
+
+describe("stepKeyBelongsToGroup", () => {
+    it("reconoce el step_key real, que empieza por el groupId", () => {
+        expect(stepKeyBelongsToGroup(slotStepKey("block-579-superset-1", 1), "block-579-superset-1")).toBe(true);
+        expect(stepKeyBelongsToGroup("block-579-superset-1-round-1", "block-579-superset-1")).toBe(true);
+    });
+
+    it("no confunde grupo 1 con grupo 10 ni con otro bloque", () => {
+        expect(stepKeyBelongsToGroup(slotStepKey("block-579-superset-10", 1), "block-579-superset-1")).toBe(false);
+        expect(stepKeyBelongsToGroup(slotStepKey("block-5791-superset-1", 1), "block-579-superset-1")).toBe(false);
+        expect(stepKeyBelongsToGroup(slotStepKey("block-579-superset-1", 1), "")).toBe(false);
+    });
+});
 
 describe("resolveLocalRoundRpeFromExecutions", () => {
     const base = (row: Partial<LocalSetExecution>): LocalSetExecution => ({
-        step_key: row.step_key ?? "slot-a-r1",
+        step_key: row.step_key ?? slotStepKey("block-5-superset-1", 1),
         exercise_id: row.exercise_id ?? 1,
         weight_kg: row.weight_kg ?? 30,
         reps: row.reps ?? 10,
@@ -24,15 +44,15 @@ describe("resolveLocalRoundRpeFromExecutions", () => {
         performed_at: row.performed_at ?? 1,
     });
 
-    it("no confunde g1 con g10 en step_key", () => {
+    it("no confunde el grupo 1 con el grupo 10 (step_key real)", () => {
         const executions: LocalSetExecution[] = [
             base({
-                step_key: "superset-g10-round-1-slot-a",
+                step_key: slotStepKey("block-5-superset-10", 1),
                 round_index: 1,
                 rpe: 10,
             }),
             base({
-                step_key: "superset-g1-round-1-slot-a",
+                step_key: slotStepKey("block-5-superset-1", 1),
                 round_index: 1,
                 rpe: 7,
             }),
@@ -42,7 +62,7 @@ describe("resolveLocalRoundRpeFromExecutions", () => {
                 executions,
                 2,
                 "superset",
-                "g1",
+                "block-5-superset-1",
             ),
         ).toBe(7);
         expect(
@@ -50,7 +70,7 @@ describe("resolveLocalRoundRpeFromExecutions", () => {
                 executions,
                 2,
                 "superset",
-                "g10",
+                "block-5-superset-10",
             ),
         ).toBe(10);
     });
@@ -58,12 +78,12 @@ describe("resolveLocalRoundRpeFromExecutions", () => {
     it("R2 hereda RPE de R1 del mismo groupId, no de otro superset", () => {
         const executions: LocalSetExecution[] = [
             base({
-                step_key: "superset-g1-round-1-slot-a",
+                step_key: slotStepKey("block-5-superset-1", 1),
                 round_index: 1,
                 rpe: 8,
             }),
             base({
-                step_key: "superset-g2-round-1-slot-a",
+                step_key: slotStepKey("block-5-superset-2", 1),
                 round_index: 1,
                 rpe: 9,
             }),
@@ -73,7 +93,7 @@ describe("resolveLocalRoundRpeFromExecutions", () => {
                 executions,
                 2,
                 "superset",
-                "g1"
+                "block-5-superset-1"
             )
         ).toBe(8);
         expect(
@@ -81,7 +101,7 @@ describe("resolveLocalRoundRpeFromExecutions", () => {
                 executions,
                 2,
                 "superset",
-                "g2"
+                "block-5-superset-2"
             )
         ).toBe(9);
     });

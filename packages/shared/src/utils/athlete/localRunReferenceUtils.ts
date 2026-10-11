@@ -63,13 +63,15 @@ export function resolveLocalRunReference(input: {
     return null;
 }
 
-/** step_key del logger usa segmentos `-{groupId}-` (p. ej. superset-g1-round-1). */
+/** True si el step_key pertenece al grupo (groupId como prefijo, p. ej. block-5-superset-1-r1-A1-R1-1). */
 export function stepKeyBelongsToGroup(
     stepKey: string,
     groupId: string,
 ): boolean {
     if (!groupId) return false;
-    return stepKey.includes(`-${groupId}-`);
+    // step_key real = `${groupId}-r${round}-…` / `${groupId}-round-${n}` (makeStepKey):
+    // el groupId es prefijo; el guion final evita confundir superset-1 con superset-10.
+    return stepKey === groupId || stepKey.startsWith(`${groupId}-`);
 }
 
 /** RPE de ronda anterior desde cola offline (misma sesión, R2+, mismo grupo). */

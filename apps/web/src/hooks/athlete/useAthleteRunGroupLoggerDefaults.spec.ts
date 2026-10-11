@@ -13,12 +13,12 @@ import { useAthleteRunGroupLoggerDefaults } from "./useAthleteRunGroupLoggerDefa
 
 function round2Step(): AthleteRunStep {
   return {
-    stepKey: "superset-g1-round-2",
+    stepKey: "block-7-superset-1-round-2",
     kind: "group_round",
     groupKind: "superset",
     blockId: 1,
     blockName: "Fuerza",
-    groupId: "g1",
+    groupId: "block-7-superset-1",
     badgeLabel: "SUPERSET A",
     roundIndex: 2,
     roundTotal: 2,
@@ -43,7 +43,7 @@ function round2Step(): AthleteRunStep {
     plannedDurationSeconds: null,
     slots: [
       {
-        stepKey: "slot-a-r2",
+        stepKey: "block-7-superset-1-r2-A1-R2-1",
         slotLabel: "A1",
         exerciseId: 101,
         exerciseName: "A",
@@ -57,7 +57,7 @@ function round2Step(): AthleteRunStep {
         loggedSets: 0,
       },
       {
-        stepKey: "slot-b-r2",
+        stepKey: "block-7-superset-1-r2-A2-R2-1",
         slotLabel: "A2",
         exerciseId: 102,
         exerciseName: "B",
@@ -76,7 +76,7 @@ function round2Step(): AthleteRunStep {
 
 const r1Executions: LocalSetExecution[] = [
   {
-    step_key: "slot-a-r1",
+    step_key: "block-7-superset-1-r1-A1-R1-1",
     exercise_id: 101,
     slot_label: "A1",
     round_index: 1,
@@ -87,7 +87,7 @@ const r1Executions: LocalSetExecution[] = [
     performed_at: Date.now(),
   },
   {
-    step_key: "slot-b-r1",
+    step_key: "block-7-superset-1-r1-A2-R1-1",
     exercise_id: 102,
     slot_label: "A2",
     round_index: 1,
@@ -102,11 +102,11 @@ const r1Executions: LocalSetExecution[] = [
 describe("useAthleteRunGroupLoggerDefaults", () => {
   it("R2: local R1 hydrates untouched slots only (02_DECISIONES L.20)", async () => {
     let slotLogs: Record<string, SlotLogValues> = {
-      "slot-a-r2": { weight: null, reps: 10 },
-      "slot-b-r2": { weight: 52, reps: 10 },
+      "block-7-superset-1-r2-A1-R2-1": { weight: null, reps: 10 },
+      "block-7-superset-1-r2-A2-R2-1": { weight: 52, reps: 10 },
     };
     const touched = new Set([
-      buildRunLoggerFieldTouchKey("slot", "slot-b-r2", "weight"),
+      buildRunLoggerFieldTouchKey("slot", "block-7-superset-1-r2-A2-R2-1", "weight"),
     ]);
     const setSlotLogs = vi.fn((updater: typeof slotLogs | ((p: typeof slotLogs) => typeof slotLogs)) => {
       slotLogs = typeof updater === "function" ? updater(slotLogs) : updater;
@@ -129,14 +129,14 @@ describe("useAthleteRunGroupLoggerDefaults", () => {
     await waitFor(() => {
       expect(setSlotLogs).toHaveBeenCalled();
     });
-    expect(slotLogs["slot-a-r2"]?.weight).toBe(33);
-    expect(slotLogs["slot-b-r2"]?.weight).toBe(52);
+    expect(slotLogs["block-7-superset-1-r2-A1-R2-1"]?.weight).toBe(33);
+    expect(slotLogs["block-7-superset-1-r2-A2-R2-1"]?.weight).toBe(52);
   });
 
   it("R2: no invented weight when R1 had no execution for slot", async () => {
     let slotLogs: Record<string, SlotLogValues> = {
-      "slot-a-r2": { weight: null, reps: 10 },
-      "slot-b-r2": { weight: null, reps: 10 },
+      "block-7-superset-1-r2-A1-R2-1": { weight: null, reps: 10 },
+      "block-7-superset-1-r2-A2-R2-1": { weight: null, reps: 10 },
     };
     const setSlotLogs = vi.fn((updater: typeof slotLogs | ((p: typeof slotLogs) => typeof slotLogs)) => {
       slotLogs = typeof updater === "function" ? updater(slotLogs) : updater;
@@ -159,17 +159,17 @@ describe("useAthleteRunGroupLoggerDefaults", () => {
     await act(async () => {
       await new Promise((r) => setTimeout(r, 50));
     });
-    expect(slotLogs["slot-a-r2"]?.weight).toBeNull();
-    expect(slotLogs["slot-b-r2"]?.weight).toBeNull();
+    expect(slotLogs["block-7-superset-1-r2-A1-R2-1"]?.weight).toBeNull();
+    expect(slotLogs["block-7-superset-1-r2-A2-R2-1"]?.weight).toBeNull();
   });
 
   it("touched weight never overwritten when API reference arrives", async () => {
     let slotLogs: Record<string, SlotLogValues> = {
-      "slot-a-r2": { weight: 33, reps: 10 },
-      "slot-b-r2": { weight: null, reps: 10 },
+      "block-7-superset-1-r2-A1-R2-1": { weight: 33, reps: 10 },
+      "block-7-superset-1-r2-A2-R2-1": { weight: null, reps: 10 },
     };
     const touched = new Set([
-      buildRunLoggerFieldTouchKey("slot", "slot-a-r2", "weight"),
+      buildRunLoggerFieldTouchKey("slot", "block-7-superset-1-r2-A1-R2-1", "weight"),
     ]);
     const setSlotLogs = vi.fn((updater: typeof slotLogs | ((p: typeof slotLogs) => typeof slotLogs)) => {
       slotLogs = typeof updater === "function" ? updater(slotLogs) : updater;
@@ -177,7 +177,7 @@ describe("useAthleteRunGroupLoggerDefaults", () => {
 
     const lateRef: AthleteRunReference = {
       exercise_id: 101,
-      step_key: "slot-a-r2",
+      step_key: "block-7-superset-1-r2-A1-R2-1",
       reference: {
         weight_kg: 99,
         reps: 10,
@@ -213,19 +213,19 @@ describe("useAthleteRunGroupLoggerDefaults", () => {
     );
 
     await waitFor(() => expect(setSlotLogs).toHaveBeenCalled());
-    const weightAfterFirst = slotLogs["slot-a-r2"]?.weight;
+    const weightAfterFirst = slotLogs["block-7-superset-1-r2-A1-R2-1"]?.weight;
 
     await act(async () => {
       rerender({
         refs: {
-          "slot-a-r2": { reference: lateRef.reference },
-          "slot-b-r2": { reference: lateRef.reference },
+          "block-7-superset-1-r2-A1-R2-1": { reference: lateRef.reference },
+          "block-7-superset-1-r2-A2-R2-1": { reference: lateRef.reference },
         },
       });
     });
 
-    expect(slotLogs["slot-a-r2"]?.weight).toBe(weightAfterFirst);
-    expect(slotLogs["slot-a-r2"]?.weight).toBe(33);
+    expect(slotLogs["block-7-superset-1-r2-A1-R2-1"]?.weight).toBe(weightAfterFirst);
+    expect(slotLogs["block-7-superset-1-r2-A1-R2-1"]?.weight).toBe(33);
   });
 
   it("R2: round RPE from offline R1 without slot weight reference (R-LOG-05)", async () => {
