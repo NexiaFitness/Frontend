@@ -58,6 +58,7 @@ export function writeH7SessionMeta(meta: H7SessionMeta, kind: H7SessionKind): vo
 export type ExecutionPost = {
   weight_kg?: number | null;
   reps?: number | null;
+  input_mode?: string;
   step_key?: string;
   exercise_id?: number;
 };

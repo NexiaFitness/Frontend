@@ -1,0 +1,167 @@
+/**
+ * weight-integrity-qa-api.ts — Sesiones desechables QA-F1 (peso no prescrito) vía API.
+ *
+ * Contexto: reproducción F1/F3/F4/F5 (peso implícito 0 kg, 0 tecleado pisado,
+ * huecos descartados, visible ≠ guardado). Crea una sesión de hoy en el cliente 346
+ * con bloques sin peso prescrito: serie simple (2 series), superserie (2 ejercicios),
+ * AMRAP, EMOM y FOR TIME. Opcionalmente la serie simple lleva peso prescrito (F3).
+ * Credenciales: NEXIA_DEMO_PASSWORD desde entorno.
+ *
+ * Notas de mantenimiento: RM-13 — todas las sesiones llevan el prefijo «QA-F1-»
+ * y el id se devuelve para listarlo en el informe; no borra nada.
+ *
+ * @author Frontend Team
+ * @since v9.4.0
+ */
+
+import { loginTrainerApi, QA_PLANNING_CLIENT_ID } from "./planning-qa-api";
+
+const API_BASE =
+  process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
+
+export type WeightIntegritySession = { sessionId: number; name: string };
+
+type BlockExercise = {
+  exercise_id: number;
+  order_in_block: number;
+  set_type: string;
+  superset_group_id?: number;
+  planned_sets?: number;
+  planned_reps?: string;
+  planned_weight?: number;
+};
+
+type BlockPayload = {
+  block_type_id: number;
+  order_in_session: number;
+  set_type: string;
+  rounds?: number;
+  time_cap?: number;
+  interval_seconds?: number;
+  exercises: BlockExercise[];
+};
+
+async function api<T>(token: string, path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`API ${init?.method ?? "GET"} ${path} -> ${res.status}: ${await res.text()}`);
+  }
+  return (await res.json()) as T;
+}
+
+function todayMadridYmd(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+/** Two loaded exercises and one block type from the live catalog. */
+async function resolveCatalogIds(token: string) {
+  const { exercises } = await api<{ exercises: { id: number }[] }>(
+    token,
+    "/exercises/?limit=2",
+  );
+  const blockTypes = await api<{ id: number }[]>(
+    token,
+    "/session-programming/training-block-types",
+  );
+  if (exercises.length < 2 || blockTypes.length < 1) {
+    throw new Error("Catálogo insuficiente para sesión QA-F1");
+  }
+  return {
+    exA: exercises[0].id,
+    exB: exercises[1].id,
+    blockTypeId: blockTypes[0].id,
+  };
+}
+
+/** One disposable session with every modality, no prescribed weight anywhere. */
+export async function createWeightIntegritySession(
+  label: string,
+  options: { singlePrescribedWeight?: number } = {},
+): Promise<WeightIntegritySession> {
+  const trainer = await loginTrainerApi();
+  const { exA, exB, blockTypeId } = await resolveCatalogIds(trainer.accessToken);
+  const name = `QA-F1-${label}-${Date.now()}`;
+  const session = await api<{ id: number }>(trainer.accessToken, "/training-sessions/", {
+    method: "POST",
+    body: JSON.stringify({
+      client_id: QA_PLANNING_CLIENT_ID,
+      trainer_id: trainer.trainerId,
+      session_date: todayMadridYmd(),
+      session_name: name,
+      session_type: "strength",
+    }),
+  });
+  const blocks: BlockPayload[] = [
+    {
+      block_type_id: blockTypeId,
+      order_in_session: 1,
+      set_type: "single_set",
+      exercises: [
+        {
+          exercise_id: exA,
+          order_in_block: 1,
+          set_type: "single_set",
+          planned_sets: 2,
+          planned_reps: "8",
+          ...(options.singlePrescribedWeight != null
+            ? { planned_weight: options.singlePrescribedWeight }
+            : {}),
+        },
+      ],
+    },
+    {
+      block_type_id: blockTypeId,
+      order_in_session: 2,
+      set_type: "superset",
+      exercises: [
+        { exercise_id: exA, order_in_block: 1, set_type: "superset", superset_group_id: 1, planned_sets: 1, planned_reps: "10" },
+        { exercise_id: exB, order_in_block: 2, set_type: "superset", superset_group_id: 1, planned_sets: 1, planned_reps: "12" },
+      ],
+    },
+    {
+      block_type_id: blockTypeId,
+      order_in_session: 3,
+      set_type: "amrap",
+      time_cap: 600,
+      exercises: [
+        { exercise_id: exA, order_in_block: 1, set_type: "amrap", planned_reps: "10" },
+      ],
+    },
+    {
+      block_type_id: blockTypeId,
+      order_in_session: 4,
+      set_type: "emom",
+      interval_seconds: 60,
+      rounds: 2,
+      exercises: [
+        { exercise_id: exA, order_in_block: 1, set_type: "emom", superset_group_id: 1, planned_reps: "5" },
+      ],
+    },
+    {
+      block_type_id: blockTypeId,
+      order_in_session: 5,
+      set_type: "for_time",
+      rounds: 1,
+      exercises: [
+        { exercise_id: exA, order_in_block: 1, set_type: "for_time", planned_reps: "15" },
+      ],
+    },
+  ];
+  await api(trainer.accessToken, `/training-sessions/${session.id}/full`, {
+    method: "PUT",
+    body: JSON.stringify({ session: {}, blocks }),
+  });
+  return { sessionId: session.id, name };
+}
