@@ -41,6 +41,7 @@ import { DiscardUnsavedChangesModal } from "@/components/ui/modals";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 
+import { BlockWeeksRepeatWeekSection } from "./BlockWeeksRepeatWeekSection";
 import { PeriodizationWeeklyStructureEditor } from "./PeriodizationWeeklyStructureEditor";
 import {
     cloneWeeklyStructureDraft,
@@ -428,6 +429,8 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
                     />
                 )}
             </div>
+
+            <BlockWeeksRepeatWeekSection planId={planId} block={block} />
 
             <DashboardFixedFooter>
                 <div className={AUTHORING_FOOTER_INNER_CLASS}>

@@ -143,6 +143,59 @@ export async function createDisposableDRep6Block(
   };
 }
 
+const QA_PLAN_531 = 531;
+const QA_BLOCK_65 = 65;
+const QA_BLOCK_84 = 84;
+
+export async function apiRepeatWeek(
+  session: TrainerSession,
+  planId: number,
+  blockId: number,
+  sourceOrdinal: number,
+  targetOrdinals: number[],
+  force: boolean,
+): Promise<{ status: number; body: unknown }> {
+  const res = await fetch(
+    `${API_BASE}/training-plans/${planId}/period-blocks/${blockId}/weekly-structure/weeks/${sourceOrdinal}/repeat`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        target_week_ordinals: targetOrdinals,
+        force,
+      }),
+    },
+  );
+  const text = await res.text();
+  let body: unknown = text;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    /* plain */
+  }
+  return { status: res.status, body };
+}
+
+export async function apiGetWeeklyStructure(
+  session: TrainerSession,
+  planId: number,
+  blockId: number,
+): Promise<{ weeks: Array<{ week_ordinal: number }> }> {
+  const res = await fetch(
+    `${API_BASE}/training-plans/${planId}/period-blocks/${blockId}/weekly-structure`,
+    { headers: { Authorization: `Bearer ${session.accessToken}` } },
+  );
+  if (!res.ok) {
+    throw new Error(`weekly-structure GET ${res.status}`);
+  }
+  return (await res.json()) as { weeks: Array<{ week_ordinal: number }> };
+}
+
+export { QA_PLAN_531, QA_BLOCK_65, QA_BLOCK_84 };
+
 export async function countClientSessionsBeforeDate(
   session: TrainerSession,
   clientId: number,
