@@ -5,22 +5,13 @@
 
 import { test, expect } from "@playwright/test";
 import { loginAsTrainer } from "../fixtures/auth";
-import { navigateToPlans } from "../fixtures/navigation";
-import { ensureOnPlanDetail } from "../fixtures/plans";
+import { ensureClientPlanningTab, QA_PLANNING_CLIENT_ID } from "../fixtures/plans";
 
 test.describe("D-REP-6 — planificación", () => {
     test.beforeEach(async ({ page }) => {
         page.on("dialog", (dialog) => dialog.accept());
         await loginAsTrainer(page);
-        await navigateToPlans(page);
-        await ensureOnPlanDetail(page);
-        const clientNav = page.getByRole("navigation", {
-            name: /tabs del cliente/i,
-        });
-        await clientNav.getByRole("button", { name: /planificación/i }).click();
-        await expect(page.getByTestId("client-planning-tab")).toBeVisible({
-            timeout: 15_000,
-        });
+        await ensureClientPlanningTab(page, QA_PLANNING_CLIENT_ID, 531);
     });
 
     test("apply-template UI: BLOCKED — sin superficie web que invoque apply-template", async () => {
