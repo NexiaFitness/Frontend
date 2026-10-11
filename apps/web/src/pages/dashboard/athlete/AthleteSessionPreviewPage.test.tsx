@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { useAthleteSessionLog } from "@/hooks/athlete/useAthleteSessionLog";
 import { AthleteSessionPreviewPage } from "./AthleteSessionPreviewPage";
 
 const navigate = vi.fn();
@@ -121,6 +122,8 @@ vi.mock("@/hooks/useMediaQuery", () => ({
     useIsAthleteDesktopLayout: () => false,
 }));
 
+// Mismas claves que el hook real (satisfies): si el hook gana un campo, el test no
+// compila en lugar de quedarse en estado de carga (pasó con registrationKnown, 7d633d5).
 vi.mock("@/hooks/athlete/useAthleteSessionLog", () => ({
     useAthleteSessionLog: () => ({
         logMode: sessionLogMock.logMode,
@@ -128,7 +131,13 @@ vi.mock("@/hooks/athlete/useAthleteSessionLog", () => ({
         exitLogMode: vi.fn(),
         logBlocks: sessionLogMock.logBlocks,
         pendingBlockCount: sessionLogMock.pendingBlockCount,
+        progressPendingStepCount: 0,
         isProgressLoading: false,
+        isProgressError: false,
+        // Progreso ya cargado: la página deja de mostrar el esqueleto de carga.
+        registrationKnown: true,
+        hasProgressSnapshot: true,
+        blockSheetState: null,
         isOnline: true,
         syncPendingCount: 0,
         activeBlock: null,
@@ -144,7 +153,7 @@ vi.mock("@/hooks/athlete/useAthleteSessionLog", () => ({
         forceCompleteSession: vi.fn().mockResolvedValue(true),
         completeSessionIfReady: vi.fn(),
         refetchProgress: vi.fn(),
-    }),
+    }) satisfies Record<keyof ReturnType<typeof useAthleteSessionLog>, unknown>,
 }));
 
 function renderPage() {
