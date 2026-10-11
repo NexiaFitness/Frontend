@@ -185,9 +185,9 @@ export function buildAthleteRunExecutionPayload(
         round_index: exercise.roundIndex ?? undefined,
         group_kind: exercise.groupKind ?? "single_set",
         input_mode: resolved.input_mode,
-        weight_kg: resolved.weight_kg ?? undefined,
-        reps: resolved.reps ?? undefined,
-        duration_seconds: resolved.duration_seconds ?? undefined,
+        weight_kg: resolved.weight_kg ?? null,
+        reps: resolved.reps ?? null,
+        duration_seconds: resolved.duration_seconds ?? null,
         rpe: values.rpe ?? undefined,
         source: "run_live",
     };

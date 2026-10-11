@@ -943,10 +943,10 @@ export function useAthleteSessionRun({
             });
             return slotsValid;
         }
-        const inputMode = current?.inputMode ?? "weight_reps";
-        if (inputMode === "duration") return reps > 0;
-        if (inputMode === "reps_only") return reps > 0;
-        return reps > 0 && weight != null && weight >= 0;
+        return isRunLoggerSlotConfirmValid(
+            { weight, reps, durationSeconds: reps },
+            current?.inputMode ?? "weight_reps"
+        );
     }, [
         amrapPartialTotal,
         amrapRounds,

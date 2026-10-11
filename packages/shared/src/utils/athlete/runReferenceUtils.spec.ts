@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveRunLoggerDefaults } from "./runReferenceUtils";
+import {
+    buildAthleteRunExecutionPayload,
+    resolveRunLoggerDefaults,
+} from "./runReferenceUtils";
 
 describe("resolveRunLoggerDefaults (P-SIMPLE autofill)", () => {
     const base = {
@@ -93,5 +96,30 @@ describe("resolveRunLoggerDefaults (P-SIMPLE autofill)", () => {
         });
         expect(result.weight).toBe(52.5);
         expect(result.rpe).toBe(7);
+    });
+});
+
+describe("buildAthleteRunExecutionPayload (S1 null weight)", () => {
+    it("serializa weight_kg null cuando no hay carga", () => {
+        const payload = buildAthleteRunExecutionPayload(
+            99,
+            {
+                stepKey: "k1",
+                exerciseId: 1,
+                blockExerciseId: 2,
+                setIndex: 1,
+                setLabel: "S1",
+                slotLabel: null,
+                roundIndex: null,
+                groupKind: "single_set",
+                inputMode: "weight_reps",
+                defaultReps: 10,
+                defaultRpe: null,
+                defaultWeight: 0,
+            },
+            { weight: null, reps: 10, rpe: null }
+        );
+        expect(payload.weight_kg).toBeNull();
+        expect(JSON.parse(JSON.stringify(payload)).weight_kg).toBeNull();
     });
 });

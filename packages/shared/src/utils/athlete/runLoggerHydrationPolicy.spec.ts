@@ -104,10 +104,10 @@ describe("runLoggerHydrationPolicy (D-LOG-TOUCH-01)", () => {
         ).toBe(7);
     });
 
-    it("R-LOG-07: confirm invalid when weight null", () => {
+    it("R-LOG-07: confirm ok con peso null y reps (fallback reps_only)", () => {
         expect(
             isRunLoggerSlotConfirmValid({ weight: null, reps: 10 })
-        ).toBe(false);
+        ).toBe(true);
         expect(
             isRunLoggerSlotConfirmValid({ weight: 40, reps: 10 })
         ).toBe(true);
