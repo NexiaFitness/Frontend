@@ -8,6 +8,7 @@
  * @since v8.5.0
  */
 
+import type { AthleteRunReferencePoint } from "../../types/athleteRunReference";
 import type { RunLoggerDefaults } from "./runReferenceUtils";
 import { prevWeightForApplicableMerge, readSlotWeightForMerge } from "./runLoggerFieldState";
 
@@ -50,6 +51,18 @@ export function runLoggerReferenceTokenForSlot(
     const weight = referenceWeightKg ?? localWeightKg;
     if (weight == null || weight <= 0) return "pending";
     return String(weight);
+}
+
+/** Token slot (peso + RPE): hidratación RPE no depende de peso resuelto. */
+export function runLoggerSlotHydrationToken(
+    apiRef: AthleteRunReferencePoint | null | undefined,
+    localRef: AthleteRunReferencePoint | null | undefined
+): string {
+    const weight = apiRef?.weight_kg ?? localRef?.weight_kg;
+    const rpe = apiRef?.rpe ?? localRef?.rpe;
+    const wPart = weight != null && weight > 0 ? String(weight) : "pw";
+    const rPart = rpe != null ? String(rpe) : "pr";
+    return `${wPart}:${rPart}`;
 }
 
 /** Peso inicial al abrir paso: prescripción o vacío (nunca 0 implícito). */

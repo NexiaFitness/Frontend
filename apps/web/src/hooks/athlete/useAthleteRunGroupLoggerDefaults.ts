@@ -10,11 +10,14 @@
 
 import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import type { LocalSetExecution } from "@nexia/shared/offline/athleteSessionTypes";
-import { resolveLocalRunReference } from "@nexia/shared/utils/athlete/localRunReferenceUtils";
+import {
+    resolveLocalRoundRpeFromExecutions,
+    resolveLocalRunReference,
+} from "@nexia/shared/utils/athlete/localRunReferenceUtils";
 import {
     mergeRoundRpeWithDefaults,
     mergeSlotLogWithDefaults,
-    runLoggerReferenceTokenForSlot,
+    runLoggerSlotHydrationToken,
 } from "@nexia/shared/utils/athlete/runLoggerHydrationPolicy";
 import { resolveRunLoggerDefaults } from "@nexia/shared/utils/athlete/runReferenceUtils";
 import type { AthleteRunStep } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
@@ -47,11 +50,11 @@ export function useAthleteRunGroupLoggerDefaults({
     setRoundRpeState,
 }: UseAthleteRunGroupLoggerDefaultsOptions): void {
     const appliedRefTokenBySlotRef = useRef<Map<string, string>>(new Map());
-    const runStepKeyRef = useRef<string | null>(null);
+    const appliedRoundRpeTokenRef = useRef<string>("");
 
     useEffect(() => {
         appliedRefTokenBySlotRef.current = new Map();
-        runStepKeyRef.current = currentRunStep?.stepKey ?? null;
+        appliedRoundRpeTokenRef.current = "";
     }, [currentRunStep?.stepKey]);
 
     useEffect(() => {
@@ -71,18 +74,14 @@ export function useAthleteRunGroupLoggerDefaults({
                 groupKind: currentRunStep.groupKind,
                 localExecutions,
             });
-            const token = runLoggerReferenceTokenForSlot(
-                apiRef?.weight_kg,
-                localRef?.weight_kg
-            );
+            const token = runLoggerSlotHydrationToken(apiRef, localRef);
             const prevToken = appliedRefTokenBySlotRef.current.get(slot.stepKey);
             if (prevToken === token) continue;
             appliedRefTokenBySlotRef.current.set(slot.stepKey, token);
             slotsToHydrate.push(slot);
         }
 
-        if (slotsToHydrate.length === 0) return;
-
+        if (slotsToHydrate.length > 0) {
         setSlotLogs((prev) => {
             const next = { ...prev };
             for (const slot of slotsToHydrate) {
@@ -115,25 +114,33 @@ export function useAthleteRunGroupLoggerDefaults({
             }
             return next;
         });
+        }
 
         const prescribedRpe =
             currentRunStep.slots.find((s) => s.defaultRpe != null)?.defaultRpe ?? null;
-        const refRpe = currentRunStep.slots
+        const apiRpe = currentRunStep.slots
             .map((s) => slotReferences[s.stepKey]?.reference?.rpe)
             .find((v) => v != null);
-        const defaultsRpe =
-            currentRunStep.roundIndex > 1 && refRpe != null
-                ? refRpe
-                : prescribedRpe;
-
-        const mergedRpe = mergeRoundRpeWithDefaults(
-            roundRpe,
-            defaultsRpe,
-            currentRunStep.stepKey,
-            touched
+        const localRpe = resolveLocalRoundRpeFromExecutions(
+            localExecutions,
+            currentRunStep.roundIndex,
+            currentRunStep.groupKind
         );
-        if (mergedRpe !== roundRpe) {
-            setRoundRpeState(mergedRpe);
+        const refRpe = apiRpe ?? localRpe;
+        const roundRpeToken = `${currentRunStep.roundIndex}|${refRpe ?? "na"}|${prescribedRpe ?? "na"}`;
+        if (appliedRoundRpeTokenRef.current !== roundRpeToken) {
+            appliedRoundRpeTokenRef.current = roundRpeToken;
+            const defaultsRpe =
+                currentRunStep.roundIndex > 1 && refRpe != null ? refRpe : prescribedRpe;
+            const mergedRpe = mergeRoundRpeWithDefaults(
+                roundRpe,
+                defaultsRpe,
+                currentRunStep.stepKey,
+                touched
+            );
+            if (mergedRpe !== roundRpe) {
+                setRoundRpeState(mergedRpe);
+            }
         }
     }, [
         restShowLogger,

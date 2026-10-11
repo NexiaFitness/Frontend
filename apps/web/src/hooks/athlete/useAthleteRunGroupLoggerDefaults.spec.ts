@@ -227,4 +227,33 @@ describe("useAthleteRunGroupLoggerDefaults", () => {
     expect(slotLogs["slot-a-r2"]?.weight).toBe(weightAfterFirst);
     expect(slotLogs["slot-a-r2"]?.weight).toBe(33);
   });
+
+  it("R2: round RPE from offline R1 without slot weight reference (R-LOG-05)", async () => {
+    const r1WithRpe: LocalSetExecution[] = [
+      {
+        ...r1Executions[0],
+        rpe: 8,
+      },
+      r1Executions[1],
+    ];
+    const setRoundRpeState = vi.fn();
+
+    renderHook(() =>
+      useAthleteRunGroupLoggerDefaults({
+        restShowLogger: true,
+        isGroupRound: true,
+        currentRunStep: round2Step(),
+        slotReferences: {},
+        localExecutions: r1WithRpe,
+        getTouchedSnapshot: () => new Set(),
+        setSlotLogs: vi.fn(),
+        roundRpe: null,
+        setRoundRpeState,
+      })
+    );
+
+    await waitFor(() => {
+      expect(setRoundRpeState).toHaveBeenCalledWith(8);
+    });
+  });
 });

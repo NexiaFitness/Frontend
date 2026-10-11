@@ -8,6 +8,7 @@ import {
     resolveApplicableSlotWeight,
     resolveInitialSlotWeight,
     runLoggerReferenceTokenForSlot,
+    runLoggerSlotHydrationToken,
 } from "./runLoggerHydrationPolicy";
 
 describe("runLoggerHydrationPolicy (D-LOG-TOUCH-01)", () => {
@@ -120,6 +121,18 @@ describe("runLoggerHydrationPolicy (D-LOG-TOUCH-01)", () => {
     it("reference token pending vs value", () => {
         expect(runLoggerReferenceTokenForSlot(null, null)).toBe("pending");
         expect(runLoggerReferenceTokenForSlot(41, null)).toBe("41");
+    });
+
+    it("slot hydration token includes RPE without weight", () => {
+        expect(runLoggerSlotHydrationToken(null, null)).toBe("pw:pr");
+        expect(
+            runLoggerSlotHydrationToken(
+                { rpe: 8, weight_kg: null } as Parameters<
+                    typeof runLoggerSlotHydrationToken
+                >[0],
+                null
+            )
+        ).toBe("pw:8");
     });
 
     it("R-LOG-07 single: touched weight ignores late reference", () => {

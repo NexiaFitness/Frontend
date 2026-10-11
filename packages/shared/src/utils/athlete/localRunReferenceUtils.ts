@@ -62,3 +62,21 @@ export function resolveLocalRunReference(input: {
 
     return null;
 }
+
+/** RPE de ronda anterior desde cola offline (misma sesión, R2+). */
+export function resolveLocalRoundRpeFromExecutions(
+    localExecutions: readonly LocalSetExecution[],
+    roundIndex: number,
+    groupKind: string | null | undefined
+): number | null {
+    if (!groupKind || !GROUP_ROUND_KINDS.has(groupKind) || roundIndex <= 1) {
+        return null;
+    }
+    const prevRound = roundIndex - 1;
+    for (const row of localExecutions) {
+        if (row.round_index === prevRound && row.rpe != null) {
+            return row.rpe;
+        }
+    }
+    return null;
+}
