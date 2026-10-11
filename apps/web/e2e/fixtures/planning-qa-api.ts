@@ -48,12 +48,17 @@ export async function loginTrainerApi(): Promise<TrainerSession> {
   if (!meRes.ok) {
     throw new Error(`API auth/me failed: ${meRes.status}`);
   }
-  const me = (await meRes.json()) as { trainer_id?: number; id?: number };
-  const trainerId = me.trainer_id ?? me.id;
-  if (trainerId == null) {
-    throw new Error("API auth/me: trainer_id missing");
+  const profileRes = await fetch(`${API_BASE}/trainers/profile`, {
+    headers: { Authorization: `Bearer ${json.access_token}` },
+  });
+  if (!profileRes.ok) {
+    throw new Error(`API trainers/profile failed: ${profileRes.status}`);
   }
-  return { accessToken: json.access_token, trainerId };
+  const profile = (await profileRes.json()) as { id: number };
+  if (profile.id == null) {
+    throw new Error("API trainers/profile: id missing");
+  }
+  return { accessToken: json.access_token, trainerId: profile.id };
 }
 
 export type QaDisposableBlockMeta = {
@@ -192,6 +197,79 @@ export async function apiGetWeeklyStructure(
     throw new Error(`weekly-structure GET ${res.status}`);
   }
   return (await res.json()) as { weeks: Array<{ week_ordinal: number }> };
+}
+
+/** Plan+bloque vacío en cliente 346 (no usa bloques 65/84). */
+export async function createQaH2LifecycleBlock(
+  session: TrainerSession,
+): Promise<QaDisposableBlockMeta> {
+  const suffix = Date.now();
+  const planBody = {
+    trainer_id: session.trainerId,
+    client_id: QA_PLANNING_CLIENT_ID,
+    name: `QA H2 lifecycle ${suffix}`,
+    description: "RM-09 H2 desechable; sin registro atleta",
+    start_date: "2027-02-01",
+    end_date: "2027-03-31",
+    goal: "strength",
+    status: "active",
+    confirm_assignment_overlap: true,
+  };
+  const planRes = await fetch(`${API_BASE}/training-plans/`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(planBody),
+  });
+  if (!planRes.ok) {
+    const t = await planRes.text();
+    throw new Error(`create H2 plan: ${planRes.status} ${t.slice(0, 200)}`);
+  }
+  const plan = (await planRes.json()) as { id: number };
+
+  const blockBody = {
+    start_date: "2027-02-01",
+    end_date: "2027-02-28",
+    volume_level: 5,
+    intensity_level: 5,
+    qualities: [{ physical_quality_id: 1, percentage: 100 }],
+    template_week: {
+      week_ordinal: 1,
+      label: null,
+      days: [
+        {
+          day_of_week: 2,
+          patterns: [{ movement_pattern_id: 1, sub_pattern: null }],
+        },
+      ],
+    },
+    apply_template_to_remaining_weeks: true,
+  };
+  const blockRes = await fetch(
+    `${API_BASE}/training-plans/${plan.id}/period-blocks/with-recurring-structure`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(blockBody),
+    },
+  );
+  if (!blockRes.ok) {
+    const t = await blockRes.text();
+    throw new Error(`create H2 block: ${blockRes.status} ${t.slice(0, 300)}`);
+  }
+  const blockOut = (await blockRes.json()) as { block: { id: number } };
+  return {
+    planId: plan.id,
+    blockId: blockOut.block.id,
+    clientId: QA_PLANNING_CLIENT_ID,
+    createdAt: new Date().toISOString(),
+    note: "RM-09 H2 lifecycle disposable",
+  };
 }
 
 export { QA_PLAN_531, QA_BLOCK_65, QA_BLOCK_84 };
