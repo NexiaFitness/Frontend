@@ -82,38 +82,38 @@ export function useAthleteRunGroupLoggerDefaults({
         }
 
         if (slotsToHydrate.length > 0) {
-        setSlotLogs((prev) => {
-            const next = { ...prev };
-            for (const slot of slotsToHydrate) {
-                const apiRef = slotReferences[slot.stepKey]?.reference;
-                const localRef = resolveLocalRunReference({
-                    exerciseId: slot.exerciseId,
-                    roundIndex: currentRunStep.roundIndex,
-                    slotLabel: slot.slotLabel,
-                    groupKind: currentRunStep.groupKind,
-                    localExecutions,
-                });
-                const reference: AthleteRunReferencePoint | null | undefined =
-                    apiRef ?? localRef ?? null;
-                const defaults = resolveRunLoggerDefaults({
-                    setIndex: currentRunStep.roundIndex,
-                    prescribedReps: slot.defaultReps,
-                    prescribedRpe: slot.defaultRpe,
-                    plannedWeight: null,
-                    defaultWeight: slot.defaultWeight,
-                    reference,
-                });
-                next[slot.stepKey] = mergeSlotLogWithDefaults({
-                    prev: prev[slot.stepKey],
-                    defaults,
-                    touched,
-                    slotStepKey: slot.stepKey,
-                    prescribedDefaultWeight: slot.defaultWeight,
-                    prescribedDefaultReps: slot.defaultReps,
-                });
-            }
-            return next;
-        });
+            setSlotLogs((prev) => {
+                const next = { ...prev };
+                for (const slot of slotsToHydrate) {
+                    const apiRef = slotReferences[slot.stepKey]?.reference;
+                    const localRef = resolveLocalRunReference({
+                        exerciseId: slot.exerciseId,
+                        roundIndex: currentRunStep.roundIndex,
+                        slotLabel: slot.slotLabel,
+                        groupKind: currentRunStep.groupKind,
+                        localExecutions,
+                    });
+                    const reference: AthleteRunReferencePoint | null | undefined =
+                        apiRef ?? localRef ?? null;
+                    const defaults = resolveRunLoggerDefaults({
+                        setIndex: currentRunStep.roundIndex,
+                        prescribedReps: slot.defaultReps,
+                        prescribedRpe: slot.defaultRpe,
+                        plannedWeight: null,
+                        defaultWeight: slot.defaultWeight,
+                        reference,
+                    });
+                    next[slot.stepKey] = mergeSlotLogWithDefaults({
+                        prev: prev[slot.stepKey],
+                        defaults,
+                        touched,
+                        slotStepKey: slot.stepKey,
+                        prescribedDefaultWeight: slot.defaultWeight,
+                        prescribedDefaultReps: slot.defaultReps,
+                    });
+                }
+                return next;
+            });
         }
 
         const prescribedRpe =
@@ -124,7 +124,8 @@ export function useAthleteRunGroupLoggerDefaults({
         const localRpe = resolveLocalRoundRpeFromExecutions(
             localExecutions,
             currentRunStep.roundIndex,
-            currentRunStep.groupKind
+            currentRunStep.groupKind,
+            currentRunStep.groupId
         );
         const refRpe = apiRpe ?? localRpe;
         const roundRpeToken = `${currentRunStep.roundIndex}|${refRpe ?? "na"}|${prescribedRpe ?? "na"}`;
