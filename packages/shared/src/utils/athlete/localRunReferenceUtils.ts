@@ -63,6 +63,15 @@ export function resolveLocalRunReference(input: {
     return null;
 }
 
+/** step_key del logger usa segmentos `-{groupId}-` (p. ej. superset-g1-round-1). */
+export function stepKeyBelongsToGroup(
+    stepKey: string,
+    groupId: string,
+): boolean {
+    if (!groupId) return false;
+    return stepKey.includes(`-${groupId}-`);
+}
+
 /** RPE de ronda anterior desde cola offline (misma sesión, R2+, mismo grupo). */
 export function resolveLocalRoundRpeFromExecutions(
     localExecutions: readonly LocalSetExecution[],
@@ -81,7 +90,11 @@ export function resolveLocalRoundRpeFromExecutions(
         if (row.group_kind != null && row.group_kind !== groupKind) {
             continue;
         }
-        if (groupId && row.step_key && !row.step_key.includes(groupId)) {
+        if (
+            groupId &&
+            row.step_key &&
+            !stepKeyBelongsToGroup(row.step_key, groupId)
+        ) {
             continue;
         }
         return row.rpe;

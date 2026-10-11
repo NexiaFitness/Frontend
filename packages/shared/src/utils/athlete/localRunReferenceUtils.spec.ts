@@ -24,6 +24,37 @@ describe("resolveLocalRoundRpeFromExecutions", () => {
         performed_at: row.performed_at ?? 1,
     });
 
+    it("no confunde g1 con g10 en step_key", () => {
+        const executions: LocalSetExecution[] = [
+            base({
+                step_key: "superset-g10-round-1-slot-a",
+                round_index: 1,
+                rpe: 10,
+            }),
+            base({
+                step_key: "superset-g1-round-1-slot-a",
+                round_index: 1,
+                rpe: 7,
+            }),
+        ];
+        expect(
+            resolveLocalRoundRpeFromExecutions(
+                executions,
+                2,
+                "superset",
+                "g1",
+            ),
+        ).toBe(7);
+        expect(
+            resolveLocalRoundRpeFromExecutions(
+                executions,
+                2,
+                "superset",
+                "g10",
+            ),
+        ).toBe(10);
+    });
+
     it("R2 hereda RPE de R1 del mismo groupId, no de otro superset", () => {
         const executions: LocalSetExecution[] = [
             base({
