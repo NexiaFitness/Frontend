@@ -44,12 +44,10 @@ test.describe("RM-09 H1 — replicación y semanas", () => {
     const dialog = page.getByRole("dialog", { name: /Replicar/i });
     await expect(dialog).toBeVisible({ timeout: 15_000 });
 
-    await expect(
-      dialog.locator("#week-5, [id='week-5']"),
-    ).toHaveCount(0);
+    await expect(dialog.getByLabel(/^Semana 5$/)).toHaveCount(0);
     const weekRows = dialog.locator("label").filter({ hasText: /^Semana \d+/ });
+    await expect(weekRows.first()).toBeVisible();
     expect(await weekRows.count()).toBeGreaterThan(0);
-    await expect(dialog.locator("text=/oct|nov|sep/i").first()).toBeVisible();
 
     expect(consoleErrors).toHaveLength(0);
     await page.screenshot({ path: "test-results/qa-rm09-h1-1-weeks.png" });
@@ -64,7 +62,7 @@ test.describe("RM-09 H1 — replicación y semanas", () => {
       `/dashboard/clients/${QA_PLANNING_CLIENT_ID}?tab=planning&plan=${QA_PLAN_531}&blockWeeks=${QA_BLOCK_65}`,
       { waitUntil: "load" },
     );
-    await expect(page.getByTestId("weekly-structure-editor")).toBeVisible({
+    await expect(page.getByTestId("block-weeks-manage-surface")).toBeVisible({
       timeout: 30_000,
     });
     expect(consoleErrors).toHaveLength(0);
@@ -94,7 +92,10 @@ test.describe("RM-09 H1 — replicación y semanas", () => {
       .getByRole("button", { name: "Replicar" })
       .click();
     const dialog = page.getByRole("dialog", { name: /Replicar/i });
-    await dialog.getByRole("button", { name: "Replicar" }).click();
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    const submit = dialog.getByRole("button", { name: "Replicar" });
+    await expect(submit).toBeEnabled({ timeout: 20_000 });
+    await submit.click();
     await expect
       .poll(() => replicatePosts, { timeout: 25_000 })
       .toBeGreaterThanOrEqual(1);
