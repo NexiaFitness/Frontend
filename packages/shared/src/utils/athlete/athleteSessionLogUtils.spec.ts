@@ -295,7 +295,7 @@ describe("resolveLogDraftSetWeight (registro al final · carga programada)", () 
         expect(draft.singleSets[0]?.weight).toBe(50);
     });
 
-    it("buildBlockSavePayloads persiste plannedWeight si el borrador aún tiene 0", () => {
+    it("buildBlockSavePayloads persiste el plannedWeight visible del borrador inicial", () => {
         const step = singleSetStep();
         const block: AthleteSessionLogBlockModel = {
             sessionBlockId: 208,
@@ -308,14 +308,10 @@ describe("resolveLogDraftSetWeight (registro al final · carga programada)", () 
             isPendingHighlight: true,
             hasRegisterableSteps: true,
         };
-        const draft: AthleteSessionLogBlockDraft = {
-            sessionBlockId: 208,
-            singleSets: [{ stepKey: step.stepKey, weight: 0, reps: 8, skipped: false }],
-            groupRounds: [],
-            dropsetRounds: [],
-            timed: null,
-            mobilityDone: null,
-        };
+        // Lo guardado es lo visible: el borrador parte de la carga programada (50);
+        // un 0 tecleado ya no se sustituye por ella (F3, athleteSessionLogSave.spec.ts).
+        const draft = buildInitialBlockDraft(block, null);
+        expect(draft.singleSets[0]?.weight).toBe(50);
         const { executions } = buildBlockSavePayloads(4453, block, draft);
         expect(executions).toHaveLength(1);
         expect(executions[0]?.weight_kg).toBe(50);

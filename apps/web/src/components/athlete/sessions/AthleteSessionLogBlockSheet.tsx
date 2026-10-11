@@ -104,9 +104,15 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
     }, [block]);
 
     const handleWeightChange = useCallback(
-        (stepKey: string, exerciseScope: ReturnType<typeof runStepToFlatExercise>, value: number) => {
+        (
+            stepKey: string,
+            exerciseScope: ReturnType<typeof runStepToFlatExercise>,
+            value: number | null
+        ) => {
             if (!draft) return;
-            rememberSeriesWeightAutofill(autofillRef.current, exerciseScope, value);
+            if (value != null) {
+                rememberSeriesWeightAutofill(autofillRef.current, exerciseScope, value);
+            }
             const nextSets = draft.singleSets.map((row) => {
                 if (row.stepKey !== stepKey) return row;
                 return { ...row, weight: value };
@@ -273,9 +279,9 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                                     weight={weight}
                                     plannedWeight={step.plannedWeight}
                                     reps={row.reps}
-                                    onWeightChange={(v) => {
-                                        if (v != null) handleWeightChange(row.stepKey, flat, v);
-                                    }}
+                                    onWeightChange={(v) =>
+                                        handleWeightChange(row.stepKey, flat, v)
+                                    }
                                     onRepsChange={(reps) =>
                                         onDraftChange({
                                             ...draft,

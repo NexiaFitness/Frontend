@@ -202,3 +202,27 @@ describe("F1 · registrar al final sin peso prescrito", () => {
         );
     });
 });
+
+describe("F3 · 0 tecleado con peso prescrito", () => {
+    it("se guarda 0, no la prescripción; sin tocar se guarda la prescripción visible", () => {
+        const set1 = singleStep({ plannedWeight: 60 });
+        const set2 = singleStep({
+            plannedWeight: 60,
+            stepKey: "block-578-single-0-r2-S2-S2-2",
+            setLabel: "S2",
+            setIndex: 2,
+        });
+        const block = blockOf([set1, set2]);
+        const initial = buildInitialBlockDraft(block, null);
+        const draft: AthleteSessionLogBlockDraft = {
+            ...initial,
+            singleSets: initial.singleSets.map((s) =>
+                s.stepKey === set1.stepKey ? { ...s, weight: 0 } : s
+            ),
+        };
+
+        expect(validateBlockDraft(block, draft)).toBeNull();
+        const { executions } = buildBlockSavePayloads(1, block, draft);
+        expect(executions.map((e) => e.weight_kg)).toEqual([0, 60]);
+    });
+});

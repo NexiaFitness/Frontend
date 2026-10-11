@@ -135,13 +135,11 @@ export function buildBlockSavePayloads(
             continue;
         }
         const flat = runStepToFlatExercise(step);
-        const weight =
-            setDraft.weight != null && setDraft.weight > 0
-                ? setDraft.weight
-                : resolveLogDraftSetWeight(step);
+        // Lo guardado es lo visible (D-LOG-TOUCH-01): el borrador ya parte de la
+        // prescripción o del guardado; un 0 tecleado nunca se sustituye (F3).
         executions.push(
             buildAthleteRunExecutionPayload(sessionId, flat, {
-                weight,
+                weight: setDraft.weight,
                 reps: setDraft.reps,
                 rpe: setDraft.rpe ?? null,
                 durationSeconds: setDraft.reps,
