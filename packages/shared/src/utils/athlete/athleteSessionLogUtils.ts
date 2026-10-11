@@ -1,6 +1,9 @@
 /**
  * athleteSessionLogUtils.ts — Registro al final FE-3 (bloques, step_key, resúmenes).
  * Contexto: misma función buildAthleteRunSteps que el guiado; estado desde BE-1.
+ * Longitud (> 400, agent.md §7.1): bajó de 715 al extraer el guardado a
+ * athleteSessionLogSave.ts; resúmenes, borrador inicial y F5 comparten el modelo de
+ * bloque. Siguiente extracción natural: resúmenes de progreso.
  * @author Frontend Team
  * @since v8.3.0
  */

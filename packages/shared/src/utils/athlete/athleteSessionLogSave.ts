@@ -9,6 +9,9 @@
  * buildBlockSavePayloads (useAthleteSessionLog). D-LOG-TOUCH-01: un hueco al que le
  * falta un dato según su input_mode bloquea el guardado con aviso; nunca se
  * descarta en silencio (F4).
+ * Longitud (> 400, agent.md §7.1): buildBlockSavePayloads recorre las cinco
+ * modalidades (serie, grupo, AMRAP, EMOM, FOR TIME) con su validación pareja; si
+ * crece, extraer la rama cronometrada a su propio módulo.
  *
  * @author Frontend Team
  * @since v9.4.0
