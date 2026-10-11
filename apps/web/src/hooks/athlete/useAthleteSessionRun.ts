@@ -1023,7 +1023,6 @@ export function useAthleteSessionRun({
         current: current ?? null,
         isBatchStep,
         restShowLogger: restFlow.showLogger,
-        restPhase: restFlow.phase,
         isGroupRound,
         currentRunStep,
         effectiveRunReference,

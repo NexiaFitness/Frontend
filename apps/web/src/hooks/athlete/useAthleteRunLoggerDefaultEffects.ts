@@ -21,7 +21,6 @@ export interface UseAthleteRunLoggerDefaultEffectsOptions {
     current: AthleteFlatExercise | null;
     isBatchStep: boolean;
     restShowLogger: boolean;
-    restPhase: string;
     isGroupRound: boolean;
     currentRunStep: AthleteRunStep | undefined;
     effectiveRunReference: AthleteRunReference | null | undefined;
@@ -44,7 +43,6 @@ export function useAthleteRunLoggerDefaultEffects({
     current,
     isBatchStep,
     restShowLogger,
-    restPhase: _restPhase,
     isGroupRound,
     currentRunStep,
     effectiveRunReference,

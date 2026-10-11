@@ -2,7 +2,6 @@
  * AthleteSessionRegistrationAlerts.tsx — Avisos plazo / error progress (D-REG-CLOSED-01).
  */
 
-import React from "react";
 import { Alert } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import {
