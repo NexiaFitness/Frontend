@@ -40,9 +40,15 @@ function session(partial: Partial<TrainingSession>): TrainingSession {
 describe("athleteSessionRegistrationPolicy", () => {
     const today = new Date(2026, 9, 4); // 4 oct 2026 local
 
-    it("M8: fecha nula no es editable", () => {
-        expect(isAthleteSessionRegistrationEditable(null, today)).toBe(false);
-        expect(isAthleteSessionRegistrationEditable(undefined, today)).toBe(false);
+    it("M8: fecha nula editable local (paridad BE; API manda si hay progress)", () => {
+        expect(isAthleteSessionRegistrationEditable(null, today)).toBe(true);
+        expect(isAthleteSessionRegistrationEditable(undefined, today)).toBe(true);
+        expect(
+            resolveAthleteSessionRegistrationEditable({
+                sessionDate: null,
+                progressRegistrationEditable: false,
+            })
+        ).toBe(false);
     });
 
     it("resolveAthleteSessionRegistrationEditable prioriza progress", () => {

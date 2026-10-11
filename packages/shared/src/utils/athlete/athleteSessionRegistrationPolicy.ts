@@ -20,8 +20,8 @@ export function isAthleteSessionRegistrationEditable(
     sessionDate: string | null | undefined,
     today = new Date()
 ): boolean {
-    /** M8 — sin fecha no asumimos ventana abierta. */
-    if (!sessionDate) return false;
+    /** Paridad BE: sesión sin fecha → editable; no cerrar antes de respuesta API. */
+    if (!sessionDate) return true;
     return daysAfterSessionDate(sessionDate, today) <= ATHLETE_REGISTRATION_EDIT_DAYS;
 }
 
