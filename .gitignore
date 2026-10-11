@@ -169,3 +169,6 @@ test-results/
 **/test-results/
 playwright-report/
 **/playwright-report/
+# Local QA scratch data and per-run e2e session metadata (never committed)
+apps/web/.playwright-qa/
+apps/web/e2e/athlete/*.meta.json
