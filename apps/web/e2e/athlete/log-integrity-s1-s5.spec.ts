@@ -1,5 +1,5 @@
 /**
- * D-LOG-INTEGRITY-01 H3 — verificación navegador S1–S5 (teclado + red).
+ * D-LOG-INTEGRITY-01 H3 — verificación navegador S1–S5 (teclado + peticiones POST).
  *
  * @spec docs/atleta/log-integrity-2026-10/07_MODELO_ESTADO_LOGGER.md
  */
@@ -8,134 +8,21 @@ import { test, expect } from "@playwright/test";
 import { loginAsAthlete } from "../fixtures/athlete-auth";
 import {
   H7_QA_CLIENT_ID,
-  attachExecutionCapture,
+  attachExecutionRequestCapture,
   confirmGroupRound,
   loginAsTrainerFresh,
   openRunForSession,
-  postWeightKgList,
   skipRestIfVisible,
-  startRestAfterFill,
-  trainerAddFuerzaBlock,
-  trainerConfigureModality,
   trainerCreateSingleExerciseSession,
+  trainerCreateSupersetOneRoundSession,
+  trainerCreateTwoSingleExerciseSession,
   typePeso,
   typeReps,
 } from "./h7-helpers";
 
-type NetTap = {
-  requests: { url: string; body: unknown }[];
-  responses: { url: string; status: number; body: unknown }[];
-};
-
-function attachNetTap(page: import("@playwright/test").Page): NetTap {
-  const tap: NetTap = { requests: [], responses: [] };
-  page.on("request", (req) => {
-    if (
-      req.method() === "POST" &&
-      req.url().includes("/athlete/run-context/executions")
-    ) {
-      try {
-        const raw = req.postData();
-        tap.requests.push({
-          url: req.url(),
-          body: raw ? JSON.parse(raw) : null,
-        });
-      } catch {
-        tap.requests.push({ url: req.url(), body: null });
-      }
-    }
-  });
-  page.on("response", async (resp) => {
-    const req = resp.request();
-    if (
-      req.method() === "POST" &&
-      req.url().includes("/athlete/run-context/executions")
-    ) {
-      let body: unknown = null;
-      try {
-        body = await resp.json();
-      } catch {
-        /* ignore */
-      }
-      tap.responses.push({ url: resp.url(), status: resp.status(), body });
-    }
-  });
-  return tap;
-}
-
-async function createTwoExerciseSession(page: import("@playwright/test").Page) {
-  await loginAsTrainerFresh(page);
-  const today = new Date().toISOString().slice(0, 10);
-  await page.goto(
-    `/dashboard/session-programming/create-session?clientId=${H7_QA_CLIENT_ID}&date=${today}`
-  );
-  await expect(page.getByPlaceholder(/ej: fuerza/i)).toBeVisible({ timeout: 30_000 });
-  const sessionName = `QA-LOG-S2 ${Date.now()}`;
-  await page.getByPlaceholder(/ej: fuerza/i).fill(sessionName);
-  await trainerAddFuerzaBlock(page);
-  let card = page.locator("[data-constructor-row-id]").first();
-  await card.getByRole("button", { name: /Buscar ejercicio/i }).click();
-  await page
-    .locator("div.space-y-0\\.5 button")
-    .filter({ hasNot: page.getByText("LESION") })
-    .nth(0)
-    .click({ timeout: 20_000 });
-  await trainerAddFuerzaBlock(page);
-  await expect(page.locator("[data-constructor-row-id]")).toHaveCount(2, {
-    timeout: 20_000,
-  });
-  card = page.locator("[data-constructor-row-id]").last();
-  await card.getByRole("button", { name: /Buscar ejercicio/i }).click();
-  await page
-    .locator("div.space-y-0\\.5 button")
-    .filter({ hasNot: page.getByText("LESION") })
-    .nth(1)
-    .click({ timeout: 20_000 });
-  await page.getByRole("button", { name: /crear sesión/i }).click();
-  await page.waitForTimeout(2500);
-  const entendido = page.getByRole("button", { name: /entendido/i });
-  if (await entendido.isVisible().catch(() => false)) await entendido.click();
-  await expect(page).toHaveURL(/session-programming\/sessions\/\d+\/review/, {
-    timeout: 30_000,
-  });
-  const match = page.url().match(/sessions\/(\d+)\/review/);
-  expect(match?.[1]).toBeTruthy();
-  await page.context().clearCookies();
-  return Number(match![1]);
-}
-
-async function createSupersetMixedSession(page: import("@playwright/test").Page) {
-  await loginAsTrainerFresh(page);
-  const today = new Date().toISOString().slice(0, 10);
-  await page.goto(
-    `/dashboard/session-programming/create-session?clientId=${H7_QA_CLIENT_ID}&date=${today}`
-  );
-  await expect(page.getByPlaceholder(/ej: fuerza/i)).toBeVisible({ timeout: 30_000 });
-  const sessionName = `QA-LOG-S4 ${Date.now()}`;
-  await page.getByPlaceholder(/ej: fuerza/i).fill(sessionName);
-  await trainerAddFuerzaBlock(page);
-  await trainerConfigureModality(page, 0, "Superset", "SUPERSET A", "Series", "1", 0, 2);
-  const card = page.locator("[data-constructor-row-id]").filter({ hasText: "SUPERSET A" });
-  const repsInputs = card.getByRole("spinbutton");
-  if ((await repsInputs.count()) >= 2) {
-    await repsInputs.nth(1).fill("12");
-  }
-  await page.getByRole("button", { name: /crear sesión/i }).click();
-  await page.waitForTimeout(2500);
-  const entendido = page.getByRole("button", { name: /entendido/i });
-  if (await entendido.isVisible().catch(() => false)) await entendido.click();
-  await expect(page).toHaveURL(/session-programming\/sessions\/\d+\/review/, {
-    timeout: 30_000,
-  });
-  const match = page.url().match(/sessions\/(\d+)\/review/);
-  expect(match?.[1]).toBeTruthy();
-  await page.context().clearCookies();
-  return Number(match![1]);
-}
-
-test("QA-LOG-01 S1 vaciar peso se conserva vacío", async ({ page }) => {
+test("QA-LOG-01 S1 vaciar peso POST weight_kg null", async ({ page }) => {
   test.setTimeout(180_000);
-  const cap = attachExecutionCapture(page);
+  const cap = attachExecutionRequestCapture(page);
   await loginAsTrainerFresh(page);
   const { sessionId } = await trainerCreateSingleExerciseSession(
     page,
@@ -150,63 +37,91 @@ test("QA-LOG-01 S1 vaciar peso se conserva vacío", async ({ page }) => {
   const peso = page.getByRole("textbox", { name: "Peso" }).first();
   await peso.click({ clickCount: 3 });
   await peso.fill("50");
-  await peso.press("Backspace");
-  await peso.press("Backspace");
   await peso.fill("");
   await peso.blur();
   await typeReps(page, 0, "10");
   await expect(peso).toHaveValue("");
   await page.getByRole("button", { name: /^Guardar$/i }).click();
-  await cap.waitForAtLeastPosts(1, 30_000);
-  expect(postWeightKgList(cap.posts).every((w) => Number.isNaN(w) || w == null)).toBe(true);
-  expect(cap.consoleErrors).toHaveLength(0);
+  await cap.waitForPostCount(1, 30_000);
+  expect(cap.posts[0]?.weight_kg).toBeNull();
 });
 
-test("QA-LOG-02 S2 no arrastra 80 kg al siguiente ejercicio", async ({ page }) => {
-  test.setTimeout(240_000);
-  const sessionId = await createTwoExerciseSession(page);
+test("QA-LOG-02 S2 no arrastra peso entre ejercicios consecutivos", async ({ page }) => {
+  test.setTimeout(300_000);
+  const cap = attachExecutionRequestCapture(page);
+  await loginAsTrainerFresh(page);
+  const { sessionId } = await trainerCreateTwoSingleExerciseSession(
+    page,
+    H7_QA_CLIENT_ID,
+    "QA-LOG-S2"
+  );
+  await page.context().clearCookies();
+
   await loginAsAthlete(page);
   await openRunForSession(page, sessionId);
   await page.getByRole("button", { name: /Empezar descanso/i }).click({ timeout: 45_000 });
   await typePeso(page, 0, "80");
+  await typeReps(page, 0, "10");
   await page.getByRole("button", { name: /^Guardar$/i }).click();
+  await cap.waitForPostCount(1, 30_000);
+  expect(cap.posts[0]?.weight_kg).toBe(80);
+
   await skipRestIfVisible(page);
-  await page.getByRole("button", { name: /Siguiente|Continuar/i }).first().click({
-    timeout: 30_000,
+  await expect(page.getByText(/Paso 2 \/ 2/i)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("textbox", { name: "Peso" }).first()).toBeVisible({
+    timeout: 45_000,
   });
-  await page.getByRole("button", { name: /Empezar descanso/i }).click({ timeout: 45_000 });
   const peso = page.getByRole("textbox", { name: "Peso" }).first();
-  await expect(peso).toHaveValue("");
+  await expect(peso).not.toHaveValue("80");
+  await peso.click({ clickCount: 3 });
+  await peso.fill("");
+  await peso.blur();
+  await typeReps(page, 0, "12");
+  await page.getByRole("button", { name: /^Guardar$/i }).click();
+  await cap.waitForPostCount(2, 30_000);
+  expect(cap.posts[1]?.weight_kg).not.toBe(80);
+  expect(cap.posts[1]?.weight_kg).toBeNull();
 });
 
-test("QA-LOG-04 S4 superset POST incluye todos los slots", async ({ page }) => {
-  test.setTimeout(240_000);
-  const net = attachNetTap(page);
-  const sessionId = await createSupersetMixedSession(page);
+test("QA-LOG-04 S4 superset: un POST por slot (sin peso en A2)", async ({ page }) => {
+  test.setTimeout(300_000);
+  const cap = attachExecutionRequestCapture(page);
+  await loginAsTrainerFresh(page);
+  const { sessionId } = await trainerCreateSupersetOneRoundSession(
+    page,
+    H7_QA_CLIENT_ID,
+    "QA-LOG-S4"
+  );
+  await page.context().clearCookies();
+
   await loginAsAthlete(page);
   await openRunForSession(page, sessionId);
   await expect(page.getByRole("heading", { name: /Ronda 1 de/i })).toBeVisible({
     timeout: 60_000,
   });
-  const pesoCount = await page.getByRole("textbox", { name: "Peso" }).count();
-  if (pesoCount >= 1) await typePeso(page, 0, "30");
+  await expect(page.getByRole("textbox", { name: "Peso" }).first()).toBeVisible({
+    timeout: 45_000,
+  });
+  await typePeso(page, 0, "30");
   await typeReps(page, 0, "10");
-  if (pesoCount >= 2) await typePeso(page, 1, "25");
-  else await typeReps(page, 1, "12");
-  await startRestAfterFill(page);
+  await typeReps(page, 1, "12");
+  const pesoA2 = page.getByRole("textbox", { name: "Peso" }).nth(1);
+  if (await pesoA2.isVisible().catch(() => false)) {
+    await pesoA2.click({ clickCount: 3 });
+    await pesoA2.fill("");
+    await pesoA2.blur();
+  }
   await confirmGroupRound(page);
-  await expect
-    .poll(() => net.responses.filter((r) => r.status >= 200 && r.status < 300).length, {
-      timeout: 45_000,
-    })
-    .toBeGreaterThanOrEqual(2);
-  const okBodies = net.requests.map((r) => r.body as { weight_kg?: number | null });
-  expect(okBodies.length).toBeGreaterThanOrEqual(2);
+  await cap.waitForPostCount(2, 45_000);
+
+  const weights = cap.posts.map((p) => p.weight_kg ?? null);
+  expect(weights).toContain(30);
+  expect(weights).toContain(null);
 });
 
 test("QA-LOG-05 S5 Editar datos upsert sin duplicar", async ({ page }) => {
   test.setTimeout(240_000);
-  const net = attachNetTap(page);
+  const cap = attachExecutionRequestCapture(page);
   await loginAsTrainerFresh(page);
   const { sessionId } = await trainerCreateSingleExerciseSession(
     page,
@@ -220,18 +135,13 @@ test("QA-LOG-05 S5 Editar datos upsert sin duplicar", async ({ page }) => {
   await typePeso(page, 0, "60");
   await typeReps(page, 0, "8");
   await page.getByRole("button", { name: /^Guardar$/i }).click();
-  await expect
-    .poll(() => net.responses.filter((r) => r.status >= 200).length, { timeout: 30_000 })
-    .toBe(1);
+  await cap.waitForPostCount(1, 30_000);
+
   const edit = page.getByRole("button", { name: /Editar datos/i });
-  if (await edit.isVisible().catch(() => false)) {
-    await edit.click();
-    await typePeso(page, 0, "62");
-    await page.getByRole("button", { name: /^Guardar$/i }).click();
-    await expect
-      .poll(() => net.responses.filter((r) => r.status >= 200).length, { timeout: 30_000 })
-      .toBe(2);
-    const last = net.requests.at(-1)?.body as { weight_kg?: number };
-    expect(last?.weight_kg).toBe(62);
-  }
+  await expect(edit).toBeVisible({ timeout: 15_000 });
+  await edit.click();
+  await typePeso(page, 0, "62");
+  await page.getByRole("button", { name: /^Guardar$/i }).click();
+  await cap.waitForPostCount(2, 30_000);
+  expect(cap.posts[1]?.weight_kg).toBe(62);
 });

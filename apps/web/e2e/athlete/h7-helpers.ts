@@ -60,6 +60,36 @@ export type ExecutionPost = {
   exercise_id?: number;
 };
 
+export function isRunContextExecutionPost(url: string, method: string): boolean {
+  return (
+    method === "POST" &&
+    /\/api\/v1\/athlete\/run-context\/executions/.test(url)
+  );
+}
+
+export function attachExecutionRequestCapture(page: Page) {
+  const posts: ExecutionPost[] = [];
+  page.on("request", (req) => {
+    if (!isRunContextExecutionPost(req.url(), req.method())) return;
+    try {
+      const raw = req.postData();
+      if (raw) posts.push(JSON.parse(raw) as ExecutionPost);
+    } catch {
+      /* ignore */
+    }
+  });
+  return {
+    posts,
+    waitForPostCount: async (count: number, timeoutMs = 45_000) => {
+      const start = Date.now();
+      while (posts.length < count && Date.now() - start < timeoutMs) {
+        await page.waitForTimeout(200);
+      }
+      expect(posts.length).toBe(count);
+    },
+  };
+}
+
 export function attachExecutionCapture(page: Page) {
   const posts: ExecutionPost[] = [];
   const consoleErrors: string[] = [];
@@ -72,7 +102,7 @@ export function attachExecutionCapture(page: Page) {
     const req = resp.request();
     if (
       req.method() === "POST" &&
-      req.url().includes("/athlete/run-context/executions")
+      isRunContextExecutionPost(req.url(), req.method())
     ) {
       try {
         const raw = req.postData();
@@ -154,6 +184,26 @@ export async function skipRestIfVisible(page: Page) {
 
 function constructorCard(page: Page, groupBadge: string) {
   return page.locator("[data-constructor-row-id]").filter({ hasText: groupBadge });
+}
+
+/** Cards serie simple (excluye anclas internas con el mismo data attr). */
+export function constructorSingleSetCards(page: Page) {
+  return page.locator("[data-constructor-row-id]").filter({
+    has: page.getByRole("button", { name: "Tipo de serie" }),
+  });
+}
+
+export async function trainerSetSingleCardSeriesCount(
+  card: ReturnType<Page["locator"]>,
+  count: string
+) {
+  const seriesInput = card
+    .locator("span")
+    .filter({ hasText: /^Series$/ })
+    .locator("xpath=following::input[1]")
+    .first();
+  await seriesInput.click({ clickCount: 3 });
+  await seriesInput.fill(count);
 }
 
 export async function trainerAddFuerzaBlock(page: Page) {
@@ -268,6 +318,103 @@ export async function trainerCreateSessionForClient(
   };
   writeH7SessionMeta(meta, kind);
   return meta;
+}
+
+export async function trainerPickExerciseFromPicker(
+  page: Page,
+  pickerIndex: number
+) {
+  await page
+    .locator("div.space-y-0\\.5 button")
+    .filter({ hasNot: page.getByText("LESION") })
+    .nth(pickerIndex)
+    .click({ timeout: 20_000 });
+  await page.waitForTimeout(250);
+}
+
+export async function trainerSubmitCreateSession(page: Page): Promise<number> {
+  await page.getByRole("button", { name: /crear sesión/i }).click();
+  await page.waitForTimeout(2500);
+  const entendido = page.getByRole("button", { name: /entendido/i });
+  if (await entendido.isVisible().catch(() => false)) await entendido.click();
+  await expect(page).toHaveURL(/session-programming\/sessions\/\d+\/review/, {
+    timeout: 30_000,
+  });
+  const match = page.url().match(/sessions\/(\d+)\/review/);
+  expect(match?.[1]).toBeTruthy();
+  return Number(match![1]);
+}
+
+/** Dos ejercicios consecutivos (serie simple): Añadir serie en el mismo bloque fuerza. */
+export async function trainerCreateTwoSingleExerciseSession(
+  page: Page,
+  clientId: number,
+  sessionNamePrefix: string
+): Promise<H7SessionMeta> {
+  await loginAsTrainerFresh(page);
+  const today = new Date().toISOString().slice(0, 10);
+  await page.goto(
+    `/dashboard/session-programming/create-session?clientId=${clientId}&date=${today}`
+  );
+  await expect(page.getByPlaceholder(/ej: fuerza/i)).toBeVisible({ timeout: 30_000 });
+  const sessionName = `${sessionNamePrefix} ${Date.now()}`;
+  await page.getByPlaceholder(/ej: fuerza/i).fill(sessionName);
+  await trainerAddFuerzaBlock(page);
+  const cards = constructorSingleSetCards(page);
+  const firstCard = cards.first();
+  await firstCard.getByRole("button", { name: /Buscar ejercicio/i }).click();
+  await trainerPickExerciseFromPicker(page, 6);
+  await trainerSetSingleCardSeriesCount(firstCard, "1");
+  await page.getByRole("button", { name: /Añadir serie/i }).first().click();
+  await expect(constructorSingleSetCards(page)).toHaveCount(2, {
+    timeout: 20_000,
+  });
+  const secondCard = constructorSingleSetCards(page).last();
+  await secondCard.getByRole("button", { name: /Buscar ejercicio/i }).click();
+  await trainerPickExerciseFromPicker(page, 7);
+  await trainerSetSingleCardSeriesCount(secondCard, "1");
+  const sessionId = await trainerSubmitCreateSession(page);
+  return {
+    sessionId,
+    sessionName,
+    createdAt: new Date().toISOString(),
+    note: "RM-13: dos ejercicios serie simple — QA-LOG-S2",
+  };
+}
+
+/** Superset 1 ronda, 2 ejercicios (índices picker para evitar historial cargado en QA). */
+export async function trainerCreateSupersetOneRoundSession(
+  page: Page,
+  clientId: number,
+  sessionNamePrefix: string,
+  pickerStart = 6
+): Promise<H7SessionMeta> {
+  await loginAsTrainerFresh(page);
+  const today = new Date().toISOString().slice(0, 10);
+  await page.goto(
+    `/dashboard/session-programming/create-session?clientId=${clientId}&date=${today}`
+  );
+  await expect(page.getByPlaceholder(/ej: fuerza/i)).toBeVisible({ timeout: 30_000 });
+  const sessionName = `${sessionNamePrefix} ${Date.now()}`;
+  await page.getByPlaceholder(/ej: fuerza/i).fill(sessionName);
+  await trainerAddFuerzaBlock(page);
+  await trainerConfigureModality(
+    page,
+    0,
+    "Superset",
+    "SUPERSET A",
+    "Series",
+    "1",
+    pickerStart,
+    2
+  );
+  const sessionId = await trainerSubmitCreateSession(page);
+  return {
+    sessionId,
+    sessionName,
+    createdAt: new Date().toISOString(),
+    note: "RM-13: superset 1 ronda — QA-LOG-S4",
+  };
 }
 
 export async function trainerCreateSingleExerciseSession(
