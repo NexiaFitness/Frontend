@@ -38,13 +38,16 @@ const appointmentDay = (dateKey: string): AgendaWeekSection["days"][number] => (
     ],
 });
 
+/** «Hoy» fijo (martes de la semana del 5 de octubre): las etiquetas no dependen del reloj real. */
+const TODAY_KEY = "2026-10-06";
+
 describe("filterAgendaWeekSectionsForView", () => {
     it("omite semanas sin días visibles para el filtro Citas", () => {
         const sections = groupAgendaDaysByWeek([
             appointmentDay("2026-10-06"),
             trainingDay("2026-10-14", 2),
             trainingDay("2026-10-21", 3),
-        ]);
+        ], TODAY_KEY);
 
         const filtered = filterAgendaWeekSectionsForView(sections, new Map(), "appointments");
 
@@ -57,7 +60,7 @@ describe("filterAgendaWeekSectionsForView", () => {
         const sections = groupAgendaDaysByWeek([
             appointmentDay("2026-10-06"),
             trainingDay("2026-10-14", 2),
-        ]);
+        ], TODAY_KEY);
 
         const filtered = filterAgendaWeekSectionsForView(sections, new Map(), "training");
 
