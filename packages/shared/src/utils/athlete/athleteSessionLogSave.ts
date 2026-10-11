@@ -6,7 +6,9 @@
  * los consumidores sigan importando desde la misma ruta.
  *
  * Notas de mantenimiento: funciones puras; validateBlockDraft se ejecuta antes que
- * buildBlockSavePayloads (useAthleteSessionLog).
+ * buildBlockSavePayloads (useAthleteSessionLog). D-LOG-TOUCH-01: un hueco al que le
+ * falta un dato según su input_mode bloquea el guardado con aviso; nunca se
+ * descarta en silencio (F4).
  *
  * @author Frontend Team
  * @since v9.4.0
@@ -34,6 +36,7 @@ import {
 import { buildAmrapSavePayloads } from "./amrapResult";
 import { buildForTimeSavePayloads } from "./forTimeResult";
 import { buildEmomSavePayloads, getEmomTemplateSlots, resolveEmomFailureState } from "./emomResult";
+import { isRunLoggerSlotConfirmValid } from "./runLoggerHydrationPolicy";
 import type {
     AthleteSessionLogBlockDraft,
     AthleteSessionLogBlockModel,
@@ -150,7 +153,7 @@ export function buildBlockSavePayloads(
         }
         for (const slot of step.slots ?? []) {
             const log = round.slotLogs[slot.stepKey];
-            if (!log || log.weight == null) continue;
+            if (!log) continue;
             executions.push(
                 buildAthleteRunExecutionPayloadFromSlot(sessionId, step, slot, {
                     weight: log.weight,
@@ -317,6 +320,58 @@ export function buildBlockSavePayloads(
     return { executions, timed, exerciseNotes, notPerformedSteps };
 }
 
+type MissingField = "el peso" | "las repeticiones" | "la duración" | "los datos";
+
+function missingFieldFor(
+    log: { weight: number | null; reps: number; durationSeconds?: number } | undefined,
+    inputMode: string
+): MissingField | null {
+    if (!log) return "los datos";
+    const shape = {
+        weight: log.weight,
+        reps: log.reps,
+        durationSeconds: log.durationSeconds ?? log.reps,
+    };
+    if (isRunLoggerSlotConfirmValid(shape, inputMode)) return null;
+    if (inputMode === "duration") return "la duración";
+    if (log.reps <= 0) return "las repeticiones";
+    return "el peso";
+}
+
+function missingDataMessage(
+    missing: MissingField,
+    exerciseName: string,
+    skipLabel: string
+): string {
+    const howTo = missing === "el peso" ? "Escríbelo (0 si fue sin carga)" : "Complétalo";
+    return `Falta ${missing} en ${exerciseName}. ${howTo} o marca ${skipLabel}.`;
+}
+
+/** F4: first incomplete slot of a non-skipped round, as a user-facing message. */
+function findIncompleteRoundSlot(
+    block: AthleteSessionLogBlockModel,
+    rounds: readonly AthleteSessionLogRoundDraft[]
+): string | null {
+    for (const round of rounds) {
+        if (round.skipped) continue;
+        const step = block.steps.find((s) => s.stepKey === round.stepKey);
+        for (const slot of step?.slots ?? []) {
+            const missing = missingFieldFor(
+                round.slotLogs[slot.stepKey],
+                slot.inputMode ?? "weight_reps"
+            );
+            if (missing) {
+                return missingDataMessage(
+                    missing,
+                    slot.exerciseName || "un ejercicio",
+                    "«No lo hice (ronda)»"
+                );
+            }
+        }
+    }
+    return null;
+}
+
 export function validateBlockDraft(
     block: AthleteSessionLogBlockModel,
     draft: AthleteSessionLogBlockDraft
@@ -343,6 +398,12 @@ export function validateBlockDraft(
             return "Registra al menos una ronda o repeticiones parciales.";
         }
     }
+
+    const incompleteRound = findIncompleteRoundSlot(block, [
+        ...draft.groupRounds,
+        ...draft.dropsetRounds,
+    ]);
+    if (incompleteRound) return incompleteRound;
 
     const hasSingle = draft.singleSets.some(
         (s) => !s.skipped && (s.weight > 0 || s.reps > 0)
