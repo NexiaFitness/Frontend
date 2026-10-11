@@ -137,24 +137,11 @@ test("QA-LOG-01 S1 vaciar peso se conserva vacío", async ({ page }) => {
   test.setTimeout(180_000);
   const cap = attachExecutionCapture(page);
   await loginAsTrainerFresh(page);
-  const today = new Date().toISOString().slice(0, 10);
-  await page.goto(
-    `/dashboard/session-programming/create-session?clientId=${H7_QA_CLIENT_ID}&date=${today}`
+  const { sessionId } = await trainerCreateSingleExerciseSession(
+    page,
+    H7_QA_CLIENT_ID,
+    "QA-LOG-S1"
   );
-  await expect(page.getByPlaceholder(/ej: fuerza/i)).toBeVisible({ timeout: 30_000 });
-  await page.getByPlaceholder(/ej: fuerza/i).fill(`QA-LOG-S1 ${Date.now()}`);
-  await trainerAddFuerzaBlock(page);
-  const card = page.locator("[data-constructor-row-id]").first();
-  await card.getByRole("button", { name: /Buscar ejercicio/i }).click();
-  await page
-    .locator("div.space-y-0\\.5 button")
-    .filter({ hasNot: page.getByText("LESION") })
-    .first()
-    .click({ timeout: 20_000 });
-  await page.getByRole("button", { name: /crear sesión/i }).click();
-  await page.waitForTimeout(2500);
-  const match = page.url().match(/sessions\/(\d+)\/review/);
-  const sessionId = Number(match![1]);
   await page.context().clearCookies();
 
   await loginAsAthlete(page);
