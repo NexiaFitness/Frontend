@@ -16,6 +16,7 @@ import {
     validateBlockDraft,
 } from "./athleteSessionLogSave";
 import {
+    applyLogSetWeightChange,
     buildInitialBlockDraft,
     type AthleteSessionLogBlockDraft,
     type AthleteSessionLogBlockModel,
@@ -224,5 +225,86 @@ describe("F3 · 0 tecleado con peso prescrito", () => {
         expect(validateBlockDraft(block, draft)).toBeNull();
         const { executions } = buildBlockSavePayloads(1, block, draft);
         expect(executions.map((e) => e.weight_kg)).toEqual([0, 60]);
+    });
+});
+
+describe("F5 · applyLogSetWeightChange (visible = guardado)", () => {
+    const set1 = singleStep();
+    const set2 = singleStep({
+        stepKey: "block-578-single-0-r2-S2-S2-2",
+        setLabel: "S2",
+        setIndex: 2,
+    });
+    const otherExercise = singleStep({
+        stepKey: "block-578-single-1-r1-S3-S1-1",
+        groupId: "block-578-single-1",
+        exerciseId: 12,
+        setIndex: 2,
+    });
+    const steps = [set1, set2, otherExercise];
+    const sets = [
+        { stepKey: set1.stepKey, weight: null, reps: 8, skipped: false },
+        { stepKey: set2.stepKey, weight: null, reps: 8, skipped: false },
+        { stepKey: otherExercise.stepKey, weight: null, reps: 8, skipped: false },
+    ];
+
+    it("copia el peso a las series posteriores de la misma serie sin peso ni tocar", () => {
+        const next = applyLogSetWeightChange({
+            sets,
+            steps,
+            stepKey: set1.stepKey,
+            weight: 60,
+            touchedStepKeys: new Set([set1.stepKey]),
+        });
+        expect(next.map((s) => s.weight)).toEqual([60, 60, null]);
+    });
+
+    it("no pisa una prescripción, una serie tocada ni una marcada «No lo hice»", () => {
+        const base = [
+            sets[0],
+            { ...sets[1], weight: 50 },
+            sets[2],
+        ];
+        expect(
+            applyLogSetWeightChange({
+                sets: base,
+                steps,
+                stepKey: set1.stepKey,
+                weight: 60,
+                touchedStepKeys: new Set(),
+            }).map((s) => s.weight)
+        ).toEqual([60, 50, null]);
+        expect(
+            applyLogSetWeightChange({
+                sets: [sets[0], { ...sets[1], skipped: true }, sets[2]],
+                steps,
+                stepKey: set1.stepKey,
+                weight: 60,
+                touchedStepKeys: new Set(),
+            }).map((s) => s.weight)
+        ).toEqual([60, null, null]);
+        expect(
+            applyLogSetWeightChange({
+                sets,
+                steps,
+                stepKey: set1.stepKey,
+                weight: 60,
+                touchedStepKeys: new Set([set2.stepKey]),
+            }).map((s) => s.weight)
+        ).toEqual([60, null, null]);
+    });
+
+    it("vaciar o escribir 0 no se propaga", () => {
+        for (const weight of [null, 0]) {
+            expect(
+                applyLogSetWeightChange({
+                    sets,
+                    steps,
+                    stepKey: set1.stepKey,
+                    weight,
+                    touchedStepKeys: new Set(),
+                }).map((s) => s.weight)
+            ).toEqual([weight, null, null]);
+        }
     });
 });

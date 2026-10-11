@@ -18,17 +18,12 @@ import {
 } from "@/components/athlete/logging";
 import { AthleteForTimeCompletionReview } from "@/components/athlete/execution/AthleteForTimeCompletionReview";
 import { AthleteRoundEffortSection } from "@/components/athlete/execution/AthleteRoundEffortSection";
-import type {
-    AthleteSessionLogBlockDraft,
-    AthleteSessionLogBlockModel,
-} from "@nexia/shared/utils/athlete/athleteSessionLogUtils";
-import { runStepToFlatExercise } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
 import {
-    createSeriesWeightAutofillStore,
-    rememberSeriesWeightAutofill,
-    resolveInheritedLogSheetWeight,
-} from "@nexia/shared/utils/athlete/athleteLoggingUtils";
-import { useRef, useCallback } from "react";
+    applyLogSetWeightChange,
+    type AthleteSessionLogBlockDraft,
+    type AthleteSessionLogBlockModel,
+} from "@nexia/shared/utils/athlete/athleteSessionLogUtils";
+import { useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { AthleteRunExerciseNoteField } from "@/components/athlete/execution/AthleteRunExerciseNoteField";
 import { formatAthleteLogExerciseSetHeading } from "@nexia/shared/utils/athlete/athleteRunLabelPresentation";
@@ -74,7 +69,11 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
     errorMessage,
     isOnline,
 }) => {
-    const autofillRef = useRef(createSeriesWeightAutofillStore());
+    /** F5: series cuyo peso tocó el atleta en este bloque (no se autorrellenan). */
+    const touchedWeightStepKeysRef = useRef<Set<string>>(new Set());
+    useEffect(() => {
+        touchedWeightStepKeysRef.current = new Set();
+    }, [block?.sessionBlockId]);
 
     const title = block?.blockTypeName ?? "Registrar bloque";
 
@@ -104,22 +103,19 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
     }, [block]);
 
     const handleWeightChange = useCallback(
-        (
-            stepKey: string,
-            exerciseScope: ReturnType<typeof runStepToFlatExercise>,
-            value: number | null
-        ) => {
-            if (!draft) return;
-            if (value != null) {
-                rememberSeriesWeightAutofill(autofillRef.current, exerciseScope, value);
-            }
-            const nextSets = draft.singleSets.map((row) => {
-                if (row.stepKey !== stepKey) return row;
-                return { ...row, weight: value };
+        (stepKey: string, value: number | null) => {
+            if (!draft || !block) return;
+            touchedWeightStepKeysRef.current.add(stepKey);
+            const singleSets = applyLogSetWeightChange({
+                sets: draft.singleSets,
+                steps: block.steps,
+                stepKey,
+                weight: value,
+                touchedStepKeys: touchedWeightStepKeysRef.current,
             });
-            onDraftChange({ ...draft, singleSets: nextSets });
+            onDraftChange({ ...draft, singleSets });
         },
-        [draft, onDraftChange]
+        [block, draft, onDraftChange]
     );
 
     if (sheetState === "error") {
@@ -231,14 +227,6 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                 {draft.singleSets.map((row) => {
                     const step = block.steps.find((s) => s.stepKey === row.stepKey);
                     if (!step) return null;
-                    const flat = runStepToFlatExercise(step);
-                    const weight = resolveInheritedLogSheetWeight({
-                        store: autofillRef.current,
-                        scope: flat,
-                        setIndex: flat.setIndex,
-                        skipped: row.skipped,
-                        draftWeight: row.weight,
-                    });
 
                     return (
                         <div
@@ -276,12 +264,10 @@ export const AthleteSessionLogBlockSheet: React.FC<AthleteSessionLogBlockSheetPr
                             {!row.skipped ? (
                                 <AthleteSetInputLogger
                                     inputMode={step.inputMode}
-                                    weight={weight}
+                                    weight={row.weight}
                                     plannedWeight={step.plannedWeight}
                                     reps={row.reps}
-                                    onWeightChange={(v) =>
-                                        handleWeightChange(row.stepKey, flat, v)
-                                    }
+                                    onWeightChange={(v) => handleWeightChange(row.stepKey, v)}
                                     onRepsChange={(reps) =>
                                         onDraftChange({
                                             ...draft,

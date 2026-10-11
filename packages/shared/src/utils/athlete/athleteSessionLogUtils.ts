@@ -12,7 +12,12 @@ import type {
 } from "../../types/athleteRunProgress";
 import type { SessionStructureView } from "../../sessionProgramming/sessionBlockView";
 import { getBlockDisplayName } from "../../sessionProgramming/sessionBlockView";
-import { buildAthleteRunSteps, type AthleteRunStep } from "./buildAthleteRunSteps";
+import {
+    buildAthleteRunSteps,
+    runStepToFlatExercise,
+    type AthleteRunStep,
+} from "./buildAthleteRunSteps";
+import { resolveSeriesWeightAutofillKey } from "./athleteLoggingUtils";
 import { exerciseNotesMapFromProgress } from "./athleteExerciseNoteUtils";
 import { resolveLogDraftSetWeight } from "./athleteSessionLogSave";
 import { resolveInitialSlotWeight } from "./runLoggerHydrationPolicy";
@@ -301,6 +306,37 @@ function defaultTimedDraft(
         forTimeTotalSeconds: saved?.total_seconds ?? 0,
         skipped: saved?.status === "not_performed",
     };
+}
+
+/**
+ * F5 — Cambio de peso en una serie simple del borrador. El valor tecleado (> 0) se
+ * copia a las series posteriores de la misma serie que siguen sin peso, sin tocar y
+ * sin marcar «No lo hice»: lo que se ve en ellas es lo que se guarda (D-LOG-TOUCH-01).
+ */
+export function applyLogSetWeightChange(input: {
+    sets: readonly AthleteSessionLogSetDraft[];
+    steps: readonly AthleteRunStep[];
+    stepKey: string;
+    weight: number | null;
+    touchedStepKeys: ReadonlySet<string>;
+}): AthleteSessionLogSetDraft[] {
+    const { sets, steps, stepKey, weight, touchedStepKeys } = input;
+    const changed = steps.find((s) => s.stepKey === stepKey);
+    const seriesKey = changed
+        ? resolveSeriesWeightAutofillKey(runStepToFlatExercise(changed))
+        : null;
+    const propagate = changed != null && weight != null && weight > 0;
+    return sets.map((set) => {
+        if (set.stepKey === stepKey) return { ...set, weight };
+        if (!propagate || set.weight != null || set.skipped) return set;
+        if (touchedStepKeys.has(set.stepKey)) return set;
+        const step = steps.find((s) => s.stepKey === set.stepKey);
+        if (!step || step.setIndex <= changed.setIndex) return set;
+        if (resolveSeriesWeightAutofillKey(runStepToFlatExercise(step)) !== seriesKey) {
+            return set;
+        }
+        return { ...set, weight };
+    });
 }
 
 /** Borrador inicial del sheet a partir de steps del bloque + progress BE-1. */
