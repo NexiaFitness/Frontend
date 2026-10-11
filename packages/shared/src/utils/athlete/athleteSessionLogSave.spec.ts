@@ -15,9 +15,10 @@ import {
     buildBlockSavePayloads,
     validateBlockDraft,
 } from "./athleteSessionLogSave";
-import type {
-    AthleteSessionLogBlockDraft,
-    AthleteSessionLogBlockModel,
+import {
+    buildInitialBlockDraft,
+    type AthleteSessionLogBlockDraft,
+    type AthleteSessionLogBlockModel,
 } from "./athleteSessionLogUtils";
 
 function slot(overrides: Partial<AthleteRunRoundSlot>): AthleteRunRoundSlot {
@@ -161,5 +162,43 @@ describe("F4 · grupos en registrar al final", () => {
             [slotA.stepKey, "weight_reps", 30, 10],
             [repsOnly.stepKey, "reps_only", null, 8],
         ]);
+    });
+});
+
+function singleStep(overrides: Partial<AthleteRunStep> = {}): AthleteRunStep {
+    return {
+        ...supersetStep([]),
+        stepKey: "block-578-single-0-r1-S2-S1-1",
+        kind: "single_set",
+        groupKind: "single_set",
+        groupId: "block-578-single-0",
+        exerciseName: "Sentadilla trasera",
+        setLabel: "S1",
+        setIndex: 1,
+        slots: undefined,
+        ...overrides,
+    } as AthleteRunStep;
+}
+
+describe("F1 · registrar al final sin peso prescrito", () => {
+    it("el borrador inicial deja el peso vacío (null), no 0", () => {
+        const step = singleStep();
+        const superset = supersetStep([slot({})]);
+        const draft = buildInitialBlockDraft(blockOf([step, superset]), null);
+
+        expect(draft.singleSets[0]?.weight).toBeNull();
+        expect(draft.groupRounds[0]?.slotLogs[slot({}).stepKey]?.weight).toBeNull();
+    });
+
+    it("una serie weight_reps sin peso bloquea el guardado con aviso", () => {
+        const step = singleStep();
+        const draft: AthleteSessionLogBlockDraft = {
+            ...emptyDraft(),
+            singleSets: [{ stepKey: step.stepKey, weight: null, reps: 8, skipped: false }],
+        };
+
+        expect(validateBlockDraft(blockOf([step]), draft)).toBe(
+            "Falta el peso en Sentadilla trasera · Serie 1. Escríbelo (0 si fue sin carga) o marca «No lo hice»."
+        );
     });
 });

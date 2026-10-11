@@ -113,3 +113,20 @@ describe("forTimeResult", () => {
         expect(payloads[0]?.data).not.toHaveProperty("notes");
     });
 });
+
+describe("buildForTimeSavePayloads · peso no prescrito (F1)", () => {
+    it("sin prescripción el peso es null, nunca 0 kg; con prescripción se mantiene", () => {
+        const unweighted: AthleteForTimeRound = {
+            ...round(1, 2),
+            slots: [{ ...SLOT, stepKey: "r1-s1", blockExerciseId: 11, defaultWeight: 0 }],
+        };
+        const payloads = buildForTimeSavePayloads({
+            rounds: [unweighted, round(2, 2)],
+            totalSeconds: 300,
+            roundRpe: null,
+            getNextActualSets: () => 1,
+        });
+
+        expect(payloads.map((p) => p.data.actual_weight)).toEqual([null, 40]);
+    });
+});

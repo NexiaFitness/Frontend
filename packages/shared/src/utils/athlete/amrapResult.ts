@@ -2,6 +2,8 @@
  * amrapResult.ts — Cálculo y formato de resultado AMRAP (rondas + parcial secuencial).
  */
 
+import { resolveInitialSlotWeight } from "./runLoggerHydrationPolicy";
+
 export interface AmrapPartialSlot {
     stepKey: string;
     maxReps: number;
@@ -114,7 +116,7 @@ export function buildAmrapSavePayloads(input: {
 }): Array<{
     blockExerciseId: number;
     data: {
-        actual_weight: number;
+        actual_weight: number | null;
         actual_reps: string;
         actual_sets: number;
         actual_effort_value?: number;
@@ -138,7 +140,7 @@ export function buildAmrapSavePayloads(input: {
         return {
             blockExerciseId: slot.blockExerciseId,
             data: {
-                actual_weight: slot.defaultWeight,
+                actual_weight: resolveInitialSlotWeight(slot.defaultWeight),
                 actual_reps: String(totalReps),
                 actual_sets: input.getNextActualSets(
                     slot.blockExerciseId,

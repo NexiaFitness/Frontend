@@ -6,6 +6,7 @@ import {
     buildEmomSavePayloads,
     formatEmomCompletionNotation,
     formatEmomIntervalLabel,
+    getEmomTemplateSlots,
     isEmomCompletionValid,
     resizeEmomFailureEntries,
     resolveEmomFailureState,
@@ -132,5 +133,26 @@ describe("emomResult", () => {
         expect(payloads[0]?.data).not.toHaveProperty("notes");
         expect(payloads[1]?.data.actual_reps).toBe("6");
         expect(payloads[1]?.data.actual_effort_value).toBe(8);
+    });
+});
+
+describe("buildEmomSavePayloads · peso no prescrito (F1)", () => {
+    it("sin prescripción el peso es null, nunca 0 kg; con prescripción se mantiene", () => {
+        const unweighted = interval(1, "i1");
+        const weighted: AthleteEmomInterval = {
+            ...interval(2, "i2"),
+            slots: [{ ...SLOT, stepKey: "i2-s1", blockExerciseId: 11, inputMode: "weight_reps", defaultWeight: 24 }],
+        };
+        const intervals = [unweighted, weighted];
+        const payloads = buildEmomSavePayloads({
+            intervals,
+            asPlanned: true,
+            failedCount: 0,
+            failureEntries: [],
+            templateSlots: getEmomTemplateSlots(intervals),
+            roundRpe: null,
+        });
+
+        expect(payloads.map((p) => p.data.actual_weight)).toEqual([null, 24]);
     });
 });

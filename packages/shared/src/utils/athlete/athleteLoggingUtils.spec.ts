@@ -88,7 +88,7 @@ describe("series weight autofill store", () => {
                 scope,
                 setIndex: 2,
                 skipped: false,
-                draftWeight: 0,
+                draftWeight: null,
             })
         ).toBe(60);
         expect(
@@ -97,9 +97,9 @@ describe("series weight autofill store", () => {
                 scope,
                 setIndex: 1,
                 skipped: false,
-                draftWeight: 0,
+                draftWeight: null,
             })
-        ).toBe(0);
+        ).toBeNull();
     });
 });
 

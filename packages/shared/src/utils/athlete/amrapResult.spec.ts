@@ -77,3 +77,20 @@ describe("amrapResult", () => {
         expect(computeAmrapPartialTotal([12, 7])).toBe(19);
     });
 });
+
+describe("buildAmrapSavePayloads · peso no prescrito (F1)", () => {
+    it("sin prescripción el peso es null, nunca 0 kg; con prescripción se mantiene", () => {
+        const payloads = buildAmrapSavePayloads({
+            fullRounds: 2,
+            slots: [
+                { stepKey: "a", blockExerciseId: 1, plannedRepsPerRound: 10, defaultWeight: 0, loggedSets: 0 },
+                { stepKey: "b", blockExerciseId: 2, plannedRepsPerRound: 8, defaultWeight: 40, loggedSets: 0 },
+            ],
+            partialReps: {},
+            roundRpe: null,
+            getNextActualSets: () => 1,
+        });
+
+        expect(payloads.map((p) => p.data.actual_weight)).toEqual([null, 40]);
+    });
+});

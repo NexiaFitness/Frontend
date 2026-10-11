@@ -2,6 +2,7 @@
  * forTimeResult.ts — Etiquetas, splits y guardado de bloques FOR TIME continuos (V05).
  */
 
+import { resolveInitialSlotWeight } from "./runLoggerHydrationPolicy";
 import type { AthleteForTimeRound } from "./buildAthleteRunSteps";
 
 export interface ForTimeSplitView {
@@ -96,7 +97,7 @@ export function buildForTimeSavePayloads(input: {
     roundKey: string;
     loggedSets: number;
     data: {
-        actual_weight: number;
+        actual_weight: number | null;
         actual_reps: string;
         actual_sets: number;
         actual_effort_value?: number;
@@ -108,7 +109,7 @@ export function buildForTimeSavePayloads(input: {
         roundKey: string;
         loggedSets: number;
         data: {
-            actual_weight: number;
+            actual_weight: number | null;
             actual_reps: string;
             actual_sets: number;
             actual_effort_value?: number;
@@ -126,7 +127,7 @@ export function buildForTimeSavePayloads(input: {
                 roundKey: round.roundKey,
                 loggedSets: slot.loggedSets,
                 data: {
-                    actual_weight: slot.defaultWeight,
+                    actual_weight: resolveInitialSlotWeight(slot.defaultWeight),
                     actual_reps: String(slot.defaultReps),
                     actual_sets: nextSets,
                     ...(!wroteDuration ? { actual_duration: input.totalSeconds } : {}),

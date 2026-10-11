@@ -2,6 +2,7 @@
  * emomResult.ts — Planificación, etiquetas y guardado de bloques EMOM continuos (V05).
  */
 
+import { resolveInitialSlotWeight } from "./runLoggerHydrationPolicy";
 import type { AthleteEmomInterval, AthleteRunRoundSlot } from "./buildAthleteRunSteps";
 
 /** Reps por ejercicio en un fallo (plantilla del intervalo de referencia). */
@@ -143,7 +144,7 @@ export function buildEmomSavePayloads(input: {
     intervalKey: string;
     loggedSets: number;
     data: {
-        actual_weight: number;
+        actual_weight: number | null;
         actual_reps: string;
         actual_effort_value?: number;
     };
@@ -162,7 +163,7 @@ export function buildEmomSavePayloads(input: {
         intervalKey: string;
         loggedSets: number;
         data: {
-            actual_weight: number;
+            actual_weight: number | null;
             actual_reps: string;
             actual_effort_value?: number;
         };
@@ -182,7 +183,7 @@ export function buildEmomSavePayloads(input: {
                 intervalKey: interval.intervalKey,
                 loggedSets: slot.loggedSets,
                 data: {
-                    actual_weight: slot.defaultWeight,
+                    actual_weight: resolveInitialSlotWeight(slot.defaultWeight),
                     actual_reps: String(reps),
                 },
             });

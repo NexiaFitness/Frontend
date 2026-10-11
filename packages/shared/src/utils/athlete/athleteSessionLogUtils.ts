@@ -15,6 +15,7 @@ import { getBlockDisplayName } from "../../sessionProgramming/sessionBlockView";
 import { buildAthleteRunSteps, type AthleteRunStep } from "./buildAthleteRunSteps";
 import { exerciseNotesMapFromProgress } from "./athleteExerciseNoteUtils";
 import { resolveLogDraftSetWeight } from "./athleteSessionLogSave";
+import { resolveInitialSlotWeight } from "./runLoggerHydrationPolicy";
 import {
     amrapPartialRepsFromDetail,
     amrapPartialTotalFromDetail,
@@ -40,7 +41,8 @@ export interface AthleteSessionLogBlockModel {
 
 export interface AthleteSessionLogSetDraft {
     stepKey: string;
-    weight: number;
+    /** null = sin peso (ni prescrito ni tecleado); 0 = 0 kg explícito (D-LOG-TOUCH-01). */
+    weight: number | null;
     reps: number;
     rpe?: number | null;
     skipped: boolean;
@@ -256,7 +258,7 @@ function defaultRoundDraft(
     for (const slot of step.slots ?? []) {
         const slotSaved = progressByKey?.get(slot.stepKey);
         slotLogs[slot.stepKey] = {
-            weight: slotSaved?.weight_kg ?? slot.defaultWeight,
+            weight: slotSaved?.weight_kg ?? resolveInitialSlotWeight(slot.defaultWeight),
             reps: slotSaved?.reps ?? slot.defaultReps,
             durationSeconds: slotSaved?.duration_seconds ?? slot.defaultReps,
         };

@@ -37,6 +37,7 @@ import { buildAmrapSavePayloads } from "./amrapResult";
 import { buildForTimeSavePayloads } from "./forTimeResult";
 import { buildEmomSavePayloads, getEmomTemplateSlots, resolveEmomFailureState } from "./emomResult";
 import { isRunLoggerSlotConfirmValid } from "./runLoggerHydrationPolicy";
+import { formatAthleteLogExerciseSetHeading } from "./athleteRunLabelPresentation";
 import type {
     AthleteSessionLogBlockDraft,
     AthleteSessionLogBlockModel,
@@ -52,11 +53,11 @@ import type { AthleteRunProgressStep } from "../../types/athleteRunProgress";
 export function resolveLogDraftSetWeight(
     step: Pick<AthleteRunStep, "defaultWeight" | "plannedWeight">,
     saved?: AthleteRunProgressStep
-): number {
+): number | null {
     if (saved?.weight_kg != null) return saved.weight_kg;
     if (step.defaultWeight != null && step.defaultWeight > 0) return step.defaultWeight;
     if (step.plannedWeight != null && step.plannedWeight > 0) return step.plannedWeight;
-    return 0;
+    return null;
 }
 
 export interface BlockSavePayloads {
@@ -135,7 +136,9 @@ export function buildBlockSavePayloads(
         }
         const flat = runStepToFlatExercise(step);
         const weight =
-            setDraft.weight > 0 ? setDraft.weight : resolveLogDraftSetWeight(step);
+            setDraft.weight != null && setDraft.weight > 0
+                ? setDraft.weight
+                : resolveLogDraftSetWeight(step);
         executions.push(
             buildAthleteRunExecutionPayload(sessionId, flat, {
                 weight,
@@ -372,6 +375,27 @@ function findIncompleteRoundSlot(
     return null;
 }
 
+/** F1: first incomplete non-skipped single set, as a user-facing message. */
+function findIncompleteSingleSet(
+    block: AthleteSessionLogBlockModel,
+    sets: AthleteSessionLogBlockDraft["singleSets"]
+): string | null {
+    for (const set of sets) {
+        if (set.skipped) continue;
+        const step = block.steps.find((s) => s.stepKey === set.stepKey);
+        if (!step) continue;
+        const missing = missingFieldFor(set, step.inputMode ?? "weight_reps");
+        if (missing) {
+            return missingDataMessage(
+                missing,
+                formatAthleteLogExerciseSetHeading(step.exerciseName || "Ejercicio", step.setLabel),
+                "«No lo hice»"
+            );
+        }
+    }
+    return null;
+}
+
 export function validateBlockDraft(
     block: AthleteSessionLogBlockModel,
     draft: AthleteSessionLogBlockDraft
@@ -399,6 +423,9 @@ export function validateBlockDraft(
         }
     }
 
+    const incompleteSingle = findIncompleteSingleSet(block, draft.singleSets);
+    if (incompleteSingle) return incompleteSingle;
+
     const incompleteRound = findIncompleteRoundSlot(block, [
         ...draft.groupRounds,
         ...draft.dropsetRounds,
@@ -406,7 +433,7 @@ export function validateBlockDraft(
     if (incompleteRound) return incompleteRound;
 
     const hasSingle = draft.singleSets.some(
-        (s) => !s.skipped && (s.weight > 0 || s.reps > 0)
+        (s) => !s.skipped && ((s.weight != null && s.weight > 0) || s.reps > 0)
     );
     const hasRound = [...draft.groupRounds, ...draft.dropsetRounds].some(
         (r) =>

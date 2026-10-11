@@ -79,11 +79,12 @@ export function resolveInheritedLogSheetWeight(input: {
     scope: SeriesWeightAutofillScope;
     setIndex: number;
     skipped: boolean;
-    draftWeight: number;
-}): number {
+    /** null = sin peso (ni prescrito ni tecleado); 0 = 0 kg explícito. */
+    draftWeight: number | null;
+}): number | null {
     if (input.setIndex <= 1 || input.skipped) return input.draftWeight;
     const inherited = input.store.get(resolveSeriesWeightAutofillKey(input.scope));
-    if (inherited != null && inherited > 0 && input.draftWeight === 0) {
+    if (inherited != null && inherited > 0 && input.draftWeight == null) {
         return inherited;
     }
     return input.draftWeight;
