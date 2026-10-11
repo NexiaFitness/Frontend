@@ -44,6 +44,7 @@ export function useAthleteRunSingleLoggerDefaults({
     setRpe,
 }: UseAthleteRunSingleLoggerDefaultsOptions): void {
     const singleLoggerDefaultsStepRef = useRef<string | null>(null);
+    const singleLoggerLastExerciseIdRef = useRef<number | null>(null);
 
     useEffect(() => {
         singleLoggerDefaultsStepRef.current = null;
@@ -80,7 +81,9 @@ export function useAthleteRunSingleLoggerDefaults({
             resolveSeriesWeightAutofillKey(current)
         );
 
-        const allowCarryPrevWeight = singleLoggerDefaultsStepRef.current !== null;
+        const allowCarryPrevWeight =
+            singleLoggerLastExerciseIdRef.current != null &&
+            singleLoggerLastExerciseIdRef.current === current.exerciseId;
 
         const merged = mergeSingleLoggerWithDefaults({
             prev: { weight, reps, rpe },
@@ -102,6 +105,7 @@ export function useAthleteRunSingleLoggerDefaults({
         if (merged.rpe !== rpe) setRpe(merged.rpe);
 
         singleLoggerDefaultsStepRef.current = defaultsKey;
+        singleLoggerLastExerciseIdRef.current = current.exerciseId;
     }, [
         restShowLogger,
         current,

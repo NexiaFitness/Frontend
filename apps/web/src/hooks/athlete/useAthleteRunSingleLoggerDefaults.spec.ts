@@ -100,4 +100,38 @@ describe("useAthleteRunSingleLoggerDefaults", () => {
         expect(setWeight).not.toHaveBeenCalled();
         expect(setReps).not.toHaveBeenCalled();
     });
+
+    it("S2: nuevo ejercicio no arrastra peso del anterior", async () => {
+        const setWeight = vi.fn();
+        const seriesAutofillWeightRef = { current: new Map<string, number>() };
+        const ex1 = { ...baseExercise, exerciseId: 10, stepKey: "ex-a-s1" };
+        const ex2 = { ...baseExercise, exerciseId: 11, stepKey: "ex-b-s1", setIndex: 1 };
+
+        const { rerender } = renderHook(
+            ({ current }: { current: AthleteFlatExercise }) =>
+                useAthleteRunSingleLoggerDefaults({
+                    restShowLogger: true,
+                    current,
+                    isBatchStep: false,
+                    effectiveRunReference: undefined,
+                    getTouchedSnapshot: () => new Set(),
+                    weight: 80,
+                    reps: 10,
+                    rpe: null,
+                    seriesAutofillWeightRef,
+                    setWeight,
+                    setReps: vi.fn(),
+                    setRpe: vi.fn(),
+                }),
+            { initialProps: { current: ex1 } }
+        );
+
+        await act(async () => {
+            rerender({ current: ex2 });
+        });
+
+        await waitFor(() => {
+            expect(setWeight).toHaveBeenCalledWith(null);
+        });
+    });
 });
