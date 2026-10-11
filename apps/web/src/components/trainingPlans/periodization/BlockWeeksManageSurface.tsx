@@ -17,6 +17,7 @@ import { X } from "lucide-react";
 
 import {
     businessTodayYmd,
+    formatWeeksSkippedToast,
     getMutationErrorMessage,
     isWeeklyStructureDirty,
     propagateTemplateWeekEdit,
@@ -246,7 +247,7 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
         setIsSaving(true);
         try {
             const baselineWasEmpty = baseline.length === 0;
-            const saved = await persistBlockStructureEdit(
+            const persistResult = await persistBlockStructureEdit(
                 planId,
                 block.id,
                 block.start_date,
@@ -258,7 +259,7 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
                 createWeek,
                 syncRecurring,
             );
-            if (!saved) {
+            if (!persistResult.changed) {
                 showWarning("No hay cambios que guardar.");
                 return;
             }
@@ -295,7 +296,14 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
             const baselineSynced = cloneWeeklyStructureDraft(synced);
             setDraftSynced(draftSynced);
             setBaselineSynced(baselineSynced);
-            showSuccess("Semanas guardadas correctamente.");
+            const skippedMsg = formatWeeksSkippedToast(
+                persistResult.weeksSkipped,
+            );
+            const successParts = [
+                "Semanas guardadas correctamente.",
+                skippedMsg,
+            ].filter(Boolean);
+            showSuccess(successParts.join(" "));
         } catch (err) {
             showError(getMutationErrorMessage(err));
         } finally {

@@ -122,4 +122,6 @@ export interface WeeklyStructureSyncRecurringOut {
     applied_week_ordinals: number[];
     preserved_week_ordinals: number[];
     updated_personalized_ordinals: number[];
+    /** D-REP-6: semanas terminadas no reescritas por sync-recurring. */
+    weeks_skipped?: WeeklyStructureWeekSkippedItem[];
 }

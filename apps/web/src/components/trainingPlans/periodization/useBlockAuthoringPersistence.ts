@@ -9,6 +9,7 @@ import { useCallback, useRef, useState } from "react";
 
 import {
     businessTodayYmd,
+    formatWeeksSkippedToast,
     getMutationErrorMessage,
     isWeeklyStructureDirty,
 } from "@nexia/shared";
@@ -217,6 +218,7 @@ export function useBlockAuthoringPersistence({
         let updatedBlock: PlanPeriodBlock = persistedBlock;
         let blockFieldsPersisted = false;
         let structureFieldsPersisted = false;
+        let structureWeeksSkippedMessage: string | null = null;
 
         try {
             if (blockFieldsChanged(payload, persistedBlock)) {
@@ -231,7 +233,7 @@ export function useBlockAuthoringPersistence({
             if (structureIsDirty) {
                 setIsSavingStructure(true);
                 try {
-                    structureFieldsPersisted =
+                    const structurePersistResult =
                         await persistBlockStructureEdit(
                             planId,
                             blockId,
@@ -244,6 +246,10 @@ export function useBlockAuthoringPersistence({
                             createWeek,
                             syncRecurring,
                         );
+                    structureFieldsPersisted = structurePersistResult.changed;
+                    structureWeeksSkippedMessage = formatWeeksSkippedToast(
+                        structurePersistResult.weeksSkipped,
+                    );
                 } finally {
                     setIsSavingStructure(false);
                 }
@@ -302,7 +308,11 @@ export function useBlockAuthoringPersistence({
                     ),
                 );
                 onStructureSynced?.(blockId, refetchResult.data.weeks);
-                showSuccess("Fase guardada correctamente.");
+                const successParts = [
+                    "Fase guardada correctamente.",
+                    structureWeeksSkippedMessage,
+                ].filter(Boolean);
+                showSuccess(successParts.join(" "));
                 onEditSuccess?.();
                 return;
             }

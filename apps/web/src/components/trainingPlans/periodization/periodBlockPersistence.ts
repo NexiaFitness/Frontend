@@ -27,9 +27,16 @@ import type {
 import type {
     WeeklyStructureOut,
     WeeklyStructureSyncRecurringIn,
+    WeeklyStructureSyncRecurringOut,
     WeeklyStructureWeek,
     WeeklyStructureWeekCreate,
+    WeeklyStructureWeekSkippedItem,
 } from "@nexia/shared/types/weeklyStructure";
+
+export interface PersistBlockStructureEditResult {
+    changed: boolean;
+    weeksSkipped?: WeeklyStructureWeekSkippedItem[];
+}
 
 export interface PeriodBlockPersistPayload {
     start_date: string;
@@ -155,7 +162,7 @@ type SyncRecurringFn = (args: {
     planId: number;
     blockId: number;
     body: WeeklyStructureSyncRecurringIn;
-}) => { unwrap: () => Promise<unknown> };
+}) => { unwrap: () => Promise<WeeklyStructureSyncRecurringOut> };
 
 const TEMPLATE_WEEK_ORDINAL = 1;
 
@@ -355,26 +362,29 @@ export async function persistBlockStructureEdit(
     updateWeek: UpdateWeekFn,
     createWeek: CreateWeekFn,
     syncRecurring: SyncRecurringFn,
-): Promise<boolean> {
+): Promise<PersistBlockStructureEditResult> {
     if (draft.length === 0) {
-        return false;
+        return { changed: false };
     }
+
+    let weeksSkipped: WeeklyStructureWeekSkippedItem[] | undefined;
 
     if (diffBaseline.length === 0) {
         const templateDraft = draft.find(
             (w) => w.week_ordinal === TEMPLATE_WEEK_ORDINAL,
         );
         if (templateDraft == null) {
-            return false;
+            return { changed: false };
         }
-        await syncRecurring({
+        const syncOut = await syncRecurring({
             planId,
             blockId,
             body: {
                 template_week: templateDraft,
             },
         }).unwrap();
-        return true;
+        weeksSkipped = syncOut.weeks_skipped;
+        return { changed: true, weeksSkipped };
     }
 
     const baselineByOrdinal = new Map(
@@ -394,7 +404,7 @@ export async function persistBlockStructureEdit(
         .map((weekDraft) => weekDraft.week_ordinal);
 
     if (changedOrdinals.length === 0) {
-        return false;
+        return { changed: false };
     }
 
     let changed = false;
@@ -405,7 +415,7 @@ export async function persistBlockStructureEdit(
             (w) => w.week_ordinal === TEMPLATE_WEEK_ORDINAL,
         );
         if (templateDraft == null) {
-            return false;
+            return { changed: false };
         }
 
         const baselineKinds = classifyWeeksByTemplate(
@@ -430,7 +440,7 @@ export async function persistBlockStructureEdit(
             );
         });
 
-        await syncRecurring({
+        const syncOut = await syncRecurring({
             planId,
             blockId,
             body: {
@@ -441,6 +451,7 @@ export async function persistBlockStructureEdit(
                         : undefined,
             },
         }).unwrap();
+        weeksSkipped = syncOut.weeks_skipped;
         changed = true;
 
         // Ordinales nuevos (no en servidor): sync-recurring no los crea.
@@ -463,7 +474,7 @@ export async function persistBlockStructureEdit(
             changed = true;
         }
 
-        return changed;
+        return { changed, weeksSkipped };
     }
 
     for (const weekDraft of draft) {
@@ -482,7 +493,7 @@ export async function persistBlockStructureEdit(
         changed = true;
     }
 
-    return changed;
+    return { changed, weeksSkipped };
 }
 
 /** PUT/create only weeks whose structure changed vs persisted snapshot. */
