@@ -14,6 +14,7 @@ import {
     type TrainingPlanCreate,
     type TrainingPlanUpdate,
 } from "../types/training";
+import { businessTodayYmd } from "../utils/businessCalendar";
 
 /** Valores del formulario compartidos entre create y edit (capa UI). */
 export interface TrainingPlanEditorDraft {
@@ -46,7 +47,7 @@ export interface TrainingPlanInstanceOverlapRow {
 export function createEmptyTrainingPlanEditorDraft(
     defaults?: Partial<Pick<TrainingPlanEditorDraft, "start_date">>
 ): TrainingPlanEditorDraft {
-    const today = new Date().toISOString().split("T")[0];
+    const today = businessTodayYmd();
     return {
         name: "",
         start_date: defaults?.start_date ?? today,

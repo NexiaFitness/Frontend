@@ -2,7 +2,11 @@
  * blockAuthoringPatternsUtils.ts — Patrones recurrentes por day_of_week (D-ST wizard).
  */
 
-import { classifyWeeksWithBaseline } from "@nexia/shared";
+import {
+    classifyWeeksWithBaseline,
+    isBlockWeekFinished,
+    type PropagateTemplateWeekEditOptions,
+} from "@nexia/shared";
 import type {
     WeeklyStructureDayPatternInput,
     WeeklyStructureWeekCreate,
@@ -87,12 +91,32 @@ function updateWeekDayPatterns(
     };
 }
 
-/** Toggle en semana tipo; propaga a semanas heredadas, respeta personalizadas. */
+function weekReceivesTemplatePropagation(
+    weekOrdinal: number,
+    kinds: Record<number, "heredada" | "personalizada" | "pasada">,
+    planning?: PropagateTemplateWeekEditOptions,
+): boolean {
+    if (weekOrdinal === 1) return true;
+    if (
+        planning &&
+        isBlockWeekFinished(
+            planning.blockStartISO,
+            weekOrdinal,
+            planning.todayYmd,
+        )
+    ) {
+        return false;
+    }
+    return kinds[weekOrdinal] !== "personalizada";
+}
+
+/** Toggle en semana tipo; propaga a semanas heredadas, respeta personalizadas y pasadas (D-REP-6). */
 export function togglePatternOnRecurringDay(
     weeklyStructure: readonly WeeklyStructureWeekCreate[],
     dayOfWeek: number,
     patternId: number,
     structureBaseline?: readonly WeeklyStructureWeekCreate[],
+    planning?: PropagateTemplateWeekEditOptions,
 ): WeeklyStructureWeekCreate[] {
     const week1 = weeklyStructure.find((w) => w.week_ordinal === 1);
     if (!week1) return weeklyStructure.map(cloneWeek);
@@ -104,7 +128,13 @@ export function togglePatternOnRecurringDay(
     const kinds = classifyWeeksWithBaseline(weeklyStructure, structureBaseline, 1);
 
     return weeklyStructure.map((week) => {
-        if (week.week_ordinal !== 1 && kinds[week.week_ordinal] === "personalizada") {
+        if (
+            !weekReceivesTemplatePropagation(
+                week.week_ordinal,
+                kinds,
+                planning,
+            )
+        ) {
             return cloneWeek(week);
         }
         return updateWeekDayPatterns(week, dayOfWeek, nextPatterns);
@@ -170,6 +200,7 @@ export function copyPatternsFromDayToDay(
     fromDayOfWeek: number,
     toDayOfWeek: number,
     structureBaseline?: readonly WeeklyStructureWeekCreate[],
+    planning?: PropagateTemplateWeekEditOptions,
 ): WeeklyStructureWeekCreate[] {
     if (fromDayOfWeek === toDayOfWeek) {
         return weeklyStructure.map(cloneWeek);
@@ -194,8 +225,11 @@ export function copyPatternsFromDayToDay(
 
     return weeklyStructure.map((week) => {
         if (
-            week.week_ordinal !== 1 &&
-            kinds[week.week_ordinal] === "personalizada"
+            !weekReceivesTemplatePropagation(
+                week.week_ordinal,
+                kinds,
+                planning,
+            )
         ) {
             return cloneWeek(week);
         }

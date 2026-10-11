@@ -14,6 +14,7 @@
 
 import {
     classifyWeeksByTemplate,
+    isBlockWeekFinished,
     weeklyStructureDraftsEqual,
     weeksStructureEqual,
 } from "@nexia/shared";
@@ -158,6 +159,13 @@ type SyncRecurringFn = (args: {
 
 const TEMPLATE_WEEK_ORDINAL = 1;
 
+/** D-REP-6: semanas terminadas no se comparan al draft propagado; se espera baseline o edición manual. */
+export interface ServerReflectWeeklyStructureContext {
+    blockStartISO: string;
+    todayYmd: string;
+    baseline: readonly WeeklyStructureWeekCreate[];
+}
+
 /**
  * Tras bootstrap (baseline vacío), el servidor replica semana tipo a 2..N;
  * solo exigimos paridad estructural en las semanas presentes en el draft local.
@@ -166,7 +174,61 @@ export function serverReflectsWeeklyStructureSave(
     synced: readonly WeeklyStructureWeekCreate[],
     draftSnapshot: readonly WeeklyStructureWeekCreate[],
     baselineWasEmpty: boolean,
+    context?: ServerReflectWeeklyStructureContext,
 ): boolean {
+    if (context) {
+        const syncedByOrdinal = new Map(
+            synced.map((w) => [w.week_ordinal, w]),
+        );
+        const draftByOrdinal = new Map(
+            draftSnapshot.map((w) => [w.week_ordinal, w]),
+        );
+        const baselineByOrdinal = new Map(
+            context.baseline.map((w) => [w.week_ordinal, w]),
+        );
+
+        for (const weekDraft of draftSnapshot) {
+            const ordinal = weekDraft.week_ordinal;
+            const syncedWeek = syncedByOrdinal.get(ordinal);
+            if (!syncedWeek) {
+                return false;
+            }
+
+            const finished = isBlockWeekFinished(
+                context.blockStartISO,
+                ordinal,
+                context.todayYmd,
+            );
+            const baselineWeek = baselineByOrdinal.get(ordinal);
+            const draftWeek = draftByOrdinal.get(ordinal);
+
+            if (finished) {
+                if (
+                    baselineWeek &&
+                    draftWeek &&
+                    !weeksStructureEqual(draftWeek, baselineWeek)
+                ) {
+                    if (!weeksStructureEqual(syncedWeek, draftWeek)) {
+                        return false;
+                    }
+                } else if (baselineWeek) {
+                    if (!weeksStructureEqual(syncedWeek, baselineWeek)) {
+                        return false;
+                    }
+                }
+                continue;
+            }
+
+            if (
+                !draftWeek ||
+                !weeksStructureEqual(syncedWeek, draftWeek)
+            ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     if (!baselineWasEmpty) {
         return weeklyStructureDraftsEqual(synced, draftSnapshot);
     }

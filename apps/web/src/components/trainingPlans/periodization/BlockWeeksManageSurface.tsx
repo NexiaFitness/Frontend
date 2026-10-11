@@ -16,10 +16,11 @@ import React, {
 import { X } from "lucide-react";
 
 import {
-    classifyWeeksByTemplate,
+    businessTodayYmd,
     getMutationErrorMessage,
     isWeeklyStructureDirty,
     propagateTemplateWeekEdit,
+    resolveWeekStructureKindByOrdinal,
     weeklyStructureDraftsEqual,
 } from "@nexia/shared";
 import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
@@ -136,10 +137,20 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
     );
 
     /** Edición del usuario: aplica la regla D-ST de semana tipo antes de guardar. */
+    const planningOptions = useMemo(
+        () => ({
+            blockStartISO: block.start_date,
+            todayYmd: businessTodayYmd(),
+        }),
+        [block.start_date],
+    );
+
     const handleDraftEdit = useCallback(
         (next: WeeklyStructureWeekCreate[]) =>
-            setDraftSynced((prev) => propagateTemplateWeekEdit(prev, next)),
-        [setDraftSynced],
+            setDraftSynced((prev) =>
+                propagateTemplateWeekEdit(prev, next, 1, planningOptions),
+            ),
+        [setDraftSynced, planningOptions],
     );
 
     const setBaselineSynced = useCallback(
@@ -185,8 +196,14 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
     );
 
     const weekKindByOrdinal = useMemo(
-        () => classifyWeeksByTemplate(draft, 1),
-        [draft],
+        () =>
+            resolveWeekStructureKindByOrdinal(
+                draft,
+                block.start_date,
+                businessTodayYmd(),
+                1,
+            ),
+        [draft, block.start_date],
     );
 
     const editorTrainingDays = useMemo(() => {
@@ -260,6 +277,11 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
                     synced,
                     draft,
                     baselineWasEmpty,
+                    {
+                        blockStartISO: block.start_date,
+                        todayYmd: businessTodayYmd(),
+                        baseline,
+                    },
                 )
             ) {
                 showError(

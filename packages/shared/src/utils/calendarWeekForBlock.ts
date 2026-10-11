@@ -81,6 +81,17 @@ export function getBlockCalendarWeekCount(
 /**
  * Etiqueta corta lun–dom de la semana ordinal N del bloque (semana calendario completa).
  */
+/** Lunes YYYY-MM-DD de la semana ordinal N del bloque (anclada a start_date). */
+export function getBlockWeekMondayYmd(
+    blockStartISO: string,
+    weekOrdinal: number,
+): string {
+    return addDaysToLocalISO(
+        getMondayOfWeekLocal(blockStartISO),
+        (weekOrdinal - 1) * 7,
+    );
+}
+
 export function formatCalendarWeekRange(
     weekOrdinal: number,
     blockStartISO: string,

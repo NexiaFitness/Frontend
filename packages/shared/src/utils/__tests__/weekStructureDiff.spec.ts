@@ -94,5 +94,15 @@ describe("weekStructureDiff", () => {
             const result = propagateTemplateWeekEdit([week(1, 1)], [week(1, 2)]);
             expect(result).toEqual([week(1, 2)]);
         });
+
+        it("D-REP-6: no propaga a semana terminada del bloque", () => {
+            const previous = [week(1, 1), week(2, 1)];
+            const next = [week(1, 9), week(2, 1)];
+            const result = propagateTemplateWeekEdit(previous, next, 1, {
+                blockStartISO: "2026-01-05",
+                todayYmd: "2026-10-11",
+            });
+            expect(result.find((w) => w.week_ordinal === 2)).toEqual(week(2, 1));
+        });
     });
 });

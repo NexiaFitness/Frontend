@@ -46,8 +46,12 @@ import type {
 } from "@nexia/shared/types/weeklyStructure";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 import {
+    businessTodayYmd,
     formatCalendarWeekRange,
+    formatSessionsSkippedPastMessage,
+    formatWeeksSkippedToast,
     getMutationErrorMessage,
+    isBlockWeekFinished,
     UI_BUCKET_LABELS,
     UI_BUCKET_ORDER,
     generateSyntheticWeeks,
@@ -593,9 +597,16 @@ export const WeeklyStructureEditor = forwardRef<
                     force: forceRepeat,
                 },
             }).unwrap();
-            showSuccess(
-                `Semana repetida en ${result.copied_week_ordinals.length} semana(s). ${result.sessions_copied} sesión(es) copiadas.`
+            const skippedWeeksMsg = formatWeeksSkippedToast(result.weeks_skipped);
+            const skippedPastMsg = formatSessionsSkippedPastMessage(
+                result.sessions_skipped_past,
             );
+            const parts = [
+                `Semana repetida en ${result.copied_week_ordinals.length} semana(s). ${result.sessions_copied} sesión(es) copiadas.`,
+                skippedWeeksMsg,
+                skippedPastMsg,
+            ].filter(Boolean);
+            showSuccess(parts.join(" "));
             setRepeatModalOpen(false);
             setRepeatTargetWeek(null);
             setSelectedTargetOrdinals([]);
@@ -1010,10 +1021,21 @@ export const WeeklyStructureEditor = forwardRef<
                                     ...weeks.map((w) => w.week_ordinal),
                                     repeatTargetWeek.week_ordinal
                                 );
+                                const blockStart = block?.start_date;
+                                const todayYmd = businessTodayYmd();
                                 const allOrdinals = Array.from(
                                     { length: maxOrdinal + 4 },
-                                    (_, i) => i + 1
-                                ).filter((o) => o !== repeatTargetWeek.week_ordinal);
+                                    (_, i) => i + 1,
+                                )
+                                    .filter((o) => o !== repeatTargetWeek.week_ordinal)
+                                    .filter((o) => {
+                                        if (!blockStart) return true;
+                                        return !isBlockWeekFinished(
+                                            blockStart,
+                                            o,
+                                            todayYmd,
+                                        );
+                                    });
                                 return allOrdinals.map((ordinal) => {
                                     const exists = weeks.some((w) => w.week_ordinal === ordinal);
                                     const selected = selectedTargetOrdinals.includes(ordinal);

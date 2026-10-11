@@ -449,10 +449,24 @@ export {
     classifyWeeksByTemplate,
     classifyWeeksWithBaseline,
     resolveStructureClassificationReference,
+    resolveWeekStructureKindByOrdinal,
+    isBlockWeekFinished,
     findTemplateWeek,
     propagateTemplateWeekEdit,
     type WeekStructureKind,
+    type PropagateTemplateWeekEditOptions,
 } from "./utils/weekStructureDiff";
+export {
+    businessDayYmdFromInstant,
+    businessTodayYmd,
+    weekSundayYmd,
+    isWeekFinished,
+} from "./utils/businessCalendar";
+export {
+    formatWeekSkippedReasonLabel,
+    formatWeeksSkippedToast,
+    formatSessionsSkippedPastMessage,
+} from "./utils/blockReplicationPresentation";
 export {
     getWeekdaysPresentInBlockRange,
     isWeekdayInBlockRange,

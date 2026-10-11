@@ -6,9 +6,9 @@
  * bloque, igual que el backend (planning/helpers.block_calendar_week_ordinal).
  * Ver docs/planificacion/auditoria-propagacion-bloque-sesiones-2026-10/.
  *
- * Notas de mantenimiento: funciones puras, fechas locales YYYY-MM-DD.
+ * Notas de mantenimiento: funciones puras, fechas YYYY-MM-DD (Europe/Madrid vía businessCalendar).
  * D-REP-3: no se ofrecen semanas cuya fecha destino cae fuera del bloque.
- * D11: no se ofrecen semanas cuya fecha destino es anterior a hoy (local).
+ * D-REP-6: no se ofrecen semanas cuya fecha destino es anterior a hoy (Madrid).
  * D-REP-1: solo `session_already_exists` es sustituible.
  *
  * @author Frontend Team
@@ -24,6 +24,7 @@ import {
     getBlockCalendarWeekCount,
     getBlockCalendarWeekOrdinal,
 } from "./calendarWeekForBlock";
+import { businessTodayYmd } from "./businessCalendar";
 
 export interface SessionReplicationWeekOption {
     ordinal: number;
@@ -35,23 +36,21 @@ export interface SessionReplicationWeekInput {
     blockStartISO: string;
     blockEndISO: string;
     sessionDateISO: string;
-    /** Fecha local «hoy» (YYYY-MM-DD); por defecto la del entorno. */
+    /** Día de negocio «hoy» (YYYY-MM-DD, Europe/Madrid); por defecto businessTodayYmd(). */
     asOfDateISO?: string;
 }
 
+/** @deprecated Use businessTodayYmd — conservado para tests que inyectan Date local. */
 export function getLocalTodayISO(today = new Date()): string {
-    const y = today.getFullYear();
-    const m = String(today.getMonth() + 1).padStart(2, "0");
-    const d = String(today.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
+    return businessTodayYmd(today);
 }
 
-/** Semanas destino válidas: excluye origen, fuera de bloque y fechas pasadas (D11). */
+/** Semanas destino válidas: excluye origen, fuera de bloque y fechas pasadas (D-REP-6). */
 export function buildSessionReplicationWeekOptions({
     blockStartISO,
     blockEndISO,
     sessionDateISO,
-    asOfDateISO = getLocalTodayISO(),
+    asOfDateISO = businessTodayYmd(),
 }: SessionReplicationWeekInput): SessionReplicationWeekOption[] {
     const totalWeeks = getBlockCalendarWeekCount(blockStartISO, blockEndISO);
     if (totalWeeks <= 0) return [];
@@ -81,7 +80,7 @@ export interface ReplicationSkipPartition {
     protectedItems: SkippedConflictItem[];
     /** Fecha destino fuera del bloque. */
     outsideBlock: SkippedConflictItem[];
-    /** Fecha destino anterior a hoy (D11). */
+    /** Fecha destino anterior a hoy (D-REP-6). */
     pastTargetDate: SkippedConflictItem[];
     /** Motivo desconocido del backend: nunca lanza. */
     unknown: SkippedConflictItem[];

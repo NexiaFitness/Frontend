@@ -21,6 +21,7 @@ const FORM_VARIANT = "premium" as const;
 import { Alert, useToast } from "@/components/ui/feedback";
 import { useAssignTemplate } from "@nexia/shared/hooks/training/useAssignTemplate";
 import {
+    businessTodayYmd,
     findOverlappingTrainingPlanInstance,
     getMutationErrorMessage,
     overlapModalDisplayFromInstance,
@@ -206,7 +207,7 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
         value: c.id.toString(),
         label: `${c.nombre} ${c.apellidos}`,
     }));
-    const today = new Date().toISOString().split("T")[0];
+    const today = businessTodayYmd();
 
     return (
         <>

@@ -79,10 +79,18 @@ export interface WeeklyStructureWeekRepeatIn {
     force: boolean;
 }
 
+export interface WeeklyStructureWeekSkippedItem {
+    week_ordinal: number;
+    reason?: string;
+}
+
 export interface WeeklyStructureWeekRepeatOut {
     copied_week_ordinals: number[];
     sessions_copied: number;
     sessions_skipped: number;
+    /** D-REP-6: opcional en backends antiguos. */
+    sessions_skipped_past?: number;
+    weeks_skipped?: WeeklyStructureWeekSkippedItem[];
 }
 
 // ---------------------------------------------------------------------------
@@ -98,6 +106,7 @@ export interface WeeklyStructureApplyTemplateIn {
 export interface WeeklyStructureApplyTemplateOut {
     applied_week_ordinals: number[];
     skipped_week_ordinals: number[];
+    weeks_skipped?: WeeklyStructureWeekSkippedItem[];
 }
 
 // ---------------------------------------------------------------------------

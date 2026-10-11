@@ -118,6 +118,7 @@ export interface TemplateAssignPreviewOut {
     assignable: boolean;
     block_reasons: string[];
     warnings: TemplateAssignWarning[];
+    sessions_skipped_past?: number;
 }
 
 export interface TemplateAssignIn {
@@ -134,6 +135,7 @@ export interface TemplateAssignOut {
     template_revision: number;
     template_revision_snapshot_id: number;
     warnings: TemplateAssignWarning[];
+    sessions_skipped_past?: number;
 }
 
 export interface TemplateProgramSessionCreate {

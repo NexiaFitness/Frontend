@@ -14,8 +14,21 @@ import type {
     WeeklyStructureWeek,
     WeeklyStructureWeekCreate,
 } from "../types/weeklyStructure";
+import { isWeekFinished } from "./businessCalendar";
+import { getBlockWeekMondayYmd } from "./calendarWeekForBlock";
 
-export type WeekStructureKind = "heredada" | "personalizada";
+export type WeekStructureKind = "heredada" | "personalizada" | "pasada";
+
+export function isBlockWeekFinished(
+    blockStartISO: string,
+    weekOrdinal: number,
+    todayYmd: string,
+): boolean {
+    return isWeekFinished(
+        getBlockWeekMondayYmd(blockStartISO, weekOrdinal),
+        todayYmd,
+    );
+}
 
 type WeekLike = WeeklyStructureWeek | WeeklyStructureWeekCreate;
 
@@ -101,6 +114,24 @@ export function resolveStructureClassificationReference(
 }
 
 /** Classify each week vs template as heredada or personalizada. */
+/** Etiquetas UI: semanas terminadas → pasada (D-REP-6 D5); semana tipo sigue editable. */
+export function resolveWeekStructureKindByOrdinal(
+    weeks: readonly WeekLike[],
+    blockStartISO: string,
+    todayYmd: string,
+    templateOrdinal = 1,
+): Record<number, WeekStructureKind> {
+    const structural = classifyWeeksByTemplate(weeks, templateOrdinal);
+    const out: Record<number, WeekStructureKind> = { ...structural };
+    for (const week of weeks) {
+        if (week.week_ordinal === templateOrdinal) continue;
+        if (isBlockWeekFinished(blockStartISO, week.week_ordinal, todayYmd)) {
+            out[week.week_ordinal] = "pasada";
+        }
+    }
+    return out;
+}
+
 export function classifyWeeksByTemplate(
     weeks: readonly WeekLike[],
     templateOrdinal = 1,
@@ -144,10 +175,16 @@ function cloneWeekAsOrdinal(
  * Paridad con el servidor (sync-recurring + D-REP-4): las heredadas del baseline
  * reciben la semana tipo; una heredada editada localmente viaja como excepción.
  */
+export interface PropagateTemplateWeekEditOptions {
+    blockStartISO: string;
+    todayYmd: string;
+}
+
 export function propagateTemplateWeekEdit(
     previous: readonly WeeklyStructureWeekCreate[],
     next: readonly WeeklyStructureWeekCreate[],
     templateOrdinal = 1,
+    planning?: PropagateTemplateWeekEditOptions,
 ): WeeklyStructureWeekCreate[] {
     const prevTemplate = previous.find((w) => w.week_ordinal === templateOrdinal);
     const nextTemplate = next.find((w) => w.week_ordinal === templateOrdinal);
@@ -161,6 +198,16 @@ export function propagateTemplateWeekEdit(
     const previousByOrdinal = new Map(previous.map((w) => [w.week_ordinal, w]));
     return next.map((week) => {
         if (week.week_ordinal === templateOrdinal) return week;
+        if (
+            planning &&
+            isBlockWeekFinished(
+                planning.blockStartISO,
+                week.week_ordinal,
+                planning.todayYmd,
+            )
+        ) {
+            return previousByOrdinal.get(week.week_ordinal) ?? week;
+        }
         const before = previousByOrdinal.get(week.week_ordinal);
         if (before == null || !weeksStructureEqual(before, prevTemplate)) {
             return week;

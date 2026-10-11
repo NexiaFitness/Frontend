@@ -8,6 +8,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import {
+    businessTodayYmd,
     getMutationErrorMessage,
     isWeeklyStructureDirty,
 } from "@nexia/shared";
@@ -281,6 +282,11 @@ export function useBlockAuthoringPersistence({
                         synced,
                         draftSnapshot,
                         baselineWasEmpty,
+                        {
+                            blockStartISO: form.startDate,
+                            todayYmd: businessTodayYmd(),
+                            baseline: baselineSnapshot,
+                        },
                     )
                 ) {
                     showError(

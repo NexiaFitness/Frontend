@@ -1,5 +1,5 @@
 /**
- * sessionReplication.spec.ts — Semanas destino y partición de omisiones (APB-01, D-REP-1..3, D11).
+ * sessionReplication.spec.ts — Semanas destino y partición de omisiones (APB-01, D-REP-1..3, D-REP-6).
  *
  * Contexto: regresión del cálculo de 7 días desde start_date en useReplicateSessionFlow.
  * @author Frontend Team
@@ -56,7 +56,7 @@ describe("buildSessionReplicationWeekOptions", () => {
         expect(options.map((o) => o.ordinal)).toEqual([1, 3, 4]);
     });
 
-    it("D11: no ofrece semanas con fecha destino anterior a asOfDateISO", () => {
+    it("D-REP-6: no ofrece semanas con fecha destino anterior a asOfDateISO", () => {
         const options = buildSessionReplicationWeekOptions({
             blockStartISO: "2026-03-02",
             blockEndISO: "2026-03-29",

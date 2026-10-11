@@ -72,11 +72,13 @@ export const PHASE_CONSTRUCTOR_PANEL_CLASS = cn(
 export const WEEK_KIND_BADGE_CLASS = {
     heredada: "bg-primary/10 text-primary border-primary/25",
     personalizada: "bg-warning/10 text-warning border-warning/25",
+    pasada: "bg-muted/50 text-muted-foreground border-border",
 } as const;
 
 export const WEEK_KIND_LABEL_ES = {
     heredada: "Heredada",
     personalizada: "Personalizada",
+    pasada: "Semana pasada",
 } as const;
 
 /** Acordeón semanas — colapsada: fila lista; expandida: sub-card con rim cyan. */

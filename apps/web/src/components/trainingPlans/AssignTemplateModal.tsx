@@ -24,6 +24,8 @@ import {
 import { useGetTrainingPlanInstancesQuery } from "@nexia/shared/api/trainingPlansApi";
 import type { AssignTemplateToClientParams } from "@nexia/shared/types/training";
 import {
+    businessTodayYmd,
+    formatSessionsSkippedPastMessage,
     formatTemplateAssignEndDate,
     TEMPLATE_ASSIGN_MODAL_COPY,
 } from "@nexia/shared";
@@ -52,7 +54,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
     clientId: fixedClientId,
     clientName: fixedClientName,
 }) => {
-    const { showError } = useToast();
+    const { showError, showSuccess } = useToast();
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined);
     const trainerId = trainerProfile?.id;
 
@@ -184,7 +186,13 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
     const performAssign = useCallback(
         async (params: AssignTemplateToClientParams) => {
             try {
-                await assignTemplate(params);
+                const assignResult = await assignTemplate(params);
+                const skippedPastMsg = formatSessionsSkippedPastMessage(
+                    assignResult.sessions_skipped_past,
+                );
+                if (skippedPastMsg) {
+                    showSuccess(skippedPastMsg);
+                }
 
                 if (onSuccess) {
                     onSuccess();
@@ -227,6 +235,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
             onSuccess,
             preview?.end_date,
             showError,
+            showSuccess,
         ],
     );
 
@@ -281,7 +290,10 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
         label: `${client.nombre} ${client.apellidos}`,
     }));
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = businessTodayYmd();
+    const previewSessionsSkippedPast = formatSessionsSkippedPastMessage(
+        preview?.sessions_skipped_past,
+    );
 
     return (
         <>
@@ -327,6 +339,12 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                                 <li key={w.code}>{w.message}</li>
                             ))}
                         </ul>
+                    </Alert>
+                ) : null}
+
+                {previewSessionsSkippedPast ? (
+                    <Alert variant="warning" title="Sesiones en fechas pasadas">
+                        {previewSessionsSkippedPast}
                     </Alert>
                 ) : null}
 

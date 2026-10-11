@@ -19,6 +19,7 @@ import { BlockPatternPickerSheet } from "./BlockPatternPickerSheet";
 import { PatternBadge } from "./PatternBadge";
 import { PeriodBlockIconButton } from "./PeriodBlockIconButton";
 import { NexiaSemanticIcon } from "@/components/ui/feedback";
+import { businessTodayYmd } from "@nexia/shared";
 import {
     copyPatternsFromDayToDay,
     getCopyablePatternSourceDays,
@@ -36,6 +37,8 @@ interface Props {
     activeDays: readonly number[];
     weeklyStructure: readonly WeeklyStructureWeekCreate[];
     structureBaseline?: readonly WeeklyStructureWeekCreate[];
+    /** D-REP-6: inicio de bloque para no propagar a semanas terminadas. */
+    blockStartISO?: string;
     onWeeklyStructureChange: (next: WeeklyStructureWeekCreate[]) => void;
     catalog: MovementPattern[];
     catalogLoading?: boolean;
@@ -62,6 +65,7 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
     activeDays,
     weeklyStructure,
     structureBaseline,
+    blockStartISO,
     onWeeklyStructureChange,
     catalog,
     catalogLoading,
@@ -82,6 +86,17 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
         [activeDays],
     );
 
+    const propagationPlanning = useMemo(
+        () =>
+            blockStartISO
+                ? {
+                      blockStartISO,
+                      todayYmd: businessTodayYmd(),
+                  }
+                : undefined,
+        [blockStartISO],
+    );
+
     const handleToggle = useCallback(
         (dayOfWeek: number, patternId: number) => {
             onWeeklyStructureChange(
@@ -90,10 +105,16 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
                     dayOfWeek,
                     patternId,
                     structureBaseline,
+                    propagationPlanning,
                 ),
             );
         },
-        [weeklyStructure, structureBaseline, onWeeklyStructureChange],
+        [
+            weeklyStructure,
+            structureBaseline,
+            propagationPlanning,
+            onWeeklyStructureChange,
+        ],
     );
 
     const pickerPatterns = pickerDay != null
@@ -125,10 +146,17 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
                     fromDayOfWeek,
                     pickerDay,
                     structureBaseline,
+                    propagationPlanning,
                 ),
             );
         },
-        [pickerDay, weeklyStructure, structureBaseline, onWeeklyStructureChange],
+        [
+            pickerDay,
+            weeklyStructure,
+            structureBaseline,
+            propagationPlanning,
+            onWeeklyStructureChange,
+        ],
     );
 
     if (activeDays.length === 0) {

@@ -825,6 +825,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                                 activeDays={activeDays}
                                 weeklyStructure={form.weeklyStructure}
                                 structureBaseline={structureBaseline}
+                                blockStartISO={form.startDate ?? undefined}
                                 onWeeklyStructureChange={setWeeklyStructure}
                                 catalog={patternsCatalog}
                                 catalogLoading={patternsLoading}

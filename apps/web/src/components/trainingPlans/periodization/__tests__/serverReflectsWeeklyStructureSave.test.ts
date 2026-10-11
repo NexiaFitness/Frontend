@@ -78,4 +78,53 @@ describe("serverReflectsWeeklyStructureSave", () => {
             serverReflectsWeeklyStructureSave(syncedWrongPatterns, draft, true),
         ).toBe(false);
     });
+
+    it("D-REP-6: semana terminada intacta en draft y servidor pasa el espejo", () => {
+        const baseline = [
+            {
+                week_ordinal: 1,
+                label: null,
+                days: [
+                    {
+                        day_of_week: 2,
+                        patterns: [{ movement_pattern_id: 1, sub_pattern: null }],
+                    },
+                ],
+            },
+            {
+                week_ordinal: 2,
+                label: null,
+                days: [
+                    {
+                        day_of_week: 2,
+                        patterns: [{ movement_pattern_id: 1, sub_pattern: null }],
+                    },
+                ],
+            },
+        ];
+        const draftAfterTemplateEdit = [
+            {
+                week_ordinal: 1,
+                label: null,
+                days: [
+                    {
+                        day_of_week: 2,
+                        patterns: [{ movement_pattern_id: 7, sub_pattern: null }],
+                    },
+                ],
+            },
+            baseline[1],
+        ];
+        const synced = [
+            draftAfterTemplateEdit[0],
+            baseline[1],
+        ];
+        expect(
+            serverReflectsWeeklyStructureSave(synced, draftAfterTemplateEdit, false, {
+                blockStartISO: "2026-01-05",
+                todayYmd: "2026-10-11",
+                baseline,
+            }),
+        ).toBe(true);
+    });
 });
