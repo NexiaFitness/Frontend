@@ -858,11 +858,16 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         isOpen={blockRemoval.isOpen}
         onClose={blockRemoval.cancel}
         onConfirm={() => void blockRemoval.confirm()}
-        title={blockRemoval.copy?.title ?? ""}
+        title={
+          blockRemoval.copy?.title ??
+          (blockRemoval.isPreviewLoading ? "Comprobando bloque…" : "")
+        }
         description={blockRemoval.copy?.description}
-        confirmLabel={blockRemoval.copy?.confirmLabel ?? ""}
-        loadingConfirmLabel={blockRemoval.copy?.loadingConfirmLabel}
-        confirmVariant={blockRemoval.copy?.confirmVariant}
+        confirmLabel={blockRemoval.copy?.confirmLabel ?? "Eliminar bloque"}
+        loadingConfirmLabel={
+          blockRemoval.copy?.loadingConfirmLabel ?? "Comprobando…"
+        }
+        confirmVariant={blockRemoval.copy?.confirmVariant ?? "destructive"}
         isLoading={blockRemoval.isLoading}
         data-testid="period-block-removal-modal"
       />

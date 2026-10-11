@@ -53,8 +53,16 @@ export function usePlanBlocksStructureDrift(input: {
             );
             if (inRange) ids.add(block.id);
         }
-        return [...ids];
+        return [...ids].sort((a, b) => a - b);
     }, [blocks, sessions]);
+
+    const sessionsScanKey = sessions
+        .map(
+            (s) =>
+                `${s.id}:${s.status}:${s.session_date ?? ""}:${s.period_block_id ?? ""}`,
+        )
+        .join("|");
+    const blockIdsKey = blockIdsToScan.join(",");
 
     useEffect(() => {
         if (!enabled || planId <= 0 || blockIdsToScan.length === 0) {
@@ -109,7 +117,7 @@ export function usePlanBlocksStructureDrift(input: {
         return () => {
             cancelled = true;
         };
-    }, [enabled, planId, blockIdsToScan, blocks, sessions, dispatch, refreshKey]);
+    }, [enabled, planId, blockIdsKey, sessionsScanKey, dispatch, refreshKey]);
 
     return driftByBlockId;
 }

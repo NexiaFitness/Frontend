@@ -41,7 +41,11 @@ export function usePeriodBlockDeletion(planId: number) {
 
     const preview = useGetPeriodBlockDeletionPreviewQuery(
         target ? { planId, blockId: target.id } : skipToken,
-        { refetchOnMountOrArgChange: true },
+        {
+            refetchOnMountOrArgChange: false,
+            refetchOnFocus: false,
+            refetchOnReconnect: false,
+        },
     );
     const [deleteBlock, { isLoading: isDeleting }] = useDeletePeriodBlockMutation();
     const [archiveBlock, { isLoading: isArchiving }] = useArchivePeriodBlockMutation();
@@ -53,17 +57,19 @@ export function usePeriodBlockDeletion(planId: number) {
         }
     }, [target, preview.isError, preview.error, showError]);
 
+    // Mantener copy mientras refetch (evita cerrar modal → reabrir → bucle "Maximum update depth").
+    const previewData = preview.data;
+    const isPreviewLoading =
+        Boolean(target) && preview.isFetching && previewData == null;
     const variant =
-        target && preview.data && !preview.isFetching
-            ? resolveBlockRemovalVariant(preview.data)
-            : null;
+        target && previewData ? resolveBlockRemovalVariant(previewData) : null;
 
     const copy: BlockRemovalCopy | null = useMemo(
         () =>
-            variant && target && preview.data
-                ? buildBlockRemovalCopy(variant, preview.data, target.label)
+            variant && target && previewData
+                ? buildBlockRemovalCopy(variant, previewData, target.label)
                 : null,
-        [variant, target, preview.data],
+        [variant, target, previewData],
     );
 
     const requestRemoval = useCallback((id: number, label: string) => {
@@ -90,9 +96,10 @@ export function usePeriodBlockDeletion(planId: number) {
     }, [target, variant, planId, archiveBlock, deleteBlock, preview, showSuccess, showError]);
 
     return {
-        isOpen: copy != null,
+        isOpen: target != null,
         copy,
-        isLoading: isDeleting || isArchiving,
+        isPreviewLoading,
+        isLoading: isDeleting || isArchiving || isPreviewLoading,
         requestRemoval,
         cancel,
         confirm,
