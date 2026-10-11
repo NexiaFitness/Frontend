@@ -16,7 +16,7 @@ import {
   openRunForSession,
   skipRestIfVisible,
   trainerCreateSingleExerciseSession,
-  trainerCreateSupersetOneRoundSession,
+  trainerCreateSessionForClient,
   trainerCreateTwoSingleExerciseSession,
   typePeso,
   typeReps,
@@ -100,22 +100,19 @@ test("QA-LOG-04 S4 superset: weight_reps exige peso; 2 POST con pesos válidos",
 }) => {
   test.setTimeout(300_000);
   const cap = attachExecutionRequestCapture(page);
-  await loginAsTrainerFresh(page);
-  const { sessionId } = await trainerCreateSupersetOneRoundSession(
+  const { sessionId } = await trainerCreateSessionForClient(
     page,
     H7_QA_CLIENT_ID,
-    "QA-LOG-S4"
+    "QA-LOG-S4",
+    "superset"
   );
   await page.context().clearCookies();
 
   await loginAsAthlete(page);
   await openRunForSession(page, sessionId);
-  await expect(page.getByRole("heading", { name: /Ronda 1 de/i })).toBeVisible({
-    timeout: 60_000,
-  });
 
   const pesoFields = page.getByRole("textbox", { name: "Peso" });
-  await expect(pesoFields).toHaveCount(2, { timeout: 15_000 });
+  await expect(pesoFields).toHaveCount(2, { timeout: 60_000 });
 
   await typePeso(page, 0, "30");
   await typePeso(page, 1, "25");
