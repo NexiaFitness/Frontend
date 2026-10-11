@@ -27,6 +27,48 @@ async function advanceCalendarToMonth(
 }
 
 test.describe("RM-09 H2 UI — ciclo de vida", () => {
+  test("H28: modal borrado estable 10s (sin bucle preview ni max depth)", async ({
+    page,
+  }) => {
+    const consoleErrors: string[] = [];
+    page.on("console", (m) => {
+      if (m.type() === "error") consoleErrors.push(m.text());
+    });
+    let previewGets = 0;
+    page.on("request", (req) => {
+      if (req.method() === "GET" && /deletion-preview/.test(req.url())) {
+        previewGets += 1;
+      }
+    });
+
+    const session = await loginTrainerApi();
+    const meta = await createQaH2LifecycleBlock(session);
+    await loginAsTrainer(page);
+    await page.goto(
+      `/dashboard/clients/${meta.clientId}?tab=planning&plan=${meta.planId}`,
+      { waitUntil: "load" },
+    );
+    await advanceCalendarToMonth(page, "febrero", 2027);
+    await page.waitForTimeout(1500);
+    consoleErrors.length = 0;
+    await page
+      .getByRole("button", { name: new RegExp(`Eliminar bloque`, "i") })
+      .first()
+      .click();
+
+    const modal = page.getByTestId("period-block-removal-modal");
+    await expect(modal).toBeVisible({ timeout: 20_000 });
+    consoleErrors.length = 0;
+    const previewAtOpen = previewGets;
+    await page.waitForTimeout(10_000);
+    expect(previewGets - previewAtOpen).toBeLessThanOrEqual(2);
+    expect(
+      consoleErrors.filter((e) => /Maximum update depth exceeded/i.test(e)),
+    ).toHaveLength(0);
+    await modal.getByRole("button", { name: "Cancelar" }).click();
+    await expect(modal).toBeHidden({ timeout: 10_000 });
+  });
+
   test("H2-4/H2-5 UI: preview delete + confirmar borrado (R-04, R-05)", async ({
     page,
   }) => {
@@ -54,6 +96,8 @@ test.describe("RM-09 H2 UI — ciclo de vida", () => {
       { waitUntil: "load" },
     );
     await advanceCalendarToMonth(page, "febrero", 2027);
+    await page.waitForTimeout(1500);
+    consoleErrors.length = 0;
 
     const deleteBtn = page.getByRole("button", {
       name: new RegExp(`Eliminar bloque`, "i"),
@@ -76,10 +120,10 @@ test.describe("RM-09 H2 UI — ciclo de vida", () => {
       .poll(() => deleteCalls, { timeout: 20_000 })
       .toBeGreaterThanOrEqual(1);
 
-    const consoleBlockers = consoleErrors.filter(
-      (e) => !/Maximum update depth exceeded/i.test(e),
-    );
-    expect(consoleBlockers).toHaveLength(0);
+    expect(
+      consoleErrors.filter((e) => /Maximum update depth exceeded/i.test(e)),
+    ).toHaveLength(0);
+    expect(consoleErrors).toHaveLength(0);
     await page.screenshot({ path: "test-results/qa-rm09-h2-ui-delete.png" });
   });
 });
