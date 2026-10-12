@@ -129,6 +129,9 @@ export const periodBlocksApi = baseApi.injectEndpoints({
         url: `/training-plans/${planId}/period-blocks/${blockId}/deletion-preview`,
         method: "GET",
       }),
+      providesTags: (_result, _error, { blockId }) => [
+        { type: "PlanPeriodBlock", id: `DELETION-PREVIEW-${blockId}` },
+      ],
       keepUnusedDataFor: 0,
     }),
 
@@ -144,6 +147,7 @@ export const periodBlocksApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { planId, blockId }) => [
         { type: "PlanPeriodBlock", id: blockId },
         { type: "PlanPeriodBlock", id: `LIST-${planId}` },
+        { type: "PlanPeriodBlock", id: `DELETION-PREVIEW-${blockId}` },
         ...SESSION_BULK_CHANGE_INVALIDATION_TAGS,
       ],
     }),

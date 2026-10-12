@@ -96,7 +96,9 @@ describe("usePeriodBlockDeletion", () => {
         act(() => result.current.requestRemoval(42, "Fuerza base"));
 
         await waitFor(() => expect(result.current.isOpen).toBe(true));
-        expect(result.current.copy?.title).toBe("Archivar bloque");
+        await waitFor(() =>
+            expect(result.current.copy?.title).toBe("Archivar bloque"),
+        );
         expect(result.current.copy?.confirmVariant).toBe("primary");
         expect(result.current.copy?.description).toContain("1 sesión entrenada");
         expect(result.current.copy?.description).toContain(
@@ -113,12 +115,14 @@ describe("usePeriodBlockDeletion", () => {
     });
 
     it("409 por carrera: no cierra y la previsualización pasa a archivar", async () => {
-        let previewCalls = 0;
+        let previewPhase: "delete" | "archive" = "delete";
+        let previewGets = 0;
+        let deleteCalls = 0;
         server.use(
             http.get(`${BASE}/deletion-preview`, () => {
-                previewCalls += 1;
+                previewGets += 1;
                 return HttpResponse.json(
-                    previewCalls === 1
+                    previewPhase === "delete"
                         ? preview({ total_sessions: 1, planned_sessions: 1 })
                         : preview({
                               total_sessions: 1,
@@ -127,23 +131,31 @@ describe("usePeriodBlockDeletion", () => {
                           }),
                 );
             }),
-            http.delete(BASE, () =>
-                HttpResponse.json(
+            http.delete(BASE, () => {
+                deleteCalls += 1;
+                previewPhase = "archive";
+                return HttpResponse.json(
                     {
                         detail: "Este bloque tiene sesiones entrenadas. Archívalo para conservar el historial.",
                     },
                     { status: 409 },
-                ),
-            ),
+                );
+            }),
         );
 
         const { result } = renderHook(() => usePeriodBlockDeletion(10), { wrapper });
         act(() => result.current.requestRemoval(42, "Fuerza base"));
         await waitFor(() => expect(result.current.isOpen).toBe(true));
+        await waitFor(() =>
+            expect(result.current.copy?.title).toBe("Eliminar bloque"),
+        );
 
         await act(async () => {
             await result.current.confirm();
         });
+
+        expect(deleteCalls).toBe(1);
+        expect(previewGets).toBeGreaterThanOrEqual(2);
 
         await waitFor(() => expect(result.current.copy?.title).toBe("Archivar bloque"));
         expect(result.current.isOpen).toBe(true);
