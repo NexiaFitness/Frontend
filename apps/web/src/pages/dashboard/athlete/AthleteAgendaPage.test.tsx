@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { formatAthleteDateLong } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import { describe, expect, it, vi } from "vitest";
 import { AthleteAgendaPage } from "./AthleteAgendaPage";
 
@@ -18,9 +19,14 @@ vi.mock("@nexia/shared/utils/athlete/athleteCalendarUtils", async (importOrigina
     const actual = await importOriginal<
         typeof import("@nexia/shared/utils/athlete/athleteCalendarUtils")
     >();
+    const todayKey = "2026-10-07";
     return {
         ...actual,
-        madridTodayDateKey: () => "2026-10-07",
+        madridTodayDateKey: () => todayKey,
+        athleteCalendarDateWindow: () => ({
+            from: "2026-10-06",
+            to: "2026-12-31",
+        }),
     };
 });
 
@@ -100,10 +106,12 @@ describe("AthleteAgendaPage", () => {
         await user.click(screen.getByRole("tab", { name: /Entrenos/i }));
         expect(screen.queryByText("Consulta")).not.toBeInTheDocument();
 
-        const trainingRows = screen.getAllByRole("button", {
-            name: /Fuerza máxima, Pecho · Tríceps/i,
-        });
-        await user.click(trainingRows[0]);
+        const todayTrainingLabel = `Fuerza máxima, Pecho · Tríceps, ${formatAthleteDateLong("2026-10-07")}`;
+        await user.click(
+            screen.getByRole("button", {
+                name: todayTrainingLabel,
+            }),
+        );
         expect(navigate).toHaveBeenCalledWith("/dashboard/sessions/99", {
             state: { from: "agenda" },
         });
