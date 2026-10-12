@@ -50,7 +50,9 @@ describe("usePeriodBlockDeletion", () => {
         act(() => result.current.requestRemoval(42, "Fuerza base"));
 
         await waitFor(() => expect(result.current.isOpen).toBe(true));
-        expect(result.current.copy?.confirmVariant).toBe("destructive");
+        await waitFor(() =>
+            expect(result.current.copy?.confirmVariant).toBe("destructive"),
+        );
         expect(result.current.copy?.description).toContain(
             "Se borrarán 3 sesiones planificadas",
         );
