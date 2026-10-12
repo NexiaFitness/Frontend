@@ -91,10 +91,10 @@ test("QA-F1 sin peso prescrito: casilla vacía, sin 0 kg en ninguna modalidad (F
   // F1 serie simple: el peso no prescrito ni tecleado se muestra vacío y no se guarda.
   let from = cap.posts.length;
   await openBlock(page, BLOCK.single);
-  await expect.soft(sheet(page).getByRole("textbox", { name: "Peso" }).first()).toHaveValue("");
+  await expect(sheet(page).getByRole("textbox", { name: "Peso" }).first()).toHaveValue("");
   await saveBlock(page);
-  expect.soft(postsSince(cap, from, "single")).toHaveLength(0);
-  await expect.soft(sheet(page).getByRole("alert")).toContainText(/peso/i);
+  expect(postsSince(cap, from, "single")).toHaveLength(0);
+  await expect(sheet(page).getByRole("alert")).toContainText(/peso/i);
   await closeSheetIfOpen(page);
 
   // F4 superserie: hueco B sin peso → se bloquea con aviso, no se descarta en silencio.
@@ -103,8 +103,8 @@ test("QA-F1 sin peso prescrito: casilla vacía, sin 0 kg en ninguna modalidad (F
   await typeInto(page, "Peso", 0, "30");
   await typeInto(page, "Peso", 1, "");
   await saveBlock(page);
-  expect.soft(postsSince(cap, from, "superset")).toHaveLength(0);
-  await expect.soft(sheet(page).getByRole("alert")).toContainText(/peso/i);
+  expect(postsSince(cap, from, "superset")).toHaveLength(0);
+  await expect(sheet(page).getByRole("alert")).toContainText(/peso/i);
   await closeSheetIfOpen(page);
 
   // F1 AMRAP: 2 rondas, peso no prescrito → weight_kg null (no 0).
@@ -113,8 +113,8 @@ test("QA-F1 sin peso prescrito: casilla vacía, sin 0 kg en ninguna modalidad (F
   await typeInto(page, "Rondas completas", 0, "2");
   await saveBlock(page);
   const amrap = postsSince(cap, from, "amrap");
-  expect.soft(amrap).toHaveLength(1);
-  expect.soft(amrap.map((p) => p.weight_kg ?? null)).toEqual([null]);
+  expect(amrap).toHaveLength(1);
+  expect(amrap.map((p) => p.weight_kg ?? null)).toEqual([null]);
   await closeSheetIfOpen(page);
 
   // F1 EMOM: completado → weight_kg null.
@@ -123,8 +123,8 @@ test("QA-F1 sin peso prescrito: casilla vacía, sin 0 kg en ninguna modalidad (F
   await sheet(page).getByRole("button", { name: "Sí" }).click();
   await saveBlock(page);
   const emom = postsSince(cap, from, "emom");
-  expect.soft(emom.length).toBeGreaterThan(0);
-  expect.soft(emom.every((p) => (p.weight_kg ?? null) === null)).toBe(true);
+  expect(emom).toHaveLength(2);
+  expect(emom.map((p) => p.weight_kg ?? null)).toEqual([null, null]);
   await closeSheetIfOpen(page);
 
   // F1 FOR TIME: 5 min → input_mode duration con weight_kg null.
@@ -133,8 +133,8 @@ test("QA-F1 sin peso prescrito: casilla vacía, sin 0 kg en ninguna modalidad (F
   await typeInto(page, "Minutos", 0, "5");
   await saveBlock(page);
   const forTime = postsSince(cap, from, "for_time");
-  expect.soft(forTime).toHaveLength(1);
-  expect.soft(forTime.map((p) => [p.input_mode, p.weight_kg ?? null])).toEqual([
+  expect(forTime).toHaveLength(1);
+  expect(forTime.map((p) => [p.input_mode, p.weight_kg ?? null])).toEqual([
     ["duration", null],
   ]);
 });
@@ -168,6 +168,6 @@ test("QA-F5 el peso heredado visible en la serie 2 es el que se guarda", async (
   console.log("VISIBLE F5 set2", visibleSet2);
   await saveBlock(page);
   const posts = postsSince(cap, 0, "F5");
-  expect.soft(visibleSet2).toBe("60");
+  expect(visibleSet2).toBe("60");
   expect(posts.map((p) => p.weight_kg)).toEqual([60, 60]);
 });
