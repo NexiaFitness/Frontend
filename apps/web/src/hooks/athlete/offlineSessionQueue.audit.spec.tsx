@@ -166,3 +166,37 @@ describe("cola offline — notas de ejercicio reeditadas (DBG-E-01)", () => {
         expect(mem.notes.size).toBe(0);
     });
 });
+
+describe("cola offline — error permanente en cabeza (DBG-E-02)", () => {
+    it("un 422 en la primera serie no bloquea el envio de la segunda", async () => {
+        queueExecution("e1", "block-1-single-0-r1-S3-S1-1", 60, 100);
+        queueExecution("e2", "block-1-single-0-r1-S3-S2-2", 62.5, 200);
+        const { adapter, calls } = makeAdapter({
+            postExecution: vi.fn(async (p: AthleteRunExecutionCreate) => {
+                if (p.step_key.endsWith("S1-1")) {
+                    throw { status: 422, data: { detail: "invalid" } };
+                }
+                calls.push(`exec:${p.step_key}:${p.weight_kg}`);
+            }),
+        });
+
+        await flushPendingSessionSync(SESSION, adapter).catch(() => undefined);
+
+        expect(calls).toEqual(["exec:block-1-single-0-r1-S3-S2-2:62.5"]);
+        expect([...mem.executions.keys()]).toEqual(["e1"]);
+    });
+
+    it("un error de red detiene el drenaje y conserva todo para reintentar", async () => {
+        queueExecution("e1", "block-1-single-0-r1-S3-S1-1", 60, 100);
+        queueExecution("e2", "block-1-single-0-r1-S3-S2-2", 62.5, 200);
+        const postExecution = vi.fn(async () => {
+            throw { status: "FETCH_ERROR", error: "TypeError: Failed to fetch" };
+        });
+        const { adapter } = makeAdapter({ postExecution });
+
+        await expect(flushPendingSessionSync(SESSION, adapter)).rejects.toBeDefined();
+
+        expect(postExecution).toHaveBeenCalledTimes(1);
+        expect(mem.executions.size).toBe(2);
+    });
+});

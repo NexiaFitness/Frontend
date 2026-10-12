@@ -299,6 +299,14 @@ export interface FlushResult {
     registrationWindowClosed: boolean;
 }
 
+/** Red, timeout, 5xx, 408 y 429 cortan el drenaje; otros 4xx solo afectan a su elemento. */
+export function isTransientSyncError(error: unknown): boolean {
+    const status = (error as { status?: unknown })?.status;
+    if (typeof status !== "number") return true;
+    if (status === 408 || status === 429) return true;
+    return status < 400 || status >= 500;
+}
+
 const sessionSyncLockName = (sessionId: number) => `nexia-athlete-session-sync-${sessionId}`;
 
 /** Evita doble flush cuando varias pestañas reconectan a la vez (misma sesión). */
@@ -367,6 +375,7 @@ async function flushPendingSessionSyncUnlocked(
                 conflict = true;
                 break;
             }
+            if (!isTransientSyncError(error)) continue;
             throw error;
         }
     }
@@ -401,6 +410,7 @@ async function flushPendingSessionSyncUnlocked(
                 conflict = true;
                 break;
             }
+            if (!isTransientSyncError(error)) continue;
             throw error;
         }
     }
@@ -439,6 +449,7 @@ async function flushPendingSessionSyncUnlocked(
                 conflict = true;
                 break;
             }
+            if (!isTransientSyncError(error)) continue;
             throw error;
         }
     }
@@ -469,6 +480,7 @@ async function flushPendingSessionSyncUnlocked(
                 conflict = true;
                 break;
             }
+            if (!isTransientSyncError(error)) continue;
             throw error;
         }
     }
