@@ -14,9 +14,6 @@ import {
     flushPendingSessionSync,
     loadSessionSnapshot,
     persistSessionSnapshot,
-    pruneSupersededExecutions,
-    pruneSupersededLogs,
-    pruneSupersededTimedResults,
     queueExecutionLog,
     queueExerciseLog,
     queueSessionComplete,
@@ -126,9 +123,6 @@ export function useOfflineSessionLog(
         if (!isOnline || flushingRef.current) return;
         flushingRef.current = true;
         try {
-            await pruneSupersededExecutions(sessionId);
-            await pruneSupersededTimedResults(sessionId);
-            await pruneSupersededLogs(sessionId);
             const result = await flushPendingSessionSync(sessionId, adapter);
             await refreshPendingCount();
             await reloadSnapshot();

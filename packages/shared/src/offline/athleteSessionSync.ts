@@ -337,6 +337,12 @@ async function flushPendingSessionSyncUnlocked(
         };
     }
 
+    // Sin esto, tras enviar el ganador quedan los superados de la misma clave y el siguiente drenaje los reenvia.
+    await pruneSupersededExecutions(sessionId);
+    await pruneSupersededTimedResults(sessionId);
+    await pruneSupersededExerciseNotes(sessionId);
+    await pruneSupersededLogs(sessionId);
+
     let conflict = false;
     let registrationWindowClosed = false;
     let syncedExecutions = 0;
@@ -540,10 +546,6 @@ export async function finishOnlineSession(
     sessionId: number,
     adapter: AthleteSessionSyncAdapter
 ): Promise<FinishOnlineSessionResult> {
-    await pruneSupersededLogs(sessionId);
-    await pruneSupersededExecutions(sessionId);
-    await pruneSupersededTimedResults(sessionId);
-    await pruneSupersededExerciseNotes(sessionId);
     const flushResult = await flushPendingSessionSync(sessionId, adapter);
 
     if (flushResult.conflict) {
