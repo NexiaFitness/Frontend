@@ -188,7 +188,7 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
         if (blocks.length > 0) {
             const isLoading = isBlockStructureLoading({
                 isLoadingBlocks,
-                blockCount: blocks.length,
+                blockIds: blocks.map((b) => b.id),
                 blockExercisesByBlock,
                 isLoadingBlockTypes,
                 isLoadingExerciseCatalog,

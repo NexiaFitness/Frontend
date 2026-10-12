@@ -55,6 +55,9 @@ const EMPTY_VIEW: SessionStructureView = {
     totalSets: 0,
 };
 
+const EMPTY_BLOCKS: SessionBlock[] = [];
+const EMPTY_LEGACY: SessionExercise[] = [];
+
 /**
  * Convierte ejercicios legacy en un único SessionBlock sintético con N filas
  * `SessionBlockExercise`, todas con set_type single_set. Cada fila conserva
@@ -125,18 +128,19 @@ export function useSessionStructureView(
         Record<number, SessionBlockExercise[]>
     >({});
 
-    const { data: blocks = [], isLoading: isLoadingBlocks } = useGetSessionBlocksQuery(
-        sessionId ?? 0,
-        { skip: !sessionId || sessionId <= 0 }
-    );
+    // currentData: `data` e `isLoading` de RTK reflejan la sesion anterior mientras carga la nueva.
+    const blocksQuery = useGetSessionBlocksQuery(sessionId ?? 0, {
+        skip: !sessionId || sessionId <= 0,
+    });
+    const blocks = blocksQuery.currentData ?? EMPTY_BLOCKS;
+    const isLoadingBlocks = blocksQuery.isFetching && blocksQuery.currentData === undefined;
 
-    const {
-        data: legacyExercises = [],
-        isLoading: isLoadingLegacy,
-        isError: isErrorLegacy,
-    } = useGetSessionExercisesQuery(sessionId ?? 0, {
+    const legacyQuery = useGetSessionExercisesQuery(sessionId ?? 0, {
         skip: !sessionId || sessionId <= 0 || blocks.length > 0,
     });
+    const legacyExercises = legacyQuery.currentData ?? EMPTY_LEGACY;
+    const isLoadingLegacy = legacyQuery.isFetching && legacyQuery.currentData === undefined;
+    const isErrorLegacy = legacyQuery.isError;
 
     const needsCatalog = needsExerciseCatalog(blocks.length, legacyExercises);
 
@@ -196,7 +200,7 @@ export function useSessionStructureView(
         if (blocks.length > 0) {
             const isLoading = isBlockStructureLoading({
                 isLoadingBlocks,
-                blockCount: blocks.length,
+                blockIds: blocks.map((b) => b.id),
                 blockExercisesByBlock,
                 isLoadingBlockTypes,
                 isLoadingExerciseCatalog,
