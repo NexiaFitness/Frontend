@@ -34,23 +34,22 @@ export function useAthleteRunProgressResume({
     setSavedStepKeys,
     setStep,
 }: UseAthleteRunProgressResumeOptions) {
-    const { data: runProgress } = useGetAthleteRunProgressQuery(sessionId, {
+    // `data` conserva el progreso de la sesion anterior mientras carga la nueva; `currentData` no.
+    const { currentData: runProgress } = useGetAthleteRunProgressQuery(sessionId, {
         skip: !sessionId,
         refetchOnMountOrArgChange: isOnline,
         refetchOnFocus: isOnline,
         refetchOnReconnect: true,
     });
 
-    const progressInitForSessionRef = useRef<number | null>(null);
-
-    useEffect(() => {
-        progressInitForSessionRef.current = null;
-    }, [sessionId]);
+    const progressInitKeyRef = useRef<string | null>(null);
 
     useEffect(() => {
         if (!runProgress || runSteps.length === 0) return;
-        if (progressInitForSessionRef.current === sessionId) return;
-        progressInitForSessionRef.current = sessionId;
+        // Los runSteps pueden ser aun los de la sesion anterior: reiniciar cuando cambian sus claves.
+        const initKey = `${sessionId}:${runSteps.map((runStep) => runStep.stepKey).join("|")}`;
+        if (progressInitKeyRef.current === initKey) return;
+        progressInitKeyRef.current = initKey;
 
         for (const key of collectResolvedStepKeysFromProgress(runProgress)) {
             completedStepKeysRef.current.add(key);
