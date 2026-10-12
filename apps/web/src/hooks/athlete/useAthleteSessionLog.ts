@@ -147,9 +147,17 @@ export function useAthleteSessionLog({
         }
     }, [registrationSyncBlocked]);
 
+    const registrationEditable = resolveAthleteSessionRegistrationEditable({
+        sessionDate,
+        progressRegistrationEditable: progress?.registration_editable,
+    });
+
     const baseLogBlocks = useMemo(
-        () => buildSessionLogBlocks(view, progress),
-        [view, progress]
+        () =>
+            buildSessionLogBlocks(view, progress, {
+                allowPendingHighlight: registrationEditable,
+            }),
+        [view, progress, registrationEditable]
     );
 
     const logBlocks = useMemo(
@@ -161,14 +169,16 @@ export function useAthleteSessionLog({
                     ...block,
                     status: override,
                     isPendingHighlight:
-                        override === "pending" && block.hasRegisterableSteps,
+                        registrationEditable &&
+                        override === "pending" &&
+                        block.hasRegisterableSteps,
                     summaryLine:
                         override === "registered" && !block.summaryLine
                             ? "Guardado · pendiente de sincronizar"
                             : block.summaryLine,
                 };
             }),
-        [baseLogBlocks, optimisticBlockStatus]
+        [baseLogBlocks, optimisticBlockStatus, registrationEditable]
     );
 
     const pendingBlockCount = useMemo(() => countPendingLogBlocks(logBlocks), [logBlocks]);
@@ -192,11 +202,6 @@ export function useAthleteSessionLog({
         () => logBlocks.find((b) => b.sessionBlockId === activeBlockId) ?? null,
         [activeBlockId, logBlocks]
     );
-
-    const registrationEditable = resolveAthleteSessionRegistrationEditable({
-        sessionDate,
-        progressRegistrationEditable: progress?.registration_editable,
-    });
 
     const registrationKnown =
         !enabled || isProgressError || (!isProgressLoading && progress != null);

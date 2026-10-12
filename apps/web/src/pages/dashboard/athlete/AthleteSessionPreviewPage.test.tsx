@@ -172,7 +172,7 @@ beforeEach(() => {
     sessionLogMock.logMode = false;
     sessionLogMock.pendingBlockCount = 0;
     sessionLogMock.logBlocks = [];
-    sessionLogMock.registrationEditable = false;
+    sessionLogMock.registrationEditable = true;
 });
 
 describe("AthleteSessionPreviewPage wellbeing (B7)", () => {
@@ -240,6 +240,14 @@ describe("AthleteSessionPreviewPage planned load (AGENDA spec)", () => {
 });
 
 describe("AthleteSessionPreviewPage registro FE-9", () => {
+    it("registro cerrado deshabilita Empezar entrenamiento", () => {
+        sessionLogMock.registrationEditable = false;
+        renderPage();
+        expect(
+            screen.getByRole("button", { name: /Empezar entrenamiento/i })
+        ).toBeDisabled();
+    });
+
     it("sesión completada con bloques pendientes muestra Completar registro, no solo feedback", () => {
         previewSessionMock.status = "completed";
         sessionLogMock.logMode = true;

@@ -16,6 +16,8 @@ import {
     type AthleteSessionLogBlockDraft,
 } from "./athleteSessionLogUtils";
 import type { AthleteRunStep } from "../../types/athleteRunSteps";
+import { buildSessionLogBlocks } from "./athleteSessionLogUtils";
+import type { SessionStructureView } from "../../sessionProgramming/sessionBlockView";
 
 function progress(partial: Partial<AthleteRunProgress>): AthleteRunProgress {
     return {
@@ -482,5 +484,39 @@ describe("buildBlockSavePayloads skipped steps", () => {
         expect(notPerformedSteps[0]?.step_key).toBe("blk-1-ex-1-set-1");
         expect(notPerformedSteps[0]?.exercise_id).toBe(1);
         expect(notPerformedSteps[0]?.session_block_id).toBe(10);
+    });
+});
+
+describe("buildSessionLogBlocks · registro cerrado", () => {
+    const emptyView: SessionStructureView = {
+        blocks: [
+            {
+                blockId: 1,
+                blockTypeName: "Test",
+                groups: [],
+            },
+        ],
+        totalExercises: 0,
+        totalSets: 0,
+    };
+
+    it("no marca isPendingHighlight cuando allowPendingHighlight es false", () => {
+        const blocks = buildSessionLogBlocks(
+            emptyView,
+            progress({
+                blocks: [
+                    {
+                        session_block_id: 1,
+                        status: "pending",
+                        expected_step_keys: ["step-a"],
+                        registered_step_keys: [],
+                        not_performed_step_keys: [],
+                        pending_step_keys: ["step-a"],
+                    },
+                ],
+            }),
+            { allowPendingHighlight: false }
+        );
+        expect(blocks[0]?.isPendingHighlight).toBe(false);
     });
 });

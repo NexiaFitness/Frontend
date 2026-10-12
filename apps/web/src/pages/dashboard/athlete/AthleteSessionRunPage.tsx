@@ -17,7 +17,11 @@ import type { AthleteExerciseTechniqueTarget } from "@/components/athlete/execut
 import { RestTimerOverlay } from "@/components/athlete/execution/RestTimerOverlay";
 import { Button } from "@/components/ui/buttons";
 import { BottomSheet } from "@/components/ui/layout/BottomSheet";
-import { useToast } from "@/components/ui/feedback";
+import { Alert, useToast } from "@/components/ui/feedback";
+import {
+    ATHLETE_REGISTRATION_PROGRESS_ERROR_BODY,
+    ATHLETE_REGISTRATION_PROGRESS_ERROR_TITLE,
+} from "@/components/athlete/sessions/athleteSessionRegistrationPresentation";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { AthleteRunChromeHeader } from "@/components/athlete/execution/AthleteRunChromeHeader";
 import { useAthleteInjuries } from "@/hooks/athlete/useAthleteInjuries";
@@ -53,10 +57,26 @@ export const AthleteSessionRunPage: React.FC = () => {
     const {
         data: runProgressForNotes,
         isSuccess: runProgressFetchSucceeded,
+        isError: runProgressFetchError,
         isFetching: runProgressFetching,
+        refetch: refetchRunProgress,
     } = useGetAthleteRunProgressQuery(sessionId, {
         skip: !sessionId,
     });
+
+    useEffect(() => {
+        if (!sessionId || !runProgressFetchSucceeded || runProgressForNotes == null) {
+            return;
+        }
+        if (runProgressForNotes.registration_editable === false) {
+            navigate(`/dashboard/sessions/${sessionId}`, { replace: true });
+        }
+    }, [
+        navigate,
+        runProgressFetchSucceeded,
+        runProgressForNotes,
+        sessionId,
+    ]);
     const isOnlineStatus = useOnlineStatus();
     const exerciseNotes = useAthleteRunExerciseNotes({
         sessionId,
@@ -300,7 +320,34 @@ export const AthleteSessionRunPage: React.FC = () => {
         !runProgressFetching &&
         !runProgressFetchSucceeded;
 
-    if (isLoading) {
+    const progressInitialLoad =
+        runProgressFetching && !runProgressFetchSucceeded && !runProgressFetchError;
+
+    if (isLoading || progressInitialLoad) {
+        return <AthletePageLoading variant="session-run" />;
+    }
+
+    if (runProgressFetchError) {
+        return (
+            <div className={cn("mx-auto max-w-lg space-y-4 pb-24 pt-4", ATHLETE_PAGE_X)}>
+                <Alert
+                    variant="error"
+                    title={ATHLETE_REGISTRATION_PROGRESS_ERROR_TITLE}
+                    description={ATHLETE_REGISTRATION_PROGRESS_ERROR_BODY}
+                    action={
+                        <Button variant="secondary" size="sm" onClick={() => void refetchRunProgress()}>
+                            Reintentar
+                        </Button>
+                    }
+                />
+                <Button variant="secondary" onClick={() => navigate(`/dashboard/sessions/${sessionId}`)}>
+                    Volver a la sesión
+                </Button>
+            </div>
+        );
+    }
+
+    if (runProgressForNotes?.registration_editable === false) {
         return <AthletePageLoading variant="session-run" />;
     }
 

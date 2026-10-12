@@ -174,8 +174,10 @@ export function buildBlockSummaryLine(
 
 export function buildSessionLogBlocks(
     view: SessionStructureView,
-    progress?: AthleteRunProgress | null
+    progress?: AthleteRunProgress | null,
+    options?: { allowPendingHighlight?: boolean }
 ): AthleteSessionLogBlockModel[] {
+    const allowPendingHighlight = options?.allowPendingHighlight !== false;
     const runSteps = buildAthleteRunSteps(view);
     const blockProgress = new Map(
         (progress?.blocks ?? []).map((b) => [b.session_block_id, b])
@@ -196,7 +198,8 @@ export function buildSessionLogBlocks(
             expectedStepKeys,
             steps,
             summaryLine: buildBlockSummaryLine(steps, progress),
-            isPendingHighlight: status === "pending" && hasRegisterableSteps,
+            isPendingHighlight:
+                allowPendingHighlight && status === "pending" && hasRegisterableSteps,
             hasRegisterableSteps,
         };
     });

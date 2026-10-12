@@ -213,7 +213,10 @@ export const AthleteSessionPreviewPage: React.FC = () => {
         !sessionLog.registrationEditable &&
         !sessionLog.isProgressError &&
         sessionLog.hasProgressSnapshot;
-    const canStart = session?.status !== "completed" && view.totalExercises > 0;
+    const canStart =
+        session?.status !== "completed" &&
+        view.totalExercises > 0 &&
+        sessionLog.registrationEditable;
     const hasPartialLogProgress = useMemo(
         () =>
             sessionLog.logBlocks.some((b) => b.status === "registered") &&
@@ -236,6 +239,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     };
 
     const goToRun = () => {
+        if (!sessionLog.registrationEditable) return;
         navigate(`/dashboard/sessions/${sessionId}/run`);
     };
 
@@ -364,7 +368,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                 {view.blocks.length > 0 ? (
                     <div className="space-y-3">
                         <AthleteSessionExercisesLabel />
-                        {sessionLog.logMode ? (
+                        {sessionLog.logMode && canRegisterFromProgress ? (
                             <AthleteSessionLogBlockList
                                 blocks={sessionLog.logBlocks}
                                 onBlockPress={sessionLog.openBlock}

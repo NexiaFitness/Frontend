@@ -6,7 +6,7 @@
  * @since v6.3.0
  */
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
     Calendar,
@@ -34,8 +34,10 @@ import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFor
 import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
 import {
     useGetTrainingSessionQuery,
+    useGetSessionExecutionSummaryQuery,
     useDeleteTrainingSessionMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
+import { mergeSessionStructureWithExecutionSummary } from "@nexia/shared";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
@@ -175,6 +177,15 @@ export const SessionDetail: React.FC = () => {
         sessionId && !Number.isNaN(sessionId) && isAuthenticated ? sessionId : null
     );
 
+    const { data: executionSummary } = useGetSessionExecutionSummaryQuery(sessionId, {
+        skip: !sessionId || Number.isNaN(sessionId) || !isAuthenticated || !session?.client_id,
+    });
+
+    const sessionStructureForDisplay = useMemo(
+        () => mergeSessionStructureWithExecutionSummary(sessionStructure, executionSummary),
+        [sessionStructure, executionSummary]
+    );
+
     const { data: plan } = useGetTrainingPlanQuery(session?.training_plan_id || 0, {
         skip: !session?.training_plan_id,
     });
@@ -252,7 +263,9 @@ export const SessionDetail: React.FC = () => {
     const clientName = client ? `${client.nombre} ${client.apellidos}` : "Cliente";
 
     const showExecutionSummary =
-        session.status === "completed" || session.status === "in_progress";
+        session.status === "completed" ||
+        session.status === "in_progress" ||
+        executionSummary?.has_executions === true;
 
     const embeddedCoherence = session.coherence ?? null;
     const legacyInjuryNote = client?.lesiones_relevantes?.trim() || null;
@@ -355,11 +368,11 @@ export const SessionDetail: React.FC = () => {
                         {showExecutionSummary ? "Prescripción" : "Ejercicios"}
                     </h2>
                     <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                        {sessionStructure.totalExercises}
+                        {sessionStructureForDisplay.totalExercises}
                     </span>
-                    {sessionStructure.totalSets > 0 && (
+                    {sessionStructureForDisplay.totalSets > 0 && (
                         <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
-                            {sessionStructure.totalSets} series
+                            {sessionStructureForDisplay.totalSets} series
                         </span>
                     )}
                 </div>
@@ -369,13 +382,13 @@ export const SessionDetail: React.FC = () => {
                     </div>
                 ) : isErrorExercises ? (
                     <Alert variant="error" title="No se pudieron cargar los ejercicios" />
-                ) : sessionStructure.blocks.length === 0 ? (
+                ) : sessionStructureForDisplay.blocks.length === 0 ? (
                     <div className="rounded-lg border border-dashed border-border/60 bg-surface/40 px-4 py-10 text-center text-sm text-muted-foreground">
                         Esta sesión todavía no tiene ejercicios asignados.
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {sessionStructure.blocks.map((block) => (
+                        {sessionStructureForDisplay.blocks.map((block) => (
                             <SessionBlockDetail key={block.blockId} block={block} />
                         ))}
                     </div>
