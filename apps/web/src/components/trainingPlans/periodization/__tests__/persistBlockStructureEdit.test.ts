@@ -90,7 +90,7 @@ describe("persistBlockStructureEdit", () => {
             syncRecurring,
         );
 
-        expect(saved).toBe(true);
+        expect(saved).toEqual({ changed: true, weeksSkipped: undefined });
         expect(syncRecurring).toHaveBeenCalledWith({
             planId: 526,
             blockId: 42,
@@ -148,7 +148,7 @@ describe("persistBlockStructureEdit", () => {
             syncRecurring,
         );
 
-        expect(saved).toBe(true);
+        expect(saved).toEqual({ changed: true, weeksSkipped: undefined });
         expect(syncRecurring).toHaveBeenCalledTimes(1);
     });
 
@@ -178,7 +178,7 @@ describe("persistBlockStructureEdit", () => {
             syncRecurring,
         );
 
-        expect(saved).toBe(true);
+        expect(saved).toEqual({ changed: true, weeksSkipped: undefined });
         expect(updateWeek).toHaveBeenCalledTimes(1);
         expect(updateWeek).toHaveBeenCalledWith(
             expect.objectContaining({ weekId: 48 }),
@@ -236,7 +236,7 @@ describe("persistBlockStructureEdit", () => {
             syncRecurring,
         );
 
-        expect(saved).toBe(true);
+        expect(saved).toEqual({ changed: true, weeksSkipped: undefined });
         expect(syncRecurring).toHaveBeenCalledTimes(1);
         expect(createWeek).toHaveBeenCalledTimes(1);
     });
@@ -276,7 +276,7 @@ describe("persistBlockStructureEdit", () => {
             syncRecurring,
         );
 
-        expect(saved).toBe(true);
+        expect(saved).toEqual({ changed: true, weeksSkipped: undefined });
         expect(syncRecurring).toHaveBeenCalledWith({
             planId: 526,
             blockId: 42,
