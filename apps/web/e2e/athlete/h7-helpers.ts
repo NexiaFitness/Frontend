@@ -59,6 +59,7 @@ export type ExecutionPost = {
   weight_kg?: number | null;
   reps?: number | null;
   input_mode?: string;
+  rpe?: number | null;
   step_key?: string;
   exercise_id?: number;
 };

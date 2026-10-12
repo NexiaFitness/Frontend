@@ -7,7 +7,9 @@
  * AMRAP, EMOM y FOR TIME. Opcionalmente la serie simple lleva peso prescrito (F3).
  * Credenciales: NEXIA_DEMO_PASSWORD desde entorno.
  *
- * Notas de mantenimiento: RM-13 — todas las sesiones llevan el prefijo «QA-F1-»
+ * También crea la superserie de varias rondas del E2E de RPE offline (prefijo «QA-RPE-»).
+ *
+ * Notas de mantenimiento: RM-13 — todas las sesiones llevan el prefijo «QA-F1-» o «QA-RPE-»
  * y el id se devuelve para listarlo en el informe; no borra nada.
  *
  * @author Frontend Team
@@ -156,6 +158,42 @@ export async function createWeightIntegritySession(
       rounds: 1,
       exercises: [
         { exercise_id: exA, order_in_block: 1, set_type: "for_time", planned_reps: "15" },
+      ],
+    },
+  ];
+  await api(trainer.accessToken, `/training-sessions/${session.id}/full`, {
+    method: "PUT",
+    body: JSON.stringify({ session: {}, blocks }),
+  });
+  return { sessionId: session.id, name };
+}
+
+/** Superserie de `rounds` rondas (2 ejercicios, sin peso prescrito) para el RPE offline R2. */
+export async function createSupersetRoundsSession(
+  label: string,
+  rounds: number,
+): Promise<WeightIntegritySession> {
+  const trainer = await loginTrainerApi();
+  const { exA, exB, blockTypeId } = await resolveCatalogIds(trainer.accessToken);
+  const name = `QA-RPE-${label}-${Date.now()}`;
+  const session = await api<{ id: number }>(trainer.accessToken, "/training-sessions/", {
+    method: "POST",
+    body: JSON.stringify({
+      client_id: QA_PLANNING_CLIENT_ID,
+      trainer_id: trainer.trainerId,
+      session_date: todayMadridYmd(),
+      session_name: name,
+      session_type: "strength",
+    }),
+  });
+  const blocks: BlockPayload[] = [
+    {
+      block_type_id: blockTypeId,
+      order_in_session: 1,
+      set_type: "superset",
+      exercises: [
+        { exercise_id: exA, order_in_block: 1, set_type: "superset", superset_group_id: 1, planned_sets: rounds, planned_reps: "10" },
+        { exercise_id: exB, order_in_block: 2, set_type: "superset", superset_group_id: 1, planned_sets: rounds, planned_reps: "12" },
       ],
     },
   ];
