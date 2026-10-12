@@ -34,7 +34,6 @@ export interface UseAthleteRunLoggerDefaultEffectsOptions {
     localExecutions: LocalSetExecution[];
     seriesAutofillWeightRef: MutableRefObject<Map<string, number>>;
     getTouchedSnapshot: () => ReadonlySet<string>;
-    roundRpe: number | null;
     weight: number | null;
     reps: number;
     rpe: number | null;
@@ -42,7 +41,7 @@ export interface UseAthleteRunLoggerDefaultEffectsOptions {
     setReps: (v: number) => void;
     setRpe: (v: number | null) => void;
     setSlotLogs: Dispatch<SetStateAction<Record<string, SlotLogValues>>>;
-    setRoundRpeState: (v: number | null) => void;
+    setRoundRpeState: Dispatch<SetStateAction<number | null>>;
 }
 
 export function useAthleteRunLoggerDefaultEffects({
@@ -56,7 +55,6 @@ export function useAthleteRunLoggerDefaultEffects({
     localExecutions,
     seriesAutofillWeightRef,
     getTouchedSnapshot,
-    roundRpe,
     weight,
     reps,
     rpe,
@@ -86,7 +84,6 @@ export function useAthleteRunLoggerDefaultEffects({
         localExecutions,
         getTouchedSnapshot,
         setSlotLogs,
-        roundRpe,
         setRoundRpeState,
     });
 

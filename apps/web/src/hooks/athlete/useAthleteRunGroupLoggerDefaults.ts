@@ -2,7 +2,10 @@
  * useAthleteRunGroupLoggerDefaults.ts — Defaults incrementales por slot en logging_rest.
  *
  * Contexto: superset/giant/dropset; fusiona con slotLogs sin pisar campos tocados.
- * Notas: ref display en tarjetas no muta estado aquí.
+ * Notas: ref display en tarjetas no muta estado aquí. El RPE de ronda se escribe con
+ * actualización funcional, igual que slotLogs: al cambiar de paso,
+ * useAthleteRunBatchStepOnStepKeyChange reinicia el RPE en el mismo commit y el
+ * estado del render aún trae el valor de la ronda anterior (R-LOG-05).
  *
  * @author Frontend Team
  * @since v8.5.0
@@ -34,8 +37,7 @@ export interface UseAthleteRunGroupLoggerDefaultsOptions {
     localExecutions: LocalSetExecution[];
     getTouchedSnapshot: () => ReadonlySet<string>;
     setSlotLogs: Dispatch<SetStateAction<Record<string, SlotLogValues>>>;
-    roundRpe: number | null;
-    setRoundRpeState: (value: number | null) => void;
+    setRoundRpeState: Dispatch<SetStateAction<number | null>>;
 }
 
 export function useAthleteRunGroupLoggerDefaults({
@@ -46,7 +48,6 @@ export function useAthleteRunGroupLoggerDefaults({
     localExecutions,
     getTouchedSnapshot,
     setSlotLogs,
-    roundRpe,
     setRoundRpeState,
 }: UseAthleteRunGroupLoggerDefaultsOptions): void {
     const appliedRefTokenBySlotRef = useRef<Map<string, string>>(new Map());
@@ -133,15 +134,10 @@ export function useAthleteRunGroupLoggerDefaults({
             appliedRoundRpeTokenRef.current = roundRpeToken;
             const defaultsRpe =
                 currentRunStep.roundIndex > 1 && refRpe != null ? refRpe : prescribedRpe;
-            const mergedRpe = mergeRoundRpeWithDefaults(
-                roundRpe,
-                defaultsRpe,
-                currentRunStep.stepKey,
-                touched
+            const roundStepKey = currentRunStep.stepKey;
+            setRoundRpeState((prev) =>
+                mergeRoundRpeWithDefaults(prev, defaultsRpe, roundStepKey, touched)
             );
-            if (mergedRpe !== roundRpe) {
-                setRoundRpeState(mergedRpe);
-            }
         }
     }, [
         restShowLogger,
@@ -151,7 +147,6 @@ export function useAthleteRunGroupLoggerDefaults({
         localExecutions,
         getTouchedSnapshot,
         setSlotLogs,
-        roundRpe,
         setRoundRpeState,
     ]);
 }

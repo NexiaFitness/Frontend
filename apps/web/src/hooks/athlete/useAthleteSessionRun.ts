@@ -1030,7 +1030,6 @@ export function useAthleteSessionRun({
         localExecutions,
         seriesAutofillWeightRef,
         getTouchedSnapshot,
-        roundRpe,
         weight,
         reps,
         rpe,
