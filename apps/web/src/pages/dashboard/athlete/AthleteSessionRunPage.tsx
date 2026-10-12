@@ -54,18 +54,19 @@ export const AthleteSessionRunPage: React.FC = () => {
         null
     );
 
+    // `data`/`isSuccess` siguen siendo los de la sesion anterior mientras carga la nueva (misma ruta).
     const {
-        data: runProgressForNotes,
-        isSuccess: runProgressFetchSucceeded,
+        currentData: runProgressForNotes,
         isError: runProgressFetchError,
         isFetching: runProgressFetching,
         refetch: refetchRunProgress,
     } = useGetAthleteRunProgressQuery(sessionId, {
         skip: !sessionId,
     });
+    const runProgressFetchSucceeded = runProgressForNotes !== undefined;
 
     useEffect(() => {
-        if (!sessionId || !runProgressFetchSucceeded || runProgressForNotes == null) {
+        if (!sessionId || runProgressForNotes == null) {
             return;
         }
         if (runProgressForNotes.registration_editable === false) {
