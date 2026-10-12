@@ -6,6 +6,8 @@
  * baseline, ni limpiar el estado sucio, ni mostrar el toast de guardado.
  */
 
+import "./blockWeeksManageTestTodayMock";
+
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";

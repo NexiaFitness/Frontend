@@ -6,6 +6,8 @@
  * cacheado que RTK Query entrega en el primer render.
  */
 
+import "./blockWeeksManageTestTodayMock";
+
 import type { PropsWithChildren } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";

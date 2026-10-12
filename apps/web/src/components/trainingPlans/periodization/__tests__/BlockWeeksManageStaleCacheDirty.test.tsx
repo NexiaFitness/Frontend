@@ -2,6 +2,8 @@
  * BlockWeeksManageStaleCacheDirty.test.tsx — Respuesta fresca no pisa draft local dirty.
  */
 
+import "./blockWeeksManageTestTodayMock";
+
 import type { PropsWithChildren } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";

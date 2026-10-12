@@ -2,6 +2,8 @@
  * BlockWeeksManageSurface.test.tsx — Restore + save persiste PUT (D-ST / D-PRES).
  */
 
+import "./blockWeeksManageTestTodayMock";
+
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
