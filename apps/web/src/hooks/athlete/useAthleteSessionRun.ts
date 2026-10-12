@@ -465,8 +465,10 @@ export function useAthleteSessionRun({
                 markSlotField(slotKey, "durationSeconds");
             }
             if (patch.weight !== undefined || patch.reps != null || patch.durationSeconds != null) {
+                // Solo paso + slot: tocar todos los slots anula el skip S5 y reenvia los no editados.
                 touchedWeightStepKeysRef.current.add(slotKey);
-                touchRunStepForPersist(currentRunStep ?? undefined);
+                if (currentRunStep) touchedWeightStepKeysRef.current.add(currentRunStep.stepKey);
+                setPersistTouchEpoch((n) => n + 1);
             }
             setSlotLogs((prev) => {
                 const current = prev[slotKey];
@@ -474,7 +476,7 @@ export function useAthleteSessionRun({
                 return { ...prev, [slotKey]: { ...current, ...patch } };
             });
         },
-        [currentRunStep, markSlotField, touchRunStepForPersist]
+        [currentRunStep, markSlotField]
     );
 
     const updateAmrapPartialReps = useCallback(
