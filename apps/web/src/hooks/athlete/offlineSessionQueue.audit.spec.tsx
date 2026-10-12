@@ -200,3 +200,35 @@ describe("cola offline — error permanente en cabeza (DBG-E-02)", () => {
         expect(mem.executions.size).toBe(2);
     });
 });
+
+describe("cola offline — dos pestanas drenan a la vez (DBG-E-03)", () => {
+    it("con Web Locks del navegador cada elemento se envia una sola vez", async () => {
+        const held = new Map<string, Promise<unknown>>();
+        vi.stubGlobal("navigator", {
+            ...navigator,
+            locks: {
+                request: (name: string, cb: () => Promise<unknown>) => {
+                    const prev = held.get(name) ?? Promise.resolve();
+                    const next = prev.then(cb, cb);
+                    held.set(name, next.catch(() => undefined));
+                    return next;
+                },
+            },
+        });
+        queueExecution("e1", "block-1-single-0-r1-S3-S1-1", 60, 100);
+        queueExecution("e2", "block-1-single-0-r1-S3-S2-2", 62.5, 200);
+        mem.completes.set(SESSION, { sessionId: SESSION, ts: 300 });
+        const { adapter, calls } = makeAdapter();
+
+        await Promise.all([
+            flushPendingSessionSync(SESSION, adapter),
+            flushPendingSessionSync(SESSION, adapter),
+        ]);
+
+        expect(calls).toEqual([
+            "exec:block-1-single-0-r1-S3-S1-1:60",
+            "exec:block-1-single-0-r1-S3-S2-2:62.5",
+            "complete",
+        ]);
+    });
+});
