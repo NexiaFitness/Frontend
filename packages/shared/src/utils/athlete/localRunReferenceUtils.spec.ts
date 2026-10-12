@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import type { LocalSetExecution } from "../../offline/athleteSessionTypes";
 import {
     resolveLocalRoundRpeFromExecutions,
+    resolveLocalRunReference,
     stepKeyBelongsToGroup,
 } from "./localRunReferenceUtils";
 
@@ -104,5 +105,82 @@ describe("resolveLocalRoundRpeFromExecutions", () => {
                 "block-5-superset-2"
             )
         ).toBe(9);
+    });
+});
+
+describe("resolveLocalRunReference — mismo ejercicio en dos grupos (DBG-C-01)", () => {
+    const row = (r: Partial<LocalSetExecution> & Pick<LocalSetExecution, "step_key">): LocalSetExecution => ({
+        exercise_id: 7,
+        weight_kg: 0,
+        reps: 8,
+        rpe: null,
+        set_index: 1,
+        round_index: 1,
+        slot_label: "S3",
+        group_kind: "single_set",
+        performed_at: 1,
+        ...r,
+    });
+
+    it("single set: la serie 2 del bloque 3 toma la serie 1 del bloque 3, no la del bloque 1", () => {
+        const executions: LocalSetExecution[] = [
+            row({ step_key: "block-1-single-0-r1-S3-S1-1", weight_kg: 100 }),
+            row({ step_key: "block-3-single-0-r1-S3-S1-1", weight_kg: 60, performed_at: 2 }),
+        ];
+        const ref = resolveLocalRunReference({
+            exerciseId: 7,
+            setIndex: 2,
+            roundIndex: 2,
+            slotLabel: "S3",
+            groupKind: "single_set",
+            groupId: "block-3-single-0",
+            localExecutions: executions,
+        });
+        expect(ref?.weight_kg).toBe(60);
+    });
+
+    it("single set: sin fila previa del mismo grupo no hereda la de otro bloque", () => {
+        const executions: LocalSetExecution[] = [
+            row({ step_key: "block-1-single-0-r1-S3-S1-1", weight_kg: 100 }),
+        ];
+        const ref = resolveLocalRunReference({
+            exerciseId: 7,
+            setIndex: 2,
+            roundIndex: 2,
+            slotLabel: "S3",
+            groupKind: "single_set",
+            groupId: "block-3-single-0",
+            localExecutions: executions,
+        });
+        expect(ref).toBeNull();
+    });
+
+    it("superset: R2 de A1 en el bloque 2 toma R1 de A1 del bloque 2, no del bloque 1", () => {
+        const executions: LocalSetExecution[] = [
+            row({
+                step_key: slotStepKey("block-1-superset-1", 1),
+                group_kind: "superset",
+                slot_label: "A1",
+                set_index: null,
+                weight_kg: 40,
+            }),
+            row({
+                step_key: slotStepKey("block-2-superset-1", 1),
+                group_kind: "superset",
+                slot_label: "A1",
+                set_index: null,
+                weight_kg: 25,
+                performed_at: 2,
+            }),
+        ];
+        const ref = resolveLocalRunReference({
+            exerciseId: 7,
+            roundIndex: 2,
+            slotLabel: "A1",
+            groupKind: "superset",
+            groupId: "block-2-superset-1",
+            localExecutions: executions,
+        });
+        expect(ref?.weight_kg).toBe(25);
     });
 });

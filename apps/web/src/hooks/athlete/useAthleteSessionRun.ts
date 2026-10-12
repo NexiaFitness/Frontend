@@ -332,6 +332,7 @@ export function useAthleteSessionRun({
             roundIndex: current.roundIndex,
             slotLabel: current.slotLabel,
             groupKind: current.groupKind,
+            groupId: current.groupId,
             localExecutions,
         });
     }, [current, isOnline, localExecutions]);

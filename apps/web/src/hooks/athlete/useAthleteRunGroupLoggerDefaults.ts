@@ -73,6 +73,7 @@ export function useAthleteRunGroupLoggerDefaults({
                 roundIndex: currentRunStep.roundIndex,
                 slotLabel: slot.slotLabel,
                 groupKind: currentRunStep.groupKind,
+                groupId: currentRunStep.groupId,
                 localExecutions,
             });
             const token = runLoggerSlotHydrationToken(apiRef, localRef);
@@ -92,6 +93,7 @@ export function useAthleteRunGroupLoggerDefaults({
                         roundIndex: currentRunStep.roundIndex,
                         slotLabel: slot.slotLabel,
                         groupKind: currentRunStep.groupKind,
+                        groupId: currentRunStep.groupId,
                         localExecutions,
                     });
                     const reference: AthleteRunReferencePoint | null | undefined =
