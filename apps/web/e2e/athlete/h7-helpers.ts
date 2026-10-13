@@ -177,6 +177,20 @@ export async function beginGroupLogging(page: Page) {
   await page.waitForTimeout(400);
 }
 
+/** Run guiado: «Empezar descanso» si hay timer; si no, logger ya visible (Guardar). */
+export async function enterRunLogger(page: Page) {
+  const start = page.getByRole("button", { name: /Empezar descanso|Registrar dropset/i });
+  if (await start.isVisible().catch(() => false)) {
+    await expect(start).toBeEnabled({ timeout: 45_000 });
+    await start.click();
+    await page.waitForTimeout(400);
+    return;
+  }
+  await expect(page.getByRole("button", { name: /^Guardar$/i })).toBeVisible({
+    timeout: 45_000,
+  });
+}
+
 export async function startRestAfterFill(page: Page) {
   const start = page.getByRole("button", { name: /Empezar descanso/i });
   await expect(start).toBeEnabled({ timeout: 45_000 });

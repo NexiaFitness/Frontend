@@ -299,8 +299,29 @@ export interface FlushResult {
     registrationWindowClosed: boolean;
 }
 
+const sessionSyncLockName = (sessionId: number) => `nexia-athlete-session-sync-${sessionId}`;
+
+/** Evita doble flush cuando varias pestañas reconectan a la vez (misma sesión). */
+async function withSessionSyncLock<T>(
+    sessionId: number,
+    run: () => Promise<T>
+): Promise<T> {
+    const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
+    if (locks?.request) {
+        return locks.request(sessionSyncLockName(sessionId), run);
+    }
+    return run();
+}
+
 /** Sincroniza cola pendiente con el backend. */
 export async function flushPendingSessionSync(
+    sessionId: number,
+    adapter: AthleteSessionSyncAdapter
+): Promise<FlushResult> {
+    return withSessionSyncLock(sessionId, () => flushPendingSessionSyncUnlocked(sessionId, adapter));
+}
+
+async function flushPendingSessionSyncUnlocked(
     sessionId: number,
     adapter: AthleteSessionSyncAdapter
 ): Promise<FlushResult> {

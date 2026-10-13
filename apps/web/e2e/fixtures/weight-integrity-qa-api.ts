@@ -31,6 +31,7 @@ type BlockExercise = {
   planned_sets?: number;
   planned_reps?: string;
   planned_weight?: number;
+  planned_duration?: number;
 };
 
 type BlockPayload = {
@@ -194,6 +195,184 @@ export async function createSupersetRoundsSession(
       exercises: [
         { exercise_id: exA, order_in_block: 1, set_type: "superset", superset_group_id: 1, planned_sets: rounds, planned_reps: "10" },
         { exercise_id: exB, order_in_block: 2, set_type: "superset", superset_group_id: 1, planned_sets: rounds, planned_reps: "12" },
+      ],
+    },
+  ];
+  await api(trainer.accessToken, `/training-sessions/${session.id}/full`, {
+    method: "PUT",
+    body: JSON.stringify({ session: {}, blocks }),
+  });
+  return { sessionId: session.id, name };
+}
+
+/** MOD-09 / S4: serie simple reps_only, serie duration, superserie reps_only (run guiado). */
+export async function createMod09RunSession(label: string): Promise<WeightIntegritySession> {
+  const trainer = await loginTrainerApi();
+  const { exA, exB, blockTypeId } = await resolveCatalogIds(trainer.accessToken);
+  const name = `QA-MOD09-${label}-${Date.now()}`;
+  const session = await api<{ id: number }>(trainer.accessToken, "/training-sessions/", {
+    method: "POST",
+    body: JSON.stringify({
+      client_id: QA_PLANNING_CLIENT_ID,
+      trainer_id: trainer.trainerId,
+      session_date: todayMadridYmd(),
+      session_name: name,
+      session_type: "strength",
+    }),
+  });
+  const blocks: BlockPayload[] = [
+    {
+      block_type_id: blockTypeId,
+      order_in_session: 1,
+      set_type: "single_set",
+      exercises: [
+        {
+          exercise_id: exA,
+          order_in_block: 1,
+          set_type: "single_set",
+          planned_sets: 1,
+          planned_reps: "12",
+        },
+      ],
+    },
+    {
+      block_type_id: blockTypeId,
+      order_in_session: 2,
+      set_type: "single_set",
+      exercises: [
+        {
+          exercise_id: exA,
+          order_in_block: 1,
+          set_type: "single_set",
+          planned_sets: 1,
+          planned_duration: 45,
+        },
+      ],
+    },
+    {
+      block_type_id: blockTypeId,
+      order_in_session: 3,
+      set_type: "superset",
+      exercises: [
+        {
+          exercise_id: exA,
+          order_in_block: 1,
+          set_type: "superset",
+          superset_group_id: 1,
+          planned_sets: 1,
+          planned_reps: "10",
+        },
+        {
+          exercise_id: exB,
+          order_in_block: 2,
+          set_type: "superset",
+          superset_group_id: 1,
+          planned_sets: 1,
+          planned_reps: "8",
+        },
+      ],
+    },
+  ];
+  await api(trainer.accessToken, `/training-sessions/${session.id}/full`, {
+    method: "PUT",
+    body: JSON.stringify({ session: {}, blocks }),
+  });
+  return { sessionId: session.id, name };
+}
+
+/** Superserie 1 ronda con peso prescrito (concurrencia / touch merge). */
+export async function createSupersetPrescribedWeightSession(
+  label: string,
+): Promise<WeightIntegritySession> {
+  const trainer = await loginTrainerApi();
+  const { exA, exB, blockTypeId } = await resolveCatalogIds(trainer.accessToken);
+  const name = `QA-2TAB-${label}-${Date.now()}`;
+  const session = await api<{ id: number }>(trainer.accessToken, "/training-sessions/", {
+    method: "POST",
+    body: JSON.stringify({
+      client_id: QA_PLANNING_CLIENT_ID,
+      trainer_id: trainer.trainerId,
+      session_date: todayMadridYmd(),
+      session_name: name,
+      session_type: "strength",
+    }),
+  });
+  const blocks: BlockPayload[] = [
+    {
+      block_type_id: blockTypeId,
+      order_in_session: 1,
+      set_type: "superset",
+      exercises: [
+        {
+          exercise_id: exA,
+          order_in_block: 1,
+          set_type: "superset",
+          superset_group_id: 1,
+          planned_sets: 1,
+          planned_reps: "10",
+          planned_weight: 30,
+        },
+        {
+          exercise_id: exB,
+          order_in_block: 2,
+          set_type: "superset",
+          superset_group_id: 1,
+          planned_sets: 1,
+          planned_reps: "12",
+          planned_weight: 20,
+        },
+      ],
+    },
+  ];
+  await api(trainer.accessToken, `/training-sessions/${session.id}/full`, {
+    method: "PUT",
+    body: JSON.stringify({ session: {}, blocks }),
+  });
+  return { sessionId: session.id, name };
+}
+
+/** Superserie con peso prescrito y N rondas (offline / dos pestañas). */
+export async function createSupersetPrescribedWeightRoundsSession(
+  label: string,
+  rounds: number,
+): Promise<WeightIntegritySession> {
+  const trainer = await loginTrainerApi();
+  const { exA, exB, blockTypeId } = await resolveCatalogIds(trainer.accessToken);
+  const name = `QA-2TAB-${label}-${Date.now()}`;
+  const session = await api<{ id: number }>(trainer.accessToken, "/training-sessions/", {
+    method: "POST",
+    body: JSON.stringify({
+      client_id: QA_PLANNING_CLIENT_ID,
+      trainer_id: trainer.trainerId,
+      session_date: todayMadridYmd(),
+      session_name: name,
+      session_type: "strength",
+    }),
+  });
+  const blocks: BlockPayload[] = [
+    {
+      block_type_id: blockTypeId,
+      order_in_session: 1,
+      set_type: "superset",
+      exercises: [
+        {
+          exercise_id: exA,
+          order_in_block: 1,
+          set_type: "superset",
+          superset_group_id: 1,
+          planned_sets: rounds,
+          planned_reps: "10",
+          planned_weight: 30,
+        },
+        {
+          exercise_id: exB,
+          order_in_block: 2,
+          set_type: "superset",
+          superset_group_id: 1,
+          planned_sets: rounds,
+          planned_reps: "12",
+          planned_weight: 20,
+        },
       ],
     },
   ];
