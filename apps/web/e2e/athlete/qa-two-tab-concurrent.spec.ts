@@ -1,8 +1,12 @@
 /**
  * QA — Edición concurrente REAL (dos pestañas): POST/GET sin duplicados ni pisado silencioso.
+ *
+ * Notas (2026-10-13, integracion): con el candado entre pestanas (fb50129) drena la cola la pestana
+ * que obtiene el lock, A o B. El escenario offline cuenta los POST de ambas pestanas y comprueba en
+ * servidor; esperar 4 POST solo en A fallaba ~3/5 con 0 POST aunque B ya habia enviado los 4.
  */
 
-import { test, expect, type BrowserContext } from "@playwright/test";
+import { test, expect, type BrowserContext, type Page } from "@playwright/test";
 import { loginAsAthlete } from "../fixtures/athlete-auth";
 import {
   createSupersetPrescribedWeightSession,
@@ -16,6 +20,20 @@ import {
   typePeso,
   typeReps,
 } from "./h7-helpers";
+
+const API_BASE = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
+
+async function registeredWeightsOnServer(page: Page, sessionId: number): Promise<Map<string, number | null>> {
+  const token = await page.evaluate(() => localStorage.getItem("nexia_token"));
+  const res = await fetch(`${API_BASE}/athlete/run-context/sessions/${sessionId}/progress`, {
+    headers: { Authorization: `Bearer ${token ?? ""}` },
+  });
+  expect(res.ok).toBeTruthy();
+  const body = (await res.json()) as { steps: { step_key: string; status: string; weight_kg?: number | null }[] };
+  return new Map(
+    body.steps.filter((s) => s.status === "registered").map((s) => [s.step_key, s.weight_kg ?? null])
+  );
+}
 
 async function athletePages(context: BrowserContext) {
   const pageA = await context.newPage();
@@ -122,10 +140,14 @@ test("2TAB offline: cola R1+R2 drena una sola vez con segunda pestaña abierta",
   expect(capA.posts).toHaveLength(0);
 
   await context.setOffline(false);
-  await capA.waitForPostCount(4, 180_000);
+  // Drena la pestana que obtiene el candado (A o B): se esperan 4 POST entre ambas.
+  await expect
+    .poll(() => capA.posts.length + capB.posts.length, { timeout: 180_000 })
+    .toBeGreaterThanOrEqual(4);
   await pageA.waitForTimeout(4_000);
 
   const merged = [...capA.posts, ...capB.posts];
+  console.log("2TAB offline POST por pestana", { A: capA.posts.length, B: capB.posts.length });
   expect(merged.length).toBe(4);
   const byKey = new Map<string, number>();
   for (const p of merged) {
@@ -136,6 +158,10 @@ test("2TAB offline: cola R1+R2 drena una sola vez con segunda pestaña abierta",
   for (const count of byKey.values()) {
     expect(count).toBe(1);
   }
+
+  const onServer = await registeredWeightsOnServer(pageA, sessionId);
+  expect(onServer.size).toBe(4);
+  expect([...onServer.values()].sort()).toEqual([18, 20, 28, 30]);
 
   await context.close();
 });
