@@ -3,10 +3,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import {
-    dedupePendingExerciseNotes,
-    isRegistrationWindowClosedSyncError,
-} from "./athleteSessionSync";
+import { dedupePendingExerciseNotes } from "./athleteSessionQueueDedupe";
+import { isRegistrationWindowClosedSyncError } from "./athleteSessionSync";
 import type { PendingAthleteExerciseNoteLog } from "./athleteSessionTypes";
 
 describe("D6 offline exercise notes", () => {
