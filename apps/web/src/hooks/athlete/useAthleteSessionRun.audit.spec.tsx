@@ -142,7 +142,7 @@ const line = (
         dropset_sequence: null,
         planned_sets: 2,
         planned_reps: "10",
-        planned_weight: null,
+        planned_weight: 20,
         planned_duration: null,
         planned_rest: 90,
         effort_character: null,
@@ -163,6 +163,21 @@ function giantSetView(): SessionStructureView {
         },
         blockTypes: [],
         exerciseNamesById: { 1: "Sentadilla", 2: "Remo", 3: "Press" },
+    });
+}
+
+/** MOD-09: sin planned_weight el ejercicio es reps_only; actual_weight es un valor viejo que no debe enviarse. */
+function repsOnlyView(setType: "single_set" | "superset"): SessionStructureView {
+    const repsOnly = { planned_weight: null, actual_weight: 20, set_type: setType } as const;
+    const lines =
+        setType === "superset"
+            ? [line(201, 20, 1, 1, repsOnly), line(202, 20, 2, 2, repsOnly)]
+            : [line(201, 20, 1, 1, { ...repsOnly, superset_group_id: null })];
+    return mapBlocksToSessionStructureView({
+        blocks: [block(20, setType, setType === "superset" ? 2 : null)],
+        blockExercisesByBlock: { 20: lines },
+        blockTypes: [],
+        exerciseNamesById: { 1: "Dominadas", 2: "Fondos" },
     });
 }
 
@@ -258,5 +273,37 @@ describe("useAthleteSessionRun — carga fallida (DBG-TO-02)", () => {
 
         await waitFor(() => expect(result.current.isOnline).toBe(false));
         expect(result.current.loadError).toBe(false);
+    });
+});
+
+describe("useAthleteSessionRun — ejercicios sin peso (MOD-09 / S4)", () => {
+    it("serie simple reps_only: 1 POST sin weight_kg (ni 0 ni el actual_weight viejo)", async () => {
+        view = repsOnlyView("single_set");
+        const { result } = renderRun();
+        await enterLogger(result);
+        expect(result.current.current?.inputMode).toBe("reps_only");
+
+        await confirm(result);
+
+        expect(postExecution).toHaveBeenCalledTimes(1);
+        const [payload] = postExecution.mock.calls[0];
+        expect(payload.input_mode).toBe("reps_only");
+        expect(payload.weight_kg ?? null).toBeNull();
+        expect(payload.reps).toBe(10);
+    });
+
+    it("superset reps_only (S4): 1 POST por slot, ninguno con weight_kg", async () => {
+        view = repsOnlyView("superset");
+        const { result } = renderRun();
+        await enterLogger(result);
+        expect(result.current.currentRunStep?.kind).toBe("group_round");
+
+        await confirm(result);
+
+        expect(postExecution).toHaveBeenCalledTimes(2);
+        for (const [payload] of postExecution.mock.calls) {
+            expect(payload.input_mode).toBe("reps_only");
+            expect(payload.weight_kg ?? null).toBeNull();
+        }
     });
 });
