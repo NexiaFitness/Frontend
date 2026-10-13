@@ -170,3 +170,23 @@ test("reps_only superset (S4): 2 POST, ninguno con weight_kg", async ({ page }) 
         expect(body.weight_kg ?? null).toBeNull();
     }
 });
+
+test("peticion colgada (DBG-TO-01/02): tras el timeout, 'No pudimos cargar tu registro' + Reintentar recupera", async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    await seedAthleteSession(page);
+    const api = await installApiMock(page, { kind: "single", hangFirstBlocksRequest: true });
+    await page.goto(`/dashboard/sessions/${SESSION_ID}/run`);
+
+    await expect(page.getByRole("status", { name: /Cargando/i }).first()).toBeVisible();
+    await expect(page.getByText(/No pudimos cargar tu registro/i)).toBeVisible({ timeout: 45_000 });
+    const blocksGets = () =>
+        api.requests.filter((r) => r.method === "GET" && r.path.endsWith(`/sessions/${SESSION_ID}/blocks`)).length;
+    expect(blocksGets()).toBe(1);
+
+    await page.getByRole("button", { name: /Reintentar/i }).click();
+    await expect(page.getByText(/Paso 1 \/ \d/)).toBeVisible({ timeout: 15_000 });
+    expect(blocksGets()).toBe(2);
+    expect(api.posts(EXECUTIONS)).toHaveLength(0);
+});

@@ -22,6 +22,8 @@ export type ScenarioKind = "single" | "single_reps_only" | "superset_reps_only" 
 export interface ScenarioOptions {
     kind: ScenarioKind;
     registrationEditable?: boolean;
+    /** La primera peticion de bloques no responde nunca (prueba del timeout de baseApi). */
+    hangFirstBlocksRequest?: boolean;
 }
 
 export interface RecordedRequest {
@@ -154,6 +156,7 @@ export async function installApiMock(page: Page, options: ScenarioOptions): Prom
     const requests: RecordedRequest[] = [];
     const unmatched: string[] = [];
     const editable = options.registrationEditable ?? true;
+    let blocksRequests = 0;
 
     const handler = async (route: Route, request: Request) => {
         const url = new URL(request.url());
@@ -193,6 +196,10 @@ export async function installApiMock(page: Page, options: ScenarioOptions): Prom
             return json(route, []);
         }
         if (method === "GET" && path === `/session-programming/sessions/${SESSION_ID}/blocks`) {
+            blocksRequests += 1;
+            if (options.hangFirstBlocksRequest && blocksRequests === 1) {
+                return new Promise<void>(() => undefined);
+            }
             return json(route, [blockFor(options.kind)]);
         }
         if (method === "GET" && path === "/session-programming/blocks/10/exercises") {
