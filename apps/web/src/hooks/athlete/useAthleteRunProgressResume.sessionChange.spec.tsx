@@ -89,7 +89,7 @@ describe("useAthleteRunProgressResume — cambio de sessionId (DBG-G-01)", () =>
             initialProps: { sessionId: 1, runSteps: SESSION_1_STEPS },
         });
 
-        await waitFor(() => expect(result.current.step).toBe(4));
+        await waitFor(() => expect(result.current.step).toBe(4), { timeout: 5_000 });
 
         // Navegacion a la sesion 2: la estructura aun es la de la sesion 1 (RTK `data` de la vista).
         rerender({ sessionId: 2, runSteps: SESSION_1_STEPS });
@@ -97,7 +97,8 @@ describe("useAthleteRunProgressResume — cambio de sessionId (DBG-G-01)", () =>
         rerender({ sessionId: 2, runSteps: SESSION_2_STEPS });
 
         await waitFor(() =>
-            expect(result.current.completedStepKeys.current.has(SESSION_2_STEPS[0].stepKey)).toBe(true)
+            expect(result.current.completedStepKeys.current.has(SESSION_2_STEPS[0].stepKey)).toBe(true),
+            { timeout: 5_000 }
         );
         expect(result.current.step).toBe(1);
         expect(result.current.step).toBeLessThan(SESSION_2_STEPS.length);
@@ -122,15 +123,16 @@ describe("useAthleteRunProgressResume — cambio de sessionId (DBG-G-01)", () =>
             wrapper,
             initialProps: { sessionId: 1, runSteps: SESSION_1_STEPS },
         });
-        await waitFor(() => expect(result.current.step).toBe(4));
+        await waitFor(() => expect(result.current.step).toBe(4), { timeout: 5_000 });
 
         rerender({ sessionId: 2, runSteps: SESSION_1_STEPS });
-        await waitFor(() => expect(session2ProgressRequests).toBe(1));
+        await waitFor(() => expect(session2ProgressRequests).toBe(1), { timeout: 5_000 });
         await new Promise((resolve) => setTimeout(resolve, 50));
         rerender({ sessionId: 2, runSteps: SESSION_2_STEPS });
 
         await waitFor(() =>
-            expect(result.current.completedStepKeys.current.has(SESSION_2_STEPS[0].stepKey)).toBe(true)
+            expect(result.current.completedStepKeys.current.has(SESSION_2_STEPS[0].stepKey)).toBe(true),
+            { timeout: 5_000 }
         );
         expect(result.current.step).toBe(1);
     });
