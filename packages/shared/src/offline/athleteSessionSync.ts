@@ -48,6 +48,7 @@ import {
     pruneSupersededLogs,
     pruneSupersededTimedResults,
 } from "./athleteSessionQueueDedupe";
+import { getSessionSyncPlatform } from "./sessionSyncPlatform";
 
 const SNAPSHOT_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -271,18 +272,12 @@ export function isTransientSyncError(error: unknown): boolean {
     return status < 400 || status >= 500;
 }
 
-const sessionSyncLockName = (sessionId: number) => `nexia-athlete-session-sync-${sessionId}`;
-
 /** Evita doble flush cuando varias pestañas reconectan a la vez (misma sesión). */
 async function withSessionSyncLock<T>(
     sessionId: number,
     run: () => Promise<T>
 ): Promise<T> {
-    const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
-    if (locks?.request) {
-        return locks.request(sessionSyncLockName(sessionId), run);
-    }
-    return run();
+    return getSessionSyncPlatform().withSessionSyncLock(sessionId, run);
 }
 
 /** Sincroniza cola pendiente con el backend. */

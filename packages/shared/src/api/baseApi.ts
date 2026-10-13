@@ -310,7 +310,11 @@ const baseQueryWithReauth: BaseQueryFn<
     const restoreConsole = suppressExpectedConsoleErrors();
     
     try {
-        const result = await baseQuery(withRequestTimeout(args, API_CONFIG.TIMEOUT), api, extraOptions);
+        const result = await baseQuery(
+            withRequestTimeout(args, API_CONFIG.TIMEOUT, String(api.endpoint ?? "")),
+            api,
+            extraOptions
+        );
         captureResponseMeta(result.meta);
 
         if (result.error) {
@@ -380,7 +384,7 @@ const baseQueryWithReauth: BaseQueryFn<
                 }
 
                 const retryResult = await baseQuery(
-                    withRequestTimeout(args, API_CONFIG.TIMEOUT),
+                    withRequestTimeout(args, API_CONFIG.TIMEOUT, String(api.endpoint ?? "")),
                     api,
                     extraOptions
                 );

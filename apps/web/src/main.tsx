@@ -22,12 +22,14 @@ import {
   reportClientError,
 } from "./lib/clientErrorReporter";
 import { registerAuthRefreshPlatform } from "./platform/authRefreshPlatform";
+import { registerSessionSyncPlatform } from "./platform/sessionSyncPlatform";
 import { installAthleteRunWakeLockVisibilityRecovery } from "./platform/wakeLock";
 
 initStorage(webStorage);
 
 registerClientErrorReporting();
 registerAuthRefreshPlatform();
+registerSessionSyncPlatform();
 installAthleteRunWakeLockVisibilityRecovery();
 // Recarga única si un chunk lazy ya no existe tras un despliegue (ver lib/lazyWithRetry.ts)
 registerPreloadErrorRecovery({
