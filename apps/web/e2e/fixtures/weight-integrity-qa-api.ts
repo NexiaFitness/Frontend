@@ -32,6 +32,7 @@ type BlockExercise = {
   planned_reps?: string;
   planned_weight?: number;
   planned_duration?: number;
+  planned_rest?: number;
 };
 
 type BlockPayload = {
@@ -212,8 +213,75 @@ export async function createSupersetRoundsSession(
       order_in_session: 1,
       set_type: "superset",
       exercises: [
-        { exercise_id: exA, order_in_block: 1, set_type: "superset", superset_group_id: 1, planned_sets: rounds, planned_reps: "10" },
-        { exercise_id: exB, order_in_block: 2, set_type: "superset", superset_group_id: 1, planned_sets: rounds, planned_reps: "12" },
+        {
+          exercise_id: exA,
+          order_in_block: 1,
+          set_type: "superset",
+          superset_group_id: 1,
+          planned_sets: rounds,
+          planned_reps: "10",
+          planned_weight: 30,
+        },
+        {
+          exercise_id: exB,
+          order_in_block: 2,
+          set_type: "superset",
+          superset_group_id: 1,
+          planned_sets: rounds,
+          planned_reps: "12",
+          planned_weight: 20,
+        },
+      ],
+    },
+  ];
+  await api(trainer.accessToken, `/training-sessions/${session.id}/full`, {
+    method: "PUT",
+    body: JSON.stringify({ session: {}, blocks }),
+  });
+  return { sessionId: session.id, name };
+}
+
+async function resolveWarmupBlockTypeId(token: string): Promise<number> {
+  const blockTypes = await api<{ id: number; name: string }[]>(
+    token,
+    "/session-programming/training-block-types",
+  );
+  const warmup =
+    blockTypes.find((b) => /calentamiento|warmup|movilidad/i.test(b.name)) ?? blockTypes[0];
+  return warmup.id;
+}
+
+/** Serie simple con `planned_rest` (D-REST / R1–R12), alineado con seed Diana QA. */
+export async function createQaRestSingleSetSession(label: string): Promise<WeightIntegritySession> {
+  const trainer = await loginTrainerApi();
+  const { exA } = await resolveCatalogIds(trainer.accessToken);
+  const blockTypeId = await resolveWarmupBlockTypeId(trainer.accessToken);
+  const name = `QA-REST-${label}-${Date.now()}`;
+  const session = await api<{ id: number }>(trainer.accessToken, "/training-sessions/", {
+    method: "POST",
+    body: JSON.stringify({
+      client_id: QA_PLANNING_CLIENT_ID,
+      trainer_id: trainer.trainerId,
+      session_date: todayMadridYmd(),
+      session_name: name,
+      session_type: "strength",
+    }),
+  });
+  const blocks: BlockPayload[] = [
+    {
+      block_type_id: blockTypeId,
+      order_in_session: 1,
+      set_type: "single_set",
+      exercises: [
+        {
+          exercise_id: exA,
+          order_in_block: 1,
+          set_type: "single_set",
+          planned_sets: 2,
+          planned_reps: "12",
+          planned_weight: 40,
+          planned_rest: 60,
+        },
       ],
     },
   ];

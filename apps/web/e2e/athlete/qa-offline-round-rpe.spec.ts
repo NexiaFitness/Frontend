@@ -22,6 +22,7 @@ import { createSupersetRoundsSession } from "../fixtures/weight-integrity-qa-api
 import {
   attachExecutionRequestCapture,
   confirmGroupRound,
+  dismissMobileNavDialog,
   openRunForSession,
   skipRestIfVisible,
   typePeso,
@@ -39,6 +40,7 @@ test("QA-RPE-R2 offline: la ronda 2 hereda el RPE de la ronda 1 y sincroniza 2 P
 
   await loginAsAthlete(page);
   await openRunForSession(page, sessionId);
+  await dismissMobileNavDialog(page);
   await expect(page.getByRole("heading", { name: /Ronda 1 de 2/i })).toBeVisible({
     timeout: 60_000,
   });

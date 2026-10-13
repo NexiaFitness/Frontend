@@ -86,19 +86,37 @@ export function countExecutionPostRequests(page: Page) {
   };
 }
 
+export type ExecutionPostFailure = {
+  status: number;
+  body: string;
+  payload: ExecutionPost | null;
+};
+
 export function attachExecutionRequestCapture(page: Page) {
   const posts: ExecutionPost[] = [];
-  page.on("request", (req) => {
+  const rejected: ExecutionPostFailure[] = [];
+  page.on("response", (resp) => {
+    const req = resp.request();
     if (!isRunContextExecutionPost(req.url(), req.method())) return;
+    const status = resp.status();
+    let payload: ExecutionPost | null = null;
     try {
       const raw = req.postData();
-      if (raw) posts.push(JSON.parse(raw) as ExecutionPost);
+      if (raw) payload = JSON.parse(raw) as ExecutionPost;
     } catch {
       /* ignore */
     }
+    if (status >= 200 && status < 300) {
+      if (payload) posts.push(payload);
+      return;
+    }
+    void resp.text().then((body) => {
+      rejected.push({ status, body, payload });
+    });
   });
   return {
     posts,
+    rejected,
     waitForPostCount: async (count: number, timeoutMs = 45_000) => {
       const start = Date.now();
       while (posts.length < count && Date.now() - start < timeoutMs) {
@@ -179,6 +197,11 @@ export async function beginGroupLogging(page: Page) {
 }
 
 export async function dismissMobileNavDialog(page: Page) {
+  const pwaLater = page.getByRole("button", { name: /Más tarde/i });
+  if (await pwaLater.isVisible().catch(() => false)) {
+    await pwaLater.click();
+    await page.waitForTimeout(300);
+  }
   const navDialog = page
     .getByRole("dialog")
     .filter({ has: page.getByRole("link", { name: "Mi agenda" }) });

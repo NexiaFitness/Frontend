@@ -5,12 +5,11 @@
 
 import { test, expect } from "@playwright/test";
 import { loginAsAthlete } from "../fixtures/athlete-auth";
+import { createQaRestSingleSetSession } from "../fixtures/weight-integrity-qa-api";
 import {
-  H7_QA_CLIENT_ID,
   countExecutionPostRequests,
-  loginAsTrainerFresh,
+  dismissMobileNavDialog,
   openRunForSession,
-  trainerCreateSingleExerciseSession,
   typePeso,
   typeReps,
 } from "./h7-helpers";
@@ -25,16 +24,11 @@ for (const vp of VIEWPORTS) {
     test.use({ viewport: { width: vp.width, height: vp.height } });
 
     async function freshSession(page: import("@playwright/test").Page) {
-      await loginAsTrainerFresh(page);
-      const meta = await trainerCreateSingleExerciseSession(
-        page,
-        H7_QA_CLIENT_ID,
-        `QA-R-${vp.label}`,
-      );
-      await page.context().clearCookies();
       await loginAsAthlete(page);
-      await openRunForSession(page, meta.sessionId);
-      return meta.sessionId;
+      const { sessionId } = await createQaRestSingleSetSession(`R-${vp.label}`);
+      await openRunForSession(page, sessionId);
+      await dismissMobileNavDialog(page);
+      return sessionId;
     }
 
     test(`R1 happy path overlay (${vp.label})`, async ({ page }) => {

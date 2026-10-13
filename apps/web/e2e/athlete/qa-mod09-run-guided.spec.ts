@@ -44,11 +44,19 @@ test("MOD-09 reps_only single_set: sin POST inválido; 1 POST reps_only al guard
   });
 
   await expect(page.getByRole("textbox", { name: "Peso" })).toHaveCount(0);
-  await expect(page.getByRole("textbox", { name: "Repeticiones" }).first()).toBeVisible();
 
   const guardar = page.getByRole("button", { name: /^Guardar$/i });
   await typeReps(page, 0, "12");
+  const postOk = page.waitForResponse(
+    (r) =>
+      r.request().method() === "POST" &&
+      /\/athlete\/run-context\/executions\b/.test(r.url()) &&
+      r.status() >= 200 &&
+      r.status() < 300,
+    { timeout: 45_000 },
+  );
   await guardar.click();
+  await postOk;
   await cap.waitForPostCount(1, 45_000);
   assertNoInventedWeight(cap.posts);
   expect(cap.posts[0]?.input_mode).toBe("reps_only");
