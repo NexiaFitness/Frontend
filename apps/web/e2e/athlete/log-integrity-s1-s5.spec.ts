@@ -13,6 +13,7 @@ import {
   startRestAfterFill,
   countExecutionPostRequests,
   loginAsTrainerFresh,
+  enterRunLogger,
   openRunForSession,
   skipRestIfVisible,
   trainerCreateSingleExerciseSession,
@@ -31,14 +32,16 @@ test("QA-LOG-01 S1 vaciar peso bloquea guardado; 0 explícito permite POST", asy
   const { sessionId } = await trainerCreateSingleExerciseSession(
     page,
     H7_QA_CLIENT_ID,
-    "QA-LOG-S1"
+    "QA-LOG-S1",
+    { prescribedWeightKg: 50 },
   );
   await page.context().clearCookies();
 
   await loginAsAthlete(page);
   await openRunForSession(page, sessionId);
-  await page.getByRole("button", { name: /Empezar descanso/i }).click({ timeout: 45_000 });
+  await enterRunLogger(page);
   const peso = page.getByRole("textbox", { name: "Peso" }).first();
+  await expect(peso).toBeVisible({ timeout: 45_000 });
   const guardar = page.getByRole("button", { name: /^Guardar$/i });
 
   await peso.click({ clickCount: 3 });
@@ -66,13 +69,14 @@ test("QA-LOG-02 S2 no arrastra peso entre ejercicios consecutivos", async ({ pag
   const { sessionId } = await trainerCreateTwoSingleExerciseSession(
     page,
     H7_QA_CLIENT_ID,
-    "QA-LOG-S2"
+    "QA-LOG-S2",
+    { prescribedWeightKg: 50 },
   );
   await page.context().clearCookies();
 
   await loginAsAthlete(page);
   await openRunForSession(page, sessionId);
-  await page.getByRole("button", { name: /Empezar descanso/i }).click({ timeout: 45_000 });
+  await enterRunLogger(page);
   await typePeso(page, 0, "80");
   await typeReps(page, 0, "10");
   await page.getByRole("button", { name: /^Guardar$/i }).click();
@@ -139,12 +143,13 @@ test("QA-LOG-05 S5 Editar datos upsert sin duplicar (API)", async ({ page, reque
   const { sessionId } = await trainerCreateSingleExerciseSession(
     page,
     H7_QA_CLIENT_ID,
-    "QA-LOG-S5"
+    "QA-LOG-S5",
+    { prescribedWeightKg: 60 },
   );
   await page.context().clearCookies();
   await loginAsAthlete(page);
   await openRunForSession(page, sessionId);
-  await page.getByRole("button", { name: /Empezar descanso/i }).click({ timeout: 45_000 });
+  await enterRunLogger(page);
   await typePeso(page, 0, "60");
   await typeReps(page, 0, "8");
   await page.getByRole("button", { name: /^Guardar$/i }).click();

@@ -166,6 +166,11 @@ export async function openRunForSession(page: Page, sessionId: number) {
     waitUntil: "domcontentloaded",
   });
   await page.waitForTimeout(600);
+  const navDialog = page.getByRole("dialog").filter({ has: page.getByRole("link", { name: "Mi agenda" }) });
+  if (await navDialog.isVisible().catch(() => false)) {
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(400);
+  }
 }
 
 export async function beginGroupLogging(page: Page) {
@@ -180,15 +185,17 @@ export async function beginGroupLogging(page: Page) {
 /** Run guiado: «Empezar descanso» si hay timer; si no, logger ya visible (Guardar). */
 export async function enterRunLogger(page: Page) {
   const start = page.getByRole("button", { name: /Empezar descanso|Registrar dropset/i });
-  if (await start.isVisible().catch(() => false)) {
+  const guardar = page.getByRole("button", { name: /^Guardar$/i });
+  try {
+    await start.scrollIntoViewIfNeeded();
+    await expect(start).toBeVisible({ timeout: 8_000 });
     await expect(start).toBeEnabled({ timeout: 45_000 });
     await start.click();
     await page.waitForTimeout(400);
     return;
+  } catch {
+    await expect(guardar).toBeVisible({ timeout: 45_000 });
   }
-  await expect(page.getByRole("button", { name: /^Guardar$/i })).toBeVisible({
-    timeout: 45_000,
-  });
 }
 
 export async function startRestAfterFill(page: Page) {
@@ -382,7 +389,8 @@ export async function trainerSubmitCreateSession(page: Page): Promise<number> {
 export async function trainerCreateTwoSingleExerciseSession(
   page: Page,
   clientId: number,
-  sessionNamePrefix: string
+  sessionNamePrefix: string,
+  options: { prescribedWeightKg?: number } = {},
 ): Promise<H7SessionMeta> {
   await loginAsTrainerFresh(page);
   const today = new Date().toISOString().slice(0, 10);
@@ -407,6 +415,12 @@ export async function trainerCreateTwoSingleExerciseSession(
   await trainerPickExerciseFromPicker(page, 7);
   await trainerSetSingleCardSeriesCount(secondCard, "1");
   const sessionId = await trainerSubmitCreateSession(page);
+  if (options.prescribedWeightKg != null) {
+    const { patchSessionFirstExercisePlannedWeight } = await import(
+      "../fixtures/weight-integrity-qa-api"
+    );
+    await patchSessionFirstExercisePlannedWeight(sessionId, options.prescribedWeightKg);
+  }
   return {
     sessionId,
     sessionName,
@@ -453,7 +467,8 @@ export async function trainerCreateSupersetOneRoundSession(
 export async function trainerCreateSingleExerciseSession(
   page: Page,
   clientId: number,
-  sessionNamePrefix: string
+  sessionNamePrefix: string,
+  options: { prescribedWeightKg?: number } = {},
 ): Promise<H7SessionMeta> {
   await loginAsTrainerFresh(page);
   const today = new Date().toISOString().slice(0, 10);
@@ -481,6 +496,12 @@ export async function trainerCreateSingleExerciseSession(
   const match = page.url().match(/sessions\/(\d+)\/review/);
   expect(match?.[1]).toBeTruthy();
   const sessionId = Number(match![1]);
+  if (options.prescribedWeightKg != null) {
+    const { patchSessionFirstExercisePlannedWeight } = await import(
+      "../fixtures/weight-integrity-qa-api"
+    );
+    await patchSessionFirstExercisePlannedWeight(sessionId, options.prescribedWeightKg);
+  }
   return {
     sessionId,
     sessionName,

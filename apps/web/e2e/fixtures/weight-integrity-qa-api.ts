@@ -331,6 +331,35 @@ export async function createSupersetPrescribedWeightSession(
   return { sessionId: session.id, name };
 }
 
+/** Tras alta UI sin kg: fuerza weight_reps en run (MOD-09 vs S1–S5). */
+export async function patchSessionFirstExercisePlannedWeight(
+  sessionId: number,
+  plannedWeight: number,
+): Promise<void> {
+  const trainer = await loginTrainerApi();
+  await new Promise((r) => setTimeout(r, 1500));
+  const blocks = await api<{ id: number }[]>(
+    trainer.accessToken,
+    `/session-programming/sessions/${sessionId}/blocks`,
+  );
+  if (blocks.length < 1) {
+    throw new Error(`Sesión ${sessionId} sin bloques para patch peso`);
+  }
+  const lines = await api<{ id: number }[]>(
+    trainer.accessToken,
+    `/session-programming/blocks/${blocks[0].id}/exercises`,
+  );
+  if (lines.length < 1) {
+    throw new Error(`Sesión ${sessionId} sin ejercicios en bloque para patch peso`);
+  }
+  for (const line of lines) {
+    await api(trainer.accessToken, `/session-programming/block-exercises/${line.id}`, {
+      method: "PUT",
+      body: JSON.stringify({ planned_weight: plannedWeight }),
+    });
+  }
+}
+
 /** Superserie con peso prescrito y N rondas (offline / dos pestañas). */
 export async function createSupersetPrescribedWeightRoundsSession(
   label: string,

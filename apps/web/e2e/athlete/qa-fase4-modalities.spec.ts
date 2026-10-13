@@ -40,6 +40,7 @@ test("F4-M1 single_set weight_reps: 1 POST; 0 explícito envía weight_kg 0", as
     page,
     H7_QA_CLIENT_ID,
     "F4-M1-single",
+    { prescribedWeightKg: 40 },
   );
   await page.context().clearCookies();
   await loginAsAthlete(page);
