@@ -74,17 +74,21 @@ async function resolveCatalogIds(token: string) {
     token,
     "/exercises/?limit=2",
   );
-  const blockTypes = await api<{ id: number }[]>(
+  const blockTypes = await api<{ id: number; name: string }[]>(
     token,
     "/session-programming/training-block-types",
   );
   if (exercises.length < 2 || blockTypes.length < 1) {
     throw new Error("Catálogo insuficiente para sesión QA-F1");
   }
+  const strengthBlockType =
+    blockTypes.find((b) => /entrenamiento|principal|fuerza/i.test(b.name)) ??
+    blockTypes.find((b) => !/acondicionamiento|movilidad|calentamiento/i.test(b.name)) ??
+    blockTypes[0];
   return {
     exA: exercises[0].id,
     exB: exercises[1].id,
-    blockTypeId: blockTypes[0].id,
+    blockTypeId: strengthBlockType.id,
   };
 }
 
@@ -129,8 +133,23 @@ export async function createWeightIntegritySession(
       order_in_session: 2,
       set_type: "superset",
       exercises: [
-        { exercise_id: exA, order_in_block: 1, set_type: "superset", superset_group_id: 1, planned_sets: 1, planned_reps: "10" },
-        { exercise_id: exB, order_in_block: 2, set_type: "superset", superset_group_id: 1, planned_sets: 1, planned_reps: "12" },
+        {
+          exercise_id: exA,
+          order_in_block: 1,
+          set_type: "superset",
+          superset_group_id: 1,
+          planned_sets: 1,
+          planned_reps: "10",
+          planned_weight: 30,
+        },
+        {
+          exercise_id: exB,
+          order_in_block: 2,
+          set_type: "superset",
+          superset_group_id: 1,
+          planned_sets: 1,
+          planned_reps: "12",
+        },
       ],
     },
     {
@@ -331,9 +350,18 @@ export async function createSupersetPrescribedWeightSession(
   return { sessionId: session.id, name };
 }
 
-/** Solo la primera fila del primer bloque (p. ej. F4: A con kg, B reps_only). */
+/** Solo la primera fila del primer bloque (legacy). */
 export async function patchSessionLeadingExercisePlannedWeight(
   sessionId: number,
+  plannedWeight: number,
+): Promise<void> {
+  await patchSessionBlockFirstExercisePlannedWeight(sessionId, 0, plannedWeight);
+}
+
+/** Primera fila de un bloque concreto (p. ej. superserie índice 1: slot A weight_reps, B reps_only). */
+export async function patchSessionBlockFirstExercisePlannedWeight(
+  sessionId: number,
+  blockIndex: number,
   plannedWeight: number,
 ): Promise<void> {
   const trainer = await loginTrainerApi();
@@ -342,12 +370,14 @@ export async function patchSessionLeadingExercisePlannedWeight(
     trainer.accessToken,
     `/session-programming/sessions/${sessionId}/blocks`,
   );
-  if (blocks.length < 1) throw new Error(`Sesión ${sessionId} sin bloques`);
+  if (blocks.length <= blockIndex) {
+    throw new Error(`Sesión ${sessionId} sin bloque índice ${blockIndex}`);
+  }
   const blockLines = await api<{ id: number }[]>(
     trainer.accessToken,
-    `/session-programming/blocks/${blocks[0].id}/exercises`,
+    `/session-programming/blocks/${blocks[blockIndex].id}/exercises`,
   );
-  if (blockLines.length < 1) throw new Error(`Sesión ${sessionId} sin ejercicios`);
+  if (blockLines.length < 1) throw new Error(`Bloque ${blockIndex} sin ejercicios`);
   await api(
     trainer.accessToken,
     `/session-programming/block-exercises/${blockLines[0].id}`,

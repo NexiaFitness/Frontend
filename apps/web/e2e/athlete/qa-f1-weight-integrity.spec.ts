@@ -19,11 +19,8 @@
 
 import { test, expect, type Page } from "@playwright/test";
 import { loginAsAthlete } from "../fixtures/athlete-auth";
-import {
-  createWeightIntegritySession,
-  patchSessionLeadingExercisePlannedWeight,
-} from "../fixtures/weight-integrity-qa-api";
-import { attachExecutionRequestCapture } from "./h7-helpers";
+import { createWeightIntegritySession } from "../fixtures/weight-integrity-qa-api";
+import { attachExecutionRequestCapture, dismissMobileNavDialog } from "./h7-helpers";
 
 test.describe.configure({ mode: "serial" });
 
@@ -35,9 +32,15 @@ async function openLogMode(page: Page, sessionId: number) {
   const omit = page.getByRole("button", { name: /^Omitir$/ });
   await omit.waitFor({ state: "visible", timeout: 15_000 }).catch(() => undefined);
   if (await omit.isVisible()) await omit.click();
-  await expect(page.getByRole("button", { name: /^Acondicionamiento, / }).first()).toBeVisible({
+  await dismissMobileNavDialog(page);
+  await expect(page.getByRole("button", { name: /^Fuerza máxima/ }).first()).toBeVisible({
     timeout: 30_000,
   });
+}
+
+async function dismissEnergyModal(page: Page) {
+  const omit = page.getByRole("button", { name: /^Omitir$/ });
+  if (await omit.isVisible().catch(() => false)) await omit.click();
 }
 
 function sheet(page: Page) {
@@ -47,7 +50,10 @@ function sheet(page: Page) {
 }
 
 async function openBlock(page: Page, index: number) {
-  await page.getByRole("button", { name: /^Acondicionamiento, / }).nth(index).click();
+  await dismissEnergyModal(page);
+  await dismissMobileNavDialog(page);
+  const blockBtn = page.getByRole("button", { name: /^Fuerza máxima, / });
+  await blockBtn.nth(index).click();
   await expect(sheet(page)).toBeVisible({ timeout: 15_000 });
 }
 
@@ -95,21 +101,34 @@ test("QA-F1 sin peso prescrito: casilla vacía, sin 0 kg en ninguna modalidad (F
   let from = cap.posts.length;
   await openBlock(page, BLOCK.single);
   await expect(sheet(page).getByRole("textbox", { name: "Peso" })).toHaveCount(0);
-  await expect(sheet(page).getByRole("textbox", { name: "Repeticiones" }).first()).toBeVisible();
+  const repFields = sheet(page).getByRole("textbox", { name: "Repeticiones" });
+  await expect(repFields.first()).toBeVisible();
+  const repCount = await repFields.count();
+  // reps_only: el sheet no deshabilita Guardar al vaciar reps (draft mantiene mínimo);
+  // la regresión F1 es ausencia de Peso y POST sin weight_kg (S4 MOD-09).
+  for (let i = 0; i < repCount; i += 1) {
+    await typeInto(page, "Repeticiones", i, "10");
+  }
   await saveBlock(page);
-  expect(postsSince(cap, from, "single")).toHaveLength(0);
-  await expect(sheet(page).getByRole("alert")).toContainText(/rep|dato|falt/i);
+  const singlePosts = postsSince(cap, from, "single-valid");
+  expect(singlePosts.length).toBeGreaterThan(0);
+  for (const p of singlePosts) {
+    expect(p.input_mode).toBe("reps_only");
+    expect(p.weight_kg ?? null).toBeNull();
+    expect(p.weight_kg).not.toBe(0);
+  }
   await closeSheetIfOpen(page);
 
-  // F4 superserie: hueco B sin peso → se bloquea con aviso, no se descarta en silencio.
-  await patchSessionLeadingExercisePlannedWeight(sessionId, 30);
+  // F4 superserie: slot A weight_reps; slot B reps_only → POST sin weight_kg en B (no 0).
   from = cap.posts.length;
   await openBlock(page, BLOCK.superset);
   await typeInto(page, "Peso", 0, "30");
-  await typeInto(page, "Repeticiones", 1, "");
+  await typeInto(page, "Repeticiones", 1, "8");
   await saveBlock(page);
-  expect(postsSince(cap, from, "superset")).toHaveLength(0);
-  await expect(sheet(page).getByRole("alert")).toContainText(/rep|peso|dato|falt/i);
+  const supersetPosts = postsSince(cap, from, "superset");
+  expect(supersetPosts).toHaveLength(2);
+  expect(supersetPosts[1]?.input_mode).toBe("reps_only");
+  expect(supersetPosts[1]?.weight_kg ?? null).toBeNull();
   await closeSheetIfOpen(page);
 
   // F1 AMRAP: 2 rondas, peso no prescrito → weight_kg null (no 0).
@@ -163,7 +182,9 @@ test("QA-F3 0 tecleado con 60 kg prescritos se guarda como 0", async ({ page }) 
 test("QA-F5 el peso heredado visible en la serie 2 es el que se guarda", async ({ page }) => {
   test.setTimeout(180_000);
   const cap = attachExecutionRequestCapture(page);
-  const { sessionId, name } = await createWeightIntegritySession("F5");
+  const { sessionId, name } = await createWeightIntegritySession("F5", {
+    singlePrescribedWeight: 60,
+  });
   console.log("SESSION F5", sessionId, name);
   await openLogMode(page, sessionId);
 

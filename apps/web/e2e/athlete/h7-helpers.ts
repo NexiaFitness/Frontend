@@ -166,11 +166,7 @@ export async function openRunForSession(page: Page, sessionId: number) {
     waitUntil: "domcontentloaded",
   });
   await page.waitForTimeout(600);
-  const navDialog = page.getByRole("dialog").filter({ has: page.getByRole("link", { name: "Mi agenda" }) });
-  if (await navDialog.isVisible().catch(() => false)) {
-    await page.keyboard.press("Escape");
-    await page.waitForTimeout(400);
-  }
+  await dismissMobileNavDialog(page);
 }
 
 export async function beginGroupLogging(page: Page) {
@@ -182,17 +178,30 @@ export async function beginGroupLogging(page: Page) {
   await page.waitForTimeout(400);
 }
 
+export async function dismissMobileNavDialog(page: Page) {
+  const navDialog = page
+    .getByRole("dialog")
+    .filter({ has: page.getByRole("link", { name: "Mi agenda" }) });
+  if (await navDialog.isVisible().catch(() => false)) {
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(400);
+  }
+}
+
 /** Run guiado: «Empezar descanso» si hay timer; si no, logger ya visible (Guardar). */
 export async function enterRunLogger(page: Page) {
-  const start = page.getByRole("button", { name: /Empezar descanso|Registrar dropset/i });
+  await dismissMobileNavDialog(page);
   const guardar = page.getByRole("button", { name: /^Guardar$/i });
+  if (await guardar.isVisible().catch(() => false)) {
+    return;
+  }
+  const start = page.getByRole("button", { name: /Empezar descanso|Registrar dropset/i });
   try {
     await start.scrollIntoViewIfNeeded();
     await expect(start).toBeVisible({ timeout: 8_000 });
     await expect(start).toBeEnabled({ timeout: 45_000 });
     await start.click();
     await page.waitForTimeout(400);
-    return;
   } catch {
     await expect(guardar).toBeVisible({ timeout: 45_000 });
   }

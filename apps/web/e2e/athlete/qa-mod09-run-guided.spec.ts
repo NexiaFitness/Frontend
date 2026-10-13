@@ -8,7 +8,7 @@ import { createMod09RunSession } from "../fixtures/weight-integrity-qa-api";
 import {
   attachExecutionRequestCapture,
   confirmGroupRound,
-  enterRunLogger,
+  dismissMobileNavDialog,
   openRunForSession,
   skipRestIfVisible,
   typeReps,
@@ -38,7 +38,10 @@ test("MOD-09 reps_only single_set: sin POST inválido; 1 POST reps_only al guard
 
   await loginAsAthlete(page);
   await openRunForSession(page, sessionId);
-  await enterRunLogger(page);
+  await dismissMobileNavDialog(page);
+  await expect(page.getByRole("textbox", { name: "Repeticiones" }).first()).toBeVisible({
+    timeout: 60_000,
+  });
 
   await expect(page.getByRole("textbox", { name: "Peso" })).toHaveCount(0);
   await expect(page.getByRole("textbox", { name: "Repeticiones" }).first()).toBeVisible();
@@ -86,17 +89,20 @@ test("MOD-09 duration single_set: 1 POST duration; superset reps_only 2 POST", a
 
   await loginAsAthlete(page);
   await openRunForSession(page, sessionId);
-
-  // Bloque 1 reps_only (skip via serial — fresh session only block 1 here we use new session and skip first by doing full flow on one session)
-  await enterRunLogger(page);
+  await dismissMobileNavDialog(page);
+  await expect(page.getByRole("textbox", { name: "Repeticiones" }).first()).toBeVisible({
+    timeout: 60_000,
+  });
   await typeReps(page, 0, "10");
   await page.getByRole("button", { name: /^Guardar$/i }).click();
   await cap.waitForPostCount(1, 45_000);
   await skipRestIfVisible(page);
 
   const fromDuration = cap.posts.length;
-  await enterRunLogger(page);
-  await expect(page.getByRole("textbox", { name: "Tiempo" }).first()).toBeVisible();
+  await dismissMobileNavDialog(page);
+  await expect(page.getByRole("textbox", { name: "Tiempo" }).first()).toBeVisible({
+    timeout: 60_000,
+  });
   await expect(page.getByRole("textbox", { name: "Peso" })).toHaveCount(0);
 
   const guardar = page.getByRole("button", { name: /^Guardar$/i });
