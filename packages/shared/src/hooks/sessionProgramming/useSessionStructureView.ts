@@ -10,11 +10,13 @@
  * Sustituye a `useSessionExercisesDisplay` en la vista de detalle (que dibujaba
  * una card por fila plana). El hook plano se mantiene para otros consumidores.
  *
+ * Notas: un fallo en la carga por bloque termina en isError (no carga infinita); refetch reintenta todo.
+ *
  * @author Frontend Team
  * @since v6.5.0
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import {
     useGetSessionBlocksQuery,
@@ -47,6 +49,7 @@ export interface UseSessionStructureViewResult {
     source: SessionStructureSource;
     isLoading: boolean;
     isError: boolean;
+    refetch: () => void;
 }
 
 const EMPTY_VIEW: SessionStructureView = {
@@ -127,6 +130,8 @@ export function useSessionStructureView(
     const [blockExercisesByBlock, setBlockExercisesByBlock] = useState<
         Record<number, SessionBlockExercise[]>
     >({});
+    const [blockExercisesError, setBlockExercisesError] = useState(false);
+    const [reloadNonce, setReloadNonce] = useState(0);
 
     // currentData: `data` e `isLoading` de RTK reflejan la sesion anterior mientras carga la nueva.
     const blocksQuery = useGetSessionBlocksQuery(sessionId ?? 0, {
@@ -158,22 +163,41 @@ export function useSessionStructureView(
         let cancelled = false;
         const load = async () => {
             const result: Record<number, SessionBlockExercise[]> = {};
+            let failed = false;
             for (const b of blocks) {
-                const res = await dispatch(
-                    sessionProgrammingApi.endpoints.getSessionBlockExercises.initiate(b.id)
+                const request = dispatch(
+                    sessionProgrammingApi.endpoints.getSessionBlockExercises.initiate(b.id, {
+                        forceRefetch: reloadNonce > 0,
+                    })
                 );
-                if (cancelled) return;
-                if ("data" in res && res.data) {
-                    result[b.id] = res.data;
+                try {
+                    result[b.id] = await request.unwrap();
+                } catch {
+                    failed = true;
+                } finally {
+                    request.unsubscribe();
                 }
+                if (cancelled) return;
             }
-            if (!cancelled) setBlockExercisesByBlock(result);
+            if (cancelled) return;
+            setBlockExercisesError(failed);
+            setBlockExercisesByBlock(result);
         };
-        load();
+        void load();
         return () => {
             cancelled = true;
         };
-    }, [blocks, dispatch]);
+    }, [blocks, dispatch, reloadNonce]);
+
+    const { refetch: refetchBlocks } = blocksQuery;
+    const { refetch: refetchLegacy } = legacyQuery;
+    const legacyActive = blocks.length === 0;
+    const refetch = useCallback(() => {
+        if (!sessionId || sessionId <= 0) return;
+        void refetchBlocks();
+        if (legacyActive) void refetchLegacy();
+        setReloadNonce((n) => n + 1);
+    }, [legacyActive, refetchBlocks, refetchLegacy, sessionId]);
 
     const exerciseNamesById = useMemo<Record<number, string>>(() => {
         const map: Record<number, string> = {};
@@ -194,11 +218,11 @@ export function useSessionStructureView(
 
     return useMemo<UseSessionStructureViewResult>(() => {
         if (!sessionId || sessionId <= 0) {
-            return { view: EMPTY_VIEW, source: "legacy", isLoading: false, isError: false };
+            return { view: EMPTY_VIEW, source: "legacy", isLoading: false, isError: false, refetch };
         }
 
         if (blocks.length > 0) {
-            const isLoading = isBlockStructureLoading({
+            const isLoading = !blockExercisesError && isBlockStructureLoading({
                 isLoadingBlocks,
                 blockIds: blocks.map((b) => b.id),
                 blockExercisesByBlock,
@@ -211,7 +235,7 @@ export function useSessionStructureView(
                 blockTypes,
                 exerciseNamesById,
             });
-            return { view, source: "blocks", isLoading, isError: false };
+            return { view, source: "blocks", isLoading, isError: blockExercisesError, refetch };
         }
 
         if (legacyExercises.length === 0) {
@@ -219,7 +243,8 @@ export function useSessionStructureView(
                 view: EMPTY_VIEW,
                 source: "legacy",
                 isLoading: isLoadingLegacy,
-                isError: isErrorLegacy,
+                isError: isErrorLegacy || blocksQuery.isError,
+                refetch,
             };
         }
 
@@ -238,7 +263,7 @@ export function useSessionStructureView(
         });
         // Sobrescribimos el blockTypeName por algo legible
         view.blocks[0].blockTypeName = "Ejercicios";
-        return { view, source: "legacy", isLoading, isError: isErrorLegacy };
+        return { view, source: "legacy", isLoading, isError: isErrorLegacy, refetch };
     }, [
         sessionId,
         blocks,
@@ -251,5 +276,8 @@ export function useSessionStructureView(
         isLoadingExerciseCatalog,
         isLoadingLegacy,
         isErrorLegacy,
+        blockExercisesError,
+        blocksQuery.isError,
+        refetch,
     ]);
 }

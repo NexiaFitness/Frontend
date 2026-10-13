@@ -41,6 +41,9 @@ const finishSession = vi.fn(() => Promise.resolve<SaveResult>("synced"));
 let isOnline = true;
 let progress: AthleteRunProgress | undefined;
 let view: SessionStructureView;
+let structureError = false;
+const refetchStructure = vi.fn();
+const refetchSession = vi.fn();
 
 vi.mock("react-router-dom", async () => {
     const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
@@ -48,7 +51,12 @@ vi.mock("react-router-dom", async () => {
 });
 
 vi.mock("@nexia/shared/api/trainingSessionsApi", () => ({
-    useGetTrainingSessionQuery: () => ({ data: { id: 7, session_name: "Audit" }, isLoading: false }),
+    useGetTrainingSessionQuery: () => ({
+        data: { id: 7, session_name: "Audit" },
+        isLoading: false,
+        isError: false,
+        refetch: refetchSession,
+    }),
     useUpdateTrainingSessionMutation: () => [vi.fn()],
     useUpdateSessionExerciseMutation: () => [vi.fn()],
 }));
@@ -58,7 +66,13 @@ vi.mock("@nexia/shared/api/sessionProgrammingApi", () => ({
 }));
 
 vi.mock("@nexia/shared/hooks/sessionProgramming", () => ({
-    useSessionStructureView: () => ({ view, source: "blocks", isLoading: false, isError: false }),
+    useSessionStructureView: () => ({
+        view,
+        source: "blocks",
+        isLoading: false,
+        isError: structureError,
+        refetch: refetchStructure,
+    }),
 }));
 
 vi.mock("@nexia/shared/api/athleteApi", () => ({
@@ -179,6 +193,7 @@ beforeEach(() => {
     isOnline = true;
     progress = undefined;
     view = giantSetView();
+    structureError = false;
 });
 
 describe("useAthleteSessionRun — giant set (auditoria punto d)", () => {
@@ -217,5 +232,31 @@ describe("useAthleteSessionRun — giant set (auditoria punto d)", () => {
 
         expect(postExecution.mock.calls.map(([payload]) => payload.step_key)).toEqual([editedSlot.stepKey]);
         expect(postExecution.mock.calls[0][0].weight_kg).toBe(42.5);
+    });
+});
+
+describe("useAthleteSessionRun — carga fallida (DBG-TO-02)", () => {
+    it("un error de estructura llega como loadError y retryLoad reintenta sesion y estructura", async () => {
+        structureError = true;
+        view = { blocks: [], totalExercises: 0, totalSets: 0 };
+        const { result } = renderRun();
+
+        await waitFor(() => expect(result.current.loadError).toBe(true));
+        act(() => {
+            result.current.retryLoad();
+        });
+
+        expect(refetchStructure).toHaveBeenCalledTimes(1);
+        expect(refetchSession).toHaveBeenCalledTimes(1);
+    });
+
+    it("offline no es error de carga (lo cubre la cache local)", async () => {
+        structureError = true;
+        isOnline = false;
+        view = { blocks: [], totalExercises: 0, totalSets: 0 };
+        const { result } = renderRun();
+
+        await waitFor(() => expect(result.current.isOnline).toBe(false));
+        expect(result.current.loadError).toBe(false);
     });
 });

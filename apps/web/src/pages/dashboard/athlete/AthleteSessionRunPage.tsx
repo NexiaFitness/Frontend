@@ -17,11 +17,8 @@ import type { AthleteExerciseTechniqueTarget } from "@/components/athlete/execut
 import { RestTimerOverlay } from "@/components/athlete/execution/RestTimerOverlay";
 import { Button } from "@/components/ui/buttons";
 import { BottomSheet } from "@/components/ui/layout/BottomSheet";
-import { Alert, useToast } from "@/components/ui/feedback";
-import {
-    ATHLETE_REGISTRATION_PROGRESS_ERROR_BODY,
-    ATHLETE_REGISTRATION_PROGRESS_ERROR_TITLE,
-} from "@/components/athlete/sessions/athleteSessionRegistrationPresentation";
+import { useToast } from "@/components/ui/feedback";
+import { AthleteSessionRegistrationAlerts } from "@/components/athlete/sessions/AthleteSessionRegistrationAlerts";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { AthleteRunChromeHeader } from "@/components/athlete/execution/AthleteRunChromeHeader";
 import { useAthleteInjuries } from "@/hooks/athlete/useAthleteInjuries";
@@ -140,6 +137,8 @@ export const AthleteSessionRunPage: React.FC = () => {
         groupContext,
         handleFinish,
         isLoading,
+        loadError,
+        retryLoad,
         runProgress,
         isLastStep,
         showStepActions,
@@ -328,18 +327,16 @@ export const AthleteSessionRunPage: React.FC = () => {
         return <AthletePageLoading variant="session-run" />;
     }
 
-    if (runProgressFetchError) {
+    if (runProgressFetchError || loadError) {
         return (
             <div className={cn("mx-auto max-w-lg space-y-4 pb-24 pt-4", ATHLETE_PAGE_X)}>
-                <Alert
-                    variant="error"
-                    title={ATHLETE_REGISTRATION_PROGRESS_ERROR_TITLE}
-                    description={ATHLETE_REGISTRATION_PROGRESS_ERROR_BODY}
-                    action={
-                        <Button variant="secondary" size="sm" onClick={() => void refetchRunProgress()}>
-                            Reintentar
-                        </Button>
-                    }
+                <AthleteSessionRegistrationAlerts
+                    showClosed={false}
+                    showProgressError
+                    onRetryProgress={() => {
+                        if (runProgressFetchError) void refetchRunProgress();
+                        if (loadError) retryLoad();
+                    }}
                 />
                 <Button variant="secondary" onClick={() => navigate(`/dashboard/sessions/${sessionId}`)}>
                     Volver a la sesión
