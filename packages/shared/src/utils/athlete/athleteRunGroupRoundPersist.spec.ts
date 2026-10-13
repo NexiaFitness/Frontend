@@ -10,12 +10,12 @@ import {
 } from "./athleteRunGroupRoundPersist";
 
 describe("athleteRunGroupRoundPersist (H2)", () => {
-    it("S4: reps_only con peso null es persistible", () => {
+    it("S4 / D-B3: weight_reps con peso null es persistible si hay reps", () => {
         expect(
-            isSlotReadyToPersist({ weight: null, reps: 12 }, "reps_only")
+            isSlotReadyToPersist({ weight: null, reps: 12 }, "weight_reps")
         ).toBe(true);
         expect(
-            isSlotReadyToPersist({ weight: null, reps: 0 }, "reps_only")
+            isSlotReadyToPersist({ weight: null, reps: 0 }, "weight_reps")
         ).toBe(false);
     });
 

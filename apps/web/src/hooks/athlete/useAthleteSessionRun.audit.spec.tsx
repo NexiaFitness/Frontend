@@ -166,8 +166,8 @@ function giantSetView(): SessionStructureView {
     });
 }
 
-/** MOD-09: sin planned_weight el ejercicio es reps_only; actual_weight es un valor viejo que no debe enviarse. */
-function repsOnlyView(setType: "single_set" | "superset"): SessionStructureView {
+/** D-B3: sin planned_weight → weight_reps; actual_weight de fila no hidrata defaultWeight ni POST. */
+function noPrescribedWeightView(setType: "single_set" | "superset"): SessionStructureView {
     const repsOnly = { planned_weight: null, actual_weight: 20, set_type: setType } as const;
     const lines =
         setType === "superset"
@@ -276,24 +276,24 @@ describe("useAthleteSessionRun — carga fallida (DBG-TO-02)", () => {
     });
 });
 
-describe("useAthleteSessionRun — ejercicios sin peso (MOD-09 / S4)", () => {
-    it("serie simple reps_only: 1 POST sin weight_kg (ni 0 ni el actual_weight viejo)", async () => {
-        view = repsOnlyView("single_set");
+describe("useAthleteSessionRun — ejercicios sin peso prescrito (D-B3 / S4)", () => {
+    it("serie simple weight_reps: campo peso en UI; POST sin weight_kg si no hay kg pautado ni tocado", async () => {
+        view = noPrescribedWeightView("single_set");
         const { result } = renderRun();
         await enterLogger(result);
-        expect(result.current.current?.inputMode).toBe("reps_only");
+        expect(result.current.current?.inputMode).toBe("weight_reps");
 
         await confirm(result);
 
         expect(postExecution).toHaveBeenCalledTimes(1);
         const [payload] = postExecution.mock.calls[0];
-        expect(payload.input_mode).toBe("reps_only");
+        expect(payload.input_mode).toBe("weight_reps");
         expect(payload.weight_kg ?? null).toBeNull();
         expect(payload.reps).toBe(10);
     });
 
-    it("superset reps_only (S4): 1 POST por slot, ninguno con weight_kg", async () => {
-        view = repsOnlyView("superset");
+    it("superset sin kg pautado (S4): 1 POST por slot, weight_reps sin weight_kg", async () => {
+        view = noPrescribedWeightView("superset");
         const { result } = renderRun();
         await enterLogger(result);
         expect(result.current.currentRunStep?.kind).toBe("group_round");
@@ -302,7 +302,7 @@ describe("useAthleteSessionRun — ejercicios sin peso (MOD-09 / S4)", () => {
 
         expect(postExecution).toHaveBeenCalledTimes(2);
         for (const [payload] of postExecution.mock.calls) {
-            expect(payload.input_mode).toBe("reps_only");
+            expect(payload.input_mode).toBe("weight_reps");
             expect(payload.weight_kg ?? null).toBeNull();
         }
     });

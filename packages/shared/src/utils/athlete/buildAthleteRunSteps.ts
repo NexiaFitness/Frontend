@@ -121,10 +121,14 @@ function buildPlannedLabel(set: SessionExerciseSetView): string {
     return parts.join(" · ") || "Según prescripción";
 }
 
+/** D-B3: fuerza → weight_reps (peso opcional); duration por prescripción; no inferir reps_only por planned_weight null. */
 function resolveInputMode(set: SessionExerciseSetView): AthleteRunInputMode {
     if (set.plannedDuration != null && set.plannedDuration > 0) return "duration";
-    if (set.plannedWeight == null) return "reps_only";
     return "weight_reps";
+}
+
+function resolveStepDefaultWeightKg(set: SessionExerciseSetView): number {
+    return set.plannedWeight != null && set.plannedWeight > 0 ? set.plannedWeight : 0;
 }
 
 function effectiveRounds(group: SessionExerciseGroupView): number {
@@ -181,7 +185,7 @@ function buildStep(ctx: StepBuildContext): AthleteRunStep {
         inputMode: resolveInputMode(set),
         blockExerciseId: set.sourceLineId,
         plannedWeight: set.plannedWeight ?? null,
-        defaultWeight: set.actualWeight ?? 0,
+        defaultWeight: resolveStepDefaultWeightKg(set),
         defaultReps: parseAthleteReps(set.plannedReps ?? set.actualReps),
         defaultRpe: set.actualEffortValue ?? set.effortValue ?? null,
         loggedSets: set.rowLoggedSets ?? 0,
@@ -206,7 +210,7 @@ function buildRoundSlot(ctx: StepBuildContext): AthleteRunRoundSlot {
         plannedLabel: buildPlannedLabel(set),
         blockExerciseId: set.sourceLineId,
         inputMode: resolveInputMode(set),
-        defaultWeight: set.actualWeight ?? 0,
+        defaultWeight: resolveStepDefaultWeightKg(set),
         defaultReps: parseAthleteReps(set.plannedReps ?? set.actualReps),
         defaultRpe: set.actualEffortValue ?? set.effortValue ?? null,
         loggedSets: set.rowLoggedSets ?? 0,

@@ -104,16 +104,17 @@ describe("runLoggerHydrationPolicy (D-LOG-TOUCH-01)", () => {
         ).toBe(7);
     });
 
-    it("R-LOG-07: weight_reps exige peso (0 explícito válido; null no)", () => {
+    it("R-LOG-07 / D-B3: weight_reps reps > 0; peso opcional (0 explícito válido)", () => {
         expect(
             isRunLoggerSlotConfirmValid({ weight: null, reps: 10 })
-        ).toBe(false);
+        ).toBe(true);
         expect(
             isRunLoggerSlotConfirmValid({ weight: 0, reps: 10 })
         ).toBe(true);
         expect(
             isRunLoggerSlotConfirmValid({ weight: 40, reps: 10 })
         ).toBe(true);
+        expect(isRunLoggerSlotConfirmValid({ weight: null, reps: 0 })).toBe(false);
     });
 
     it("initial weight uses prescription or null", () => {

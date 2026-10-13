@@ -113,7 +113,7 @@ describe("F4 · grupos en registrar al final", () => {
     const step = supersetStep([slotA, slotB]);
     const block = blockOf([step]);
 
-    it("bloquea con aviso si un hueco weight_reps no tiene peso (no lo descarta)", () => {
+    it("permite ronda con un slot sin peso y otro con peso (D-B3, no descarta en silencio)", () => {
         const draft: AthleteSessionLogBlockDraft = {
             ...emptyDraft(),
             groupRounds: [
@@ -128,40 +128,41 @@ describe("F4 · grupos en registrar al final", () => {
             ],
         };
 
-        expect(validateBlockDraft(block, draft)).toBe(
-            "Falta el peso en Curl martillo. Escríbelo (0 si fue sin carga) o marca «No lo hice (ronda)»."
-        );
+        expect(validateBlockDraft(block, draft)).toBeNull();
+        const { executions } = buildBlockSavePayloads(1, block, draft);
+        expect(executions).toHaveLength(2);
+        expect(executions.find((e) => e.step_key === slotB.stepKey)?.weight_kg ?? null).toBeNull();
     });
 
-    it("envía los huecos sin peso por diseño (reps_only) con weight_kg null", () => {
-        const repsOnly = slot({
+    it("envía slot sin peso tecleado como weight_reps con weight_kg null (D-B3)", () => {
+        const noPrescribedWeight = slot({
             stepKey: "block-579-superset-1-r1-A2-R1-1",
             slotLabel: "A2",
             exerciseName: "Dominadas",
             blockExerciseId: 902,
-            inputMode: "reps_only",
+            inputMode: "weight_reps",
         });
-        const repsOnlyStep = supersetStep([slotA, repsOnly]);
+        const mixedStep = supersetStep([slotA, noPrescribedWeight]);
         const draft: AthleteSessionLogBlockDraft = {
             ...emptyDraft(),
             groupRounds: [
                 {
-                    stepKey: repsOnlyStep.stepKey,
+                    stepKey: mixedStep.stepKey,
                     skipped: false,
                     slotLogs: {
                         [slotA.stepKey]: { weight: 30, reps: 10 },
-                        [repsOnly.stepKey]: { weight: null, reps: 8 },
+                        [noPrescribedWeight.stepKey]: { weight: null, reps: 8 },
                     },
                 },
             ],
         };
-        const repsOnlyBlock = blockOf([repsOnlyStep]);
+        const mixedBlock = blockOf([mixedStep]);
 
-        expect(validateBlockDraft(repsOnlyBlock, draft)).toBeNull();
-        const { executions } = buildBlockSavePayloads(1, repsOnlyBlock, draft);
+        expect(validateBlockDraft(mixedBlock, draft)).toBeNull();
+        const { executions } = buildBlockSavePayloads(1, mixedBlock, draft);
         expect(executions.map((e) => [e.step_key, e.input_mode, e.weight_kg, e.reps])).toEqual([
             [slotA.stepKey, "weight_reps", 30, 10],
-            [repsOnly.stepKey, "reps_only", null, 8],
+            [noPrescribedWeight.stepKey, "weight_reps", null, 8],
         ]);
     });
 });
@@ -191,16 +192,17 @@ describe("F1 · registrar al final sin peso prescrito", () => {
         expect(draft.groupRounds[0]?.slotLogs[slot({}).stepKey]?.weight).toBeNull();
     });
 
-    it("una serie weight_reps sin peso bloquea el guardado con aviso", () => {
+    it("permite guardar weight_reps con peso vacío si hay reps (D-B3)", () => {
         const step = singleStep();
         const draft: AthleteSessionLogBlockDraft = {
             ...emptyDraft(),
             singleSets: [{ stepKey: step.stepKey, weight: null, reps: 8, skipped: false }],
         };
 
-        expect(validateBlockDraft(blockOf([step]), draft)).toBe(
-            "Falta el peso en Sentadilla trasera · Serie 1. Escríbelo (0 si fue sin carga) o marca «No lo hice»."
-        );
+        expect(validateBlockDraft(blockOf([step]), draft)).toBeNull();
+        const { executions } = buildBlockSavePayloads(1, blockOf([step]), draft);
+        expect(executions[0]?.input_mode).toBe("weight_reps");
+        expect(executions[0]?.weight_kg ?? null).toBeNull();
     });
 });
 

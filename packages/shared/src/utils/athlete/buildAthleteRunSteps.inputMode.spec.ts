@@ -1,5 +1,5 @@
 /**
- * buildAthleteRunSteps.inputMode.spec.ts — MOD-09: reps_only y duration desde prescripción.
+ * buildAthleteRunSteps.inputMode.spec.ts — D-B3: weight_reps en fuerza; duration por prescripción.
  */
 
 import { describe, expect, it } from "vitest";
@@ -73,7 +73,7 @@ function structureWithGroups(groups: SessionExerciseGroupView[]): SessionStructu
     };
 }
 
-describe("buildAthleteRunSteps resolveInputMode (MOD-09)", () => {
+describe("buildAthleteRunSteps resolveInputMode (D-B3)", () => {
     it("usa duration cuando hay plannedDuration > 0", () => {
         const steps = buildAthleteRunSteps(
             structureWithGroups([
@@ -83,11 +83,11 @@ describe("buildAthleteRunSteps resolveInputMode (MOD-09)", () => {
         expect(steps[0]?.inputMode).toBe("duration");
     });
 
-    it("usa reps_only cuando no hay peso prescrito", () => {
+    it("usa weight_reps cuando no hay peso prescrito (peso opcional en UI)", () => {
         const steps = buildAthleteRunSteps(
             structureWithGroups([singleSetGroup([setView({ plannedWeight: null })])])
         );
-        expect(steps[0]?.inputMode).toBe("reps_only");
+        expect(steps[0]?.inputMode).toBe("weight_reps");
     });
 
     it("usa weight_reps cuando hay peso prescrito", () => {
@@ -97,7 +97,19 @@ describe("buildAthleteRunSteps resolveInputMode (MOD-09)", () => {
         expect(steps[0]?.inputMode).toBe("weight_reps");
     });
 
-    it("propaga reps_only a slots de superserie sin peso", () => {
+    it("no usa actualWeight como defaultWeight del paso", () => {
+        const steps = buildAthleteRunSteps(
+            structureWithGroups([
+                singleSetGroup([
+                    setView({ plannedWeight: null, actualWeight: 55 }),
+                ]),
+            ])
+        );
+        expect(steps[0]?.defaultWeight).toBe(0);
+        expect(steps[0]?.inputMode).toBe("weight_reps");
+    });
+
+    it("propaga weight_reps a slots de superserie sin peso prescrito", () => {
         const superset: SessionExerciseGroupView = {
             groupId: "ss1",
             kind: "superset",
@@ -114,15 +126,16 @@ describe("buildAthleteRunSteps resolveInputMode (MOD-09)", () => {
                     exerciseId: 1,
                 },
                 {
-                    ...slot([setView({ plannedWeight: null })]),
+                    ...slot([setView({ plannedWeight: null, actualWeight: 20 })]),
                     slotLabel: "A2",
                     exerciseId: 2,
-                    exerciseName: "B",
+                    exerciseName: "Dominadas",
                 },
             ],
         };
         const steps = buildAthleteRunSteps(structureWithGroups([superset]));
         const round = steps.find((s) => s.kind === "group_round");
-        expect(round?.slots?.every((sl) => sl.inputMode === "reps_only")).toBe(true);
+        expect(round?.slots?.every((sl) => sl.inputMode === "weight_reps")).toBe(true);
+        expect(round?.slots?.every((sl) => sl.defaultWeight === 0)).toBe(true);
     });
 });

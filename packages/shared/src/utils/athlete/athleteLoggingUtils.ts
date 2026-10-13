@@ -1,7 +1,7 @@
 /**
  * athleteLoggingUtils.ts — Utilidades compartidas guiado + registro al final (FE-4).
  * Contexto: pasos de peso, reparto AMRAP y autocompletado N6 sin DOM.
- * Notas de mantenimiento: mantener paridad con buildAthleteRunSteps.inputMode.
+ * Notas de mantenimiento: paridad con buildAthleteRunSteps (D-B3: weight_reps + peso opcional).
  * @author Frontend Team
  * @since v8.3.0
  */
