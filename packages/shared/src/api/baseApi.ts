@@ -13,11 +13,13 @@
  * @updated 2026-04 - Authorization: resolver access token (localStorage + Redux); evita 401 cuando la sesión
  *   es válida en el store pero el storage no está legible o desincronizado.
  * @updated 2026-10-01 - B2a: refreshAccessToken ok|invalid|network; 408/429 transitorios; candado vía AuthRefreshPlatform
+ * @updated 2026-10-13 - Timeout por defecto (API_CONFIG.TIMEOUT) salvo subidas FormData (requestTimeout.ts)
  */
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { API_CONFIG, AUTH_CONFIG } from "@nexia/shared/config/constants";
+import { withRequestTimeout } from "./requestTimeout";
 import {
     CLIENT_VERSION_HEADER,
     clearRefreshNetworkFailure,
@@ -306,7 +308,7 @@ const baseQueryWithReauth: BaseQueryFn<
     const restoreConsole = suppressExpectedConsoleErrors();
     
     try {
-        const result = await baseQuery(args, api, extraOptions);
+        const result = await baseQuery(withRequestTimeout(args, API_CONFIG.TIMEOUT), api, extraOptions);
         captureResponseMeta(result.meta);
 
         if (result.error) {
@@ -375,7 +377,11 @@ const baseQueryWithReauth: BaseQueryFn<
                     return result;
                 }
 
-                const retryResult = await baseQuery(args, api, extraOptions);
+                const retryResult = await baseQuery(
+                    withRequestTimeout(args, API_CONFIG.TIMEOUT),
+                    api,
+                    extraOptions
+                );
                 captureResponseMeta(retryResult.meta);
                 if (retryResult.error) {
                     maybeReportHttp5xx(String(api.endpoint ?? ""), retryResult.error);
