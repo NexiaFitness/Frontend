@@ -76,6 +76,10 @@ vi.mock("@nexia/shared/hooks/offline/useOnlineStatus", () => ({
 
 import { useOfflineSessionLog } from "@nexia/shared/hooks/offline/useOfflineSessionLog";
 import { flushPendingSessionSync } from "@nexia/shared/offline/athleteSessionSync";
+import {
+    configureSessionSyncPlatform,
+    resetSessionSyncPlatformForTests,
+} from "@nexia/shared/offline/sessionSyncPlatform";
 
 const SESSION = 7;
 
@@ -135,6 +139,7 @@ beforeEach(() => {
 
 afterEach(() => {
     vi.unstubAllGlobals();
+    resetSessionSyncPlatformForTests();
 });
 
 describe("cola offline — notas de ejercicio reeditadas (DBG-E-01)", () => {
@@ -202,17 +207,14 @@ describe("cola offline — error permanente en cabeza (DBG-E-02)", () => {
 });
 
 describe("cola offline — dos pestanas drenan a la vez (DBG-E-03)", () => {
-    it("con Web Locks del navegador cada elemento se envia una sola vez", async () => {
-        const held = new Map<string, Promise<unknown>>();
-        vi.stubGlobal("navigator", {
-            ...navigator,
-            locks: {
-                request: (name: string, cb: () => Promise<unknown>) => {
-                    const prev = held.get(name) ?? Promise.resolve();
-                    const next = prev.then(cb, cb);
-                    held.set(name, next.catch(() => undefined));
-                    return next;
-                },
+    it("con SessionSyncPlatform serializado cada elemento se envia una sola vez", async () => {
+        const held = new Map<number, Promise<unknown>>();
+        configureSessionSyncPlatform({
+            withSessionSyncLock: (sessionId, run) => {
+                const prev = held.get(sessionId) ?? Promise.resolve();
+                const next = prev.then(run, run);
+                held.set(sessionId, next.catch(() => undefined));
+                return next;
             },
         });
         queueExecution("e1", "block-1-single-0-r1-S3-S1-1", 60, 100);

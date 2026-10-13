@@ -156,7 +156,7 @@ export function useOfflineSessionLog(
 
     useEffect(() => {
         if (isOnline) {
-            flush();
+            void flush().catch(() => undefined);
         }
     }, [isOnline, flush]);
 
