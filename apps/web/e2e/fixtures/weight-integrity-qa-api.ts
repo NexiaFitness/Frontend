@@ -331,6 +331,30 @@ export async function createSupersetPrescribedWeightSession(
   return { sessionId: session.id, name };
 }
 
+/** Solo la primera fila del primer bloque (p. ej. F4: A con kg, B reps_only). */
+export async function patchSessionLeadingExercisePlannedWeight(
+  sessionId: number,
+  plannedWeight: number,
+): Promise<void> {
+  const trainer = await loginTrainerApi();
+  await new Promise((r) => setTimeout(r, 1500));
+  const blocks = await api<{ id: number }[]>(
+    trainer.accessToken,
+    `/session-programming/sessions/${sessionId}/blocks`,
+  );
+  if (blocks.length < 1) throw new Error(`Sesión ${sessionId} sin bloques`);
+  const blockLines = await api<{ id: number }[]>(
+    trainer.accessToken,
+    `/session-programming/blocks/${blocks[0].id}/exercises`,
+  );
+  if (blockLines.length < 1) throw new Error(`Sesión ${sessionId} sin ejercicios`);
+  await api(
+    trainer.accessToken,
+    `/session-programming/block-exercises/${blockLines[0].id}`,
+    { method: "PUT", body: JSON.stringify({ planned_weight: plannedWeight }) },
+  );
+}
+
 /** Tras alta UI sin kg: fuerza weight_reps en run (MOD-09 vs S1–S5). */
 export async function patchSessionFirstExercisePlannedWeight(
   sessionId: number,
@@ -345,18 +369,17 @@ export async function patchSessionFirstExercisePlannedWeight(
   if (blocks.length < 1) {
     throw new Error(`Sesión ${sessionId} sin bloques para patch peso`);
   }
-  const lines = await api<{ id: number }[]>(
-    trainer.accessToken,
-    `/session-programming/blocks/${blocks[0].id}/exercises`,
-  );
-  if (lines.length < 1) {
-    throw new Error(`Sesión ${sessionId} sin ejercicios en bloque para patch peso`);
-  }
-  for (const line of lines) {
-    await api(trainer.accessToken, `/session-programming/block-exercises/${line.id}`, {
-      method: "PUT",
-      body: JSON.stringify({ planned_weight: plannedWeight }),
-    });
+  for (const block of blocks) {
+    const blockLines = await api<{ id: number }[]>(
+      trainer.accessToken,
+      `/session-programming/blocks/${block.id}/exercises`,
+    );
+    for (const line of blockLines) {
+      await api(trainer.accessToken, `/session-programming/block-exercises/${line.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ planned_weight: plannedWeight }),
+      });
+    }
   }
 }
 

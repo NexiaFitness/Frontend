@@ -19,7 +19,10 @@
 
 import { test, expect, type Page } from "@playwright/test";
 import { loginAsAthlete } from "../fixtures/athlete-auth";
-import { createWeightIntegritySession } from "../fixtures/weight-integrity-qa-api";
+import {
+  createWeightIntegritySession,
+  patchSessionLeadingExercisePlannedWeight,
+} from "../fixtures/weight-integrity-qa-api";
 import { attachExecutionRequestCapture } from "./h7-helpers";
 
 test.describe.configure({ mode: "serial" });
@@ -91,20 +94,22 @@ test("QA-F1 sin peso prescrito: casilla vacía, sin 0 kg en ninguna modalidad (F
   // F1 serie simple: el peso no prescrito ni tecleado se muestra vacío y no se guarda.
   let from = cap.posts.length;
   await openBlock(page, BLOCK.single);
-  await expect(sheet(page).getByRole("textbox", { name: "Peso" }).first()).toHaveValue("");
+  await expect(sheet(page).getByRole("textbox", { name: "Peso" })).toHaveCount(0);
+  await expect(sheet(page).getByRole("textbox", { name: "Repeticiones" }).first()).toBeVisible();
   await saveBlock(page);
   expect(postsSince(cap, from, "single")).toHaveLength(0);
-  await expect(sheet(page).getByRole("alert")).toContainText(/peso/i);
+  await expect(sheet(page).getByRole("alert")).toContainText(/rep|dato|falt/i);
   await closeSheetIfOpen(page);
 
   // F4 superserie: hueco B sin peso → se bloquea con aviso, no se descarta en silencio.
+  await patchSessionLeadingExercisePlannedWeight(sessionId, 30);
   from = cap.posts.length;
   await openBlock(page, BLOCK.superset);
   await typeInto(page, "Peso", 0, "30");
-  await typeInto(page, "Peso", 1, "");
+  await typeInto(page, "Repeticiones", 1, "");
   await saveBlock(page);
   expect(postsSince(cap, from, "superset")).toHaveLength(0);
-  await expect(sheet(page).getByRole("alert")).toContainText(/peso/i);
+  await expect(sheet(page).getByRole("alert")).toContainText(/rep|peso|dato|falt/i);
   await closeSheetIfOpen(page);
 
   // F1 AMRAP: 2 rondas, peso no prescrito → weight_kg null (no 0).

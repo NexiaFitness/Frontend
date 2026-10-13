@@ -357,6 +357,12 @@ export async function trainerCreateSessionForClient(
     kind,
   };
   writeH7SessionMeta(meta, kind);
+  if (kind === "superset" || kind === "giant" || kind === "dropset") {
+    const { patchSessionFirstExercisePlannedWeight } = await import(
+      "../fixtures/weight-integrity-qa-api"
+    );
+    await patchSessionFirstExercisePlannedWeight(sessionId, 30);
+  }
   return meta;
 }
 
@@ -456,6 +462,10 @@ export async function trainerCreateSupersetOneRoundSession(
     2
   );
   const sessionId = await trainerSubmitCreateSession(page);
+  const { patchSessionFirstExercisePlannedWeight } = await import(
+    "../fixtures/weight-integrity-qa-api"
+  );
+  await patchSessionFirstExercisePlannedWeight(sessionId, 30);
   return {
     sessionId,
     sessionName,

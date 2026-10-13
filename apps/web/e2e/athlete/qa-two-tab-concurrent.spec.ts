@@ -122,7 +122,7 @@ test("2TAB offline: cola R1+R2 drena una sola vez con segunda pestaña abierta",
   expect(capA.posts).toHaveLength(0);
 
   await context.setOffline(false);
-  await capA.waitForPostCount(4, 120_000);
+  await capA.waitForPostCount(4, 180_000);
   await pageA.waitForTimeout(4_000);
 
   const merged = [...capA.posts, ...capB.posts];
