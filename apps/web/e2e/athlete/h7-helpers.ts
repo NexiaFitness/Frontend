@@ -71,6 +71,17 @@ export function isRunContextExecutionPost(url: string, method: string): boolean 
   );
 }
 
+export function isRunContextTimedPost(url: string, method: string): boolean {
+  return (
+    method === "POST" &&
+    /\/api\/v1\/athlete\/run-context\/timed-results/.test(url)
+  );
+}
+
+export function isRunContextPersistPost(url: string, method: string): boolean {
+  return isRunContextExecutionPost(url, method) || isRunContextTimedPost(url, method);
+}
+
 /** Cuenta POST a run-context/executions (peticiones, no solo 2xx). */
 export function countExecutionPostRequests(page: Page) {
   let count = 0;
@@ -123,6 +134,62 @@ export function attachExecutionRequestCapture(page: Page) {
         await page.waitForTimeout(200);
       }
       expect(posts.length).toBe(count);
+    },
+  };
+}
+
+export type RunContextGateFailure = ExecutionPostFailure & { kind: "executions" | "timed" };
+
+/** Gate G2: captura executions + timed-results (2xx y rejected). */
+export function attachRunContextGateCapture(page: Page) {
+  const executionPosts: ExecutionPost[] = [];
+  const timedPosts: unknown[] = [];
+  const rejected: RunContextGateFailure[] = [];
+  page.on("response", (resp) => {
+    const req = resp.request();
+    const url = req.url();
+    const method = req.method();
+    const isExec = isRunContextExecutionPost(url, method);
+    const isTimed = isRunContextTimedPost(url, method);
+    if (!isExec && !isTimed) return;
+    const kind = isExec ? "executions" : "timed";
+    const status = resp.status();
+    let payload: ExecutionPost | null = null;
+    let timedPayload: unknown = null;
+    try {
+      const raw = req.postData();
+      if (raw) {
+        const parsed = JSON.parse(raw) as unknown;
+        if (isExec) payload = parsed as ExecutionPost;
+        else timedPayload = parsed;
+      }
+    } catch {
+      /* ignore */
+    }
+    if (status >= 200 && status < 300) {
+      if (isExec && payload) executionPosts.push(payload);
+      if (isTimed && timedPayload) timedPosts.push(timedPayload);
+      return;
+    }
+    void resp.text().then((body) => {
+      rejected.push({
+        kind,
+        status,
+        body,
+        payload: isExec ? payload : null,
+      });
+    });
+  });
+  return {
+    executionPosts,
+    timedPosts,
+    rejected,
+    summary() {
+      return {
+        executions2xx: executionPosts.length,
+        timed2xx: timedPosts.length,
+        rejected,
+      };
     },
   };
 }
@@ -207,6 +274,15 @@ export async function dismissMobileNavDialog(page: Page) {
     .filter({ has: page.getByRole("link", { name: "Mi agenda" }) });
   if (await navDialog.isVisible().catch(() => false)) {
     await page.keyboard.press("Escape");
+    await page.waitForTimeout(400);
+  }
+  if (await navDialog.isVisible().catch(() => false)) {
+    const close = navDialog.getByRole("button", { name: /Cerrar|Close/i });
+    if (await close.isVisible().catch(() => false)) {
+      await close.click();
+    } else {
+      await page.mouse.click(10, 10);
+    }
     await page.waitForTimeout(400);
   }
 }
