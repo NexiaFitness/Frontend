@@ -2,6 +2,8 @@
  * Configuración base de RTK Query para NEXIA
  * ARREGLADO: Respeta headers personalizados y no interfiere con login form-urlencoded
  * Se extiende en servicios específicos como authApi, clientsApi, etc.
+ * Mas de 400 lineas: concentra el pipeline comun (auth, refresh 401, timeout, supresion de logs);
+ * extraer el interceptor de refresh es un hito propio (agent.md 7.1).
  * 
  * @author Frontend Team
  * @since v1.0.0
