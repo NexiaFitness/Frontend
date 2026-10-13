@@ -116,7 +116,7 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
         [exercise.exerciseId, exercise.videoUrl]
     );
 
-    if (sessionReadyToFinish && isDoingPhase) {
+    if (sessionReadyToFinish) {
         return <AthleteRunSessionReadyCard />;
     }
 

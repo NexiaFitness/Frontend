@@ -136,7 +136,7 @@ export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
         return rows;
     }, [injuryConflicts, runStep.slots]);
 
-    if (sessionReadyToFinish && isDoingPhase) {
+    if (sessionReadyToFinish) {
         return <AthleteRunSessionReadyCard />;
     }
 
