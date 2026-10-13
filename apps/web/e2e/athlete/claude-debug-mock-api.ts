@@ -17,7 +17,7 @@ import type { Page, Request, Route } from "@playwright/test";
 export const SESSION_ID = 7;
 export const CLIENT_ID = 3;
 
-export type ScenarioKind = "single" | "single_reps_only" | "giant";
+export type ScenarioKind = "single" | "single_reps_only" | "superset_reps_only" | "giant";
 
 export interface ScenarioOptions {
     kind: ScenarioKind;
@@ -49,14 +49,23 @@ const athleteUser = {
 
 const nowIso = new Date().toISOString();
 
+function setTypeFor(kind: ScenarioKind): string {
+    if (kind === "giant") return "giant_set";
+    if (kind === "superset_reps_only") return "superset";
+    return "single_set";
+}
+
+const isGroup = (kind: ScenarioKind) => kind === "giant" || kind === "superset_reps_only";
+const isRepsOnly = (kind: ScenarioKind) => kind === "single_reps_only" || kind === "superset_reps_only";
+
 function blockFor(kind: ScenarioKind) {
     return {
         id: 10,
         training_session_id: SESSION_ID,
         block_type_id: 1,
         order_in_session: 1,
-        set_type: kind === "giant" ? "giant_set" : "single_set",
-        rounds: kind === "giant" ? 2 : null,
+        set_type: setTypeFor(kind),
+        rounds: kind === "giant" || kind === "superset_reps_only" ? 2 : null,
         time_cap: null,
         interval_seconds: null,
         notes: null,
@@ -73,21 +82,22 @@ function lineFor(id: number, exerciseId: number, order: number, kind: ScenarioKi
         session_block_id: 10,
         exercise_id: exerciseId,
         order_in_block: order,
-        set_type: kind === "giant" ? "giant_set" : "single_set",
-        superset_group_id: kind === "giant" ? 1 : null,
+        set_type: setTypeFor(kind),
+        superset_group_id: isGroup(kind) ? 1 : null,
         dropset_sequence: null,
         planned_sets: 2,
         planned_reps: "10",
-        planned_weight: null,
+        // MOD-09: sin planned_weight el ejercicio es reps_only.
+        planned_weight: isRepsOnly(kind) ? null : 20,
         planned_assistance_kg: null,
         planned_duration: null,
         planned_distance: null,
-        planned_rest: kind === "giant" ? 90 : 0,
+        planned_rest: isGroup(kind) ? 90 : 0,
         effort_character: null,
         effort_value: null,
         actual_sets: null,
         actual_reps: null,
-        actual_weight: kind === "single_reps_only" ? null : 20,
+        actual_weight: 20,
         actual_duration: null,
         actual_distance: null,
         actual_rest: null,
@@ -102,6 +112,9 @@ function lineFor(id: number, exerciseId: number, order: number, kind: ScenarioKi
 function linesFor(kind: ScenarioKind) {
     if (kind === "giant") {
         return [lineFor(101, 1, 1, kind), lineFor(102, 2, 2, kind), lineFor(103, 3, 3, kind)];
+    }
+    if (kind === "superset_reps_only") {
+        return [lineFor(101, 1, 1, kind), lineFor(102, 2, 2, kind)];
     }
     return [lineFor(101, 1, 1, kind)];
 }

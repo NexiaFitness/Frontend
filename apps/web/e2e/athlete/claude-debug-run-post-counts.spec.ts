@@ -22,7 +22,8 @@ const EXECUTIONS = "/athlete/run-context/executions";
 
 interface ExecutionBody {
     step_key: string;
-    weight_kg: number | null;
+    input_mode: string;
+    weight_kg?: number | null;
     reps: number | null;
 }
 
@@ -134,4 +135,38 @@ test("offline y reconexion: 0 POST sin red, exactamente 1 POST al reconectar", a
 
     expect(api.posts(EXECUTIONS)).toHaveLength(1);
     expect(bodies(api)[0].weight_kg).toBe(70);
+});
+
+test("reps_only serie simple (MOD-09): 1 POST sin weight_kg aunque haya actual_weight viejo", async ({ page }) => {
+    await seedAthleteSession(page);
+    const api = await installApiMock(page, { kind: "single_reps_only" });
+    await openRun(page);
+
+    await expect(page.getByRole("textbox", { name: /^Peso/i })).toHaveCount(0);
+    await page.getByRole("button", { name: /^Guardar$/ }).click();
+    await expect(page.getByText(/Serie registrada/i)).toBeVisible();
+    await settle(page);
+
+    expect(api.posts(EXECUTIONS)).toHaveLength(1);
+    expect(bodies(api)[0].input_mode).toBe("reps_only");
+    expect(bodies(api)[0].weight_kg ?? null).toBeNull();
+});
+
+test("reps_only superset (S4): 2 POST, ninguno con weight_kg", async ({ page }) => {
+    await seedAthleteSession(page);
+    const api = await installApiMock(page, { kind: "superset_reps_only" });
+    await openRun(page);
+
+    await page.getByRole("button", { name: /Empezar descanso/i }).click();
+    await expect(page.getByRole("textbox", { name: /^Peso/i })).toHaveCount(0);
+    await page.getByRole("button", { name: /Ronda completada/i }).click();
+    await expect(page.getByText(/Ronda registrada/i)).toBeVisible();
+    await settle(page);
+
+    const posted = bodies(api);
+    expect(posted).toHaveLength(2);
+    for (const body of posted) {
+        expect(body.input_mode).toBe("reps_only");
+        expect(body.weight_kg ?? null).toBeNull();
+    }
 });
