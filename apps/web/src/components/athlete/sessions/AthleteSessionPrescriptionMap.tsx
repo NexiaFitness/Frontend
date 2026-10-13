@@ -10,6 +10,10 @@ import { AthleteInjuryCallout } from "@/components/athlete/AthleteInjuryCallout"
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
 import {
+    NEXIA_DIVIDER_FLOW_GLOW,
+    NEXIA_DIVIDER_FLOW_INSET,
+} from "@/components/ui/surface/nexiaDividerPresentation";
+import {
     ATHLETE_SESSION_BLOCK_BODY,
     ATHLETE_SESSION_BLOCK_BODY_COMPACT,
     ATHLETE_SESSION_BLOCK_SECTION_HEADER,
@@ -100,7 +104,10 @@ const ExerciseRow: React.FC<{
                         <>
                             <NexiaPremiumDivider
                                 tone="glow"
-                                className={ATHLETE_SESSION_EXERCISE_ACTIONS_DIVIDER}
+                                className={cn(
+                                    NEXIA_DIVIDER_FLOW_INSET,
+                                    ATHLETE_SESSION_EXERCISE_ACTIONS_DIVIDER
+                                )}
                             />
                             <AthletePrescriptionTrainerNotes notes={card.notes} />
                         </>
@@ -161,16 +168,25 @@ const GroupSection: React.FC<{
                 </p>
             ))}
             <ul className="space-y-0">
-                {cards.map((card) => {
+                {cards.map((card, cardIndex) => {
                     const hasConflict = card.exerciseIds.some((id) => conflictByExerciseId.has(id));
                     return (
-                        <ExerciseRow
-                            key={card.key}
-                            card={card}
-                            groupKind={group.kind}
-                            hasConflict={hasConflict}
-                            onInfo={onInfo}
-                        />
+                        <React.Fragment key={card.key}>
+                            {cardIndex > 0 ? (
+                                <li className="list-none" aria-hidden>
+                                    <NexiaPremiumDivider
+                                        tone="glow"
+                                        className={NEXIA_DIVIDER_FLOW_GLOW}
+                                    />
+                                </li>
+                            ) : null}
+                            <ExerciseRow
+                                card={card}
+                                groupKind={group.kind}
+                                hasConflict={hasConflict}
+                                onInfo={onInfo}
+                            />
+                        </React.Fragment>
                     );
                 })}
             </ul>
@@ -287,14 +303,21 @@ const BlockSection: React.FC<{
                             onConsult={onConsult}
                         />
                     ) : null}
-                    <div className="space-y-4">
-                        {block.groups.map((group) => (
-                            <GroupSection
-                                key={group.groupId}
-                                group={group}
-                                conflictByExerciseId={conflictByExerciseId}
-                                onInfo={onInfo}
-                            />
+                    <div className="space-y-0">
+                        {block.groups.map((group, groupIndex) => (
+                            <React.Fragment key={group.groupId}>
+                                {groupIndex > 0 ? (
+                                    <NexiaPremiumDivider
+                                        tone="glow"
+                                        className={cn(NEXIA_DIVIDER_FLOW_GLOW, "my-3")}
+                                    />
+                                ) : null}
+                                <GroupSection
+                                    group={group}
+                                    conflictByExerciseId={conflictByExerciseId}
+                                    onInfo={onInfo}
+                                />
+                            </React.Fragment>
                         ))}
                     </div>
                 </div>

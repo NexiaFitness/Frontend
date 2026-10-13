@@ -34,5 +34,16 @@ export const NEXIA_DIVIDER_INSET = "inset-x-3";
 
 export const NEXIA_DIVIDER_INSET_WIDE = "inset-x-5";
 
+/** Inset en flujo (listas) — la línea no llega a los bordes de la card. */
+export const NEXIA_DIVIDER_FLOW_INSET = "mx-3";
+
+export const NEXIA_DIVIDER_FLOW_INSET_WIDE = "mx-5";
+
+/** Separador premium in-flow (glow + márgenes). Componer con NexiaPremiumDivider. */
+export const NEXIA_DIVIDER_FLOW_GLOW = cn(
+    NEXIA_DIVIDER_FLOW_INSET,
+    "my-2.5 block w-auto shrink-0"
+);
+
 /** Banda suave encima de línea glow (footer cards). */
 export const NEXIA_DIVIDER_GLOW_BAND = "h-3 bg-gradient-to-b from-primary/15 to-transparent";

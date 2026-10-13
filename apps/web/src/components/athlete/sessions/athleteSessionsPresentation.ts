@@ -253,10 +253,8 @@ export const ATHLETE_SESSION_EXERCISE_ROW_CONFLICT = cn(
     "border-l-2 border-warning/50 pl-2.5 text-warning"
 );
 
-/** Fila plana de ejercicio en mapa V04 (sin mini-card). */
-export const ATHLETE_SESSION_EXERCISE_ROW_FLAT = cn(
-    "flex items-start gap-2.5 border-b border-border/40 py-2 last:border-b-0"
-);
+/** Fila plana de ejercicio en mapa V04 (sin mini-card). Separadores → NexiaPremiumDivider. */
+export const ATHLETE_SESSION_EXERCISE_ROW_FLAT = cn("flex items-start gap-2.5 py-2");
 
 /** Cuerpo de fila V04: cabecera (nombre + ℹ️) y bloque expand a ancho completo. */
 export const ATHLETE_SESSION_EXERCISE_ROW_BODY = "flex min-w-0 flex-1 flex-col gap-0";
@@ -288,7 +286,11 @@ export const ATHLETE_SESSION_SERIES_TOGGLE = cn(
     "underline-offset-2 hover:underline"
 );
 
-export const ATHLETE_SESSION_EXERCISE_ACTIONS_DIVIDER = "my-2 w-full";
+/** Divisor cyan inset (notas / acciones dentro de fila). */
+export const ATHLETE_SESSION_EXERCISE_ACTIONS_DIVIDER = "my-2";
+
+/** Entre ejercicios o tipos de serie en mapa de prescripción (paridad glass rim). */
+export const ATHLETE_SESSION_PRESCRIPTION_SEPARATOR = "my-2.5";
 
 export const ATHLETE_SESSION_EXERCISE_NAME =
     "min-w-0 flex-1 text-sm font-medium leading-snug text-foreground";

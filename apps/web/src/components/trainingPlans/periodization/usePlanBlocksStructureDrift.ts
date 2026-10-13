@@ -2,7 +2,7 @@
  * usePlanBlocksStructureDrift.ts — Mapa blockId → sesiones con deriva G26 (RTK + shared).
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
 import type { AppDispatch } from "@nexia/shared/store";
@@ -59,25 +59,40 @@ export function usePlanBlocksStructureDrift(input: {
     const sessionsScanKey = sessions
         .map(
             (s) =>
-                `${s.id}:${s.status}:${s.session_date ?? ""}:${s.period_block_id ?? ""}`,
+                `${s.id}:${s.status}:${s.session_date ?? ""}:${s.period_block_id ?? ""}:${s.session_name ?? ""}`,
         )
+        .join("|");
+    const blocksScanKey = blocks
+        .map((b) => `${b.id}:${b.start_date}:${b.end_date}`)
         .join("|");
     const blockIdsKey = blockIdsToScan.join(",");
 
+    /** Lectura en async alineada con blockIdsKey / sessionsScanKey / blocksScanKey (evita re-fetch por ref de array). */
+    const blocksRef = useRef(blocks);
+    const sessionsRef = useRef(sessions);
+    const blockIdsToScanRef = useRef(blockIdsToScan);
+    blocksRef.current = blocks;
+    sessionsRef.current = sessions;
+    blockIdsToScanRef.current = blockIdsToScan;
+
     useEffect(() => {
-        if (!enabled || planId <= 0 || blockIdsToScan.length === 0) {
+        const scanBlockIds = blockIdsToScanRef.current;
+        const scanBlocks = blocksRef.current;
+        const scanSessions = sessionsRef.current;
+
+        if (!enabled || planId <= 0 || scanBlockIds.length === 0) {
             setDriftByBlockId({});
             return;
         }
 
         let cancelled = false;
         const todayYmd = formatLocalDateOnly(new Date());
-        const sessionInputs = sessions.map(toDriftSessionInput);
+        const sessionInputs = scanSessions.map(toDriftSessionInput);
 
         void (async () => {
             const next: Record<number, StructureDriftSessionSummary[]> = {};
-            for (const blockId of blockIdsToScan) {
-                const block = blocks.find((b) => b.id === blockId);
+            for (const blockId of scanBlockIds) {
+                const block = scanBlocks.find((b) => b.id === blockId);
                 if (!block) continue;
                 try {
                     const structure = await dispatch(
@@ -96,7 +111,7 @@ export function usePlanBlocksStructureDrift(input: {
                         structure.weeks ?? [],
                         todayYmd,
                     ).map((row) => {
-                        const match = sessions.find((s) => s.id === row.id);
+                        const match = scanSessions.find((s) => s.id === row.id);
                         return {
                             ...row,
                             session_name: match?.session_name ?? null,
@@ -117,7 +132,15 @@ export function usePlanBlocksStructureDrift(input: {
         return () => {
             cancelled = true;
         };
-    }, [enabled, planId, blockIdsKey, sessionsScanKey, dispatch, refreshKey]);
+    }, [
+        enabled,
+        planId,
+        blockIdsKey,
+        blocksScanKey,
+        sessionsScanKey,
+        dispatch,
+        refreshKey,
+    ]);
 
     return driftByBlockId;
 }
