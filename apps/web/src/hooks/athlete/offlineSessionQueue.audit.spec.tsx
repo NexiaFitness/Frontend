@@ -232,3 +232,34 @@ describe("cola offline — dos pestanas drenan a la vez (DBG-E-03)", () => {
         ]);
     });
 });
+
+describe("cola offline — servidor en 5xx (DBG-E-04)", () => {
+    it("un fallo transitorio no reintenta en cada render: 1 POST aunque el llamador pase callbacks nuevos", async () => {
+        queueExecution("e1", "block-1-single-0-r1-S3-S1-1", 60, 100);
+        const postExecution = vi.fn(async () => {
+            throw { status: 500, data: { detail: "boom" } };
+        });
+        const { adapter } = makeAdapter({ postExecution });
+
+        const { rerender } = renderHook(() =>
+            useOfflineSessionLog({
+                sessionId: SESSION,
+                clientId: 3,
+                sessionName: "Audit",
+                flatExercises: [],
+                adapter: { ...adapter },
+                onSynced: () => undefined,
+                onConflict: () => undefined,
+            })
+        );
+        await waitFor(() => expect(postExecution).toHaveBeenCalledTimes(1));
+
+        for (let i = 0; i < 5; i += 1) {
+            rerender();
+            await act(flushMicrotasks);
+        }
+
+        expect(postExecution).toHaveBeenCalledTimes(1);
+        expect(mem.executions.size).toBe(1);
+    });
+});

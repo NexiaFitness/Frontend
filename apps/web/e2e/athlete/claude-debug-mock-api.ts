@@ -26,6 +26,11 @@ export interface ScenarioOptions {
     hangFirstBlocksRequest?: boolean;
 }
 
+export interface ApiMockControls {
+    /** Status fijo para POST de ejecuciones (p. ej. 500); null = comportamiento normal. */
+    executionsStatus: number | null;
+}
+
 export interface RecordedRequest {
     method: string;
     path: string;
@@ -33,6 +38,7 @@ export interface RecordedRequest {
 }
 
 export interface ApiMock {
+    controls: ApiMockControls;
     requests: RecordedRequest[];
     unmatched: string[];
     posts: (pathSuffix: string) => RecordedRequest[];
@@ -157,6 +163,7 @@ export async function installApiMock(page: Page, options: ScenarioOptions): Prom
     const unmatched: string[] = [];
     const editable = options.registrationEditable ?? true;
     let blocksRequests = 0;
+    const controls: ApiMockControls = { executionsStatus: null };
 
     const handler = async (route: Route, request: Request) => {
         const url = new URL(request.url());
@@ -224,6 +231,9 @@ export async function installApiMock(page: Page, options: ScenarioOptions): Prom
             });
         }
         if (method === "POST" && path === "/athlete/run-context/executions") {
+            if (controls.executionsStatus != null) {
+                return json(route, { detail: "forced" }, controls.executionsStatus);
+            }
             if (!editable) {
                 return json(route, { detail: "El plazo de registro ha cerrado" }, 403);
             }
@@ -241,6 +251,7 @@ export async function installApiMock(page: Page, options: ScenarioOptions): Prom
     await page.route("http://localhost:8000/**", handler);
 
     return {
+        controls,
         requests,
         unmatched,
         posts: (suffix: string) => requests.filter((r) => r.method === "POST" && r.path.endsWith(suffix)),

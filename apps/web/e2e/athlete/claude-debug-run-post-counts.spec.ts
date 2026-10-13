@@ -190,3 +190,24 @@ test("peticion colgada (DBG-TO-01/02): tras el timeout, 'No pudimos cargar tu re
     expect(blocksGets()).toBe(2);
     expect(api.posts(EXECUTIONS)).toHaveLength(0);
 });
+
+test("reintento con servidor en 5xx (DBG-E-04): la cola no entra en bucle de POST", async ({ page, context }) => {
+    await seedAthleteSession(page);
+    const api = await installApiMock(page, { kind: "single" });
+    await openRun(page);
+
+    await context.setOffline(true);
+    const weight = page.getByRole("spinbutton", { name: /^Peso/i }).or(page.getByLabel(/^Peso/i)).first();
+    await weight.fill("70");
+    await page.getByRole("button", { name: /^Guardar$/ }).click();
+    await expect(page.getByText(/guardada localmente/i)).toBeVisible();
+    expect(api.posts(EXECUTIONS)).toHaveLength(0);
+
+    api.controls.executionsStatus = 500;
+    await context.setOffline(false);
+    await expect.poll(() => api.posts(EXECUTIONS).length, { timeout: 15_000 }).toBeGreaterThan(0);
+    await page.waitForTimeout(5_000);
+
+    // Un intento al reconectar; sin backoff explicito se tolera un reintento, nunca una rafaga.
+    expect(api.posts(EXECUTIONS).length).toBeLessThanOrEqual(2);
+});
