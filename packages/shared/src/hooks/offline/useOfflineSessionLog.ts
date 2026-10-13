@@ -14,9 +14,6 @@ import {
     flushPendingSessionSync,
     loadSessionSnapshot,
     persistSessionSnapshot,
-    pruneSupersededExecutions,
-    pruneSupersededLogs,
-    pruneSupersededTimedResults,
     queueExecutionLog,
     queueExerciseLog,
     queueSessionComplete,
@@ -88,6 +85,14 @@ export function useOfflineSessionLog(
     const [registrationSyncBlocked, setRegistrationSyncBlocked] = useState(false);
     const [cachedSnapshot, setCachedSnapshot] = useState<AthleteSessionSnapshot | null>(null);
     const flushingRef = useRef(false);
+    // Los llamadores pasan adapter/callbacks nuevos en cada render; si `flush` dependiera de ellos,
+    // el efecto de reconexion drenaria en cada render y un 5xx produciria una rafaga de POST.
+    const adapterRef = useRef(adapter);
+    const onSyncedRef = useRef(onSynced);
+    const onConflictRef = useRef(onConflict);
+    adapterRef.current = adapter;
+    onSyncedRef.current = onSynced;
+    onConflictRef.current = onConflict;
 
     const refreshPendingCount = useCallback(async () => {
         if (!sessionId) return;
@@ -126,17 +131,14 @@ export function useOfflineSessionLog(
         if (!isOnline || flushingRef.current) return;
         flushingRef.current = true;
         try {
-            await pruneSupersededExecutions(sessionId);
-            await pruneSupersededTimedResults(sessionId);
-            await pruneSupersededLogs(sessionId);
-            const result = await flushPendingSessionSync(sessionId, adapter);
+            const result = await flushPendingSessionSync(sessionId, adapterRef.current);
             await refreshPendingCount();
             await reloadSnapshot();
             if (result.registrationWindowClosed) {
                 setRegistrationSyncBlocked(true);
             }
             if (result.conflict) {
-                onConflict?.();
+                onConflictRef.current?.();
                 return;
             }
             if (
@@ -145,12 +147,12 @@ export function useOfflineSessionLog(
                 result.syncedTimedResults > 0 ||
                 result.syncedCompletes > 0
             ) {
-                onSynced?.(result);
+                onSyncedRef.current?.(result);
             }
         } finally {
             flushingRef.current = false;
         }
-    }, [adapter, isOnline, onConflict, onSynced, refreshPendingCount, reloadSnapshot, sessionId]);
+    }, [isOnline, refreshPendingCount, reloadSnapshot, sessionId]);
 
     useEffect(() => {
         if (isOnline) {

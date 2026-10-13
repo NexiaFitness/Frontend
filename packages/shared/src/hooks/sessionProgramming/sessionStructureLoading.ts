@@ -25,31 +25,32 @@ export function needsExerciseCatalog(
     return needsExerciseCatalogForBlocks(blockCount) || needsExerciseCatalogForLegacy(legacyExercises);
 }
 
+/** Por id: el mapa puede conservar entradas de bloques de otra sesion. */
 export function areBlockExercisesLoaded(
-    blockCount: number,
+    blockIds: readonly number[],
     blockExercisesByBlock: Record<number, SessionBlockExercise[]>
 ): boolean {
-    if (blockCount === 0) return true;
-    return Object.keys(blockExercisesByBlock).length >= blockCount;
+    return blockIds.every((id) => blockExercisesByBlock[id] !== undefined);
 }
 
 export function isBlockStructureLoading(input: {
     isLoadingBlocks: boolean;
-    blockCount: number;
+    blockIds: readonly number[];
     blockExercisesByBlock: Record<number, SessionBlockExercise[]>;
     isLoadingBlockTypes: boolean;
     isLoadingExerciseCatalog: boolean;
 }): boolean {
     const {
         isLoadingBlocks,
-        blockCount,
+        blockIds,
         blockExercisesByBlock,
         isLoadingBlockTypes,
         isLoadingExerciseCatalog,
     } = input;
+    const blockCount = blockIds.length;
 
     if (isLoadingBlocks) return true;
-    if (!areBlockExercisesLoaded(blockCount, blockExercisesByBlock)) return true;
+    if (!areBlockExercisesLoaded(blockIds, blockExercisesByBlock)) return true;
     if (blockCount === 0) return false;
 
     if (isLoadingBlockTypes) return true;

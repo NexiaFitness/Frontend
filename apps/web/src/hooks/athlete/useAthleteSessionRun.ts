@@ -5,7 +5,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-    useGetTrainingSessionQuery,
     useUpdateTrainingSessionMutation,
     useUpdateSessionExerciseMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
@@ -34,11 +33,9 @@ import { resolveLocalRunReference } from "@nexia/shared/utils/athlete/localRunRe
 import { useAthleteRunSlotReferences } from "@/hooks/athlete/useAthleteRunSlotReferences";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useOfflineSessionLog } from "@nexia/shared/hooks/offline";
-import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
-import { flattenAthleteExercises } from "@nexia/shared/utils/athlete/athleteSessionUtils";
+import { useAthleteRunSessionData } from "@/hooks/athlete/useAthleteRunSessionData";
 import { resolveSeriesWeightAutofillKey } from "@nexia/shared/utils/athlete/athleteLoggingUtils";
 import {
-    buildAthleteRunSteps,
     resolveRestAfterCompletingRunStep,
     runStepToFlatExercise,
     type AthleteRunRoundSlot,
@@ -121,10 +118,8 @@ export function useAthleteSessionRun({
     const navigate = useNavigate();
     const { clientId } = useAthleteContext();
 
-    const { data: session, isLoading: loadingSession } = useGetTrainingSessionQuery(sessionId, {
-        skip: !sessionId,
-    });
-    const { view, source: structureSource, isLoading: loadingStructure } = useSessionStructureView(sessionId);
+    const { session, structureSource, runSteps, flatExercisesFromApi, ...sessionData } =
+        useAthleteRunSessionData(sessionId);
 
     const [updateBlockExercise] = useUpdateSessionBlockExerciseMutation();
     const [updateSessionExercise] = useUpdateSessionExerciseMutation();
@@ -132,9 +127,6 @@ export function useAthleteSessionRun({
     const [postRunExecution] = usePostAthleteRunExecutionMutation();
     const [postTimedResult] = usePostAthleteRunTimedResultMutation();
     const [putExerciseNote] = usePutAthleteExerciseNoteMutation();
-
-    const runSteps = useMemo(() => buildAthleteRunSteps(view), [view]);
-    const flatExercisesFromApi = useMemo(() => flattenAthleteExercises(view), [view]);
 
     const adapter = useMemo(
         () => ({
@@ -332,6 +324,7 @@ export function useAthleteSessionRun({
             roundIndex: current.roundIndex,
             slotLabel: current.slotLabel,
             groupKind: current.groupKind,
+            groupId: current.groupId,
             localExecutions,
         });
     }, [current, isOnline, localExecutions]);
@@ -464,8 +457,10 @@ export function useAthleteSessionRun({
                 markSlotField(slotKey, "durationSeconds");
             }
             if (patch.weight !== undefined || patch.reps != null || patch.durationSeconds != null) {
+                // Solo paso + slot: tocar todos los slots anula el skip S5 y reenvia los no editados.
                 touchedWeightStepKeysRef.current.add(slotKey);
-                touchRunStepForPersist(currentRunStep ?? undefined);
+                if (currentRunStep) touchedWeightStepKeysRef.current.add(currentRunStep.stepKey);
+                setPersistTouchEpoch((n) => n + 1);
             }
             setSlotLogs((prev) => {
                 const current = prev[slotKey];
@@ -473,7 +468,7 @@ export function useAthleteSessionRun({
                 return { ...prev, [slotKey]: { ...current, ...patch } };
             });
         },
-        [currentRunStep, markSlotField, touchRunStepForPersist]
+        [currentRunStep, markSlotField]
     );
 
     const updateAmrapPartialReps = useCallback(
@@ -1257,7 +1252,7 @@ export function useAthleteSessionRun({
         }
     }, [finishSession, navigate, onError, onSessionFinished, sessionId]);
 
-    const loadingFromNetwork = loadingSession || loadingStructure;
+    const loadingFromNetwork = sessionData.isLoading;
     const waitingForCache = !isOnline && loadingFromNetwork && !cachedSnapshot;
     const isLoading = (loadingFromNetwork && !isUsingCache && isOnline) || waitingForCache;
     const timedBlockClockActive =
@@ -1324,6 +1319,8 @@ export function useAthleteSessionRun({
         restFlow: restFlowUi,
         handleFinish,
         isLoading,
+        loadError: sessionData.isError && isOnline && !isUsingCache,
+        retryLoad: sessionData.retry,
         isLastStep,
         showStepActions,
         isCurrentStepSaved,

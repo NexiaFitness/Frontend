@@ -4,13 +4,15 @@
 
 import { describe, expect, it, vi } from "vitest";
 import {
-    dedupePendingExecutions,
-    dedupePendingLogs,
-    dedupePendingTimedResults,
     finishOnlineSession,
     flushPendingSessionSync,
     prepareOfflineExecutionPayload,
 } from "./athleteSessionSync";
+import {
+    dedupePendingExecutions,
+    dedupePendingLogs,
+    dedupePendingTimedResults,
+} from "./athleteSessionQueueDedupe";
 import type { PendingExecutionLog, PendingExerciseLog, PendingTimedResultLog } from "./athleteSessionTypes";
 
 function log(id: string, blockExerciseId: number, ts: number): PendingExerciseLog {

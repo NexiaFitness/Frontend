@@ -12,7 +12,8 @@ import { API_BASE_URL } from './env';
 // API Configuration
 export const API_CONFIG = {
     BASE_URL: API_BASE_URL,
-    TIMEOUT: 10000,
+    /** ms por peticion en baseApi (no subidas); holgado para endpoints lentos como /ai/weekly-summary. */
+    TIMEOUT: 30000,
     RETRY_ATTEMPTS: 3,
 } as const;
 

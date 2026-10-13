@@ -29,10 +29,14 @@ export function resolveLocalRunReference(input: {
     roundIndex?: number | null;
     slotLabel?: string | null;
     groupKind?: string | null;
+    /** El mismo ejercicio puede repetirse en otro bloque/grupo con el mismo set_index o slot_label. */
+    groupId: string | null | undefined;
     localExecutions: readonly LocalSetExecution[];
 }): AthleteRunReferencePoint | null {
-    const { exerciseId, setIndex, roundIndex, slotLabel, groupKind, localExecutions } =
-        input;
+    const { exerciseId, setIndex, roundIndex, slotLabel, groupKind, groupId } = input;
+    const localExecutions = groupId
+        ? input.localExecutions.filter((row) => stepKeyBelongsToGroup(row.step_key, groupId))
+        : input.localExecutions;
 
     if (groupKind && GROUP_ROUND_KINDS.has(groupKind) && slotLabel && roundIndex != null) {
         if (roundIndex > 1) {
