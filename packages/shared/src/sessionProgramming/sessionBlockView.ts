@@ -29,6 +29,7 @@ import { collapseDropsetBlockLines, inferDropsetRounds } from "./dropsetCollapse
 import { getEffectiveBlockRounds, timeCapSecondsToMinutes } from "./blockRounds";
 import { inferRoundSlotLayout } from "./parallelRoundCollapse";
 import { displayAmrapPlannedReps } from "./amrapPlannedReps";
+import { groupLinesIntoConstructorRowSegments } from "./constructorBlockInstance";
 
 // ============================================================================
 // TIPOS DE VISTA
@@ -199,40 +200,29 @@ function buildSingleSetGroups(
     lines: SessionBlockExercise[],
     nameMap: Map<number, string>
 ): SessionExerciseGroupView[] {
-    const sorted = [...lines].sort(sortByOrderInBlock);
+    const segments = groupLinesIntoConstructorRowSegments(lines);
 
-    type Accum = { exerciseId: number; rows: SessionBlockExercise[] };
-    const grouped: Accum[] = [];
-    for (const line of sorted) {
-        const last = grouped[grouped.length - 1];
-        if (last && last.exerciseId === line.exercise_id) {
-            last.rows.push(line);
-        } else {
-            grouped.push({ exerciseId: line.exercise_id, rows: [line] });
-        }
-    }
-
-    return grouped.map((group, idx) => {
-        const first = group.rows[0];
-        const allOnePlanned = group.rows.every((r) => (r.planned_sets ?? 1) === 1);
+    return segments.map((segment, idx) => {
+        const groupRows = segment as SessionBlockExercise[];
+        const first = groupRows[0];
+        const exerciseId = first.exercise_id;
+        const allOnePlanned = groupRows.every((r) => (r.planned_sets ?? 1) === 1);
         let sets: SessionExerciseSetView[];
 
-        if (group.rows.length > 1 && allOnePlanned) {
-            // Caso constructor: N filas con planned_sets=1 -> una serie por fila.
-            sets = group.rows.map((row, i) => setView(row, `S${i + 1}`, i + 1));
-        } else if (group.rows.length === 1 && (first.planned_sets ?? 1) > 1) {
-            // Caso legacy: 1 fila con planned_sets=N -> replicamos N celdas idénticas.
+        if (groupRows.length > 1 && allOnePlanned) {
+            // Constructor: N filas API (1 serie cada una) en la misma fila lógica.
+            sets = groupRows.map((row, i) => setView(row, `S${i + 1}`, i + 1));
+        } else if (groupRows.length === 1 && (first.planned_sets ?? 1) > 1) {
             const total = first.planned_sets ?? 1;
             sets = Array.from({ length: total }, (_, i) => setView(first, `S${i + 1}`, i + 1));
         } else {
-            // Fallback: 1 fila, planned_sets=1.
             sets = [setView(first, "S1", 1)];
         }
 
         const slot: SessionExerciseSlotView = {
             slotLabel: `S${sets.length}`,
-            exerciseId: group.exerciseId,
-            exerciseName: exerciseNameOf(nameMap, group.exerciseId),
+            exerciseId,
+            exerciseName: exerciseNameOf(nameMap, exerciseId),
             ...slotMetaFromLine(first),
             sets,
         };
@@ -244,7 +234,6 @@ function buildSingleSetGroups(
             rounds: sets.length,
             timeCapMinutes: null,
             intervalSeconds: null,
-            // En single_set el descanso es por serie (lo lleva cada set).
             restBetweenSeconds: null,
             slots: [slot],
         } satisfies SessionExerciseGroupView;
