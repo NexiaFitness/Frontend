@@ -46,11 +46,14 @@ async function collapseSidePanels(page: import("@playwright/test").Page) {
 
 async function trainerAddHipertrofiaBlock(page: import("@playwright/test").Page) {
   await collapseSidePanels(page);
-  let chip = page.getByRole("button", { name: /^Hipertrofia$/i });
-  if (!(await chip.isVisible().catch(() => false))) {
+  const barChip = page.getByRole("button", { name: /^Hipertrofia$/i });
+  if (!(await barChip.isVisible().catch(() => false))) {
     await page.getByRole("button", { name: /Añadir cualidad/i }).click();
-    chip = page.getByRole("button", { name: /^Hipertrofia$/i });
+    await page
+      .getByRole("button", { name: /Añadir Hipertrofia a la barra de bloques/i })
+      .click({ timeout: 15_000 });
   }
+  const chip = page.getByRole("button", { name: /^Hipertrofia$/i });
   await chip.scrollIntoViewIfNeeded();
   await chip.click({ timeout: 20_000 });
   await expect(page.getByRole("button", { name: "Tipo de serie" }).first()).toBeVisible({
