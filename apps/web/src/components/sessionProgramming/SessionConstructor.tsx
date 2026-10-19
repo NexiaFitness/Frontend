@@ -112,7 +112,13 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
         );
     };
 
-    const renderBlockRow = (row: ConstructorRow, index: number): React.ReactNode => {
+    const renderBlockRow = (
+        row: ConstructorRow,
+        index: number,
+        indexInBlockInstance: number,
+    ): React.ReactNode => {
+        const setTypeSelectorVisible = indexInBlockInstance === 0;
+
         if (row.setType === SET_TYPE.SUPERSET) {
             return (
                 <SupersetBlock
@@ -140,6 +146,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                     onUpdateExercise={handleUpdateExercise}
                     onDuplicate={handleDuplicateRow}
                     onRemove={handleRemoveRow}
+                    setTypeSelectorVisible={setTypeSelectorVisible}
                 />
             );
         }
@@ -233,6 +240,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                 blockTypes={blockTypes}
                 setType={row.setType}
                 onSetTypeChange={(setType) => handleUpdateRow(row.id, { setType })}
+                setTypeSelectorVisible={setTypeSelectorVisible}
                 onDuplicate={() => handleDuplicateRow(row.id)}
                 onRemove={() => handleRemoveRow(row.id)}
             >
@@ -274,7 +282,9 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                     <>
                                         {blockRows
                                             .slice(0, activeIndex)
-                                            .map((row, index) => renderBlockRow(row, index))}
+                                            .map((row, index) =>
+                                                renderBlockRow(row, index, index)
+                                            )}
                                         <div className="flex items-start gap-4">
                                             <div className="flex min-w-0 flex-1 flex-col gap-4">
                                                 <div className="space-y-4">
@@ -283,6 +293,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                                         .map((row, index) =>
                                                             renderBlockRow(
                                                                 row,
+                                                                activeIndex + index,
                                                                 activeIndex + index
                                                             )
                                                         )}
@@ -296,7 +307,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                     <>
                                         <div className="space-y-4">
                                             {blockRows.map((row, index) =>
-                                                renderBlockRow(row, index)
+                                                renderBlockRow(row, index, index)
                                             )}
                                         </div>
                                         {renderBlockGroupActions(blockRows)}

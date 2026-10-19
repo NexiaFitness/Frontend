@@ -17,9 +17,38 @@ import { normalizeGiantSetRow } from "../constructor/utils/giantSetRow";
 import { normalizeForTimeRow } from "../constructor/utils/forTimeRow";
 import { normalizeEmomRow } from "../constructor/utils/emomRow";
 import { normalizeAmrapRow } from "../constructor/utils/amrapRow";
+import {
+    resolveBlockInstanceId,
+} from "@nexia/shared/sessionProgramming/constructorBlockInstance";
 
 function generateId(): string {
     return `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/** Normaliza la fila tras un cambio de setType (misma instancia = mismo tipo). */
+export function normalizeConstructorRowForSetType(row: ConstructorRow): ConstructorRow {
+    if (row.setType === SET_TYPE.SUPERSET) {
+        return normalizeSupersetRow(row);
+    }
+    if (row.setType === SET_TYPE.SINGLE_SET) {
+        return normalizeSingleSetRow(row);
+    }
+    if (row.setType === SET_TYPE.DROPSET) {
+        return normalizeDropsetRow(row);
+    }
+    if (row.setType === SET_TYPE.GIANT_SET) {
+        return normalizeGiantSetRow(row);
+    }
+    if (row.setType === SET_TYPE.FOR_TIME) {
+        return normalizeForTimeRow(row);
+    }
+    if (row.setType === SET_TYPE.EMOM) {
+        return normalizeEmomRow(row);
+    }
+    if (row.setType === SET_TYPE.AMRAP) {
+        return normalizeAmrapRow(row);
+    }
+    return row;
 }
 
 export function useSessionConstructorActions(
@@ -27,11 +56,28 @@ export function useSessionConstructorActions(
 ) {
     const handleUpdateRow = React.useCallback(
         (rowId: string, updates: Partial<ConstructorRow>) => {
-            onRowsChange((prev) =>
-                prev.map((r) =>
+            onRowsChange((prev) => {
+                const target = prev.find((r) => r.id === rowId);
+                if (!target) return prev;
+
+                if (updates.setType !== undefined) {
+                    const instanceId = resolveBlockInstanceId(target);
+                    return prev.map((r) => {
+                        if (resolveBlockInstanceId(r) !== instanceId) return r;
+                        const merged =
+                            r.id === rowId
+                                ? applyConstructorRowUpdate(r, updates)
+                                : applyConstructorRowUpdate(r, {
+                                      setType: updates.setType,
+                                  });
+                        return normalizeConstructorRowForSetType(merged);
+                    });
+                }
+
+                return prev.map((r) =>
                     r.id === rowId ? applyConstructorRowUpdate(r, updates) : r
-                )
-            );
+                );
+            });
         },
         [onRowsChange]
     );

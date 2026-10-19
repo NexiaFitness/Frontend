@@ -49,6 +49,8 @@ export interface SingleSetBlockProps {
     ) => void;
     onDuplicate?: (rowId: string) => void;
     onRemove?: (rowId: string) => void;
+    /** Primera fila de la instancia: selector de tipo de serie; el resto solo lectura. */
+    setTypeSelectorVisible?: boolean;
 }
 
 export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
@@ -59,6 +61,7 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
     onUpdateExercise: _onUpdateExercise,
     onDuplicate,
     onRemove,
+    setTypeSelectorVisible = true,
 }) => {
     const [collapsed, setCollapsed] = React.useState(false);
     const normalized = normalizeSingleSetRow(row);
@@ -105,6 +108,7 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
                 blockTypes={blockTypes}
                 setType={normalized.setType}
                 onSetTypeChange={(setType) => onUpdate(normalized.id, { setType })}
+                setTypeSelectorVisible={setTypeSelectorVisible}
                 collapsed={collapsed}
                 onToggleCollapse={() => setCollapsed((v) => !v)}
                 onDuplicate={onDuplicate ? () => onDuplicate(normalized.id) : undefined}

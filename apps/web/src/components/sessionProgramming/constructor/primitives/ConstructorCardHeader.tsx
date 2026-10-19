@@ -29,6 +29,8 @@ export interface ConstructorCardHeaderProps {
     blockTypes: TrainingBlockType[];
     setType: SetType;
     onSetTypeChange: (setType: SetType) => void;
+    /** false en filas secundarias de la misma instancia (solo una fila controla el tipo). */
+    setTypeSelectorVisible?: boolean;
     collapsed?: boolean;
     onToggleCollapse?: () => void;
     onDuplicate?: () => void;
@@ -40,6 +42,7 @@ export const ConstructorCardHeader: React.FC<ConstructorCardHeaderProps> = ({
     blockTypes,
     setType,
     onSetTypeChange,
+    setTypeSelectorVisible = true,
     collapsed = false,
     onToggleCollapse,
     onDuplicate,
@@ -57,15 +60,21 @@ export const ConstructorCardHeader: React.FC<ConstructorCardHeaderProps> = ({
                 <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-foreground">
                     {blockLabel}
                 </span>
-                <FormCombobox
-                    size="xs"
-                    value={setType}
-                    onChange={(value) => onSetTypeChange(value as SetType)}
-                    options={SET_TYPE_OPTIONS}
-                    className="w-[118px] shrink-0"
-                    buttonClassName={CONSTRUCTOR_SET_TYPE_SELECT_CLASS}
-                    ariaLabel="Tipo de serie"
-                />
+                {setTypeSelectorVisible ? (
+                    <FormCombobox
+                        size="xs"
+                        value={setType}
+                        onChange={(value) => onSetTypeChange(value as SetType)}
+                        options={SET_TYPE_OPTIONS}
+                        className="w-[118px] shrink-0"
+                        buttonClassName={CONSTRUCTOR_SET_TYPE_SELECT_CLASS}
+                        ariaLabel="Tipo de serie"
+                    />
+                ) : (
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                        {SET_TYPE_LABELS[setType]}
+                    </span>
+                )}
             </div>
             <div className="flex shrink-0 items-center gap-0.5">
                 {onDuplicate ? (

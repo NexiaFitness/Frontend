@@ -15,6 +15,7 @@ export interface ConstructorBlockShellProps {
     blockTypes: TrainingBlockType[];
     setType: SetType;
     onSetTypeChange: (setType: SetType) => void;
+    setTypeSelectorVisible?: boolean;
     children: React.ReactNode;
     className?: string;
     onDuplicate?: () => void;
@@ -26,6 +27,7 @@ export const ConstructorBlockShell: React.FC<ConstructorBlockShellProps> = ({
     blockTypes,
     setType,
     onSetTypeChange,
+    setTypeSelectorVisible = true,
     children,
     className,
     onDuplicate,
@@ -40,6 +42,7 @@ export const ConstructorBlockShell: React.FC<ConstructorBlockShellProps> = ({
                 blockTypes={blockTypes}
                 setType={setType}
                 onSetTypeChange={onSetTypeChange}
+                setTypeSelectorVisible={setTypeSelectorVisible}
                 collapsed={collapsed}
                 onToggleCollapse={() => setCollapsed((v) => !v)}
                 onDuplicate={onDuplicate}
