@@ -1,9 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Layers, Pencil, Trash2 } from "lucide-react";
+import { Layers, Pencil, Trash2 } from "lucide-react";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
-import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
-import { formatClientWorkoutSessionCountShort } from "@nexia/shared/training/clientSessionsOnDate";
 import { sliderLevelLabelEs } from "@nexia/shared";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 import { Button } from "@/components/ui/buttons";
@@ -38,7 +36,6 @@ import {
     PERIOD_BLOCK_CARD_QUALITIES_SECTION_CLASS,
     PERIOD_BLOCK_CARD_QUALITY_CHIP_CLASS,
     PERIOD_BLOCK_CARD_QUALITY_CHIP_PERCENT_CLASS,
-    PERIOD_BLOCK_CARD_SESSIONS_CLASS,
     PERIOD_BLOCK_CARD_SHELL_CLASS,
     PERIOD_BLOCK_CARD_SHELL_FOCUSED_CLASS,
 } from "./periodBlockCardPresentation";
@@ -64,7 +61,8 @@ import { STRUCTURE_COVERAGE_COPY } from "./structureCoveragePresentation";
 interface Props {
     block: PlanPeriodBlock;
     catalog: PhysicalQuality[];
-    sessions?: TrainingSession[];
+    /** Sesiones con fecha en el rango de la fase (CTA Crear vs Añadir). */
+    phaseSessionCount?: number;
     onEdit?: (block: PlanPeriodBlock) => void;
     onViewWeeks?: (block: PlanPeriodBlock) => void;
     onDelete: (id: number, label: string) => void;
@@ -104,7 +102,7 @@ function clampLevel(level: number): number {
 export const PeriodBlockCard: React.FC<Props> = ({
     block,
     catalog,
-    sessions = [],
+    phaseSessionCount = 0,
     onEdit,
     onViewWeeks,
     onDelete,
@@ -118,7 +116,6 @@ export const PeriodBlockCard: React.FC<Props> = ({
     structureCoverageWeeklyStructurePath = null,
 }) => {
     const navigate = useNavigate();
-    const [showSessions, setShowSessions] = useState(false);
     const label = `${formatDateShort(block.start_date)} — ${formatDateShort(block.end_date)}`;
     const days = daysBetween(block.start_date, block.end_date);
     const showCompleteStructureCta =
@@ -406,73 +403,13 @@ export const PeriodBlockCard: React.FC<Props> = ({
                                 className="w-full sm:flex-1"
                                 onClick={() => onCreateSessionForBlock(block)}
                             >
-                                {sessions.length === 0
+                                {phaseSessionCount === 0
                                     ? "Crear sesión"
                                     : "Añadir sesión"}
                             </Button>
                         )}
                     </footer>
                 </>
-            )}
-
-            {sessions.length > 0 && (
-                <div className={PERIOD_BLOCK_CARD_SESSIONS_CLASS}>
-                    <button
-                        type="button"
-                        onClick={() => setShowSessions((v) => !v)}
-                        className="flex w-full items-center gap-1.5 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                        <ChevronRight
-                            className={cn(
-                                "h-3 w-3 shrink-0 transition-transform",
-                                showSessions && "rotate-90",
-                            )}
-                            aria-hidden
-                        />
-                        <span>
-                            {formatClientWorkoutSessionCountShort(sessions.length)}{" "}
-                            programada{sessions.length !== 1 ? "s" : ""}
-                        </span>
-                    </button>
-                    {showSessions && (
-                        <ul className="mt-2 space-y-1">
-                            {sessions
-                                .slice()
-                                .sort((a, b) =>
-                                    (a.session_date ?? "").localeCompare(
-                                        b.session_date ?? "",
-                                    ),
-                                )
-                                .map((s) => (
-                                    <li
-                                        key={s.id}
-                                        className="flex items-center gap-2 text-xs text-muted-foreground"
-                                    >
-                                        <span
-                                            className="h-1 w-1 shrink-0 rounded-full bg-success"
-                                            aria-hidden
-                                        />
-                                        <span className="font-medium text-foreground">
-                                            {s.session_date
-                                                ? parseLocal(
-                                                      s.session_date,
-                                                  ).toLocaleDateString(
-                                                      "es-ES",
-                                                      {
-                                                          day: "numeric",
-                                                          month: "short",
-                                                      },
-                                                  )
-                                                : "Sin fecha"}
-                                        </span>
-                                        <span className="truncate">
-                                            {s.session_name}
-                                        </span>
-                                    </li>
-                                ))}
-                        </ul>
-                    )}
-                </div>
             )}
         </article>
     );

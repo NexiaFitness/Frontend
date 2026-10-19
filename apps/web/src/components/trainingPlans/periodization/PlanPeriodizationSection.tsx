@@ -51,6 +51,7 @@ import {
   isPlanningCreateWhenMode,
 } from "@/utils/planningHubUrl";
 import {
+  countSessionsInPeriodBlockPhase,
   findBlockContainingDate,
   hasStaleFocusParam,
   isPeriodBlockVisibleInMonth,
@@ -189,17 +190,16 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     return set;
   }, [dayExceptions]);
 
-  const sessionsByBlock = useMemo(() => {
-    const map = new Map<number, typeof sessions>();
-    for (const session of sessions) {
-      if (session.period_block_id != null) {
-        const arr = map.get(session.period_block_id) ?? [];
-        arr.push(session);
-        map.set(session.period_block_id, arr);
-      }
+  const phaseSessionCountByBlock = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const block of blocks) {
+      map.set(
+        block.id,
+        countSessionsInPeriodBlockPhase(sessions, block),
+      );
     }
     return map;
-  }, [sessions]);
+  }, [blocks, sessions]);
 
   useEffect(() => {
     if (wasDapAuthoringRef.current && !isDapAuthoring) {
@@ -812,7 +812,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         planId={planId}
         blocks={blocks}
         catalog={catalog}
-        sessionsByBlock={sessionsByBlock}
+        phaseSessionCountByBlock={phaseSessionCountByBlock}
         activePlan={activePlan}
         clientId={clientId}
         planStartDate={planStartDate}

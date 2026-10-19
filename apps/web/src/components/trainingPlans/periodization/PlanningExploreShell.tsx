@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
-import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import type { VolumeIntensityContext } from "@nexia/shared";
 import type { StructureDriftSessionSummary } from "@nexia/shared";
 import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
@@ -43,7 +42,7 @@ interface Props {
     planId: number;
     blocks: PlanPeriodBlock[];
     catalog: PhysicalQuality[];
-    sessionsByBlock: Map<number, TrainingSession[]>;
+    phaseSessionCountByBlock: Map<number, number>;
     activePlan?: ActivePlanByClientOut;
     clientId?: number;
     planStartDate?: string | null;
@@ -87,7 +86,7 @@ export const PlanningExploreShell: React.FC<Props> = ({
     planId,
     blocks,
     catalog,
-    sessionsByBlock,
+    phaseSessionCountByBlock,
     activePlan,
     clientId,
     planStartDate,
@@ -204,7 +203,9 @@ export const PlanningExploreShell: React.FC<Props> = ({
                             <PeriodBlockCard
                                 block={block}
                                 catalog={catalog}
-                                sessions={sessionsByBlock.get(block.id) ?? []}
+                                phaseSessionCount={
+                                    phaseSessionCountByBlock.get(block.id) ?? 0
+                                }
                                 onEdit={onEditBlock}
                                 onViewWeeks={onViewWeeks}
                                 onDelete={onDeleteBlock}

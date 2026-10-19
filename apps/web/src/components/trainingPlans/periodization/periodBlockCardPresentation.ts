@@ -122,9 +122,6 @@ export const PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS = NEXIA_DIVIDER_GLOW;
 export const PERIOD_BLOCK_CARD_FOOTER_CLASS =
     "relative z-[1] flex flex-col gap-2 border-t border-border/50 bg-surface-2/20 px-3 py-3 sm:flex-row";
 
-export const PERIOD_BLOCK_CARD_SESSIONS_CLASS =
-    "relative z-[1] border-t border-border/40 px-4 py-2.5";
-
 /** Rejilla fases — paridad Planificación / lista sesiones (máx. 3 cols + gap-6 en lg). */
 export const PERIOD_BLOCK_CARD_LIST_GRID_CLASS = cn(
     TRAINING_PLANS_TABS_CARD_GRID,

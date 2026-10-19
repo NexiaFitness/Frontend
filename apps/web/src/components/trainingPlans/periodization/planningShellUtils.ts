@@ -5,6 +5,7 @@
 import type { ActivePlanByClientOut, TrainingPlan } from "@nexia/shared/types/training";
 import { TRAINING_PLAN_STATUS } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
+import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import {
     findNextFreeDate,
     isDateInRange,
@@ -209,4 +210,29 @@ export function sortClientTrainingPlansForDisplay(
         }
         return b.id - a.id;
     });
+}
+
+/**
+ * Sesiones que pertenecen a la fase en calendario (rango del bloque).
+ * No usa solo period_block_id: evita inflar el conteo si el vínculo legacy está mal.
+ */
+export function countSessionsInPeriodBlockPhase(
+    sessions: readonly TrainingSession[],
+    block: Pick<PlanPeriodBlock, "id" | "start_date" | "end_date">,
+): number {
+    let count = 0;
+    for (const session of sessions) {
+        const date = session.session_date;
+        if (!date || !isDateInRange(date, block.start_date, block.end_date)) {
+            continue;
+        }
+        if (
+            session.period_block_id != null &&
+            session.period_block_id !== block.id
+        ) {
+            continue;
+        }
+        count += 1;
+    }
+    return count;
 }
