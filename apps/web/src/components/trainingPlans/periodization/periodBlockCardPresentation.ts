@@ -9,6 +9,10 @@ import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentati
 import { NEXIA_DIVIDER_GLOW } from "@/components/ui/surface/nexiaDividerPresentation";
 import { PLATFORM_SECTION_LABEL } from "@/components/ui/surface/platformPremiumPresentation";
 import { TRAINING_PLANS_TABS_CARD_GRID } from "@/components/trainingPlans/templateLibraryPresentation";
+import {
+    PATTERN_BADGE_BASE_CLASS,
+    patternBadgeSizeClass,
+} from "./patternBadgePresentation";
 
 /** Shell tarjeta bloque — glass premium, ancho fluido en rejilla (paridad plan/sesiones). */
 export const PERIOD_BLOCK_CARD_SHELL_CLASS = cn(
@@ -59,17 +63,56 @@ export const PERIOD_BLOCK_CARD_ICON_BTN_DELETE_CLASS = cn(
 export const PERIOD_BLOCK_CARD_ICON_BTN_DISCARD_CLASS =
     PERIOD_BLOCK_CARD_ICON_BTN_EDIT_CLASS;
 
-export const PERIOD_BLOCK_CARD_BODY_CLASS =
-    "relative z-[1] grid grid-cols-2 gap-3 px-4 py-3.5";
-
 export const PERIOD_BLOCK_CARD_COLUMN_LABEL_CLASS = cn(
     PLATFORM_SECTION_LABEL,
     "mb-2 text-[10px]",
 );
 
+/** Columnas legacy (SessionCard, ClientSessionAppointmentCard). */
 export const PERIOD_BLOCK_CARD_QUALITIES_COLUMN_CLASS = "min-w-0 space-y-2";
 
 export const PERIOD_BLOCK_CARD_METRICS_COLUMN_CLASS = "min-w-0 space-y-2.5";
+
+export const PERIOD_BLOCK_CARD_QUALITIES_SECTION_CLASS =
+    "relative z-[1] space-y-2 px-4 py-3.5";
+
+export const PERIOD_BLOCK_CARD_QUALITIES_CHIPS_CLASS = "flex flex-wrap gap-1.5";
+
+export const PERIOD_BLOCK_CARD_QUALITY_CHIP_CLASS = cn(
+    PATTERN_BADGE_BASE_CLASS,
+    patternBadgeSizeClass("sm"),
+    "inline-flex max-w-full items-center gap-1.5 whitespace-normal",
+);
+
+export const PERIOD_BLOCK_CARD_QUALITY_CHIP_PERCENT_CLASS =
+    "shrink-0 font-semibold tabular-nums text-foreground";
+
+export const PERIOD_BLOCK_CARD_EMPTY_QUALITIES_CLASS =
+    "text-[11px] text-muted-foreground";
+
+/** Franja volumen + intensidad — una fila, dos celdas iguales. */
+export const PERIOD_BLOCK_CARD_LOAD_STRIP_CLASS = cn(
+    "relative z-[1] grid grid-cols-2 bg-surface-2/25",
+);
+
+export const PERIOD_BLOCK_CARD_LOAD_CELL_CLASS = "min-w-0 px-3 py-3 sm:px-4";
+
+export const PERIOD_BLOCK_CARD_LOAD_CELL_RIGHT_CLASS = cn(
+    PERIOD_BLOCK_CARD_LOAD_CELL_CLASS,
+    "border-l border-border/50",
+);
+
+export const PERIOD_BLOCK_CARD_LOAD_VALUE_ROW_CLASS =
+    "mt-1 flex items-baseline gap-0.5";
+
+export const PERIOD_BLOCK_CARD_LOAD_VALUE_MAIN_CLASS =
+    "text-xl leading-none tabular-nums sm:text-2xl";
+
+export const PERIOD_BLOCK_CARD_LOAD_VALUE_SUFFIX_CLASS =
+    "text-sm font-semibold tabular-nums opacity-75";
+
+export const PERIOD_BLOCK_CARD_LOAD_HINT_CLASS =
+    "mt-1 text-[10px] leading-tight text-muted-foreground";
 
 export const PERIOD_BLOCK_CARD_DIVIDER_WRAP_CLASS =
     "relative z-[1] bg-surface-2/25 px-4 py-0.5";

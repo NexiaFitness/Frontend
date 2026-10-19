@@ -44,6 +44,20 @@ export const QUALITY_SHARE_BAR_PERCENT_CLASS =
 
 export const QUALITY_SHARE_BAR_DOT_CLASS = "h-1.5 w-1.5 shrink-0 rounded-full opacity-80";
 
+/** Paridad BlockLevelMeter: cabecera + pista a ancho completo (opt-in vía layout="stacked"). */
+export const QUALITY_SHARE_BAR_STACKED_ROOT_CLASS = "min-w-0 space-y-1.5";
+
+export const QUALITY_SHARE_BAR_STACKED_HEADER_CLASS =
+    "flex items-baseline justify-between gap-2";
+
+export const QUALITY_SHARE_BAR_STACKED_NAME_CLASS =
+    "inline-flex min-w-0 items-center gap-1.5 text-[11px] font-medium leading-tight";
+
+export const QUALITY_SHARE_BAR_STACKED_TRACK_CLASS = cn(
+    QUALITY_SHARE_BAR_TRACK_CLASS,
+    "w-full flex-none",
+);
+
 /** Relleno por hex de catálogo (sin primary del tema). */
 export function qualityShareBarFillStyle(
     hex: string,
@@ -82,4 +96,13 @@ export function qualityShareBarDotStyle(hex: string): CSSProperties {
 
 export function qualityShareBarLabelToneStyle(hex: string): CSSProperties {
     return { color: hex, opacity: 0.88 };
+}
+
+/** Chip cualidad en PeriodBlockCard — borde ~30 %, fondo ~12 %, texto hex (paridad PatternBadge). */
+export function qualityChipStyle(hex: string): CSSProperties {
+    return {
+        borderColor: `${hex}4D`,
+        backgroundColor: `${hex}1F`,
+        color: hex,
+    };
 }

@@ -57,6 +57,52 @@ describe("persistCreateSessionContent (G8)", () => {
         expect(createSessionBlockExercise.mock.calls.length).toBeGreaterThan(0);
     });
 
+    it("merges rows with same blockInstanceId into one createSessionBlock call", async () => {
+        const createSessionBlock = vi.fn(() => ({
+            unwrap: () => Promise.resolve({ id: 201 }),
+        }));
+        const createSessionBlockExercise = vi.fn(() => ({
+            unwrap: () => Promise.resolve({}),
+        }));
+
+        const makeRow = (id: string, exerciseId: number): ConstructorRow => ({
+            id,
+            blockInstanceId: "inst-1",
+            blockTypeId: 18,
+            setType: SET_TYPE.SINGLE_SET,
+            sets: 1,
+            rounds: null,
+            rest: 60,
+            timeCap: null,
+            intervalSeconds: null,
+            exercises: [
+                {
+                    id: `e-${id}`,
+                    exerciseId,
+                    exerciseName: "X",
+                    plannedReps: "10",
+                    plannedWeight: 40,
+                    plannedAssistanceKg: null,
+                    plannedDuration: null,
+                    effortCharacter: null,
+                    effortValue: null,
+                    notes: null,
+                },
+            ],
+        });
+
+        const result = await persistTrainingSessionConstructorContent({
+            sessionId: 1,
+            constructorRows: [makeRow("a", 11), makeRow("b", 61)],
+            createSessionBlock,
+            createSessionBlockExercise,
+        });
+
+        expect(result.ok).toBe(true);
+        expect(createSessionBlock).toHaveBeenCalledTimes(1);
+        expect(createSessionBlockExercise).toHaveBeenCalledTimes(2);
+    });
+
     it("persistTrainingSessionConstructorContent fails without swallowing after partial block failure", async () => {
         const createSessionBlock = vi.fn(() => ({
             unwrap: () => Promise.reject(new Error("network")),

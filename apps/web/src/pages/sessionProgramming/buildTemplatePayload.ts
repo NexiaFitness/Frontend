@@ -17,6 +17,7 @@ import type { ConstructorRow, ConstructorExercise } from "@/components/sessionPr
 import { getConstructorPersistLines } from "@/components/sessionProgramming/constructor/utils/singleSetRow";
 import { getPersistLinePlannedSets } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
 import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
+import { groupConstructorRowsByBlockInstance } from "@nexia/shared/sessionProgramming/constructorBlockInstance";
 import { mapExerciseRepsToPayload } from "@/components/sessionProgramming/constructor/utils/exerciseRepsMode";
 
 function mapRepsTipoToPayload(
@@ -40,6 +41,7 @@ function buildTemplateExercisePayload(
     return {
         exercise_id: ex.exerciseId,
         order_in_block: orderInBlock,
+        constructor_row_key: row.id,
         set_type: row.setType,
         planned_sets: plannedSets,
         planned_reps: mapped.planned_reps,
@@ -69,10 +71,19 @@ export function buildTemplatePayloadFromConstructorRows(
 ): SessionTemplateCreate {
     const { constructorRows, sessionName, sessionType, plannedDuration, notes } = input;
 
-    const blocks: SessionTemplateBlockWithExercisesCreate[] = constructorRows.map(
-        (row, rowIndex) => {
+    const groups = groupConstructorRowsByBlockInstance(
+        constructorRows.filter((r) => r.blockTypeId),
+    );
+
+    const blocks: SessionTemplateBlockWithExercisesCreate[] = groups.map((group, blockIndex) => {
+        const head = group.rows[0];
+        const exercises: SessionTemplateExerciseCreate[] = [];
+        let orderInBlock = 0;
+
+        for (const row of group.rows) {
             const lines = getConstructorPersistLines(row);
-            const exercises: SessionTemplateExerciseCreate[] = lines.map((line) => {
+            for (const line of lines) {
+                orderInBlock += 1;
                 const fields = line.setDataEntry
                     ? {
                           plannedReps: line.setDataEntry.plannedReps,
@@ -84,27 +95,31 @@ export function buildTemplatePayloadFromConstructorRows(
                           notes: line.exercise.notes,
                       }
                     : line.exercise;
-                return buildTemplateExercisePayload(
-                    row,
-                    { ...line.exercise, ...fields },
-                    line.orderInBlock,
-                    getPersistLinePlannedSets(row, line),
-                    row.setType === SET_TYPE.DROPSET
-                        ? row.rest
-                        : (line.setDataEntry?.rest ?? row.rest)
+                exercises.push(
+                    buildTemplateExercisePayload(
+                        row,
+                        { ...line.exercise, ...fields },
+                        orderInBlock,
+                        getPersistLinePlannedSets(row, line),
+                        row.setType === SET_TYPE.DROPSET
+                            ? row.rest
+                            : (line.setDataEntry?.rest ?? row.rest),
+                    ),
                 );
-            });
-            return {
-                block_type_id: row.blockTypeId,
-                order_in_template: rowIndex,
-                set_type: row.setType,
-                rounds: getBlockRoundsFromConstructorRow(row),
-                time_cap: row.timeCap,
-                interval_seconds: row.intervalSeconds,
-                exercises,
-            };
+            }
         }
-    );
+
+        return {
+            block_type_id: head.blockTypeId,
+            order_in_template: blockIndex,
+            constructor_block_instance_id: group.blockInstanceId,
+            set_type: head.setType,
+            rounds: getBlockRoundsFromConstructorRow(head),
+            time_cap: head.timeCap,
+            interval_seconds: head.intervalSeconds,
+            exercises,
+        };
+    });
 
     return {
         name: sessionName.trim() || "Plantilla sin nombre",

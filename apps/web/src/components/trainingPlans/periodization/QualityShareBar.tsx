@@ -14,6 +14,10 @@ import {
     QUALITY_SHARE_BAR_LABEL_COMFORT_CLASS,
     QUALITY_SHARE_BAR_PERCENT_CLASS,
     QUALITY_SHARE_BAR_RANGE_WRAP,
+    QUALITY_SHARE_BAR_STACKED_HEADER_CLASS,
+    QUALITY_SHARE_BAR_STACKED_NAME_CLASS,
+    QUALITY_SHARE_BAR_STACKED_ROOT_CLASS,
+    QUALITY_SHARE_BAR_STACKED_TRACK_CLASS,
     QUALITY_SHARE_BAR_TRACK_CLASS,
     QUALITY_SHARE_BAR_TRACK_OVERLAY_CLASS,
     qualityShareBarDotStyle,
@@ -27,6 +31,11 @@ interface Props {
     percentage: number;
     colorHex: string;
     className?: string;
+    /**
+     * inline: etiqueta y pista en fila (tarjetas compactas, constructor bloque).
+     * stacked: cabecera + pista ancho completo (p. ej. mix en «Hoy toca»).
+     */
+    layout?: "inline" | "stacked";
     /** comfortable: sin truncar etiqueta (p. ej. «Fuerza máxima» en contexto día). */
     labelDensity?: "default" | "comfortable";
     /** Ayuda junto al nombre (p. ej. tooltip en constructor). */
@@ -44,6 +53,7 @@ export const QualityShareBar: React.FC<Props> = ({
     percentage,
     colorHex,
     className,
+    layout = "inline",
     labelDensity = "default",
     labelAccessory,
     min = 0,
@@ -66,7 +76,11 @@ export const QualityShareBar: React.FC<Props> = ({
 
     const trackReadOnly = (
         <div
-            className={QUALITY_SHARE_BAR_TRACK_CLASS}
+            className={
+                layout === "stacked"
+                    ? QUALITY_SHARE_BAR_STACKED_TRACK_CLASS
+                    : QUALITY_SHARE_BAR_TRACK_CLASS
+            }
             role="progressbar"
             aria-valuenow={clamped}
             aria-valuemin={min}
@@ -78,7 +92,12 @@ export const QualityShareBar: React.FC<Props> = ({
     );
 
     const trackEditable = (
-        <div className={QUALITY_SHARE_BAR_RANGE_WRAP}>
+        <div
+            className={cn(
+                QUALITY_SHARE_BAR_RANGE_WRAP,
+                layout === "stacked" && "w-full flex-none",
+            )}
+        >
             <div className="pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2">
                 <div className={QUALITY_SHARE_BAR_TRACK_OVERLAY_CLASS} aria-hidden>
                     {fill}
@@ -103,6 +122,37 @@ export const QualityShareBar: React.FC<Props> = ({
         </div>
     );
 
+    const track = editable ? trackEditable : trackReadOnly;
+
+    const labelClass =
+        labelDensity === "comfortable"
+            ? QUALITY_SHARE_BAR_LABEL_COMFORT_CLASS
+            : QUALITY_SHARE_BAR_LABEL_CLASS;
+
+    if (layout === "stacked") {
+        return (
+            <div className={cn(QUALITY_SHARE_BAR_STACKED_ROOT_CLASS, className)}>
+                <div className={QUALITY_SHARE_BAR_STACKED_HEADER_CLASS}>
+                    <span
+                        className={QUALITY_SHARE_BAR_STACKED_NAME_CLASS}
+                        style={qualityShareBarLabelToneStyle(colorHex)}
+                        title={name}
+                    >
+                        <span
+                            className={QUALITY_SHARE_BAR_DOT_CLASS}
+                            style={qualityShareBarDotStyle(colorHex)}
+                            aria-hidden
+                        />
+                        <span className="truncate">{name}</span>
+                        {labelAccessory}
+                    </span>
+                    <span className={QUALITY_SHARE_BAR_PERCENT_CLASS}>{clamped}%</span>
+                </div>
+                {track}
+            </div>
+        );
+    }
+
     return (
         <div className={cn("flex min-w-0 items-center gap-2", className)}>
             <span
@@ -111,19 +161,14 @@ export const QualityShareBar: React.FC<Props> = ({
                 aria-hidden
             />
             <span
-                className={cn(
-                    labelDensity === "comfortable"
-                        ? QUALITY_SHARE_BAR_LABEL_COMFORT_CLASS
-                        : QUALITY_SHARE_BAR_LABEL_CLASS,
-                    "inline-flex min-w-0 items-center gap-1",
-                )}
+                className={cn(labelClass, "inline-flex min-w-0 items-center gap-1")}
                 style={qualityShareBarLabelToneStyle(colorHex)}
                 title={name}
             >
                 <span className="truncate">{name}</span>
                 {labelAccessory}
             </span>
-            {editable ? trackEditable : trackReadOnly}
+            {track}
             <span className={QUALITY_SHARE_BAR_PERCENT_CLASS}>{clamped}%</span>
         </div>
     );

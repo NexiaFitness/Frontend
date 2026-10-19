@@ -113,7 +113,8 @@ export const SESSION_PROGRAMMING_FIELD_PLAN = "sm:col-span-2 lg:col-span-3";
 
 export const SESSION_PROGRAMMING_FIELD_COMPACT = "lg:col-span-2";
 
-export const SESSION_PROGRAMMING_FIELD_METER = "sm:col-span-1 lg:col-span-3";
+/** Par vol/int en la fila de duración: lg 2 (duración) + 4 (este bloque) = 6 cols. */
+export const SESSION_PROGRAMMING_FIELD_LOAD_METERS = "sm:col-span-2 lg:col-span-4 min-w-0";
 
 export const SESSION_PROGRAMMING_FIELDS_GRID_2 = "grid grid-cols-1 gap-4 sm:grid-cols-2";
 

@@ -114,6 +114,14 @@ export const AUTHORING_STEP_INNER_PANEL_CLASS = cn(
 
 export const AUTHORING_STEP_SECTION_LABEL_CLASS = PLATFORM_SECTION_LABEL;
 
+/** Grid ancho completo — picker de cualidades (constructor D-PAP). */
+export const AUTHORING_QUALITY_PICKER_GRID_CLASS =
+    "grid w-full grid-cols-2 gap-2 sm:grid-cols-3 md:gap-2.5";
+
+/** Celda outline-primary (design/platform/05_ACTION_HIERARCHY.md — selección densa). */
+export const AUTHORING_QUALITY_PICKER_BTN_CLASS =
+    "h-auto min-h-10 w-full whitespace-normal px-2.5 py-2.5 text-xs leading-snug sm:text-sm";
+
 export const AUTHORING_STEP_META_CLASS = PLATFORM_SECTION_LABEL;
 
 /** Fila de botones del footer del wizard (Atrás / Continuar). */

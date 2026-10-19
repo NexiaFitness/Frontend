@@ -184,6 +184,7 @@ export interface SessionBlock {
     estimated_duration: number | null; // in minutes
     actual_duration: number | null; // in minutes
     notes: string | null;
+    constructor_block_instance_id?: string | null;
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
     is_active: boolean;
@@ -192,6 +193,7 @@ export interface SessionBlock {
 export interface SessionBlockCreate {
     block_type_id: number;
     order_in_session: number;
+    constructor_block_instance_id?: string | null;
     set_type?: SetType | null;
     rounds?: number | null;
     time_cap?: number | null;
@@ -250,6 +252,7 @@ export interface SessionBlockExercise {
     actual_rest: number | null; // in seconds
     actual_effort_value: number | null;
     notes: string | null;
+    constructor_row_key?: string | null;
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
     is_active: boolean;
@@ -275,11 +278,13 @@ export type SessionBlockExerciseHydrationLine = Pick<
     | "effort_character"
     | "effort_value"
     | "notes"
+    | "constructor_row_key"
 >;
 
 export interface SessionBlockExerciseCreate {
     exercise_id: number;
     order_in_block: number;
+    constructor_row_key?: string | null;
     set_type?: SetType; // Default: "single_set"
     superset_group_id?: number | null;
     dropset_sequence?: number | null;
@@ -326,6 +331,7 @@ export interface SessionBlockExerciseFullUpdate {
     id?: number;
     exercise_id: number;
     order_in_block: number;
+    constructor_row_key?: string | null;
     set_type?: SetType;
     superset_group_id?: number | null;
     dropset_sequence?: number | null;
@@ -346,6 +352,7 @@ export interface SessionBlockFullUpdate {
     id?: number;
     block_type_id: number;
     order_in_session: number;
+    constructor_block_instance_id?: string | null;
     set_type?: SetType | null;
     rounds?: number | null;
     time_cap?: number | null;

@@ -22,14 +22,24 @@ describe("AddPill", () => {
         expect(onClick).toHaveBeenCalledTimes(1);
     });
 
-    it("AddPillGrid premium usa grid de ancho completo", () => {
+    it("AddPillGrid premium inline usa flex wrap (MDS)", () => {
         const { container } = render(
             <AddPillGrid variant="premium">
+                <AddPill label="Potencia" onClick={vi.fn()} />
+            </AddPillGrid>,
+        );
+
+        expect(container.firstChild).toHaveClass("flex");
+        expect(container.firstChild).toHaveClass("flex-wrap");
+    });
+
+    it("AddPillGrid premium layout grid opcional", () => {
+        const { container } = render(
+            <AddPillGrid variant="premium" layout="grid">
                 <AddPill label="Potencia" onClick={vi.fn()} fullWidth />
             </AddPillGrid>,
         );
 
         expect(container.firstChild).toHaveClass("grid");
-        expect(container.firstChild).toHaveClass("w-full");
     });
 });

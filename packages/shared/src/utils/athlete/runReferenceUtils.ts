@@ -203,7 +203,9 @@ export function resolveRunLoggerDefaults(input: RunLoggerDefaultsInput): RunLogg
             : null;
     const referenceWeight =
         ref?.weight_kg != null && ref.weight_kg > 0 ? ref.weight_kg : null;
-    const weight = prescribedWeight ?? referenceWeight ?? 0;
+    const fallbackWeight =
+        input.defaultWeight != null && input.defaultWeight > 0 ? input.defaultWeight : 0;
+    const weight = prescribedWeight ?? referenceWeight ?? fallbackWeight;
     const reps = input.prescribedReps > 0 ? input.prescribedReps : 8;
 
     let rpe = input.prescribedRpe;

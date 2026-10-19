@@ -34,7 +34,7 @@ import {
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
-import { getMutationErrorMessage, suggestNextSessionDateAfter } from "@nexia/shared";
+import { getMutationErrorMessage, resolveNextSessionScheduleDate } from "@nexia/shared";
 import { useValidateSessionMutation } from "@nexia/shared/api/sessionValidationApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import {
@@ -84,6 +84,8 @@ import {
     SESSION_REVIEW_BREADCRUMB,
     SESSION_REVIEW_BREADCRUMB_CURRENT,
     SESSION_REVIEW_BREADCRUMB_LINK,
+    SESSION_REVIEW_BLOCK_SCHEDULE_COMPLETE_CHIP,
+    SESSION_REVIEW_BLOCK_SCHEDULE_COMPLETE_COPY,
     SESSION_REVIEW_CLIENT_META,
     SESSION_REVIEW_FOOTER_MGMT,
     SESSION_REVIEW_FOOTER_ROW,
@@ -91,6 +93,7 @@ import {
     SESSION_REVIEW_FOOTER_VIEW_ACTION,
     SESSION_REVIEW_GLOW,
     SESSION_REVIEW_HEADER_ACTIONS,
+    SESSION_REVIEW_SCHEDULE_NEXT_LABEL,
     SESSION_REVIEW_HERO,
     SESSION_REVIEW_HERO_ROW,
     SESSION_REVIEW_META_CHIP,
@@ -121,20 +124,6 @@ function formatMetric(v: number | null): string {
     if (v == null) return "—";
     return String(v);
 }
-
-function addOneLocalDay(dateISO: string): string | null {
-    const parts = dateISO.split("-").map(Number);
-    if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
-    const [y, m, d] = parts;
-    const dt = new Date(y, m - 1, d);
-    if (Number.isNaN(dt.getTime())) return null;
-    dt.setDate(dt.getDate() + 1);
-    const ny = dt.getFullYear();
-    const nm = String(dt.getMonth() + 1).padStart(2, "0");
-    const nd = String(dt.getDate()).padStart(2, "0");
-    return `${ny}-${nm}-${nd}`;
-}
-
 
 function DurationMetric({
     planned,
@@ -169,9 +158,11 @@ const SessionReviewHeader: React.FC<{
         session_type: string;
         client_id: number;
     };
+    canScheduleNext: boolean;
+    blockScheduleComplete: boolean;
     onBack: () => void;
     onSchedule: () => void;
-}> = ({ session, onBack, onSchedule }) => {
+}> = ({ session, canScheduleNext, blockScheduleComplete, onBack, onSchedule }) => {
     const { data: client, isLoading: isLoadingClient } = useGetClientQuery(session.client_id, {
         skip: !session.client_id,
     });
@@ -239,10 +230,21 @@ const SessionReviewHeader: React.FC<{
 
                 <div className={SESSION_REVIEW_HEADER_ACTIONS}>
                     <PlatformHeaderBackButton onClick={onBack} />
-                    <Button variant="primary" size="sm" onClick={onSchedule}>
-                        <CalendarPlus className="size-3.5 shrink-0" aria-hidden />
-                        Programar siguiente
-                    </Button>
+                    {canScheduleNext ? (
+                        <Button variant="primary" size="sm" onClick={onSchedule}>
+                            <CalendarPlus className="size-3.5 shrink-0" aria-hidden />
+                            {SESSION_REVIEW_SCHEDULE_NEXT_LABEL}
+                        </Button>
+                    ) : null}
+                    {blockScheduleComplete ? (
+                        <p
+                            className={SESSION_REVIEW_BLOCK_SCHEDULE_COMPLETE_CHIP}
+                            data-testid="session-review-block-schedule-complete"
+                            role="status"
+                        >
+                            {SESSION_REVIEW_BLOCK_SCHEDULE_COMPLETE_COPY}
+                        </p>
+                    ) : null}
                 </div>
             </div>
         </header>
@@ -445,6 +447,23 @@ export const SessionReviewPage: React.FC = () => {
         return planSessions.filter((s) => s.period_block_id === resolvedBlockId);
     }, [planSessions, resolvedBlockId]);
 
+    const nextScheduleDate = useMemo(() => {
+        if (!session?.session_date) return null;
+        const blockRange = activeBlock
+            ? { start_date: activeBlock.start_date, end_date: activeBlock.end_date }
+            : null;
+        return resolveNextSessionScheduleDate(
+            session.session_date,
+            blockRange,
+            weeklyStructure?.weeks ?? [],
+            blockSessions,
+        );
+    }, [session?.session_date, activeBlock, weeklyStructure?.weeks, blockSessions]);
+
+    const canScheduleNext = nextScheduleDate != null;
+    const blockScheduleComplete =
+        !!session?.session_date && !!activeBlock && nextScheduleDate == null;
+
     const [validateSession, { isLoading: isValidating, data: validationData, error: validationError }] =
         useValidateSessionMutation();
 
@@ -472,6 +491,17 @@ export const SessionReviewPage: React.FC = () => {
     const handleSchedule = useCallback(() => {
         if (!session) return;
 
+        const nextDate = nextScheduleDate;
+        if (!nextDate) {
+            if (blockScheduleComplete) {
+                return;
+            }
+            showError(
+                "No quedan días de entreno en este bloque para programar la siguiente sesión.",
+            );
+            return;
+        }
+
         const params = new URLSearchParams();
         if (session.client_id) {
             params.set("clientId", String(session.client_id));
@@ -479,31 +509,9 @@ export const SessionReviewPage: React.FC = () => {
         if (session.training_plan_id) {
             params.set("planId", String(session.training_plan_id));
         }
-
-        let nextDate: string | null = null;
-
-        if (session.session_date && activeBlock) {
-            nextDate = suggestNextSessionDateAfter(
-                session.session_date,
-                activeBlock.start_date,
-                activeBlock.end_date,
-                weeklyStructure?.weeks ?? [],
-                blockSessions
-            );
-        } else if (session.session_date) {
-            nextDate = addOneLocalDay(session.session_date);
-        }
-
-        if (!nextDate) {
-            showError(
-                "No quedan días de entreno en este bloque para programar la siguiente sesión."
-            );
-            return;
-        }
-
         params.set("date", nextDate);
         navigate(`/dashboard/session-programming/create-session?${params.toString()}`);
-    }, [session, activeBlock, weeklyStructure, blockSessions, navigate, showError]);
+    }, [session, nextScheduleDate, blockScheduleComplete, navigate, showError]);
 
     const replicateFlow = useReplicateSessionFlow(
         session
@@ -583,6 +591,8 @@ export const SessionReviewPage: React.FC = () => {
                 <div className={SESSION_REVIEW_STACK}>
                 <SessionReviewHeader
                     session={session}
+                    canScheduleNext={canScheduleNext}
+                    blockScheduleComplete={blockScheduleComplete}
                     onBack={handleBack}
                     onSchedule={handleSchedule}
                 />

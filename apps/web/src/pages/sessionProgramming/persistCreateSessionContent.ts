@@ -1,13 +1,14 @@
 /**
  * Persistencia post-POST de sesión en CreateSession (Fase 0.5 G8).
  * Sin segundo POST de sesión padre; errores explícitos para recovery.
+ *
+ * @updated v6.7.0 — Un bloque API por blockInstanceId (no por fila).
  */
 
 import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
 import { getConstructorPersistLines } from "@/components/sessionProgramming/constructor";
-import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
 import type { SessionBlockCreate } from "@nexia/shared/types/sessionProgramming";
-import { buildExercisePayloadFromLine } from "./buildExercisePayload";
+import { mapConstructorRowsToCreateBlockGroups } from "./mapConstructorToSessionBlocks";
 
 export type PersistTrainingBlocksResult =
     | { ok: true; blocksSaved: number; exercisesSaved: number }
@@ -25,7 +26,7 @@ type CreateBlockFn = (args: {
 
 type CreateBlockExerciseFn = (args: {
     blockId: number;
-    data: ReturnType<typeof buildExercisePayloadFromLine>;
+    data: ReturnType<typeof import("./buildExercisePayload").buildExercisePayloadFromLine>;
 }) => { unwrap: () => Promise<unknown> };
 
 export async function persistTrainingSessionConstructorContent(args: {
@@ -37,34 +38,20 @@ export async function persistTrainingSessionConstructorContent(args: {
     const { sessionId, constructorRows, createSessionBlock, createSessionBlockExercise } = args;
     let blocksSaved = 0;
     let exercisesSaved = 0;
-    const totalBlocks = constructorRows.filter((r) => r.blockTypeId).length;
+
+    const groups = mapConstructorRowsToCreateBlockGroups(constructorRows);
+    const totalBlocks = groups.length;
     const totalEx = constructorRows.reduce(
         (s, r) => s + getConstructorPersistLines(r).length,
         0,
     );
 
-    for (let i = 0; i < constructorRows.length; i++) {
-        const row = constructorRows[i];
-        if (!row.blockTypeId) continue;
+    for (const group of groups) {
         let createdBlockId: number;
         try {
-            const blockPayload = {
-                block_type_id: row.blockTypeId,
-                order_in_session: i + 1,
-                set_type: row.setType,
-                rounds: getBlockRoundsFromConstructorRow(row),
-                time_cap: row.timeCap,
-                interval_seconds: row.intervalSeconds,
-                objective_text:
-                    row.setType === "for_time"
-                        ? "Objetivo: menor tiempo"
-                        : row.setType === "amrap"
-                          ? "Objetivo: máximo rendimiento"
-                          : null,
-            };
             const createdBlock = await createSessionBlock({
                 sessionId,
-                data: blockPayload,
+                data: group.blockPayload,
             }).unwrap();
             createdBlockId = createdBlock.id;
             blocksSaved++;
@@ -80,11 +67,8 @@ export async function persistTrainingSessionConstructorContent(args: {
             };
         }
 
-        const persistable = getConstructorPersistLines(row);
-        for (let j = 0; j < persistable.length; j++) {
-            const line = persistable[j];
+        for (const payload of group.exercisePayloads) {
             try {
-                const payload = buildExercisePayloadFromLine(row, line);
                 await createSessionBlockExercise({
                     blockId: createdBlockId,
                     data: payload,

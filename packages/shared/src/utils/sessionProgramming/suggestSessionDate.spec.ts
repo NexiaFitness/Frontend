@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { WeeklyStructureWeek } from "../../types/weeklyStructure";
 import {
+    resolveNextSessionScheduleDate,
     suggestNextSessionDateAfter,
     suggestSessionDateForPeriodBlock,
 } from "./suggestSessionDate";
@@ -86,6 +87,33 @@ describe("suggestNextSessionDateAfter", () => {
             ],
         );
         expect(date).toBeNull();
+    });
+});
+
+describe("resolveNextSessionScheduleDate", () => {
+    it("delegates to block logic when period block is present", () => {
+        const date = resolveNextSessionScheduleDate(
+            "2026-06-22",
+            { start_date: "2026-06-22", end_date: "2026-07-15" },
+            LUN_MIE_VIE_WEEK,
+            [{ session_date: "2026-06-22" }],
+        );
+        expect(date).toBe("2026-06-24");
+    });
+
+    it("returns null when block has no further schedulable days", () => {
+        const date = resolveNextSessionScheduleDate(
+            "2026-07-15",
+            { start_date: "2026-06-22", end_date: "2026-07-15" },
+            LUN_MIE_VIE_WEEK,
+            [{ session_date: "2026-07-15" }],
+        );
+        expect(date).toBeNull();
+    });
+
+    it("adds one calendar day when session is outside a period block", () => {
+        const date = resolveNextSessionScheduleDate("2026-06-22", null, [], []);
+        expect(date).toBe("2026-06-23");
     });
 });
 

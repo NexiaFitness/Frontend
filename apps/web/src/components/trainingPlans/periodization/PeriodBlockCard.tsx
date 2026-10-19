@@ -4,6 +4,7 @@ import { ChevronRight, Layers, Pencil, Trash2 } from "lucide-react";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import { formatClientWorkoutSessionCountShort } from "@nexia/shared/training/clientSessionsOnDate";
+import { sliderLevelLabelEs } from "@nexia/shared";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 import { Button } from "@/components/ui/buttons";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
@@ -12,24 +13,40 @@ import { cn } from "@/lib/utils";
 import type { VolumeIntensityContext } from "@nexia/shared";
 import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
 
-import { BlockLevelMeter } from "./BlockLevelMeter";
-import { QualityShareBar } from "./QualityShareBar";
 import {
-    PERIOD_BLOCK_CARD_BODY_CLASS,
+    BLOCK_LEVEL_METER_QUALITATIVE_CLASS,
+    BLOCK_LEVEL_METER_VALUE_CLASS,
+} from "./blockLevelMeterPresentation";
+import {
     PERIOD_BLOCK_CARD_COLUMN_LABEL_CLASS,
     PERIOD_BLOCK_CARD_DATE_DOT_CLASS,
     PERIOD_BLOCK_CARD_DATE_TEXT_CLASS,
     PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS,
     PERIOD_BLOCK_CARD_DIVIDER_WRAP_CLASS,
     PERIOD_BLOCK_CARD_DURATION_BADGE_CLASS,
+    PERIOD_BLOCK_CARD_EMPTY_QUALITIES_CLASS,
     PERIOD_BLOCK_CARD_FOOTER_CLASS,
     PERIOD_BLOCK_CARD_HEADER_CLASS,
-    PERIOD_BLOCK_CARD_METRICS_COLUMN_CLASS,
-    PERIOD_BLOCK_CARD_QUALITIES_COLUMN_CLASS,
+    PERIOD_BLOCK_CARD_LOAD_CELL_CLASS,
+    PERIOD_BLOCK_CARD_LOAD_CELL_RIGHT_CLASS,
+    PERIOD_BLOCK_CARD_LOAD_HINT_CLASS,
+    PERIOD_BLOCK_CARD_LOAD_STRIP_CLASS,
+    PERIOD_BLOCK_CARD_LOAD_VALUE_MAIN_CLASS,
+    PERIOD_BLOCK_CARD_LOAD_VALUE_ROW_CLASS,
+    PERIOD_BLOCK_CARD_LOAD_VALUE_SUFFIX_CLASS,
+    PERIOD_BLOCK_CARD_QUALITIES_CHIPS_CLASS,
+    PERIOD_BLOCK_CARD_QUALITIES_SECTION_CLASS,
+    PERIOD_BLOCK_CARD_QUALITY_CHIP_CLASS,
+    PERIOD_BLOCK_CARD_QUALITY_CHIP_PERCENT_CLASS,
     PERIOD_BLOCK_CARD_SESSIONS_CLASS,
     PERIOD_BLOCK_CARD_SHELL_CLASS,
     PERIOD_BLOCK_CARD_SHELL_FOCUSED_CLASS,
 } from "./periodBlockCardPresentation";
+import {
+    QUALITY_SHARE_BAR_DOT_CLASS,
+    qualityChipStyle,
+    qualityShareBarDotStyle,
+} from "./qualityShareBarPresentation";
 import {
     STRUCTURE_DRIFT_BADGE_CLASS,
     formatStructureDriftBadgeLabel,
@@ -40,8 +57,8 @@ import { STRUCTURE_COVERAGE_COPY } from "./structureCoveragePresentation";
 /**
  * PeriodBlockCard.tsx — Tarjeta de fase en hub de planificación.
  *
- * Diseño: DESIGN_PREMIUM.md §2 (glass+rim), §3 (badge warning), §4.4 (una acción
- * de estructura: Completar o Ver semanas), §5 (NexiaGlassAccentRim).
+ * Diseño: DESIGN_PREMIUM.md §2 (glass+rim), chips cualidad (PatternBadge glass),
+ * carga textual sin barras (lectura en card).
  */
 
 interface Props {
@@ -80,6 +97,10 @@ function daysBetween(start: string, end: string): number {
     return Math.round(ms / 86400000) + 1;
 }
 
+function clampLevel(level: number): number {
+    return Math.max(1, Math.min(10, Math.round(level)));
+}
+
 export const PeriodBlockCard: React.FC<Props> = ({
     block,
     catalog,
@@ -104,11 +125,17 @@ export const PeriodBlockCard: React.FC<Props> = ({
         structureCoverageIncomplete &&
         Boolean(structureCoverageWeeklyStructurePath);
 
+    const volumeLevel = clampLevel(block.volume_level);
+    const intensityLevel = clampLevel(block.intensity_level);
+
     const volumeHint =
         volumeIntensityPhase === "complete" &&
         volumeIntensityContext?.result.weekly_target_sets != null
             ? `Objetivo: ${volumeIntensityContext.result.weekly_target_sets} series / semana`
             : null;
+
+    const volumeAriaLabel = `Volumen ${volumeLevel} de 10, ${sliderLevelLabelEs(volumeLevel)}`;
+    const intensityAriaLabel = `Intensidad ${intensityLevel} de 10, ${sliderLevelLabelEs(intensityLevel)}`;
 
     return (
         <article
@@ -200,65 +227,132 @@ export const PeriodBlockCard: React.FC<Props> = ({
                 tabIndex={-1}
                 aria-hidden={!onSelectFocus}
             >
-            <div className={PERIOD_BLOCK_CARD_DIVIDER_WRAP_CLASS} aria-hidden>
-                <div className={PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS} />
-            </div>
-
-            <div className={PERIOD_BLOCK_CARD_BODY_CLASS}>
-                <div className={PERIOD_BLOCK_CARD_QUALITIES_COLUMN_CLASS}>
+                <section className={PERIOD_BLOCK_CARD_QUALITIES_SECTION_CLASS}>
                     <p className={PERIOD_BLOCK_CARD_COLUMN_LABEL_CLASS}>
                         Cualidades
                     </p>
                     {block.qualities.length === 0 ? (
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className={PERIOD_BLOCK_CARD_EMPTY_QUALITIES_CLASS}>
                             Sin cualidades
                         </p>
                     ) : (
-                        block.qualities.map((q) => {
-                            const catItem = catalog.find(
-                                (c) => c.id === q.physical_quality_id,
-                            );
-                            const slug =
-                                catItem?.slug ??
-                                q.physical_quality_slug ??
-                                "unknown";
-                            const name =
-                                catItem?.name ??
-                                q.physical_quality_name ??
-                                `#${q.physical_quality_id}`;
-                            const color = getPhysicalQualityColor(slug, {
-                                displayOrder: catItem?.display_order,
-                            });
+                        <div className={PERIOD_BLOCK_CARD_QUALITIES_CHIPS_CLASS}>
+                            {block.qualities.map((q) => {
+                                const catItem = catalog.find(
+                                    (c) => c.id === q.physical_quality_id,
+                                );
+                                const slug =
+                                    catItem?.slug ??
+                                    q.physical_quality_slug ??
+                                    "unknown";
+                                const name =
+                                    catItem?.name ??
+                                    q.physical_quality_name ??
+                                    `#${q.physical_quality_id}`;
+                                const color = getPhysicalQualityColor(slug, {
+                                    displayOrder: catItem?.display_order,
+                                });
 
-                            return (
-                                <QualityShareBar
-                                    key={q.id}
-                                    name={name}
-                                    percentage={q.percentage}
-                                    colorHex={color.hex}
-                                />
-                            );
-                        })
+                                return (
+                                    <span
+                                        key={q.id}
+                                        className={PERIOD_BLOCK_CARD_QUALITY_CHIP_CLASS}
+                                        style={qualityChipStyle(color.hex)}
+                                    >
+                                        <span
+                                            className={QUALITY_SHARE_BAR_DOT_CLASS}
+                                            style={qualityShareBarDotStyle(
+                                                color.hex,
+                                            )}
+                                            aria-hidden
+                                        />
+                                        <span>{name}</span>
+                                        <span
+                                            className={
+                                                PERIOD_BLOCK_CARD_QUALITY_CHIP_PERCENT_CLASS
+                                            }
+                                        >
+                                            {q.percentage}%
+                                        </span>
+                                    </span>
+                                );
+                            })}
+                        </div>
                     )}
+                </section>
+
+                <div className={PERIOD_BLOCK_CARD_DIVIDER_WRAP_CLASS} aria-hidden>
+                    <div className={PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS} />
                 </div>
 
-                <div className={PERIOD_BLOCK_CARD_METRICS_COLUMN_CLASS}>
-                    <p className={PERIOD_BLOCK_CARD_COLUMN_LABEL_CLASS}>
-                        Carga
-                    </p>
-                    <BlockLevelMeter
-                        tone="volume"
-                        level={block.volume_level}
-                        prefix="Volumen"
-                        hint={volumeHint}
-                    />
-                    <BlockLevelMeter
-                        tone="intensity"
-                        level={block.intensity_level}
-                        prefix="Intensidad"
-                    />
+                <div
+                    className={PERIOD_BLOCK_CARD_LOAD_STRIP_CLASS}
+                    data-testid="period-block-card-load-strip"
+                >
+                    <div
+                        className={PERIOD_BLOCK_CARD_LOAD_CELL_CLASS}
+                        aria-label={volumeAriaLabel}
+                    >
+                        <p className={PERIOD_BLOCK_CARD_COLUMN_LABEL_CLASS}>
+                            Volumen
+                        </p>
+                        <div className={PERIOD_BLOCK_CARD_LOAD_VALUE_ROW_CLASS}>
+                            <span
+                                className={cn(
+                                    PERIOD_BLOCK_CARD_LOAD_VALUE_MAIN_CLASS,
+                                    BLOCK_LEVEL_METER_VALUE_CLASS.volume,
+                                )}
+                            >
+                                {volumeLevel}
+                            </span>
+                            <span
+                                className={cn(
+                                    PERIOD_BLOCK_CARD_LOAD_VALUE_SUFFIX_CLASS,
+                                    BLOCK_LEVEL_METER_VALUE_CLASS.volume,
+                                )}
+                            >
+                                /10
+                            </span>
+                        </div>
+                        <p className={BLOCK_LEVEL_METER_QUALITATIVE_CLASS}>
+                            {sliderLevelLabelEs(volumeLevel)}
+                        </p>
+                        {volumeHint ? (
+                            <p className={PERIOD_BLOCK_CARD_LOAD_HINT_CLASS}>
+                                {volumeHint}
+                            </p>
+                        ) : null}
+                    </div>
+                    <div
+                        className={PERIOD_BLOCK_CARD_LOAD_CELL_RIGHT_CLASS}
+                        aria-label={intensityAriaLabel}
+                    >
+                        <p className={PERIOD_BLOCK_CARD_COLUMN_LABEL_CLASS}>
+                            Intensidad
+                        </p>
+                        <div className={PERIOD_BLOCK_CARD_LOAD_VALUE_ROW_CLASS}>
+                            <span
+                                className={cn(
+                                    PERIOD_BLOCK_CARD_LOAD_VALUE_MAIN_CLASS,
+                                    BLOCK_LEVEL_METER_VALUE_CLASS.intensity,
+                                )}
+                            >
+                                {intensityLevel}
+                            </span>
+                            <span
+                                className={cn(
+                                    PERIOD_BLOCK_CARD_LOAD_VALUE_SUFFIX_CLASS,
+                                    BLOCK_LEVEL_METER_VALUE_CLASS.intensity,
+                                )}
+                            >
+                                /10
+                            </span>
+                        </div>
+                        <p className={BLOCK_LEVEL_METER_QUALITATIVE_CLASS}>
+                            {sliderLevelLabelEs(intensityLevel)}
+                        </p>
+                    </div>
                 </div>
-            </div>
             </button>
 
             {(onViewWeeks != null ||

@@ -92,6 +92,7 @@ export function buildExercisePayloadFromLine(
     return {
         exercise_id: line.exercise.exerciseId,
         order_in_block: line.orderInBlock,
+        constructor_row_key: row.id,
         set_type: row.setType,
         planned_sets: getPersistLinePlannedSets(row, line),
         planned_reps: mapped.planned_reps,

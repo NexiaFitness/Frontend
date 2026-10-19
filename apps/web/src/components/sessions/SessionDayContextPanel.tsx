@@ -242,13 +242,14 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                             label={SESSION_DAY_CONTEXT_COPY.mixTitle}
                             icon={<Sparkles className="h-3 w-3 text-primary" aria-hidden />}
                         >
-                            <div className="space-y-1.5">
+                            <div className={SESSION_DAY_CONTEXT_QUALITY_MIX_GRID}>
                                 {qualityMix.map((item) => (
                                     <QualityShareBar
                                         key={item.slug}
                                         name={item.name}
                                         percentage={item.percentage}
                                         colorHex={getPhysicalQualityColor(item.slug).hex}
+                                        layout="stacked"
                                         labelDensity="comfortable"
                                     />
                                 ))}
@@ -420,6 +421,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                                         name={item.name}
                                         percentage={item.percentage}
                                         colorHex={getPhysicalQualityColor(item.slug).hex}
+                                        layout="stacked"
                                         labelDensity="comfortable"
                                     />
                                 ))}

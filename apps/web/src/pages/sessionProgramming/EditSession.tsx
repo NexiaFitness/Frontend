@@ -60,7 +60,10 @@ import {
     STRUCTURE_DRIFT_EDIT_BANNER_TITLE,
 } from "@/components/trainingPlans/periodization/structureDriftPresentation";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
-import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
+import { createBlockInstanceId } from "@nexia/shared/sessionProgramming/constructorBlockInstance";
+import { findBlockInstanceSetTypeConflicts } from "@nexia/shared/sessionProgramming/constructorBlockInstanceCoherence";
+import { mapConstructorRowsToFullUpdateBlocks } from "./mapConstructorToSessionBlocks";
+import { hydrateSessionBlocksToConstructorRows } from "./hydrateSessionBlocksToConstructorRows";
 import type { AppDispatch, RootState } from "@nexia/shared/store";
 import { SessionDayContextPanel } from "@/components/sessions/SessionDayContextPanel";
 import { ClientAvatar } from "@/components/ui/avatar";
@@ -68,40 +71,18 @@ import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingB
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
 
-import type {
-    ConstructorRow,
-    ConstructorExercise,
-    RepsTipo,
-} from "@/components/sessionProgramming/constructorTypes";
-import {
-    buildExercisePayloadFromLine,
-} from "./buildExercisePayload";
+import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
 import {
     applyExercisePickerSelection,
-    getConstructorPersistLines,
     ConstructorValidationProvider,
     formatConstructorValidationToast,
-    hydrateSingleSetConstructorRow,
-    canHydrateDropsetApiLines,
-    hydrateDropsetConstructorRow,
-    isCollapsedSingleSetApiLines,
-    normalizeSupersetRow,
-    normalizeSingleSetRow,
-    normalizeDropsetRow,
-    normalizeGiantSetRow,
-    normalizeForTimeRow,
-    normalizeEmomRow,
-    hydrateEmomConstructorRow,
-    normalizeAmrapRow,
-    hydrateSupersetConstructorRow,
-    hydrateGiantSetConstructorRow,
-    hydrateForTimeConstructorRow,
 } from "@/components/sessionProgramming/constructor";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import {
     SET_TYPE,
     type SessionBlockExercise,
+    type SessionBlockExerciseHydrationLine,
 } from "@nexia/shared/types/sessionProgramming";
 import { ChevronRight, ClipboardList } from "lucide-react";
 import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
@@ -125,7 +106,8 @@ import {
     SESSION_PROGRAMMING_FIELD_ERROR,
     SESSION_PROGRAMMING_FIELD_HINT,
     SESSION_PROGRAMMING_FIELD_LABEL,
-    SESSION_PROGRAMMING_FIELD_METER,
+    SESSION_PROGRAMMING_FIELD_LOAD_METERS,
+    SESSION_PROGRAMMING_FIELDS_GRID_2,
     SESSION_PROGRAMMING_FIELD_NAME,
     SESSION_PROGRAMMING_FIELD_NAME_SOLO,
     SESSION_PROGRAMMING_FIELD_PLAN,
@@ -466,109 +448,31 @@ export const EditSession: React.FC = () => {
 
             if (cancelled) return;
 
-            const inferRepsTipo = (
-                ex: { planned_reps: string | null; planned_duration: number | null },
-            ): RepsTipo => {
-                if (ex.planned_duration != null && !ex.planned_reps?.trim()) return "tiempo";
-                return "reps";
-            };
+            const hydrationByBlock: Record<number, SessionBlockExerciseHydrationLine[]> = {};
+            for (const [blockId, exs] of Object.entries(exercisesByBlock)) {
+                hydrationByBlock[Number(blockId)] = exs.map((ex) => ({
+                    id: ex.id,
+                    exercise_id: ex.exercise_id,
+                    order_in_block: ex.order_in_block,
+                    planned_sets: ex.planned_sets,
+                    planned_reps: ex.planned_reps,
+                    planned_weight: ex.planned_weight,
+                    planned_assistance_kg: ex.planned_assistance_kg,
+                    planned_duration: ex.planned_duration,
+                    planned_rest: ex.planned_rest,
+                    effort_character: ex.effort_character,
+                    effort_value: ex.effort_value,
+                    notes: ex.notes,
+                    superset_group_id: ex.superset_group_id,
+                    dropset_sequence: ex.dropset_sequence,
+                    constructor_row_key: ex.constructor_row_key ?? null,
+                }));
+            }
 
-            const rows: ConstructorRow[] = sortedBlocks.map((b, i) => {
-                const exs = exercisesByBlock[b.id] ?? [];
-                const firstEx = exs[0];
-                const setType =
-                    (b.set_type as ConstructorRow["setType"]) ?? SET_TYPE.SINGLE_SET;
-
-                const base: ConstructorRow = {
-                    id: `row-${b.id}-${i}`,
-                    serverBlockId: b.id,
-                    blockTypeId: b.block_type_id,
-                    setType,
-                    sets: exs[0]?.planned_sets ?? null,
-                    rounds: b.rounds,
-                    timeCap: b.time_cap,
-                    intervalSeconds: b.interval_seconds,
-                    rest: exs[0]?.planned_rest ?? 60,
-                    repsTipo: firstEx ? inferRepsTipo(firstEx) : "reps",
-                    exercises: [],
-                };
-
-                if (
-                    setType === SET_TYPE.SINGLE_SET &&
-                    isCollapsedSingleSetApiLines(exs)
-                ) {
-                    return hydrateSingleSetConstructorRow(base, exs);
-                }
-
-                if (setType === SET_TYPE.DROPSET && canHydrateDropsetApiLines(exs)) {
-                    return hydrateDropsetConstructorRow(base, exs);
-                }
-
-                if (setType === SET_TYPE.SUPERSET && exs.length > 0) {
-                    return hydrateSupersetConstructorRow(base, exs);
-                }
-
-                if (setType === SET_TYPE.GIANT_SET && exs.length > 0) {
-                    return hydrateGiantSetConstructorRow(base, exs);
-                }
-
-                if (setType === SET_TYPE.FOR_TIME && exs.length > 0) {
-                    return hydrateForTimeConstructorRow(base, exs);
-                }
-
-                if (setType === SET_TYPE.EMOM && exs.length > 0) {
-                    return hydrateEmomConstructorRow(base, exs);
-                }
-
-                return {
-                    ...base,
-                    exercises: exs.map((ex, j) => ({
-                        id: `ex-${ex.id}-${j}`,
-                        serverExerciseId: ex.id,
-                        exerciseId: ex.exercise_id,
-                        exerciseName: `Ejercicio #${ex.exercise_id}`,
-                        plannedReps: ex.planned_reps,
-                        plannedWeight: ex.planned_weight,
-        plannedAssistanceKg: ex.planned_assistance_kg ?? null,
-                        plannedDuration: ex.planned_duration,
-                        effortCharacter:
-                            ex.effort_character as ConstructorExercise["effortCharacter"],
-                        effortValue: ex.effort_value,
-                        notes: ex.notes,
-                    })),
-                };
-            });
-
-            const normalized = rows.map((row) => {
-                if (row.setType === SET_TYPE.SUPERSET) {
-                    return normalizeSupersetRow(row);
-                }
-                if (row.setType === SET_TYPE.SINGLE_SET) {
-                    return normalizeSingleSetRow(row);
-                }
-                if (row.setType === SET_TYPE.DROPSET) {
-                    return normalizeDropsetRow(row);
-                }
-                if (row.setType === SET_TYPE.GIANT_SET) {
-                    return normalizeGiantSetRow(row);
-                }
-                if (row.setType === SET_TYPE.FOR_TIME) {
-                    return normalizeForTimeRow(row);
-                }
-                if (row.setType === SET_TYPE.EMOM) {
-                    return normalizeEmomRow(row);
-                }
-                if (row.setType === SET_TYPE.AMRAP) {
-                    return normalizeAmrapRow(row);
-                }
-                return row;
-            });
+            const rows = hydrateSessionBlocksToConstructorRows(sortedBlocks, hydrationByBlock);
 
             setConstructorRows(
-                applyConstructorExerciseCatalogNames(
-                    normalized,
-                    exerciseNameByIdRef.current,
-                ),
+                applyConstructorExerciseCatalogNames(rows, exerciseNameByIdRef.current),
             );
         };
 
@@ -682,6 +586,11 @@ export const EditSession: React.FC = () => {
                 scrollToConstructorIssue(ctorResult.issues);
                 return;
             }
+            const setTypeConflicts = findBlockInstanceSetTypeConflicts(constructorRows);
+            if (setTypeConflicts.length > 0) {
+                showWarning(setTypeConflicts[0].message, 8000);
+                return;
+            }
         }
 
         setIsSaving(true);
@@ -702,33 +611,7 @@ export const EditSession: React.FC = () => {
                 notes: formData.notes.trim() || null,
             };
 
-            const blocksPayload = constructorRows.map((row, i) => {
-                const persistLines = getConstructorPersistLines(row);
-                const exercises = persistLines.map((line) => {
-                    const base = buildExercisePayloadFromLine(row, line);
-                    return {
-                        ...(line.serverExerciseId ? { id: line.serverExerciseId } : {}),
-                        ...base,
-                    };
-                });
-
-                return {
-                    ...(row.serverBlockId ? { id: row.serverBlockId } : {}),
-                    block_type_id: row.blockTypeId,
-                    order_in_session: i + 1,
-                    set_type: row.setType,
-                    rounds: getBlockRoundsFromConstructorRow(row),
-                    time_cap: row.timeCap,
-                    interval_seconds: row.intervalSeconds,
-                    objective_text:
-                        row.setType === "for_time"
-                            ? "Objetivo: menor tiempo"
-                            : row.setType === "amrap"
-                            ? "Objetivo: máximo rendimiento"
-                            : null,
-                    exercises,
-                };
-            });
+            const blocksPayload = mapConstructorRowsToFullUpdateBlocks(constructorRows);
 
             const updatedSession = await updateTrainingSessionFull({
                 id: sessionId,
@@ -957,7 +840,12 @@ export const EditSession: React.FC = () => {
                                         />
                                     </div>
 
-                                    <div className={SESSION_PROGRAMMING_FIELD_METER}>
+                                    <div
+                                        className={cn(
+                                            SESSION_PROGRAMMING_FIELD_LOAD_METERS,
+                                            SESSION_PROGRAMMING_FIELDS_GRID_2,
+                                        )}
+                                    >
                                         <BlockLevelMeter
                                             id="edit-session-volume"
                                             tone="volume"
@@ -970,11 +858,12 @@ export const EditSession: React.FC = () => {
                                             hint={editSliderValueNote}
                                             onChange={(v) => {
                                                 setVolumeIntensityTouched(true);
-                                                setFormData({ ...formData, plannedVolume: String(v) });
+                                                setFormData({
+                                                    ...formData,
+                                                    plannedVolume: String(v),
+                                                });
                                             }}
                                         />
-                                    </div>
-                                    <div className={SESSION_PROGRAMMING_FIELD_METER}>
                                         <BlockLevelMeter
                                             id="edit-session-intensity"
                                             tone="intensity"
@@ -1102,6 +991,7 @@ export const EditSession: React.FC = () => {
                                             return;
                                         const newRow: ConstructorRow = {
                                             id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                                            blockInstanceId: createBlockInstanceId(),
                                             blockTypeId: blockTypeId,
                                             setType: SET_TYPE.SINGLE_SET,
                                             sets: 3,

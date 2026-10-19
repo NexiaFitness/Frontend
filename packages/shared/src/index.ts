@@ -595,6 +595,8 @@ export * from "./sessionProgramming/parallelConstructorHydration";
 export * from "./sessionProgramming/amrapPlannedReps";
 export * from "./sessionProgramming/loadInheritance";
 export * from "./sessionProgramming/sessionBriefMath";
+export * from "./sessionProgramming/constructorBlockInstance";
+export * from "./sessionProgramming/constructorBlockInstanceCoherence";
 
 // Hooks - Injuries
 export * from "./hooks/injuries";

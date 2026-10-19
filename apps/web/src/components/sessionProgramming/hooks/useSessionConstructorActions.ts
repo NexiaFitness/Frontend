@@ -8,6 +8,7 @@
 
 import React from "react";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import { createBlockInstanceId } from "@nexia/shared/sessionProgramming/constructorBlockInstance";
 import type { ConstructorRow, ConstructorExercise } from "../constructorTypes";
 import { applyConstructorRowUpdate, normalizeSupersetRow } from "../constructor/utils/supersetRow";
 import { normalizeSingleSetRow } from "../constructor/utils/singleSetRow";
@@ -76,11 +77,17 @@ export function useSessionConstructorActions(
     );
 
     const handleAddRow = React.useCallback(
-        (blockTypeId: number) => {
-            const newRow = normalizeSingleSetRow({
+        (args: {
+            blockTypeId: number;
+            blockInstanceId: string;
+            setType: ConstructorRow["setType"];
+        }) => {
+            const { blockTypeId, blockInstanceId, setType } = args;
+            const draft: ConstructorRow = {
                 id: generateId(),
+                blockInstanceId,
                 blockTypeId,
-                setType: SET_TYPE.SINGLE_SET,
+                setType,
                 sets: 3,
                 rounds: null,
                 timeCap: null,
@@ -88,7 +95,23 @@ export function useSessionConstructorActions(
                 exercises: [],
                 rest: 60,
                 repsTipo: "reps",
-            });
+            };
+            let newRow = draft;
+            if (setType === SET_TYPE.SUPERSET) {
+                newRow = normalizeSupersetRow(draft);
+            } else if (setType === SET_TYPE.SINGLE_SET) {
+                newRow = normalizeSingleSetRow(draft);
+            } else if (setType === SET_TYPE.DROPSET) {
+                newRow = normalizeDropsetRow(draft);
+            } else if (setType === SET_TYPE.GIANT_SET) {
+                newRow = normalizeGiantSetRow(draft);
+            } else if (setType === SET_TYPE.FOR_TIME) {
+                newRow = normalizeForTimeRow(draft);
+            } else if (setType === SET_TYPE.EMOM) {
+                newRow = normalizeEmomRow(draft);
+            } else if (setType === SET_TYPE.AMRAP) {
+                newRow = normalizeAmrapRow(draft);
+            }
             onRowsChange((prev) => [...prev, newRow]);
         },
         [onRowsChange]
@@ -112,6 +135,7 @@ export function useSessionConstructorActions(
                 const clone: ConstructorRow = {
                     ...source,
                     id: cloneId,
+                    blockInstanceId: source.blockInstanceId ?? createBlockInstanceId(),
                     exercises: source.exercises.map((ex) => ({
                         ...ex,
                         id: `ex-${generateId()}`,

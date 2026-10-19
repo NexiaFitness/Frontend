@@ -11,6 +11,10 @@
 import React from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import {
+    groupConstructorRowsByBlockInstance,
+    resolveBlockInstanceId,
+} from "@nexia/shared/sessionProgramming/constructorBlockInstance";
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import { SessionPanelShell } from "./SessionPanelShell";
 import {
@@ -61,16 +65,10 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
         handleDuplicateRow,
     } = useSessionConstructorActions(onRowsChange);
 
-    const rowsByBlock = React.useMemo(() => {
-        const map = new Map<number, ConstructorRow[]>();
-        for (const row of rows) {
-            if (!row.blockTypeId) continue;
-            const list = map.get(row.blockTypeId) ?? [];
-            list.push(row);
-            map.set(row.blockTypeId, list);
-        }
-        return map;
-    }, [rows]);
+    const rowGroups = React.useMemo(
+        () => groupConstructorRowsByBlockInstance(rows.filter((r) => r.blockTypeId)),
+        [rows],
+    );
 
     const supersetLabels = React.useMemo(() => supersetGroupLabels(rows), [rows]);
     const dropsetLabels = React.useMemo(() => dropsetGroupLabels(rows), [rows]);
@@ -80,30 +78,35 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
     const amrapLabels = React.useMemo(() => amrapGroupLabels(rows), [rows]);
     const hasRows = rows.length > 0;
 
-    const renderBlockGroupActions = (
-        blockTypeId: number,
-        blockRows: ConstructorRow[]
-    ) => {
+    const renderBlockGroupActions = (blockRows: ConstructorRow[]) => {
+        const head = blockRows[0];
         const lastRow = blockRows[blockRows.length - 1];
+        if (!head) return null;
         return (
             <div className="flex items-center justify-between px-1 pt-1">
                 <button
                     type="button"
-                    onClick={() => handleAddRow(blockTypeId)}
+                    onClick={() =>
+                        handleAddRow({
+                            blockTypeId: head.blockTypeId,
+                            blockInstanceId: resolveBlockInstanceId(head),
+                            setType: head.setType,
+                        })
+                    }
                     className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium text-primary/80 transition-colors hover:bg-primary/10 hover:text-primary"
                 >
                     <Plus className="h-3 w-3" aria-hidden />
-                    Añadir serie
+                    Añadir ejercicio
                 </button>
                 <button
                     type="button"
                     onClick={() => lastRow && handleRemoveRow(lastRow.id)}
                     disabled={!lastRow}
                     className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium text-destructive/75 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:pointer-events-none disabled:text-muted-foreground/40"
-                    aria-label="Eliminar última serie del bloque"
+                    aria-label="Eliminar último ejercicio del bloque"
                 >
                     <Trash2 className="h-3 w-3" aria-hidden />
-                    Eliminar serie
+                    Eliminar ejercicio
                 </button>
             </div>
         );
@@ -259,14 +262,14 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {Array.from(rowsByBlock.entries()).map(([blockTypeId, blockRows]) => {
+                    {rowGroups.map(({ blockInstanceId, rows: blockRows }) => {
                         const activeIndex = activePickerRowId
                             ? blockRows.findIndex((r) => r.id === activePickerRowId)
                             : -1;
                         const hasActivePicker = activeIndex !== -1 && exercisePickerPanel;
 
                         return (
-                            <div key={blockTypeId} className="space-y-4">
+                            <div key={blockInstanceId} className="space-y-4">
                                 {hasActivePicker ? (
                                     <>
                                         {blockRows
@@ -284,7 +287,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                                             )
                                                         )}
                                                 </div>
-                                                {renderBlockGroupActions(blockTypeId, blockRows)}
+                                                {renderBlockGroupActions(blockRows)}
                                             </div>
                                             {exercisePickerPanel}
                                         </div>
@@ -296,7 +299,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                                 renderBlockRow(row, index)
                                             )}
                                         </div>
-                                        {renderBlockGroupActions(blockTypeId, blockRows)}
+                                        {renderBlockGroupActions(blockRows)}
                                     </>
                                 )}
                             </div>

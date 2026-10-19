@@ -14,10 +14,11 @@ export {
 export type { CaracterTipo } from "./effortCharacterMapping";
 export {
     collectStructureTrainingDates,
+    resolveNextSessionScheduleDate,
     suggestNextSessionDateAfter,
     suggestSessionDateForPeriodBlock,
 } from "./suggestSessionDate";
-export type { SessionDateCarrier } from "./suggestSessionDate";
+export type { PeriodBlockDateRange, SessionDateCarrier } from "./suggestSessionDate";
 export {
     defaultSessionCreateKind,
     parseSessionCreateKindParam,

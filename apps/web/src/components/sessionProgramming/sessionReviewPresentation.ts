@@ -72,9 +72,14 @@ export const SESSION_REVIEW_CLIENT_META = cn(
 );
 
 export const SESSION_REVIEW_HEADER_ACTIONS = cn(
-    "flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end md:w-auto md:shrink-0",
+    "flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end md:w-auto md:shrink-0",
     "[&_button]:w-full md:[&_button]:w-auto",
 );
+
+export const SESSION_REVIEW_SCHEDULE_NEXT_LABEL = "Programar siguiente";
+
+export const SESSION_REVIEW_BLOCK_SCHEDULE_COMPLETE_COPY =
+    "No hay más días de entreno programables en este bloque";
 
 export function sessionReviewStatusBadgeClass(status: string): string {
     switch (status) {
@@ -111,6 +116,11 @@ export const SESSION_REVIEW_SUMMARY_BODY = SESSION_PROGRAMMING_PANEL_BODY;
 
 export const SESSION_REVIEW_META_CHIP = cn(
     "inline-flex items-center rounded-md border border-border/45 bg-surface-2/50 px-2.5 py-1 text-xs text-foreground",
+);
+
+export const SESSION_REVIEW_BLOCK_SCHEDULE_COMPLETE_CHIP = cn(
+    SESSION_REVIEW_META_CHIP,
+    "max-w-full text-center text-muted-foreground sm:text-left md:max-w-xs",
 );
 
 export const SESSION_REVIEW_TYPE_CHIP =

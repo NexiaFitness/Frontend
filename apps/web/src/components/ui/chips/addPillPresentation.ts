@@ -37,7 +37,7 @@ export const ADD_PILL_COMPACT_CLASS = cn(
     "hover:border-primary hover:bg-primary/5 hover:text-primary",
 );
 
-/** Celda en grid ancho completo (wizard cualidades). */
+/** Celda en grid ancho completo (uso excepcional; preferir wrap premium). */
 export const ADD_PILL_PREMIUM_GRID_ITEM_CLASS = cn(
     ADD_PILL_PREMIUM_CLASS,
     "w-full min-w-0 px-2.5 py-2.5 whitespace-normal text-center leading-snug",
@@ -46,6 +46,9 @@ export const ADD_PILL_PREMIUM_GRID_ITEM_CLASS = cn(
 export const ADD_PILL_GRID_PREMIUM_CLASS = cn(
     "grid w-full grid-cols-2 gap-2 sm:grid-cols-3 md:gap-2.5",
 );
+
+/** Wizard D-PAP y selectors: chips inline con tokens premium (DESIGN_PREMIUM §5). */
+export const ADD_PILL_WRAP_PREMIUM_CLASS = "flex flex-wrap gap-2 md:gap-2.5";
 
 export const ADD_PILL_WRAP_COMPACT_CLASS =
     "flex flex-wrap gap-2 md:gap-2.5";
@@ -62,8 +65,16 @@ export function addPillItemClass(
         : ADD_PILL_COMPACT_CLASS;
 }
 
-export function addPillGridClass(variant: AddPillVariant): string {
-    return variant === "premium"
-        ? ADD_PILL_GRID_PREMIUM_CLASS
-        : ADD_PILL_WRAP_COMPACT_CLASS;
+export type AddPillGridLayout = "inline" | "grid";
+
+export function addPillGridClass(
+    variant: AddPillVariant,
+    layout: AddPillGridLayout = "inline",
+): string {
+    if (variant === "premium") {
+        return layout === "grid"
+            ? ADD_PILL_GRID_PREMIUM_CLASS
+            : ADD_PILL_WRAP_PREMIUM_CLASS;
+    }
+    return ADD_PILL_WRAP_COMPACT_CLASS;
 }

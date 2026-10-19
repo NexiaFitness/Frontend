@@ -55,6 +55,8 @@ export interface EmomWindow {
 
 export interface ConstructorRow {
     id: string;
+    /** Instancia lógica del bloque-card (varias filas → un SessionBlock API). */
+    blockInstanceId?: string;
     blockTypeId: number;
     setType: SetType;
     sets: number | null;

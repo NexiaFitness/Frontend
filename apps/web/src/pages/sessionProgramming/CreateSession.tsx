@@ -108,7 +108,8 @@ import {
     SESSION_PROGRAMMING_FIELD_ERROR,
     SESSION_PROGRAMMING_FIELD_HINT,
     SESSION_PROGRAMMING_FIELD_LABEL,
-    SESSION_PROGRAMMING_FIELD_METER,
+    SESSION_PROGRAMMING_FIELD_LOAD_METERS,
+    SESSION_PROGRAMMING_FIELDS_GRID_2,
     SESSION_PROGRAMMING_FIELD_NAME,
     SESSION_PROGRAMMING_FIELD_NAME_SOLO,
     SESSION_PROGRAMMING_FIELD_PLAN,
@@ -144,6 +145,7 @@ import type {
     CreateSessionFormErrors,
 } from "@nexia/shared/types/sessionProgramming";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import { createBlockInstanceId } from "@nexia/shared/sessionProgramming/constructorBlockInstance";
 import type {
     TrainingSessionCreate,
 } from "@nexia/shared/types/trainingSessions";
@@ -1068,29 +1070,43 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                     />
                                 </div>
 
-                                <div className={SESSION_PROGRAMMING_FIELD_METER}>
+                                <div
+                                    className={cn(
+                                        SESSION_PROGRAMMING_FIELD_LOAD_METERS,
+                                        SESSION_PROGRAMMING_FIELDS_GRID_2,
+                                    )}
+                                >
                                     <BlockLevelMeter
                                         id="create-session-volume"
                                         tone="volume"
                                         prefix="Volumen"
-                                        level={formData.plannedVolume ? Number(formData.plannedVolume) : 5}
+                                        level={
+                                            formData.plannedVolume
+                                                ? Number(formData.plannedVolume)
+                                                : 5
+                                        }
                                         hint={sliderValueNote}
                                         onChange={(v) => {
                                             setVolumeIntensityTouched(true);
                                             setFormData({ ...formData, plannedVolume: String(v) });
                                         }}
                                     />
-                                </div>
-                                <div className={SESSION_PROGRAMMING_FIELD_METER}>
                                     <BlockLevelMeter
                                         id="create-session-intensity"
                                         tone="intensity"
                                         prefix="Intensidad"
-                                        level={formData.plannedIntensity ? Number(formData.plannedIntensity) : 5}
+                                        level={
+                                            formData.plannedIntensity
+                                                ? Number(formData.plannedIntensity)
+                                                : 5
+                                        }
                                         hint={sliderValueNote}
                                         onChange={(v) => {
                                             setVolumeIntensityTouched(true);
-                                            setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }));
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                plannedIntensity: String(v),
+                                            }));
                                         }}
                                     />
                                 </div>
@@ -1191,6 +1207,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId)) return;
                                         const newRow: ConstructorRow = {
                                             id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                                            blockInstanceId: createBlockInstanceId(),
                                             blockTypeId: blockTypeId,
                                             setType: SET_TYPE.SINGLE_SET,
                                             sets: 3,

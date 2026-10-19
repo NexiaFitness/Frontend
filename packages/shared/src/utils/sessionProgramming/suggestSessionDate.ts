@@ -19,6 +19,11 @@ export interface SessionDateCarrier {
     session_date: string | null;
 }
 
+export interface PeriodBlockDateRange {
+    start_date: string;
+    end_date: string;
+}
+
 function parseLocalDate(iso: string): Date | null {
     const [y, m, d] = iso.split("-").map(Number);
     if ([y, m, d].some((n) => Number.isNaN(n))) return null;
@@ -147,6 +152,29 @@ export function suggestNextSessionDateAfter(
     }
 
     return null;
+}
+
+/**
+ * Fecha sugerida para «Programar siguiente» desde revisión de sesión (B13).
+ * Con bloque: patrón + hueco libre; sin bloque: día siguiente calendario.
+ */
+export function resolveNextSessionScheduleDate(
+    sessionDate: string | null | undefined,
+    periodBlock: PeriodBlockDateRange | null,
+    weeklyStructureWeeks: WeeklyStructureWeek[],
+    sessionsInBlock: SessionDateCarrier[],
+): string | null {
+    if (!sessionDate) return null;
+    if (periodBlock) {
+        return suggestNextSessionDateAfter(
+            sessionDate,
+            periodBlock.start_date,
+            periodBlock.end_date,
+            weeklyStructureWeeks,
+            sessionsInBlock,
+        );
+    }
+    return addDaysLocal(sessionDate, 1);
 }
 
 /**

@@ -10,6 +10,7 @@ import type { EffortCharacter, SetType } from "./sessionProgramming";
 export interface SessionBlockExerciseContract {
     exercise_id: number;
     order_in_block: number;
+    constructor_row_key?: string | null;
     set_type: SetType;
     superset_group_id?: number | null;
     dropset_sequence?: number | null;
@@ -28,6 +29,7 @@ export interface SessionBlockExerciseContract {
 export interface SessionBlockContract {
     block_type_id: number;
     order_in_session: number;
+    constructor_block_instance_id?: string | null;
     set_type?: SetType | null;
     rounds?: number | null;
     time_cap?: number | null;

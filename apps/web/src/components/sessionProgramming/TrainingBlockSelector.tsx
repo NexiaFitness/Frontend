@@ -1,15 +1,15 @@
 /**
  * TrainingBlockSelector.tsx — Bloques de entrenamiento (G27).
  *
- * Una fila: roles fijos + cualidades añadidas por el entrenador (+ AddPillGrid).
+ * Fila principal: roles + cualidades visibles; «Añadir cualidad» abre picker aparte (mismo chip, sin mezclar filas).
  * Catálogo cerrado; sin tipos personalizados admin.
  */
 
 import React, { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { AddPill, AddPillGrid, ADD_PILL_SECTION_LABEL_CLASS } from "@/components/ui/chips";
 import { Button } from "@/components/ui/buttons";
+import { PLATFORM_SECTION_LABEL } from "@/components/ui/surface/platformPremiumPresentation";
 import { Plus } from "lucide-react";
 import { getTrainingBlockDisplayName } from "@nexia/shared";
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
@@ -169,22 +169,27 @@ export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
                     ) : null}
                 </div>
 
-                {showAddQualities && addableQualities.length > 0 && (
-                    <section className="space-y-2" aria-label="Añadir cualidad">
-                        <p className={ADD_PILL_SECTION_LABEL_CLASS}>Elegir cualidad</p>
-                        <AddPillGrid variant="compact">
+                {showAddQualities && addableQualities.length > 0 ? (
+                    <section
+                        className="space-y-2 border-t border-border/50 pt-3"
+                        aria-label="Añadir cualidad"
+                    >
+                        <p className={PLATFORM_SECTION_LABEL}>Elegir cualidad</p>
+                        <div className="flex flex-wrap gap-2">
                             {addableQualities.map(([slug, bt]) => (
-                                <AddPill
+                                <button
                                     key={slug}
-                                    label={getTrainingBlockDisplayName(bt)}
-                                    variant="compact"
-                                    prefix=""
+                                    type="button"
                                     onClick={() => handleAddQualitySlug(slug)}
-                                />
+                                    className={sessionProgrammingBlockChipClass(false)}
+                                    aria-label={`Añadir ${getTrainingBlockDisplayName(bt)} a la barra de bloques`}
+                                >
+                                    {getTrainingBlockDisplayName(bt)}
+                                </button>
                             ))}
-                        </AddPillGrid>
+                        </div>
                     </section>
-                )}
+                ) : null}
             </div>
         </div>
     );

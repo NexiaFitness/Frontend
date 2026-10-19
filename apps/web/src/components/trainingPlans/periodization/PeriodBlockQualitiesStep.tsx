@@ -6,7 +6,7 @@
  */
 
 import React, { useCallback } from "react";
-import { HelpCircle, X } from "lucide-react";
+import { HelpCircle, Plus, X } from "lucide-react";
 
 import type {
     PhysicalQuality,
@@ -15,12 +15,7 @@ import type {
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 
 import { Button } from "@/components/ui/buttons";
-import {
-    AddPill,
-    AddPillGrid,
-    ADD_PILL_SECTION_HINT_CLASS,
-    ADD_PILL_SECTION_LABEL_CLASS,
-} from "@/components/ui/chips";
+import { ADD_PILL_SECTION_HINT_CLASS } from "@/components/ui/chips";
 import { HintTooltip } from "@/components/ui/feedback";
 import { QualityShareBar } from "./QualityShareBar";
 import { useToast } from "@/components/ui/feedback";
@@ -31,7 +26,10 @@ import {
     PHYSICAL_QUALITY_MIX_COPY,
 } from "./periodizationQualitiesPresentation";
 import {
+    AUTHORING_QUALITY_PICKER_BTN_CLASS,
+    AUTHORING_QUALITY_PICKER_GRID_CLASS,
     AUTHORING_STEP_INNER_PANEL_CLASS,
+    AUTHORING_STEP_SECTION_LABEL_CLASS,
 } from "./phaseAuthoringPresentation";
 
 import {
@@ -168,12 +166,14 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                         return (
                             <div
                                 key={q.physical_quality_id}
-                                className="relative pr-9"
+                                className="flex items-start gap-1"
                             >
                                 <QualityShareBar
+                                    className="min-w-0 flex-1"
                                     name={name}
                                     percentage={q.percentage}
                                     colorHex={qColor.hex}
+                                    layout="stacked"
                                     labelDensity="comfortable"
                                     min={0}
                                     max={100}
@@ -208,7 +208,7 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                                     onClick={() =>
                                         onRemoveQuality(q.physical_quality_id)
                                     }
-                                    className="absolute right-0 top-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
+                                    className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
                                     aria-label={`Quitar ${name}`}
                                 >
                                     <X className="h-3.5 w-3.5" />
@@ -224,23 +224,27 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                     className={cn("space-y-3", premiumLayout && "md:space-y-4")}
                     aria-label="Añadir cualidades"
                 >
-                    <p className={ADD_PILL_SECTION_LABEL_CLASS}>
+                    <p className={AUTHORING_STEP_SECTION_LABEL_CLASS}>
                         Añadir cualidad
                         <span className={ADD_PILL_SECTION_HINT_CLASS}>
                             (máx. {MAX_PERIOD_BLOCK_QUALITIES})
                         </span>
                     </p>
-                    <AddPillGrid variant={premiumLayout ? "premium" : "compact"}>
+                    <div className={AUTHORING_QUALITY_PICKER_GRID_CLASS}>
                         {available.map((c) => (
-                            <AddPill
+                            <Button
                                 key={c.id}
-                                label={c.name}
-                                variant={premiumLayout ? "premium" : "compact"}
-                                fullWidth={premiumLayout}
+                                type="button"
+                                variant="outline-primary"
+                                size="sm"
+                                className={AUTHORING_QUALITY_PICKER_BTN_CLASS}
                                 onClick={() => handleAddQuality(c.id)}
-                            />
+                            >
+                                <Plus className="h-3.5 w-3.5" aria-hidden />
+                                {c.name}
+                            </Button>
                         ))}
-                    </AddPillGrid>
+                    </div>
                 </section>
             )}
 

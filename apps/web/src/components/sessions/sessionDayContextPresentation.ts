@@ -65,8 +65,7 @@ export const SESSION_DAY_CONTEXT_MUSCLE_CHIP = cn(
 export const SESSION_DAY_CONTEXT_CHIP_WRAP = "flex flex-wrap gap-1";
 
 export const SESSION_DAY_CONTEXT_QUALITY_MIX_GRID = cn(
-    "grid grid-cols-1 gap-1.5 min-w-0",
-    "sm:grid-cols-2 sm:gap-x-3 lg:grid-cols-1 lg:gap-1.5",
+    "grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2",
 );
 
 export const SESSION_DAY_CONTEXT_METRIC_VALUE = "text-base font-bold tabular-nums sm:text-lg";
