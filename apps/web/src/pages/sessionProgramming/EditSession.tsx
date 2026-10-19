@@ -61,7 +61,7 @@ import {
 } from "@/components/trainingPlans/periodization/structureDriftPresentation";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { createBlockInstanceId } from "@nexia/shared/sessionProgramming/constructorBlockInstance";
-import { findBlockInstanceSetTypeConflicts } from "@nexia/shared/sessionProgramming/constructorBlockInstanceCoherence";
+import { validateConstructorBeforePersist } from "./validateConstructorBeforePersist";
 import { mapConstructorRowsToFullUpdateBlocks } from "./mapConstructorToSessionBlocks";
 import { hydrateSessionBlocksToConstructorRows } from "./hydrateSessionBlocksToConstructorRows";
 import type { AppDispatch, RootState } from "@nexia/shared/store";
@@ -586,9 +586,9 @@ export const EditSession: React.FC = () => {
                 scrollToConstructorIssue(ctorResult.issues);
                 return;
             }
-            const setTypeConflicts = findBlockInstanceSetTypeConflicts(constructorRows);
-            if (setTypeConflicts.length > 0) {
-                showWarning(setTypeConflicts[0].message, 8000);
+            const persistGuard = validateConstructorBeforePersist(constructorRows);
+            if (!persistGuard.ok) {
+                showWarning(persistGuard.message, 8000);
                 return;
             }
         }

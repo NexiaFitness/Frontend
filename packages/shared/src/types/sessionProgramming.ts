@@ -111,6 +111,7 @@ export interface SessionTemplateListResponse {
 export interface SessionTemplateExerciseCreate {
     exercise_id: number;
     order_in_block: number;
+    constructor_row_key?: string | null;
     set_type?: SetType; // Default: "single_set"
     planned_sets?: number | null;
     planned_reps?: string | null;
@@ -128,6 +129,7 @@ export interface SessionTemplateExerciseCreate {
 export interface SessionTemplateBlockWithExercisesCreate {
     block_type_id: number;
     order_in_template: number;
+    constructor_block_instance_id?: string | null;
     set_type?: SetType | null;
     rounds?: number | null;
     time_cap?: number | null;

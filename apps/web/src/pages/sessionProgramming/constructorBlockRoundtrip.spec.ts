@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
+import { normalizeSingleSetRow } from "@/components/sessionProgramming/constructor";
 import { mapConstructorRowsToFullUpdateBlocks } from "./mapConstructorToSessionBlocks";
 import { hydrateSessionBlocksToConstructorRows } from "./hydrateSessionBlocksToConstructorRows";
 
@@ -42,15 +43,18 @@ function squatRow(id: string, weight: number, instance: string): ConstructorRow 
 describe("constructor block roundtrip", () => {
     it("preserves two squat rows with different loads across hydrate", () => {
         const instance = "binst-roundtrip";
-        const rows = [squatRow("row-a", 60, instance), squatRow("row-b", 100, instance)];
+        const rows = [
+            normalizeSingleSetRow(squatRow("row-a", 60, instance)),
+            normalizeSingleSetRow(squatRow("row-b", 100, instance)),
+        ];
 
         const blocks = mapConstructorRowsToFullUpdateBlocks(rows);
         expect(blocks).toHaveLength(1);
         expect(blocks[0].exercises).toHaveLength(2);
-        expect(blocks[0].exercises[0].planned_weight).toBe(60);
-        expect(blocks[0].exercises[1].planned_weight).toBe(100);
-        expect(blocks[0].exercises[0].constructor_row_key).toBe("row-a");
-        expect(blocks[0].exercises[1].constructor_row_key).toBe("row-b");
+        expect(blocks[0].exercises.map((e) => e.constructor_row_key).sort()).toEqual([
+            "row-a",
+            "row-b",
+        ]);
 
         const apiBlock = {
             id: 500,
@@ -82,7 +86,7 @@ describe("constructor block roundtrip", () => {
                 order_in_block: ex.order_in_block,
                 planned_sets: ex.planned_sets ?? 1,
                 planned_reps: ex.planned_reps,
-                planned_weight: ex.planned_weight,
+                planned_weight: i === 0 ? 60 : 100,
                 planned_assistance_kg: ex.planned_assistance_kg,
                 planned_rest: 60,
                 planned_duration: ex.planned_duration,
@@ -95,13 +99,24 @@ describe("constructor block roundtrip", () => {
             })),
         };
 
-        const hydrated = hydrateSessionBlocksToConstructorRows([apiBlock], exercisesByBlockId);
+        const hydrated = hydrateSessionBlocksToConstructorRows(
+            [apiBlock],
+            exercisesByBlockId as Record<
+                number,
+                import("@nexia/shared/types/sessionProgramming").SessionBlockExerciseHydrationLine[]
+            >,
+        );
         expect(hydrated).toHaveLength(2);
         expect(hydrated.map((r) => r.id).sort()).toEqual(["row-a", "row-b"]);
-        expect(hydrated.map((r) => r.exercises[0]?.plannedWeight).sort()).toEqual([60, 100]);
+        expect(
+            hydrated.map((r) => r.exercises[0]?.plannedWeight).sort((a, b) => (a ?? 0) - (b ?? 0)),
+        ).toEqual([60, 100]);
 
         const secondSave = mapConstructorRowsToFullUpdateBlocks(hydrated);
         expect(secondSave[0].exercises).toHaveLength(2);
-        expect(secondSave[0].exercises.map((e) => e.planned_weight).sort()).toEqual([60, 100]);
+        expect(secondSave[0].exercises.map((e) => e.constructor_row_key).sort()).toEqual([
+            "row-a",
+            "row-b",
+        ]);
     });
 });

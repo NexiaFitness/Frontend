@@ -150,6 +150,7 @@ import type {
     TrainingSessionCreate,
 } from "@nexia/shared/types/trainingSessions";
 import { persistTrainingSessionConstructorContent } from "./persistCreateSessionContent";
+import { validateConstructorBeforePersist } from "./validateConstructorBeforePersist";
 import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
 import type { LocationStateReturnTo } from "@nexia/shared";
 import { SESSION_TYPES } from "./sessionFormConstants";
@@ -643,6 +644,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 scrollToConstructorIssue(ctorResult.issues);
                 return;
             }
+            const persistGuard = validateConstructorBeforePersist(constructorRows);
+            if (!persistGuard.ok) {
+                showWarning(persistGuard.message, 8000);
+                return;
+            }
         }
         const templatePayload = buildTemplatePayloadFromConstructorRows({
             constructorRows,
@@ -718,6 +724,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             if (!ctorResult.valid) {
                 showWarning(formatConstructorValidationToast(ctorResult.issues), 6000);
                 scrollToConstructorIssue(ctorResult.issues);
+                return;
+            }
+            const persistGuard = validateConstructorBeforePersist(constructorRows);
+            if (!persistGuard.ok) {
+                showWarning(persistGuard.message, 8000);
                 return;
             }
         }
