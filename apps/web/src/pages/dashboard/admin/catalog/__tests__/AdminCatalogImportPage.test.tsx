@@ -73,7 +73,13 @@ describe("AdminCatalogImportPage", () => {
         await user.click(confirmButton);
 
         expect(
-            await screen.findByText(ADMIN_CATALOG_COPY.importConfirmedBody(2))
+            await screen.findByText(
+                ADMIN_CATALOG_COPY.importConfirmedBody({
+                    newCount: 1,
+                    updatedCount: 1,
+                    importedCount: 2,
+                })
+            )
         ).toBeInTheDocument();
         expect(
             screen.queryByRole("button", { name: ADMIN_CATALOG_COPY.importConfirmAction })

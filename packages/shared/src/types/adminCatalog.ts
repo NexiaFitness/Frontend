@@ -153,10 +153,17 @@ export interface CatalogImportUpdatedEntryOut {
     fields: string[];
 }
 
+export interface CatalogImportAssignedExerciseIdOut {
+    row: number;
+    exercise_id: string;
+    exercise_name_es: string;
+}
+
 export interface CatalogImportChangeSummaryOut {
     new: string[];
     updated: CatalogImportUpdatedEntryOut[];
     unchanged_count: number;
+    assigned_exercise_ids?: CatalogImportAssignedExerciseIdOut[];
 }
 
 export interface CatalogImportValidateOut {
@@ -167,6 +174,8 @@ export interface CatalogImportValidateOut {
 
 export interface CatalogImportConfirmOut {
     imported_count: number;
+    new_count: number;
+    updated_count: number;
     exercise_ids: string[];
     change_summary: CatalogImportChangeSummaryOut;
 }

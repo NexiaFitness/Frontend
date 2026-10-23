@@ -224,7 +224,11 @@ export const AdminCatalogImportPage: React.FC = () => {
                             </Button>
                         }
                     >
-                        {ADMIN_CATALOG_COPY.importConfirmedBody(confirmation.imported_count)}
+                        {ADMIN_CATALOG_COPY.importConfirmedBody({
+                            newCount: confirmation.new_count,
+                            updatedCount: confirmation.updated_count,
+                            importedCount: confirmation.imported_count,
+                        })}
                     </Alert>
                 ) : null}
 

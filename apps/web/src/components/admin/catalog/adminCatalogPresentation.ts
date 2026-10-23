@@ -405,7 +405,7 @@ export const ADMIN_CATALOG_COPY = {
     importTemplateError: "No se pudo descargar la plantilla",
     importTemplateToast: "Plantilla descargada",
     importFlowHelp:
-        "1) Exporta o descarga la plantilla. 2) Edita en Excel (priority en prime movers). 3) Valida. 4) Revisa el resumen. 5) Confirma (todo o nada).",
+        "Exporta el catálogo, edita el Excel y asigna un exercise_id numérico nuevo a cada alta antes de rellenar las hojas de mapeo. Valida y confirma solo cuando el resumen cuadre.",
     importExportIncludeInactive: "Incluir inactivos",
     importExportError: "No se pudo exportar el catálogo",
     importExportedToast: "Exportación descargada",
@@ -428,8 +428,24 @@ export const ADMIN_CATALOG_COPY = {
     importConfirmAction: "Confirmar import",
     importConfirmError: "No se pudo confirmar la importación",
     importConfirmedTitle: "Importación completada",
-    importConfirmedBody: (count: number) =>
-        `${count} ejercicio(s) importados. Los que cambiaron vuelven a pendiente de revisión.`,
+    importConfirmedBody: (summary: {
+        newCount: number;
+        updatedCount: number;
+        importedCount: number;
+    }) => {
+        const { newCount, updatedCount, importedCount } = summary;
+        if (importedCount === 0) {
+            return "No hubo cambios que aplicar; el catálogo ya coincidía con el archivo.";
+        }
+        const parts: string[] = [];
+        if (newCount > 0) {
+            parts.push(`${newCount} nuevo(s)`);
+        }
+        if (updatedCount > 0) {
+            parts.push(`${updatedCount} actualizado(s)`);
+        }
+        return `${parts.join(" y ")}. Los actualizados vuelven a pendiente de revisión.`;
+    },
     importConfirmedToast: "Importación completada",
     importGoToList: "Ir al listado",
     importPendingValidation: "Valida el archivo antes de confirmar",

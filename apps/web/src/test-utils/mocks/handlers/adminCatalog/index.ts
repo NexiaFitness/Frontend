@@ -437,6 +437,8 @@ export const confirmCatalogImportHandler = http.post(
         HttpResponse.json(
             {
                 imported_count: 2,
+                new_count: 1,
+                updated_count: 1,
                 exercise_ids: ["squat_back", "new_exercise"],
                 change_summary: {
                     new: ["new_exercise"],
