@@ -47,8 +47,8 @@ export const PatternSelectorFlatPanel: React.FC<Props> = ({
     );
 
     const grouped = useMemo(
-        () => groupPatternsByUiBucket(catalog),
-        [catalog],
+        () => groupPatternsByUiBucket(catalog, selectedPatternIds),
+        [catalog, selectedPatternIds],
     );
 
     if (catalogLoading) {

@@ -52,13 +52,12 @@ import {
     formatWeeksSkippedToast,
     getMutationErrorMessage,
     isBlockWeekFinished,
-    UI_BUCKET_LABELS,
-    UI_BUCKET_ORDER,
     generateSyntheticWeeks,
     generateSyntheticProgramWeeks,
     mergeWeeklyStructureWeeks,
 } from "@nexia/shared";
 import { PatternBadge } from "./PatternBadge";
+import { groupPatternsByUiBucket } from "./patternSelectorGrouping";
 
 import { Button } from "@/components/ui/buttons";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
@@ -179,29 +178,10 @@ const DayEditor: React.FC<DayEditorProps> = ({
 
     const isSelected = (id: number) => day.patterns.some((p) => p.movement_pattern_id === id);
 
-    const groupedPatterns = useMemo(() => {
-        const map = new Map<string, MovementPattern[]>();
-        for (const p of patternsCatalog) {
-            const bucket = (p.ui_bucket || "ACCESSORY").toString().toUpperCase();
-            if (!map.has(bucket)) map.set(bucket, []);
-            map.get(bucket)!.push(p);
-        }
-        // Ordenar grupos según UI_BUCKET_ORDER y patrones dentro de cada grupo por id
-        const ordered: { bucket: string; label: string; patterns: MovementPattern[] }[] = [];
-        for (const bucket of UI_BUCKET_ORDER) {
-            const list = map.get(bucket);
-            if (list && list.length > 0) {
-                ordered.push({ bucket, label: UI_BUCKET_LABELS[bucket], patterns: list.sort((a, b) => a.id - b.id) });
-            }
-        }
-        // Añadir cualquier bucket no conocido al final (defensivo)
-        for (const [bucket, list] of map) {
-            if (!UI_BUCKET_ORDER.includes(bucket as typeof UI_BUCKET_ORDER[number])) {
-                ordered.push({ bucket, label: bucket, patterns: list.sort((a, b) => a.id - b.id) });
-            }
-        }
-        return ordered;
-    }, [patternsCatalog]);
+    const groupedPatterns = useMemo(
+        () => groupPatternsByUiBucket(patternsCatalog, day.patterns.map((p) => p.movement_pattern_id)),
+        [patternsCatalog, day.patterns]
+    );
 
     const hasPatterns = day.patterns.length > 0;
 

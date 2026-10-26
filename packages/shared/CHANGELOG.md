@@ -1,5 +1,13 @@
 # Changelog — @nexia/shared
 
+## 1.3.0 — 2026-10-27
+
+### Added (taxonomía v2, H2)
+
+- `MovementPattern`: `body_region` (`MovementPatternBodyRegion`), `joint_subgroup`, `kind` (`MovementPatternKind`), `is_planning_selectable`.
+- `MuscleGroup.is_planning_selectable` (el grupo cuenta en volumen pero no se ofrece como objetivo del día).
+- `planningPatternOptions(catalog, selectedIds)`: patrones que ofrece un selector de planificación; los no seleccionables solo aparecen si ya están elegidos.
+
 ## 1.2.0 — 2026-10-27
 
 ### Changed (contrato H1)

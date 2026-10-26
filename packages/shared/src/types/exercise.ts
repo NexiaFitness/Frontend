@@ -63,12 +63,22 @@ export type MovementPatternUiBucket =
     | "POWER_LOCOMOTION"
     | "ACCESSORY";
 
+export type MovementPatternBodyRegion = "lower" | "upper" | "core";
+export type MovementPatternKind = "compound" | "isolated";
+
 export interface MovementPattern {
     id: number;
     name_en: string;
     name_es: string | null;
     description: string | null;
     ui_bucket: MovementPatternUiBucket | string;
+    /** Taxonomía v2 (H2): lower | upper | core. */
+    body_region: MovementPatternBodyRegion | null;
+    /** Subgrupo articular de Adrián (p. ej. "rodilla", "hombro"). */
+    joint_subgroup: string | null;
+    kind: MovementPatternKind | null;
+    /** false: no se ofrece al planificar (se conserva si ya estaba elegido). */
+    is_planning_selectable: boolean;
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -84,6 +94,8 @@ export interface MuscleGroup {
     name_en: string;
     name_es: string | null;
     description: string | null;
+    /** false: cuenta en volumen pero no se ofrece como objetivo del día (H2). */
+    is_planning_selectable: boolean;
     is_active: boolean;
     created_at: string;
     updated_at: string;

@@ -1,4 +1,13 @@
-import { UI_BUCKET_LABELS, UI_BUCKET_ORDER } from "@nexia/shared";
+/**
+ * patternSelectorGrouping.ts — Opciones de patrón de un selector, agrupadas por ui_bucket.
+ *
+ * Oculta los patrones no seleccionables (H2) salvo los ya elegidos (`planningPatternOptions`).
+ */
+import {
+    UI_BUCKET_LABELS,
+    UI_BUCKET_ORDER,
+    planningPatternOptions,
+} from "@nexia/shared";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 
 export type PatternGroup = {
@@ -8,10 +17,11 @@ export type PatternGroup = {
 };
 
 export function groupPatternsByUiBucket(
-    catalog: MovementPattern[],
+    catalog: readonly MovementPattern[],
+    selectedPatternIds: readonly number[],
 ): PatternGroup[] {
     const map = new Map<string, MovementPattern[]>();
-    for (const p of catalog) {
+    for (const p of planningPatternOptions(catalog, selectedPatternIds)) {
         const bucket = (p.ui_bucket || "ACCESSORY").toString().toUpperCase();
         if (!map.has(bucket)) map.set(bucket, []);
         map.get(bucket)!.push(p);

@@ -31,8 +31,8 @@ export const PatternSelectorPanelBody: React.FC<PatternSelectorPanelBodyProps> =
 }) => {
     const isCompact = density === "compact";
     const groupedPatterns = useMemo(
-        () => groupPatternsByUiBucket(catalog),
-        [catalog],
+        () => groupPatternsByUiBucket(catalog, selectedPatternIds),
+        [catalog, selectedPatternIds],
     );
 
     return (

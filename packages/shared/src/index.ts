@@ -481,6 +481,7 @@ export {
     UI_BUCKET_LABELS,
     uiBucketToTailwindKey,
     uiBucketLabel,
+    planningPatternOptions,
     type UiBucketTailwindKey,
 } from "./utils/exerciseUiBucket";
 export {

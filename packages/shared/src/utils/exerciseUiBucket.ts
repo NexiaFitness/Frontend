@@ -2,9 +2,10 @@
  * exerciseUiBucket.ts — Orden y etiquetas de ui_bucket para patrones de movimiento.
  *
  * Alineado con backend `movement_patterns.ui_bucket` y tokens CSS bucket-* en web.
+ * `planningPatternOptions` aplica `is_planning_selectable` (taxonomía v2, H2) a los selectores.
  */
 
-import type { MovementPatternUiBucket } from "../types/exercise";
+import type { MovementPattern, MovementPatternUiBucket } from "../types/exercise";
 
 export const UI_BUCKET_ORDER: readonly MovementPatternUiBucket[] = [
     "LOWER",
@@ -53,4 +54,16 @@ export function uiBucketLabel(bucket: string | null | undefined): string {
         return UI_BUCKET_LABELS[bucket as MovementPatternUiBucket];
     }
     return "Otros";
+}
+
+/**
+ * Patrones que un selector de planificación ofrece: los seleccionables y, además, los ya elegidos
+ * aunque hayan dejado de serlo (p. ej. «locomotion»), para que el entrenador pueda verlos y quitarlos.
+ */
+export function planningPatternOptions(
+    catalog: readonly MovementPattern[],
+    selectedPatternIds: readonly number[],
+): MovementPattern[] {
+    const selected = new Set(selectedPatternIds);
+    return catalog.filter((p) => p.is_planning_selectable || selected.has(p.id));
 }

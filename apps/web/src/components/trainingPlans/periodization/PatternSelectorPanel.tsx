@@ -7,6 +7,7 @@ import React, { useMemo } from "react";
 import {
     UI_BUCKET_ORDER,
     UI_BUCKET_LABELS,
+    planningPatternOptions,
     uiBucketLabel,
 } from "@nexia/shared";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
@@ -44,7 +45,7 @@ export const PatternSelectorPanel: React.FC<Props> = ({
 
     const grouped = useMemo(() => {
         const byBucket = new Map<string, MovementPattern[]>();
-        for (const pattern of catalog) {
+        for (const pattern of planningPatternOptions(catalog, selectedPatternIds)) {
             const key = pattern.ui_bucket ?? "ACCESSORY";
             if (!byBucket.has(key)) byBucket.set(key, []);
             byBucket.get(key)!.push(pattern);
@@ -77,7 +78,7 @@ export const PatternSelectorPanel: React.FC<Props> = ({
             }
         }
         return ordered;
-    }, [catalog]);
+    }, [catalog, selectedPatternIds]);
 
     if (catalogLoading) {
         return (
