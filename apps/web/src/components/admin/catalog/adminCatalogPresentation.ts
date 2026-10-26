@@ -27,6 +27,7 @@ import {
     nexiaSegmentedItemClass,
 } from "@/components/ui/surface/platformPremiumPresentation";
 import { NEXIA_GLASS_CARD, NEXIA_GLASS_CARD_DESKTOP } from "@/components/ui/surface/glassSurfacePresentation";
+import type { CatalogImportChangeSummaryOut } from "@nexia/shared/types/adminCatalog";
 
 export {
     PLATFORM_PAGE_HEADER as ADMIN_CATALOG_PAGE_HEADER,
@@ -287,7 +288,7 @@ export const ADMIN_CATALOG_VIOLATION_META = "text-xs text-muted-foreground";
 export const ADMIN_CATALOG_COPY = {
     listTitle: "Catálogo de ejercicios",
     listNew: "Nuevo ejercicio",
-    listImport: "Importar",
+    listImport: "Importar / exportar",
     searchLabel: "Buscar por nombre o slug EN",
     searchPlaceholderList: "Buscar nombre / slug EN…",
     filterPending: "Pendientes de revisión",
@@ -399,18 +400,21 @@ export const ADMIN_CATALOG_COPY = {
     importStep3: "Paso 3 — Confirmar",
     importExportCardTitle: "Exportar catálogo actual",
     importExportCardBody:
-        "Flujo: exportar → editar en Excel → validar → revisar el resumen → confirmar. También puedes descargar una plantilla vacía para alta masiva.",
-    importExportAction: "Exportar Excel v2",
-    importTemplateAction: "Descargar plantilla vacía",
+        "Descarga el catálogo actual (incluye ejercicios activos e inactivos, con columna Estado), edítalo en Excel, valida y revisa el resumen antes de aplicar los cambios.",
+    importExportAction: "Descargar catálogo actual",
+    importTemplateAction: "Plantilla vacía (solo altas nuevas)",
     importTemplateError: "No se pudo descargar la plantilla",
     importTemplateToast: "Plantilla descargada",
     importFlowHelp:
-        "Exporta el catálogo, edita el Excel y asigna un exercise_id numérico nuevo a cada alta antes de rellenar las hojas de mapeo. Valida y confirma solo cuando el resumen cuadre.",
-    importExportIncludeInactive: "Incluir inactivos",
+        "Cada ejercicio lleva un código numérico en la hoja «Ejercicio base». Para altas nuevas, elige un código que no aparezca en la exportación y repítelo en las hojas de mapeo (músculos, patrones, material…).",
+    importInactiveIdWarning:
+        "Hay actualizaciones sobre ejercicios que estaban inactivos. Revisa el antes/después (nombre y estado) antes de aplicar los cambios.",
+    importUpdatedChangeSeparator: "→",
     importExportError: "No se pudo exportar el catálogo",
     importExportedToast: "Exportación descargada",
-    importFileLabel: "Archivo Excel v2 (.xlsx)",
-    importFileHint: "Tamaño máximo: 25 MB. Solo .xlsx (exportación Excel v2 del catálogo).",
+    importFileLabel: "Archivo Excel del catálogo (.xlsx)",
+    importFileHint:
+        "Tamaño máximo: 25 MB. Solo archivos .xlsx generados desde esta pantalla o la plantilla oficial.",
     importValidateAction: "Validar archivo",
     importValidateError: "No se pudo validar el archivo",
     importNoFile: "Selecciona un archivo .xlsx",
@@ -419,13 +423,13 @@ export const ADMIN_CATALOG_COPY = {
     importOkBody: "Revisa el resumen de cambios antes de confirmar. La importación es todo o nada.",
     importOverwriteWarning:
         "Estos ejercicios se sobrescribirán con el contenido del Excel. Los cambios hechos en la web después de tu exportación se perderán.",
-    importOverwriteCodesLabel: "Códigos afectados",
+    importOverwriteCodesLabel: "Ejercicios afectados",
     importSummaryTitle: "Resumen de cambios",
     importSummaryNew: "Nuevos",
     importSummaryUpdated: "Actualizados",
     importSummaryUnchanged: "Sin cambios",
     importSummaryNoDetail: "Sin detalle de campos",
-    importConfirmAction: "Confirmar import",
+    importConfirmAction: "Aplicar cambios al catálogo",
     importConfirmError: "No se pudo confirmar la importación",
     importConfirmedTitle: "Importación completada",
     importConfirmedBody: (summary: {
@@ -448,8 +452,69 @@ export const ADMIN_CATALOG_COPY = {
     },
     importConfirmedToast: "Importación completada",
     importGoToList: "Ir al listado",
+    importGoToPendingReview: "Ver pendientes de revisión",
     importPendingValidation: "Valida el archivo antes de confirmar",
 } as const;
+
+const CATALOG_IMPORT_FIELD_LABELS: Record<string, string> = {
+    "core.nombre": "Nombre ES",
+    "core.nombre_ingles": "Nombre EN",
+    "core.is_active": "Estado",
+    "core.tipo": "Tipo",
+    "core.nivel": "Nivel",
+    "core.laterality": "Lateralidad",
+    "core.axial_load": "Carga axial",
+    "core.notas": "Notas",
+    muscles: "Músculos",
+    movement_patterns: "Patrones",
+    joint_actions: "Articulaciones",
+    equipment_ids: "Material",
+    tag_ids: "Etiquetas",
+};
+
+export function catalogImportFieldLabel(field: string): string {
+    return CATALOG_IMPORT_FIELD_LABELS[field] ?? field;
+}
+
+/** Filas «nuevos» del resumen: usa `new_entries` o deriva ids de `new`. */
+export function catalogImportNewEntries(
+    summary: CatalogImportChangeSummaryOut
+): { exercise_id: string; exercise_name_es: string }[] {
+    if (summary.new_entries && summary.new_entries.length > 0) {
+        return summary.new_entries;
+    }
+    return summary.new.map((exerciseId) => ({
+        exercise_id: exerciseId,
+        exercise_name_es: "",
+    }));
+}
+
+export function catalogImportSummaryEntryTitle(
+    name: string | null | undefined,
+    code: string | null | undefined
+): string {
+    const label = (name ?? "").trim();
+    const id = (code ?? "").trim();
+    if (label && id) {
+        return `${label} (código ${id})`;
+    }
+    return label || (id ? `Código ${id}` : "—");
+}
+
+export function catalogImportViolationLocation(
+    sheet: string,
+    row?: number | null
+): string | null {
+    const parts: string[] = [];
+    const sheetLabel = sheet.trim();
+    if (sheetLabel) {
+        parts.push(`Hoja «${sheetLabel}»`);
+    }
+    if (row != null && row > 0) {
+        parts.push(`fila ${row}`);
+    }
+    return parts.length > 0 ? parts.join(" · ") : null;
+}
 
 /** Etiquetas §3.1 para los códigos `quality_flags` del backend. */
 export const ADMIN_CATALOG_QUALITY_FLAG_LABELS: Record<string, string> = {

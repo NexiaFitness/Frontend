@@ -64,7 +64,7 @@ describe("AdminCatalogImportPage", () => {
 
         expect(await screen.findByTestId("admin-catalog-import-summary")).toBeInTheDocument();
         expect(screen.getByText(ADMIN_CATALOG_COPY.importSummaryNew)).toBeInTheDocument();
-        expect(screen.getAllByText(/squat_back/).length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText(/Sentadilla trasera/).length).toBeGreaterThanOrEqual(1);
 
         const confirmButton = screen.getByRole("button", {
             name: ADMIN_CATALOG_COPY.importConfirmAction,
@@ -94,7 +94,7 @@ describe("AdminCatalogImportPage", () => {
 
         const warning = await screen.findByTestId("admin-catalog-import-overwrite-warning");
         expect(warning).toHaveTextContent(ADMIN_CATALOG_COPY.importOverwriteWarning);
-        expect(warning).toHaveTextContent("squat_back");
+        expect(warning).toHaveTextContent("Sentadilla trasera");
         expect(
             screen.getByRole("button", { name: ADMIN_CATALOG_COPY.importConfirmAction })
         ).toBeInTheDocument();

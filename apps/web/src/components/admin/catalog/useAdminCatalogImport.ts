@@ -44,7 +44,6 @@ export function useAdminCatalogImport() {
     const { showSuccess, showError } = useToast();
 
     const [file, setFileState] = useState<File | null>(null);
-    const [includeInactive, setIncludeInactive] = useState(false);
     const [validation, setValidation] = useState<CatalogImportValidateOut | null>(null);
     const [confirmation, setConfirmation] = useState<CatalogImportConfirmOut | null>(null);
 
@@ -65,14 +64,14 @@ export function useAdminCatalogImport() {
     const handleExport = useCallback(async () => {
         try {
             const blob = await triggerExport({
-                include_inactive: includeInactive,
+                include_inactive: true,
             }).unwrap();
             downloadBlob(blob, EXPORT_FILENAME);
             showSuccess(ADMIN_CATALOG_COPY.importExportedToast);
         } catch {
             showError(ADMIN_CATALOG_COPY.importExportError);
         }
-    }, [includeInactive, showError, showSuccess, triggerExport]);
+    }, [showError, showSuccess, triggerExport]);
 
     const handleDownloadTemplate = useCallback(async () => {
         try {
@@ -124,8 +123,6 @@ export function useAdminCatalogImport() {
     return {
         file,
         setFile,
-        includeInactive,
-        setIncludeInactive,
         validation,
         confirmation,
         isExporting,

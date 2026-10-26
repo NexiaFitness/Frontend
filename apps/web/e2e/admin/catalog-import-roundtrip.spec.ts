@@ -1,8 +1,10 @@
 /**
  * E2E Admin — Import/export catálogo Excel v2 (F12).
  *
- * Requiere: backend :8000, frontend :5173, cuenta admin (NEXIA_QA_ADMIN_PASSWORD).
- * Flujo: export → subir mismo archivo → validar → confirmar (sin cambios).
+ * Contexto: round-trip sin cambios; credenciales vía global-setup + backend/.env.qa.
+ *
+ * @author Frontend Team
+ * @since v1.0.0
  */
 
 import { test, expect } from "@playwright/test";
@@ -10,19 +12,26 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { loginAsAdmin } from "../fixtures/admin-auth";
+import {
+    cleanupCatalogQaExercises,
+    loginAdminApiToken,
+} from "../fixtures/catalog-import-qa";
 
 const API_BASE =
     process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
 const TOKEN_KEY = "nexia_token";
 
 test.describe("Admin — Catálogo import Excel v2", () => {
-    test.beforeEach(() => {
+    test.beforeEach(async ({ request }) => {
         if (!process.env.NEXIA_QA_ADMIN_PASSWORD?.trim()) {
             test.skip(
                 true,
                 "Falta NEXIA_QA_ADMIN_PASSWORD (backend/.env.qa DEMO_ADMIN_PASSWORD)"
             );
         }
+        const token = await loginAdminApiToken(request);
+        process.env.NEXIA_QA_ADMIN_TOKEN = token;
+        await cleanupCatalogQaExercises(request, token);
     });
 
     test("export, upload, validate y confirm round-trip sin cambios", async ({
@@ -37,9 +46,9 @@ test.describe("Admin — Catálogo import Excel v2", () => {
         ).toBeVisible();
 
         await expect(
-            page.getByRole("button", { name: /exportar excel v2/i })
+            page.getByTestId("admin-catalog-export-catalog")
         ).toBeVisible();
-        await page.getByRole("button", { name: /exportar excel v2/i }).click();
+        await page.getByTestId("admin-catalog-export-catalog").click();
 
         const downloadDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexia-catalog-e2e-"));
         const downloadPath = path.join(downloadDir, "nexia_catalog_export.xlsx");
@@ -65,7 +74,7 @@ test.describe("Admin — Catálogo import Excel v2", () => {
         });
 
         const confirmButton = page.getByRole("button", {
-            name: /confirmar import/i,
+            name: /aplicar cambios al catálogo/i,
         });
         await expect(confirmButton).toBeEnabled();
 

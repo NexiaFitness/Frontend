@@ -1,7 +1,11 @@
 /**
  * admin-auth.ts — Sesión admin para E2E (catálogo / import Excel).
  *
- * Credenciales: NEXIA_QA_ADMIN_EMAIL y NEXIA_QA_ADMIN_PASSWORD (p. ej. backend/.env.qa).
+ * Contexto: credenciales desde NEXIA_QA_* o DEMO_ADMIN_* (cargadas en global-setup
+ * desde backend/.env.qa — qa.md §8).
+ *
+ * @author Frontend Team
+ * @since v1.0.0
  */
 
 import type { Page } from "@playwright/test";
@@ -9,17 +13,21 @@ import type { Page } from "@playwright/test";
 const LOGIN_FORM_TIMEOUT = 15_000;
 
 function requireAdminPassword(): string {
-    const password = String(process.env.NEXIA_QA_ADMIN_PASSWORD ?? "").trim();
+    const password = String(
+        process.env.NEXIA_QA_ADMIN_PASSWORD ?? process.env.DEMO_ADMIN_PASSWORD ?? ""
+    ).trim();
     if (!password) {
         throw new Error(
-            "E2E admin: define NEXIA_QA_ADMIN_PASSWORD (ver backend/.env.qa DEMO_ADMIN_*)."
+            "E2E admin: define NEXIA_QA_ADMIN_PASSWORD o DEMO_ADMIN_PASSWORD en backend/.env.qa"
         );
     }
     return password;
 }
 
 export const qaAdminEmail =
-    process.env.NEXIA_QA_ADMIN_EMAIL?.trim() || "admin@test.com";
+    process.env.NEXIA_QA_ADMIN_EMAIL?.trim() ||
+    process.env.DEMO_ADMIN_EMAIL?.trim() ||
+    "admin@test.com";
 
 export async function loginAsAdmin(page: Page): Promise<void> {
     await page.goto("/auth/login", { waitUntil: "load" });

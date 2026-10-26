@@ -350,7 +350,27 @@ export const validateCatalogImportHandler = http.post(
                 violations: [],
                 change_summary: {
                     new: ["new_exercise"],
-                    updated: [{ exercise_id: "squat_back", fields: ["core.nombre"] }],
+                    new_entries: [
+                        {
+                            exercise_id: "new_exercise",
+                            exercise_name_es: "Ejercicio nuevo QA",
+                        },
+                    ],
+                    updated: [
+                        {
+                            exercise_id: "squat_back",
+                            exercise_name_es: "Sentadilla trasera",
+                            fields: ["core.nombre"],
+                            changes: [
+                                {
+                                    field: "core.nombre",
+                                    before: "Antes",
+                                    after: "Después",
+                                },
+                            ],
+                            was_inactive: false,
+                        },
+                    ],
                     unchanged_count: 100,
                 },
             },
@@ -389,6 +409,12 @@ export const validateCatalogImportNoUpdatesHandler = http.post(
                 violations: [],
                 change_summary: {
                     new: ["brand_new"],
+                    new_entries: [
+                        {
+                            exercise_id: "brand_new",
+                            exercise_name_es: "Marca nueva",
+                        },
+                    ],
                     updated: [],
                     unchanged_count: 50,
                 },
@@ -442,7 +468,27 @@ export const confirmCatalogImportHandler = http.post(
                 exercise_ids: ["squat_back", "new_exercise"],
                 change_summary: {
                     new: ["new_exercise"],
-                    updated: [{ exercise_id: "squat_back", fields: ["core.nombre"] }],
+                    new_entries: [
+                        {
+                            exercise_id: "new_exercise",
+                            exercise_name_es: "Ejercicio nuevo QA",
+                        },
+                    ],
+                    updated: [
+                        {
+                            exercise_id: "squat_back",
+                            exercise_name_es: "Sentadilla trasera",
+                            fields: ["core.nombre"],
+                            changes: [
+                                {
+                                    field: "core.nombre",
+                                    before: "Antes",
+                                    after: "Después",
+                                },
+                            ],
+                            was_inactive: false,
+                        },
+                    ],
                     unchanged_count: 100,
                 },
             },

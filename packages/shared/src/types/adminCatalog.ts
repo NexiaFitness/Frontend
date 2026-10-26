@@ -142,15 +142,29 @@ export interface AdminCatalogListParams {
 export interface CatalogImportViolationOut {
     exercise_id?: string | null;
     sheet: string;
-    row: number;
+    row?: number | null;
     rule: string;
     message: string;
+}
+
+export interface CatalogImportFieldChangeOut {
+    field: string;
+    before: string;
+    after: string;
 }
 
 /** Entrada de `change_summary.updated` — la produce `catalog_import_bundle._diff_fields`. */
 export interface CatalogImportUpdatedEntryOut {
     exercise_id: string | null;
+    exercise_name_es?: string | null;
     fields: string[];
+    changes?: CatalogImportFieldChangeOut[];
+    was_inactive?: boolean;
+}
+
+export interface CatalogImportNewEntryOut {
+    exercise_id: string;
+    exercise_name_es: string;
 }
 
 export interface CatalogImportAssignedExerciseIdOut {
@@ -160,7 +174,10 @@ export interface CatalogImportAssignedExerciseIdOut {
 }
 
 export interface CatalogImportChangeSummaryOut {
+    /** Códigos de ejercicio nuevos (compat. API legacy). */
     new: string[];
+    /** Detalle con nombres para UI (preferir frente a `new`). */
+    new_entries?: CatalogImportNewEntryOut[];
     updated: CatalogImportUpdatedEntryOut[];
     unchanged_count: number;
     assigned_exercise_ids?: CatalogImportAssignedExerciseIdOut[];

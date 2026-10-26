@@ -13,7 +13,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useListAdminCatalogExercisesQuery } from "@nexia/shared/api/adminCatalogApi";
 import type { AdminCatalogListParams } from "@nexia/shared/types/adminCatalog";
 import { useAdminCatalogQueue } from "./useAdminCatalogQueue";
@@ -24,6 +24,7 @@ const SEARCH_DEBOUNCE_MS = 300;
 
 export function useAdminCatalogList() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { setQueue } = useAdminCatalogQueue();
 
     const [search, setSearch] = useState("");
@@ -40,6 +41,12 @@ export function useAdminCatalogList() {
         );
         return () => window.clearTimeout(timer);
     }, [search]);
+
+    useEffect(() => {
+        if (searchParams.get("pendientes") === "1") {
+            setPendingOnly(true);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         setPage(1);
