@@ -1,5 +1,18 @@
 # Changelog — @nexia/shared
 
+## 1.1.0 — 2026-10-26
+
+### Changed (contrato)
+
+- `ExerciseCatalogCoreIn.axial_load` pasa a obligatorio (`CatalogAxialLoad`), alineado con el backend: el servidor ya no aplica `none` por defecto.
+- `CatalogPatternIn.role` y `CatalogJointActionIn.role` pasan a obligatorios (el backend los exige).
+- `CatalogBundleDraft.core` usa `CatalogCoreDraft`: `axial_load` admite `null` mientras no se ha elegido.
+
+### Added
+
+- `CatalogAxialLoad`, `CATALOG_AXIAL_LOADS`, `parseCatalogAxialLoad`, `finalizeCatalogBundle` (payload solo con carga axial informada).
+- `validateCatalogBundleDraft` exige carga axial («La carga axial es obligatoria»).
+
 ## 1.0.3 — 2026-10-02
 
 ### Added

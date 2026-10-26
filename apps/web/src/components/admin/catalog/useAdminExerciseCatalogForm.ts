@@ -19,19 +19,20 @@ import {
     useUpdateExerciseCatalogMutation,
 } from "@nexia/shared/api/adminCatalogApi";
 import {
+    finalizeCatalogBundle,
     getNextCatalogQueuePk,
     orderMusclesForCommit,
     parseCatalogConcurrencyError,
     parseCatalogValidationErrors,
     validateCatalogBundleDraft,
     type AdminCatalogSectionId,
+    type CatalogBundleDraft,
 } from "@nexia/shared";
 import type {
     CatalogConcurrencyErrorOut,
     CatalogMuscleIn,
     CatalogPatternIn,
     CatalogJointActionIn,
-    ExerciseCatalogBundleCreateIn,
 } from "@nexia/shared/types/adminCatalog";
 import { useToast } from "@/components/ui/feedback";
 import {
@@ -49,7 +50,8 @@ export interface UseAdminExerciseCatalogFormArgs {
     exercisePk: number | null;
 }
 
-function toBundle(draft: AdminCatalogFormDraft): ExerciseCatalogBundleCreateIn {
+/** Normaliza el estado del formulario al draft del contrato; no rellena campos obligatorios. */
+function toBundleDraft(draft: AdminCatalogFormDraft): CatalogBundleDraft {
     const muscles: CatalogMuscleIn[] = orderMusclesForCommit(
         draft.muscles
             .filter((m): m is MuscleRowDraft & { muscle_id: number } => m.muscle_id != null)
@@ -80,7 +82,6 @@ function toBundle(draft: AdminCatalogFormDraft): ExerciseCatalogBundleCreateIn {
             tipo: draft.core.tipo.trim().toLowerCase(),
             nivel: draft.core.nivel.trim(),
             laterality: draft.core.laterality?.trim() || null,
-            axial_load: draft.core.axial_load?.trim() || "none",
         },
         muscles,
         movement_patterns,
@@ -163,15 +164,7 @@ export function useAdminExerciseCatalogForm({
     }, [clientErrors]);
 
     const runClientValidation = useCallback(() => {
-        const bundle = toBundle(draft);
-        const result = validateCatalogBundleDraft({
-            core: bundle.core,
-            muscles: bundle.muscles,
-            movement_patterns: bundle.movement_patterns,
-            joint_actions: bundle.joint_actions,
-            equipment_ids: bundle.equipment_ids,
-            tag_ids: bundle.tag_ids ?? [],
-        });
+        const result = validateCatalogBundleDraft(toBundleDraft(draft));
         const next: Partial<Record<AdminCatalogSectionId, string[]>> = {};
         for (const item of result.bySection) {
             next[item.section] = item.messages;
@@ -194,7 +187,11 @@ export function useAdminExerciseCatalogForm({
             return null;
         }
 
-        const bundle = toBundle(draft);
+        const bundle = finalizeCatalogBundle(toBundleDraft(draft));
+        if (!bundle) {
+            showError(ADMIN_CATALOG_COPY.validationAlert);
+            return null;
+        }
         setServerErrors([]);
 
         try {

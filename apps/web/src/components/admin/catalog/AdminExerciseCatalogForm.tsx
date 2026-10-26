@@ -76,31 +76,15 @@ import { AdminCatalogSearchPicker } from "./AdminCatalogSearchPicker";
 import { nextRowKey, type AdminCatalogSectionId } from "./adminCatalogFormTypes";
 import { useAdminExerciseCatalogForm } from "./useAdminExerciseCatalogForm";
 import { useGetCatalogExerciseUsageQuery } from "@nexia/shared/api/adminCatalogApi";
-
-const TIPO_OPTIONS = [
-    { value: "monoarticular", label: "Monoarticular" },
-    { value: "multiarticular", label: "Multiarticular" },
-    { value: "complex", label: "Complex" },
-];
-
-const NIVEL_OPTIONS = [
-    { value: "beginner", label: "Principiante" },
-    { value: "intermediate", label: "Intermedio" },
-    { value: "advanced", label: "Avanzado" },
-];
-
-const LATERALITY_OPTIONS = [
-    { value: "bilateral", label: "Bilateral" },
-    { value: "unilateral", label: "Unilateral" },
-    { value: "alternating", label: "Alternating" },
-];
-
-const AXIAL_OPTIONS = [
-    { value: "none", label: "None" },
-    { value: "low", label: "Low" },
-    { value: "medium", label: "Medium" },
-    { value: "high", label: "High" },
-];
+import { parseCatalogAxialLoad } from "@nexia/shared";
+import {
+    AXIAL_OPTIONS,
+    AXIAL_PLACEHOLDER,
+    LATERALITY_OPTIONS,
+    NIVEL_OPTIONS,
+    NIVEL_PLACEHOLDER,
+    TIPO_OPTIONS,
+} from "./adminCatalogFieldOptions";
 
 const MUSCLE_ROLE_OPTIONS = [
     { value: "prime_mover", label: ADMIN_CATALOG_COPY.rolePrimeMover },
@@ -508,6 +492,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                             variant="premium"
                                             value={draft.core.nivel}
                                             options={NIVEL_OPTIONS}
+                                            placeholder={NIVEL_PLACEHOLDER}
                                             onChange={(value) =>
                                                 setDraft((prev) => ({
                                                     ...prev,
@@ -530,16 +515,17 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                             }
                                         />
                                     </FormField>
-                                    <FormField label="Carga axial" htmlFor="cat-axial" variant="premium">
+                                    <FormField label="Carga axial" htmlFor="cat-axial" required variant="premium">
                                         <FormCombobox
                                             id="cat-axial"
                                             variant="premium"
-                                            value={draft.core.axial_load ?? "none"}
+                                            value={draft.core.axial_load ?? ""}
                                             options={AXIAL_OPTIONS}
+                                            placeholder={AXIAL_PLACEHOLDER}
                                             onChange={(value) =>
                                                 setDraft((prev) => ({
                                                     ...prev,
-                                                    core: { ...prev.core, axial_load: value },
+                                                    core: { ...prev.core, axial_load: parseCatalogAxialLoad(value) },
                                                 }))
                                             }
                                         />

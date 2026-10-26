@@ -9,9 +9,12 @@ import type {
     CatalogMuscleRole,
     CatalogPatternRole,
     CatalogExerciseOut,
-    ExerciseCatalogCoreIn,
 } from "@nexia/shared/types/adminCatalog";
-import type { AdminCatalogSectionId } from "@nexia/shared";
+import {
+    parseCatalogAxialLoad,
+    type AdminCatalogSectionId,
+    type CatalogCoreDraft,
+} from "@nexia/shared";
 
 export type { AdminCatalogSectionId };
 
@@ -36,7 +39,7 @@ export interface JointRowDraft {
 }
 
 export interface AdminCatalogFormDraft {
-    core: ExerciseCatalogCoreIn;
+    core: CatalogCoreDraft;
     muscles: MuscleRowDraft[];
     patterns: PatternRowDraft[];
     joints: JointRowDraft[];
@@ -54,14 +57,15 @@ export function nextRowKey(prefix: string): string {
     return `${prefix}-${rowKeySeq}`;
 }
 
-export function emptyCore(): ExerciseCatalogCoreIn {
+/** Alta nueva: nivel y carga axial empiezan vacíos y son obligatorios (sin valor por defecto). */
+export function emptyCore(): CatalogCoreDraft {
     return {
         nombre: "",
         nombre_ingles: null,
         tipo: "multiarticular",
-        nivel: "intermediate",
+        nivel: "",
         laterality: "bilateral",
-        axial_load: "none",
+        axial_load: null,
         descripcion: null,
         instrucciones: null,
         notas: null,
@@ -147,7 +151,7 @@ export function draftFromCatalog(exercise: CatalogExerciseOut): AdminCatalogForm
             tipo: exercise.tipo,
             nivel: exercise.nivel,
             laterality: exercise.laterality ?? null,
-            axial_load: exercise.axial_load ?? "none",
+            axial_load: parseCatalogAxialLoad(exercise.axial_load),
             descripcion: exercise.descripcion,
             instrucciones: exercise.instrucciones,
             notas: exercise.notas,

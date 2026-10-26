@@ -58,6 +58,22 @@ describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
         });
     });
 
+    it("alta nueva: carga axial y nivel empiezan vacíos y son obligatorios", async () => {
+        const user = userEvent.setup();
+        render(<AdminExerciseCatalogForm mode="create" exercisePk={null} />);
+
+        await screen.findByTestId("admin-exercise-catalog-form");
+        expect(screen.getByText("Selecciona la carga axial")).toBeInTheDocument();
+        expect(screen.getByText("Selecciona el nivel")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: ADMIN_CATALOG_COPY.save }));
+
+        await waitFor(() => {
+            expect(screen.getByText("La carga axial es obligatoria")).toBeInTheDocument();
+        });
+        expect(screen.getByText("El nivel es obligatorio")).toBeInTheDocument();
+    });
+
     it("carga ficha edit y abre historial vacío", async () => {
         server.use(getCatalogHistoryEmptyHandler);
         const user = userEvent.setup();

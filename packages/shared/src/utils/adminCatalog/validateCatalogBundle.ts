@@ -8,9 +8,11 @@
  */
 
 import type {
+    CatalogAxialLoad,
     CatalogJointActionIn,
     CatalogMuscleIn,
     CatalogPatternIn,
+    ExerciseCatalogBundleCreateIn,
     ExerciseCatalogCoreIn,
 } from "../../types/adminCatalog";
 
@@ -24,8 +26,16 @@ export type AdminCatalogSectionId =
     | "alternativas"
     | "variantes";
 
+/**
+ * Core en edición: `axial_load` null = aún sin elegir. Nunca se sustituye por un valor por defecto;
+ * la validación lo exige y `finalizeCatalogBundle` solo produce el payload cuando está informado.
+ */
+export type CatalogCoreDraft = Omit<ExerciseCatalogCoreIn, "axial_load"> & {
+    axial_load: CatalogAxialLoad | null;
+};
+
 export interface CatalogBundleDraft {
-    core: ExerciseCatalogCoreIn;
+    core: CatalogCoreDraft;
     muscles: CatalogMuscleIn[];
     movement_patterns: CatalogPatternIn[];
     joint_actions: CatalogJointActionIn[];
@@ -46,7 +56,13 @@ export interface CatalogValidationResult {
 
 const VALID_TIPOS = new Set(["monoarticular", "multiarticular", "complex"]);
 const VALID_LATERALITY = new Set(["bilateral", "unilateral", "alternating"]);
-const VALID_AXIAL = new Set(["none", "low", "medium", "high"]);
+export const CATALOG_AXIAL_LOADS: readonly CatalogAxialLoad[] = ["none", "low", "medium", "high"];
+
+/** Valor de carga axial reconocido, o null si falta o no es válido (sin valor por defecto). */
+export function parseCatalogAxialLoad(value: string | null | undefined): CatalogAxialLoad | null {
+    const normalized = value?.trim().toLowerCase();
+    return CATALOG_AXIAL_LOADS.find((axial) => axial === normalized) ?? null;
+}
 
 function push(
     map: Map<AdminCatalogSectionId, string[]>,
@@ -79,10 +95,8 @@ export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogVa
             push(map, "datos", "Lateralidad inválida");
         }
     }
-    if (core.axial_load != null && core.axial_load !== "") {
-        if (!VALID_AXIAL.has(core.axial_load.trim().toLowerCase())) {
-            push(map, "datos", "Carga axial inválida");
-        }
+    if (core.axial_load === null) {
+        push(map, "datos", "La carga axial es obligatoria");
     }
 
     if (muscles.length === 0) {
@@ -122,7 +136,7 @@ export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogVa
                 push(map, "patrones", "Patrón duplicado");
             }
             seen.add(p.movement_pattern_id);
-            if ((p.role ?? "primary") === "primary") {
+            if (p.role === "primary") {
                 primary += 1;
             }
         }
@@ -171,6 +185,18 @@ export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogVa
         bySection,
         firstSectionWithError: bySection[0]?.section ?? null,
     };
+}
+
+/**
+ * Payload POST/PUT desde un draft ya validado. Devuelve null si falta un campo obligatorio
+ * del contrato (carga axial): nunca lo rellena.
+ */
+export function finalizeCatalogBundle(draft: CatalogBundleDraft): ExerciseCatalogBundleCreateIn | null {
+    const { axial_load } = draft.core;
+    if (axial_load === null) {
+        return null;
+    }
+    return { ...draft, core: { ...draft.core, axial_load } };
 }
 
 /**

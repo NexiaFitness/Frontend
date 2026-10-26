@@ -16,6 +16,9 @@ export type CatalogMuscleRole = "prime_mover" | "synergist" | "stabilizer";
 
 export type CatalogPatternRole = "primary" | "secondary";
 
+/** Carga axial del ejercicio. Obligatoria en el contrato: el servidor no aplica valor por defecto. */
+export type CatalogAxialLoad = "none" | "low" | "medium" | "high";
+
 /** POST/PUT body muscle line — priority lo asigna el servidor por orden PM. */
 export interface CatalogMuscleIn {
     muscle_id: number;
@@ -24,13 +27,14 @@ export interface CatalogMuscleIn {
 
 export interface CatalogPatternIn {
     movement_pattern_id: number;
-    role?: CatalogPatternRole;
+    role: CatalogPatternRole;
 }
 
 export interface CatalogJointActionIn {
     joint_id: number;
     action_id: number;
-    role?: string;
+    /** Servidor: `primary` | `secondary`, obligatorio. */
+    role: string;
 }
 
 export interface ExerciseCatalogCoreIn {
@@ -39,7 +43,7 @@ export interface ExerciseCatalogCoreIn {
     tipo: string;
     nivel: string;
     laterality?: string | null;
-    axial_load?: string | null;
+    axial_load: CatalogAxialLoad;
     descripcion?: string | null;
     instrucciones?: string | null;
     notas?: string | null;

@@ -7,9 +7,29 @@
 
 import { describe, expect, it } from "vitest";
 import {
+    finalizeCatalogBundle,
     orderMusclesForCommit,
+    parseCatalogAxialLoad,
     validateCatalogBundleDraft,
+    type CatalogBundleDraft,
 } from "./validateCatalogBundle";
+
+function validDraft(overrides: Partial<CatalogBundleDraft["core"]> = {}): CatalogBundleDraft {
+    return {
+        core: {
+            nombre: "Sentadilla",
+            tipo: "multiarticular",
+            nivel: "intermediate",
+            axial_load: "high",
+            ...overrides,
+        },
+        muscles: [{ muscle_id: 1, role: "prime_mover" }],
+        movement_patterns: [{ movement_pattern_id: 1, role: "primary" }],
+        joint_actions: [{ joint_id: 1, action_id: 2, role: "primary" }],
+        equipment_ids: [1],
+        tag_ids: [],
+    };
+}
 
 describe("validateCatalogBundleDraft", () => {
     it("ok con draft mínimo válido", () => {
@@ -36,10 +56,11 @@ describe("validateCatalogBundleDraft", () => {
                 nombre: "X",
                 tipo: "monoarticular",
                 nivel: "beginner",
+                axial_load: "none",
             },
             muscles: [{ muscle_id: 1, role: "synergist" }],
             movement_patterns: [{ movement_pattern_id: 1, role: "primary" }],
-            joint_actions: [{ joint_id: 1, action_id: 2 }],
+            joint_actions: [{ joint_id: 1, action_id: 2, role: "primary" }],
             equipment_ids: [1],
             tag_ids: [],
         });
@@ -54,13 +75,14 @@ describe("validateCatalogBundleDraft", () => {
                 nombre: "X",
                 tipo: "complex",
                 nivel: "advanced",
+                axial_load: "medium",
             },
             muscles: [
                 { muscle_id: 5, role: "prime_mover" },
                 { muscle_id: 5, role: "synergist" },
             ],
             movement_patterns: [{ movement_pattern_id: 1, role: "primary" }],
-            joint_actions: [{ joint_id: 1, action_id: 2 }],
+            joint_actions: [{ joint_id: 1, action_id: 2, role: "primary" }],
             equipment_ids: [1],
             tag_ids: [],
         });
@@ -68,6 +90,43 @@ describe("validateCatalogBundleDraft", () => {
         expect(result.bySection.find((s) => s.section === "musculos")?.messages.join(" ")).toMatch(
             /duplicado/i
         );
+    });
+});
+
+describe("carga axial y nivel obligatorios (sin valor por defecto)", () => {
+    it("falla si la carga axial no está elegida", () => {
+        const result = validateCatalogBundleDraft(validDraft({ axial_load: null }));
+        expect(result.ok).toBe(false);
+        expect(result.firstSectionWithError).toBe("datos");
+        expect(result.bySection[0]?.messages).toContain("La carga axial es obligatoria");
+    });
+
+    it("falla si el nivel está vacío", () => {
+        const result = validateCatalogBundleDraft(validDraft({ nivel: "" }));
+        expect(result.ok).toBe(false);
+        expect(result.bySection[0]?.messages).toContain("El nivel es obligatorio");
+    });
+
+    it("finalizeCatalogBundle no produce payload sin carga axial", () => {
+        expect(finalizeCatalogBundle(validDraft({ axial_load: null }))).toBeNull();
+    });
+
+    it("finalizeCatalogBundle conserva la carga axial elegida", () => {
+        expect(finalizeCatalogBundle(validDraft({ axial_load: "none" }))?.core.axial_load).toBe("none");
+    });
+});
+
+describe("parseCatalogAxialLoad", () => {
+    it.each([
+        ["HIGH", "high"],
+        [" low ", "low"],
+        ["none", "none"],
+    ])("reconoce %s", (raw, expected) => {
+        expect(parseCatalogAxialLoad(raw)).toBe(expected);
+    });
+
+    it.each([[null], [undefined], [""], ["alta"]])("devuelve null para %s", (raw) => {
+        expect(parseCatalogAxialLoad(raw)).toBeNull();
     });
 });
 
