@@ -157,8 +157,9 @@ describe("AdminCatalogImportPage", () => {
         expect(
             screen.getByText("El ejercicio no tiene prime mover")
         ).toBeInTheDocument();
+        expect(screen.queryByTestId("admin-catalog-import-summary")).not.toBeInTheDocument();
         expect(
-            screen.getByRole("button", { name: ADMIN_CATALOG_COPY.importConfirmAction })
-        ).toBeDisabled();
+            screen.queryByRole("button", { name: ADMIN_CATALOG_COPY.importConfirmAction })
+        ).not.toBeInTheDocument();
     });
 });

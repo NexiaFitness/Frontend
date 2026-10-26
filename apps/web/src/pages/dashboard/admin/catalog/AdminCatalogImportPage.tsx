@@ -247,7 +247,7 @@ export const AdminCatalogImportPage: React.FC = () => {
                     </Alert>
                 ) : null}
 
-                {summary ? (
+                {summary && validation?.ok_for_import ? (
                     <section
                         className={ADMIN_CATALOG_IMPORT_CARD}
                         data-testid="admin-catalog-import-summary"
