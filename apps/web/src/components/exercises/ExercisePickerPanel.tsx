@@ -77,9 +77,11 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
     const [expandedExerciseId, setExpandedExerciseId] = useState<number | null>(null);
     const [safetyResults, setSafetyResults] = useState<Map<number, ExerciseSafetyResponse>>(new Map());
 
+    // Solo ejercicios con contrato completo: los incompletos no se pueden añadir (H1 R3).
     const { data, isLoading } = useGetExercisesQuery({
         skip: 0,
         limit: 500,
+        contract: "complete",
         ...(clientId != null ? { client_id: clientId } : {}),
     });
 

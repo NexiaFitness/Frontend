@@ -21,6 +21,7 @@ import { Alert } from "@/components/ui/feedback";
 import { FormField } from "@/components/ui/forms";
 import { PageTitle } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { AdminCatalogImportPreserved } from "@/components/admin/catalog/AdminCatalogImportPreserved";
 import { useAdminCatalogImport } from "@/components/admin/catalog/useAdminCatalogImport";
 import {
     ADMIN_CATALOG_ALERT_SPACING,
@@ -357,6 +358,8 @@ export const AdminCatalogImportPage: React.FC = () => {
                                 ))}
                             </ul>
                         ) : null}
+
+                        <AdminCatalogImportPreserved entries={summary.preserved ?? []} />
 
                         {!confirmation && hasInactiveReuse ? (
                             <Alert

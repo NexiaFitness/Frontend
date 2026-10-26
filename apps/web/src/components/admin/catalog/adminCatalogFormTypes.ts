@@ -10,15 +10,17 @@ import type {
     CatalogPatternRole,
     CatalogExerciseOut,
 } from "@nexia/shared/types/adminCatalog";
+import type { MuscleEvidenceFields } from "@nexia/shared/types/exerciseContract";
 import {
     parseCatalogAxialLoad,
+    parseTrainingObjective,
     type AdminCatalogSectionId,
     type CatalogCoreDraft,
 } from "@nexia/shared";
 
 export type { AdminCatalogSectionId };
 
-export interface MuscleRowDraft {
+export interface MuscleRowDraft extends MuscleEvidenceFields {
     key: string;
     muscle_id: number | null;
     role: CatalogMuscleRole;
@@ -38,8 +40,15 @@ export interface JointRowDraft {
     role: string;
 }
 
+/** Valores guardados como propuesta sin revisar: la ficha pide confirmarlos de forma explícita. */
+export interface PendingReviewState {
+    axial_load: boolean;
+    nivel: boolean;
+}
+
 export interface AdminCatalogFormDraft {
     core: CatalogCoreDraft;
+    pending_review: PendingReviewState;
     muscles: MuscleRowDraft[];
     patterns: PatternRowDraft[];
     joints: JointRowDraft[];
@@ -51,13 +60,28 @@ export interface AdminCatalogFormDraft {
     review_status: "pending" | "reviewed" | null;
 }
 
+/**
+ * Cambia músculo o rol de una fila. La trazabilidad (fuente, decisión, nota) describía la fila
+ * anterior: se limpia para no atribuir a una decisión nueva la evidencia de otra.
+ */
+export function retargetMuscleRow(
+    row: MuscleRowDraft,
+    patch: Partial<Pick<MuscleRowDraft, "muscle_id" | "role" | "label">>
+): MuscleRowDraft {
+    const changed =
+        (patch.muscle_id !== undefined && patch.muscle_id !== row.muscle_id) ||
+        (patch.role !== undefined && patch.role !== row.role);
+    if (!changed) return { ...row, ...patch };
+    return { ...row, ...patch, evidence_level: null, is_coach_decision: false, evidence_note: null };
+}
+
 let rowKeySeq = 0;
 export function nextRowKey(prefix: string): string {
     rowKeySeq += 1;
     return `${prefix}-${rowKeySeq}`;
 }
 
-/** Alta nueva: nivel y carga axial empiezan vacíos y son obligatorios (sin valor por defecto). */
+/** Alta nueva: nivel, carga axial y objetivo empiezan vacíos y son obligatorios (sin defecto). */
 export function emptyCore(): CatalogCoreDraft {
     return {
         nombre: "",
@@ -66,6 +90,7 @@ export function emptyCore(): CatalogCoreDraft {
         nivel: "",
         laterality: "bilateral",
         axial_load: null,
+        objetivo_entrenamiento: null,
         descripcion: null,
         instrucciones: null,
         notas: null,
@@ -76,6 +101,7 @@ export function emptyCore(): CatalogCoreDraft {
 export function emptyDraft(): AdminCatalogFormDraft {
     return {
         core: emptyCore(),
+        pending_review: { axial_load: false, nivel: false },
         muscles: [
             {
                 key: nextRowKey("m"),
@@ -122,6 +148,10 @@ export function draftFromCatalog(exercise: CatalogExerciseOut): AdminCatalogForm
                   muscle_id: m.id,
                   role: (m.role as CatalogMuscleRole) || "prime_mover",
                   label: m.name_es || m.name || m.name_en,
+                  // Trazabilidad: se conserva al guardar (su edición llega en H5).
+                  evidence_level: m.evidence_level ?? null,
+                  is_coach_decision: m.is_coach_decision ?? false,
+                  evidence_note: m.evidence_note ?? null,
               }))
             : [{ key: nextRowKey("m"), muscle_id: null, role: "prime_mover" }];
 
@@ -152,10 +182,15 @@ export function draftFromCatalog(exercise: CatalogExerciseOut): AdminCatalogForm
             nivel: exercise.nivel,
             laterality: exercise.laterality ?? null,
             axial_load: parseCatalogAxialLoad(exercise.axial_load),
+            objetivo_entrenamiento: parseTrainingObjective(exercise.objetivo_entrenamiento),
             descripcion: exercise.descripcion,
             instrucciones: exercise.instrucciones,
             notas: exercise.notas,
             is_active: exercise.is_active,
+        },
+        pending_review: {
+            axial_load: exercise.axial_load_review === "pending_review",
+            nivel: exercise.nivel_review === "pending_review",
         },
         muscles,
         patterns,

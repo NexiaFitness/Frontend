@@ -10,6 +10,7 @@ export * from "./api/invitationsApi";
 export * from "./api/sessionLoadApi";
 export * from "./api/adminApi";
 export * from "./api/adminCatalogApi";
+export * from "./types/exerciseContract";
 export * from "./api/adminUsersApi";
 export * from "./types/adminUsers";
 export * from "./api/adminTaxonomiesApi";

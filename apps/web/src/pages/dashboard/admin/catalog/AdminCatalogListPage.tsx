@@ -307,6 +307,7 @@ export const AdminCatalogListPage: React.FC = () => {
                                                     <td className={ADMIN_CATALOG_TD}>
                                                         <AdminCatalogQualityFlags
                                                             flags={item.quality_flags}
+                                                            contractMissing={item.contract_missing}
                                                         />
                                                     </td>
                                                     <td className={ADMIN_CATALOG_TD_MUTED}>
@@ -351,7 +352,10 @@ export const AdminCatalogListPage: React.FC = () => {
                                                     ? ` · ${ADMIN_CATALOG_COPY.inactiveBadge}`
                                                     : ""}
                                             </p>
-                                            <AdminCatalogQualityFlags flags={item.quality_flags} />
+                                            <AdminCatalogQualityFlags
+                                                flags={item.quality_flags}
+                                                contractMissing={item.contract_missing}
+                                            />
                                         </div>
                                     ))}
                                 </div>

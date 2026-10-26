@@ -15,6 +15,7 @@ import type {
     ExerciseCatalogBundleCreateIn,
     ExerciseCatalogCoreIn,
 } from "../../types/adminCatalog";
+import type { TrainingObjective } from "../../types/exerciseContract";
 
 export type AdminCatalogSectionId =
     | "datos"
@@ -27,11 +28,13 @@ export type AdminCatalogSectionId =
     | "variantes";
 
 /**
- * Core en edición: `axial_load` null = aún sin elegir. Nunca se sustituye por un valor por defecto;
- * la validación lo exige y `finalizeCatalogBundle` solo produce el payload cuando está informado.
+ * Core en edición: `axial_load` y `objetivo_entrenamiento` null = aún sin elegir. Nunca se
+ * sustituyen por un valor por defecto; la validación los exige y `finalizeCatalogBundle` solo
+ * produce el payload cuando están informados.
  */
-export type CatalogCoreDraft = Omit<ExerciseCatalogCoreIn, "axial_load"> & {
+export type CatalogCoreDraft = Omit<ExerciseCatalogCoreIn, "axial_load" | "objetivo_entrenamiento"> & {
     axial_load: CatalogAxialLoad | null;
+    objetivo_entrenamiento: TrainingObjective | null;
 };
 
 export interface CatalogBundleDraft {
@@ -98,8 +101,15 @@ export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogVa
     if (core.axial_load === null) {
         push(map, "datos", "La carga axial es obligatoria");
     }
+    if (core.objetivo_entrenamiento === null) {
+        push(map, "datos", "El objetivo de entrenamiento es obligatorio");
+    }
+    // Espejo de la regla del servidor (H1 R1): cardio y movilidad no exigen músculo principal
+    // ni patrón; un objetivo aún vacío se valida como fuerza (el caso más exigente).
+    const requiresStrengthStructure =
+        core.objetivo_entrenamiento === null || core.objetivo_entrenamiento === "strength";
 
-    if (muscles.length === 0) {
+    if (muscles.length === 0 && requiresStrengthStructure) {
         push(map, "musculos", "Añade al menos un músculo");
     } else {
         const seen = new Set<number>();
@@ -117,12 +127,12 @@ export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogVa
                 pmCount += 1;
             }
         }
-        if (pmCount < 1) {
+        if (pmCount < 1 && requiresStrengthStructure) {
             push(map, "musculos", "Se requiere al menos un prime mover");
         }
     }
 
-    if (movement_patterns.length === 0) {
+    if (movement_patterns.length === 0 && requiresStrengthStructure) {
         push(map, "patrones", "Añade al menos un patrón de movimiento");
     } else {
         const seen = new Set<number>();
@@ -140,7 +150,7 @@ export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogVa
                 primary += 1;
             }
         }
-        if (primary < 1) {
+        if (primary < 1 && requiresStrengthStructure) {
             push(map, "patrones", "Se requiere al menos un patrón con rol primary");
         }
     }
@@ -189,14 +199,14 @@ export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogVa
 
 /**
  * Payload POST/PUT desde un draft ya validado. Devuelve null si falta un campo obligatorio
- * del contrato (carga axial): nunca lo rellena.
+ * del contrato (carga axial, objetivo): nunca lo rellena.
  */
 export function finalizeCatalogBundle(draft: CatalogBundleDraft): ExerciseCatalogBundleCreateIn | null {
-    const { axial_load } = draft.core;
-    if (axial_load === null) {
+    const { axial_load, objetivo_entrenamiento } = draft.core;
+    if (axial_load === null || objetivo_entrenamiento === null) {
         return null;
     }
-    return { ...draft, core: { ...draft.core, axial_load } };
+    return { ...draft, core: { ...draft.core, axial_load, objetivo_entrenamiento } };
 }
 
 /**

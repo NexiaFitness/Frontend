@@ -10,6 +10,7 @@
  */
 
 import type { CatalogAxialLoad } from "@nexia/shared/types/adminCatalog";
+import type { TrainingObjective } from "@nexia/shared/types/exerciseContract";
 
 export interface CatalogFieldOption<TValue extends string = string> {
     value: TValue;
@@ -43,3 +44,18 @@ export const AXIAL_OPTIONS: CatalogFieldOption<CatalogAxialLoad>[] = [
 
 export const NIVEL_PLACEHOLDER = "Selecciona el nivel";
 export const AXIAL_PLACEHOLDER = "Selecciona la carga axial";
+
+export const OBJETIVO_OPTIONS: CatalogFieldOption<TrainingObjective>[] = [
+    { value: "strength", label: "Fuerza" },
+    { value: "cardiovascular", label: "Cardiovascular" },
+    { value: "mobility", label: "Movilidad" },
+];
+
+export const OBJETIVO_PLACEHOLDER = "Selecciona el objetivo";
+export const OBJETIVO_HINT =
+    "Solo los ejercicios de Fuerza suman volumen muscular. Cardiovascular y Movilidad no necesitan músculo principal ni patrón.";
+export const AXIAL_PENDING_CONFIRM = "Confirmo la carga axial propuesta";
+export const NIVEL_PENDING_CONFIRM = "Confirmo el nivel propuesto";
+export const PENDING_REVIEW_HINT =
+    "Valor propuesto por el sistema, pendiente de revisión. Mientras la carga axial esté pendiente, el ejercicio no se puede añadir a sesiones.";
+

@@ -1,7 +1,7 @@
 /**
  * AdminCatalogQualityFlags.tsx — Badges de la columna «Estado calidad» (§3.1).
  *
- * Contexto: traduce los códigos `quality_flags` de
+ * Contexto: traduce los códigos `quality_flags` y `contract_missing` (H1) de
  * `GET /api/v1/admin/catalog/exercises` a etiquetas de producto.
  *
  * Notas de mantenimiento: códigos desconocidos se muestran tal cual para no
@@ -14,22 +14,24 @@
 import React from "react";
 import { Badge } from "@/components/ui/Badge";
 import { PLATFORM_BADGE_ROW } from "@/components/ui/surface/platformPremiumPresentation";
-import { adminCatalogQualityFlagLabel } from "./adminCatalogPresentation";
+import { catalogStatusBadges } from "./catalogContractPresentation";
 
 export interface AdminCatalogQualityFlagsProps {
     flags: string[];
+    contractMissing?: readonly string[] | null;
 }
 
 export const AdminCatalogQualityFlags: React.FC<AdminCatalogQualityFlagsProps> = ({
     flags,
+    contractMissing,
 }) => (
     <div className={PLATFORM_BADGE_ROW}>
-        {flags.map((flag) => (
+        {catalogStatusBadges(flags, contractMissing).map((badge) => (
             <Badge
-                key={flag}
-                variant={flag === "OK" ? "subtle-success" : "subtle-warning"}
+                key={badge.key}
+                variant={badge.tone === "ok" ? "subtle-success" : "subtle-warning"}
             >
-                {adminCatalogQualityFlagLabel(flag)}
+                {badge.label}
             </Badge>
         ))}
     </div>

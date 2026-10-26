@@ -22,6 +22,11 @@
  * @since v5.0.0 (Exercise Catalog Migration - Phase 1)
  */
 
+import type {
+    ExerciseContractFields,
+    ExerciseContractFilter,
+    MuscleEvidenceFields,
+} from "../../types/exerciseContract";
 import { useState, useMemo, useCallback } from "react";
 import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { baseApi } from "../../api/baseApi";
@@ -55,7 +60,7 @@ export interface ExercisePhysicalQualityRef {
 }
 
 /** Catálogo Excel / Tablas: músculos con rol (prime_mover, synergist, stabilizer). */
-export interface ExerciseMuscleRef {
+export interface ExerciseMuscleRef extends MuscleEvidenceFields {
     id: number;
     name: string;
     name_en: string;
@@ -95,7 +100,7 @@ export interface ExerciseJointActionRef {
     action_name_es?: string | null;
 }
 
-export interface Exercise {
+export interface Exercise extends ExerciseContractFields {
     id: number;
     exercise_id: string; // String único del ejercicio
     /** Tablas.xlsx `exercise_name_es` — texto UI; español o anglicismo según Excel; no traducir en front. */
@@ -253,6 +258,8 @@ interface GetExercisesParams {
     movement_pattern_ids?: number[];
     movement_pattern_role?: "primary" | "secondary" | "any";
     client_id?: number;
+    /** Por defecto el backend usa `all`; el selector que añade ejercicios pide `complete`. */
+    contract?: ExerciseContractFilter;
 }
 // ========================================
 
@@ -312,6 +319,9 @@ const exercisesListApi = baseApi.injectEndpoints({
                 }
                 if (filters.client_id != null) {
                     params.append('client_id', String(filters.client_id));
+                }
+                if (filters.contract) {
+                    params.append('contract', filters.contract);
                 }
 
                 return {

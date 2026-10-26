@@ -111,6 +111,21 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
         );
     });
 
+    it("solo lista ejercicios con contrato completo (H1)", () => {
+        render(
+            <ExercisePickerPanel
+                isOpen={true}
+                onClose={vi.fn()}
+                onSelect={vi.fn()}
+                clientId={1}
+                activeInjuries={[]}
+            />
+        );
+        expect(useGetExercisesQuery).toHaveBeenCalledWith(
+            expect.objectContaining({ contract: "complete", client_id: 1 })
+        );
+    });
+
     it("ejercicio seguro: un clic llama onSelect", async () => {
         const user = userEvent.setup();
         const onSelect = vi.fn();

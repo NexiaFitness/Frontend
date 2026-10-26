@@ -1,5 +1,21 @@
 # Changelog — @nexia/shared
 
+## 1.2.0 — 2026-10-27
+
+### Changed (contrato H1)
+
+- `ExerciseCatalogCoreIn.objetivo_entrenamiento` obligatorio (`TrainingObjective`); campos opcionales `axial_load_review`, `nivel_review`, `source`, `source_ref`.
+- `CatalogCoreDraft.objetivo_entrenamiento` admite `null` mientras no se ha elegido; `validateCatalogBundleDraft` lo exige y solo pide músculo principal y patrón primario en Fuerza (espejo de la regla del servidor).
+- `finalizeCatalogBundle` devuelve null si falta el objetivo.
+
+### Added
+
+- `types/exerciseContract`: `TrainingObjective`, `CatalogReviewState`, `CatalogSource`, `ExerciseContractStatus`, `ExerciseContractMissingCode`, `ExerciseContractFields`, `MuscleEvidenceFields`, `parseTrainingObjective`.
+- `Exercise` y `AdminCatalogExerciseListItemOut` exponen `contract_status` / `contract_missing` (derivados por el backend).
+- `GetExercisesParams.contract` (`all` | `complete`).
+- `CatalogMuscleIn` / `ExerciseMuscleRef`: trazabilidad (`evidence_level`, `is_coach_decision`, `evidence_note`).
+- `CatalogImportChangeSummaryOut.preserved`: carga axial / nivel que el import no sobrescribe.
+
 ## 1.1.0 — 2026-10-26
 
 ### Changed (contrato)

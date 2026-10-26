@@ -14,12 +14,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
 import { Alert, LoadingSpinner, useToast } from "@/components/ui/feedback";
-import {
-    FormCombobox,
-    FormField,
-    Input,
-    Textarea,
-} from "@/components/ui/forms";
+import { FormCombobox } from "@/components/ui/forms";
 import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
 import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
@@ -73,18 +68,10 @@ import { AdminCatalogConflictModal } from "./AdminCatalogConflictModal";
 import { AdminCatalogHistoryModal } from "./AdminCatalogHistoryModal";
 import { AdminCatalogRelationsSection } from "./AdminCatalogRelationsSection";
 import { AdminCatalogSearchPicker } from "./AdminCatalogSearchPicker";
-import { nextRowKey, type AdminCatalogSectionId } from "./adminCatalogFormTypes";
+import { nextRowKey, retargetMuscleRow, type AdminCatalogSectionId } from "./adminCatalogFormTypes";
 import { useAdminExerciseCatalogForm } from "./useAdminExerciseCatalogForm";
 import { useGetCatalogExerciseUsageQuery } from "@nexia/shared/api/adminCatalogApi";
-import { parseCatalogAxialLoad } from "@nexia/shared";
-import {
-    AXIAL_OPTIONS,
-    AXIAL_PLACEHOLDER,
-    LATERALITY_OPTIONS,
-    NIVEL_OPTIONS,
-    NIVEL_PLACEHOLDER,
-    TIPO_OPTIONS,
-} from "./adminCatalogFieldOptions";
+import { AdminCatalogCoreSection } from "./AdminCatalogCoreSection";
 
 const MUSCLE_ROLE_OPTIONS = [
     { value: "prime_mover", label: ADMIN_CATALOG_COPY.rolePrimeMover },
@@ -433,150 +420,15 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                         <NexiaGlassAccentRim />
                         <div className={ADMIN_CATALOG_FORM_BODY}>
                             {/* DATOS */}
-                            <section id="datos" className={sectionClass("datos")}>
-                                <h2 className={ADMIN_CATALOG_SECTION_TITLE}>
-                                    {ADMIN_CATALOG_COPY.sectionDatos}
-                                </h2>
-                                {(clientErrors.datos ?? []).map((msg) => (
-                                    <Alert key={msg} variant="error" className={ADMIN_CATALOG_ALERT_SPACING}>
-                                        {msg}
-                                    </Alert>
-                                ))}
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    <FormField label="Nombre" htmlFor="cat-nombre" required variant="premium">
-                                        <Input
-                                            id="cat-nombre"
-                                            variant="premium"
-                                            value={draft.core.nombre}
-                                            onChange={(e) =>
-                                                setDraft((prev) => ({
-                                                    ...prev,
-                                                    core: { ...prev.core, nombre: e.target.value },
-                                                }))
-                                            }
-                                        />
-                                    </FormField>
-                                    <FormField label="Nombre EN" htmlFor="cat-nombre-en" variant="premium">
-                                        <Input
-                                            id="cat-nombre-en"
-                                            variant="premium"
-                                            value={draft.core.nombre_ingles ?? ""}
-                                            onChange={(e) =>
-                                                setDraft((prev) => ({
-                                                    ...prev,
-                                                    core: {
-                                                        ...prev.core,
-                                                        nombre_ingles: e.target.value || null,
-                                                    },
-                                                }))
-                                            }
-                                        />
-                                    </FormField>
-                                    <FormField label="Tipo" htmlFor="cat-tipo" required variant="premium">
-                                        <FormCombobox
-                                            id="cat-tipo"
-                                            variant="premium"
-                                            value={draft.core.tipo}
-                                            options={TIPO_OPTIONS}
-                                            onChange={(value) =>
-                                                setDraft((prev) => ({
-                                                    ...prev,
-                                                    core: { ...prev.core, tipo: value },
-                                                }))
-                                            }
-                                        />
-                                    </FormField>
-                                    <FormField label="Nivel" htmlFor="cat-nivel" required variant="premium">
-                                        <FormCombobox
-                                            id="cat-nivel"
-                                            variant="premium"
-                                            value={draft.core.nivel}
-                                            options={NIVEL_OPTIONS}
-                                            placeholder={NIVEL_PLACEHOLDER}
-                                            onChange={(value) =>
-                                                setDraft((prev) => ({
-                                                    ...prev,
-                                                    core: { ...prev.core, nivel: value },
-                                                }))
-                                            }
-                                        />
-                                    </FormField>
-                                    <FormField label="Lateralidad" htmlFor="cat-lat" variant="premium">
-                                        <FormCombobox
-                                            id="cat-lat"
-                                            variant="premium"
-                                            value={draft.core.laterality ?? "bilateral"}
-                                            options={LATERALITY_OPTIONS}
-                                            onChange={(value) =>
-                                                setDraft((prev) => ({
-                                                    ...prev,
-                                                    core: { ...prev.core, laterality: value },
-                                                }))
-                                            }
-                                        />
-                                    </FormField>
-                                    <FormField label="Carga axial" htmlFor="cat-axial" required variant="premium">
-                                        <FormCombobox
-                                            id="cat-axial"
-                                            variant="premium"
-                                            value={draft.core.axial_load ?? ""}
-                                            options={AXIAL_OPTIONS}
-                                            placeholder={AXIAL_PLACEHOLDER}
-                                            onChange={(value) =>
-                                                setDraft((prev) => ({
-                                                    ...prev,
-                                                    core: { ...prev.core, axial_load: parseCatalogAxialLoad(value) },
-                                                }))
-                                            }
-                                        />
-                                    </FormField>
-                                </div>
-                                <FormField label="Descripción" htmlFor="cat-desc" variant="premium">
-                                    <Textarea
-                                        id="cat-desc"
-                                        variant="premium"
-                                        rows={3}
-                                        value={draft.core.descripcion ?? ""}
-                                        onChange={(e) =>
-                                            setDraft((prev) => ({
-                                                ...prev,
-                                                core: { ...prev.core, descripcion: e.target.value || null },
-                                            }))
-                                        }
-                                    />
-                                </FormField>
-                                <FormField label="Instrucciones" htmlFor="cat-inst" variant="premium">
-                                    <Textarea
-                                        id="cat-inst"
-                                        variant="premium"
-                                        rows={3}
-                                        value={draft.core.instrucciones ?? ""}
-                                        onChange={(e) =>
-                                            setDraft((prev) => ({
-                                                ...prev,
-                                                core: {
-                                                    ...prev.core,
-                                                    instrucciones: e.target.value || null,
-                                                },
-                                            }))
-                                        }
-                                    />
-                                </FormField>
-                                <FormField label="Notas" htmlFor="cat-notas" variant="premium">
-                                    <Textarea
-                                        id="cat-notas"
-                                        variant="premium"
-                                        rows={2}
-                                        value={draft.core.notas ?? ""}
-                                        onChange={(e) =>
-                                            setDraft((prev) => ({
-                                                ...prev,
-                                                core: { ...prev.core, notas: e.target.value || null },
-                                            }))
-                                        }
-                                    />
-                                </FormField>
-                            </section>
+                            <AdminCatalogCoreSection
+                                className={sectionClass("datos")}
+                                core={draft.core}
+                                errors={clientErrors.datos ?? []}
+                                pendingReview={draft.pending_review}
+                                onCoreChange={(patch) =>
+                                    setDraft((prev) => ({ ...prev, core: { ...prev.core, ...patch } }))
+                                }
+                            />
 
                             {/* MUSCULOS */}
                             <section id="musculos" className={sectionClass("musculos")}>
@@ -621,7 +473,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                                             ...prev,
                                                             muscles: prev.muscles.map((m) =>
                                                                 m.key === row.key
-                                                                    ? { ...m, muscle_id: value, label }
+                                                                    ? retargetMuscleRow(m, { muscle_id: value, label })
                                                                     : m
                                                             ),
                                                         }));
@@ -643,10 +495,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                                         ...prev,
                                                         muscles: prev.muscles.map((m) =>
                                                             m.key === row.key
-                                                                ? {
-                                                                      ...m,
-                                                                      role: value as CatalogMuscleRole,
-                                                                  }
+                                                                ? retargetMuscleRow(m, { role: value as CatalogMuscleRole })
                                                                 : m
                                                         ),
                                                     }))
@@ -684,7 +533,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                                             ...prev,
                                                             muscles: prev.muscles.map((m) =>
                                                                 m.key === row.key
-                                                                    ? { ...m, muscle_id: value, label }
+                                                                    ? retargetMuscleRow(m, { muscle_id: value, label })
                                                                     : m
                                                             ),
                                                         }));
@@ -705,10 +554,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                                         ...prev,
                                                         muscles: prev.muscles.map((m) =>
                                                             m.key === row.key
-                                                                ? {
-                                                                      ...m,
-                                                                      role: value as CatalogMuscleRole,
-                                                                  }
+                                                                ? retargetMuscleRow(m, { role: value as CatalogMuscleRole })
                                                                 : m
                                                         ),
                                                     }))

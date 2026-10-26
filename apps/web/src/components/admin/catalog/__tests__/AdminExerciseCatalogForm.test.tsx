@@ -58,13 +58,14 @@ describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
         });
     });
 
-    it("alta nueva: carga axial y nivel empiezan vacíos y son obligatorios", async () => {
+    it("alta nueva: carga axial, nivel y objetivo empiezan vacíos y son obligatorios", async () => {
         const user = userEvent.setup();
         render(<AdminExerciseCatalogForm mode="create" exercisePk={null} />);
 
         await screen.findByTestId("admin-exercise-catalog-form");
         expect(screen.getByText("Selecciona la carga axial")).toBeInTheDocument();
         expect(screen.getByText("Selecciona el nivel")).toBeInTheDocument();
+        expect(screen.getByText("Selecciona el objetivo")).toBeInTheDocument();
 
         await user.click(screen.getByRole("button", { name: ADMIN_CATALOG_COPY.save }));
 
@@ -72,6 +73,15 @@ describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
             expect(screen.getByText("La carga axial es obligatoria")).toBeInTheDocument();
         });
         expect(screen.getByText("El nivel es obligatorio")).toBeInTheDocument();
+        expect(screen.getByText("El objetivo de entrenamiento es obligatorio")).toBeInTheDocument();
+    });
+
+    it("edición: muestra el objetivo guardado y no pide confirmar revisiones legacy", async () => {
+        render(<AdminExerciseCatalogForm mode="edit" exercisePk={11} />);
+
+        expect(await screen.findByText(/squat_back/i, undefined, { timeout: 15_000 })).toBeInTheDocument();
+        expect(screen.getByText("Fuerza")).toBeInTheDocument();
+        expect(screen.queryByLabelText("Confirmo la carga axial propuesta")).not.toBeInTheDocument();
     });
 
     it("carga ficha edit y abre historial vacío", async () => {

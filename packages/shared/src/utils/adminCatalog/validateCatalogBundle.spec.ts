@@ -21,6 +21,7 @@ function validDraft(overrides: Partial<CatalogBundleDraft["core"]> = {}): Catalo
             tipo: "multiarticular",
             nivel: "intermediate",
             axial_load: "high",
+            objetivo_entrenamiento: "strength",
             ...overrides,
         },
         muscles: [{ muscle_id: 1, role: "prime_mover" }],
@@ -39,6 +40,7 @@ describe("validateCatalogBundleDraft", () => {
                 tipo: "multiarticular",
                 nivel: "intermediate",
                 axial_load: "high",
+                objetivo_entrenamiento: "strength",
             },
             muscles: [{ muscle_id: 1, role: "prime_mover" }],
             movement_patterns: [{ movement_pattern_id: 1, role: "primary" }],
@@ -57,6 +59,7 @@ describe("validateCatalogBundleDraft", () => {
                 tipo: "monoarticular",
                 nivel: "beginner",
                 axial_load: "none",
+                objetivo_entrenamiento: "strength",
             },
             muscles: [{ muscle_id: 1, role: "synergist" }],
             movement_patterns: [{ movement_pattern_id: 1, role: "primary" }],
@@ -76,6 +79,7 @@ describe("validateCatalogBundleDraft", () => {
                 tipo: "complex",
                 nivel: "advanced",
                 axial_load: "medium",
+                objetivo_entrenamiento: "strength",
             },
             muscles: [
                 { muscle_id: 5, role: "prime_mover" },
@@ -113,6 +117,36 @@ describe("carga axial y nivel obligatorios (sin valor por defecto)", () => {
 
     it("finalizeCatalogBundle conserva la carga axial elegida", () => {
         expect(finalizeCatalogBundle(validDraft({ axial_load: "none" }))?.core.axial_load).toBe("none");
+    });
+});
+
+describe("objetivo de entrenamiento (H1)", () => {
+    it("falla si el objetivo no está elegido", () => {
+        const result = validateCatalogBundleDraft(validDraft({ objetivo_entrenamiento: null }));
+        expect(result.ok).toBe(false);
+        expect(result.bySection[0]?.messages).toContain("El objetivo de entrenamiento es obligatorio");
+    });
+
+    it.each(["cardiovascular", "mobility"] as const)(
+        "%s no exige músculo principal ni patrón",
+        (objetivo) => {
+            const draft = validDraft({ objetivo_entrenamiento: objetivo });
+            const result = validateCatalogBundleDraft({ ...draft, muscles: [], movement_patterns: [] });
+            expect(result.ok).toBe(true);
+        }
+    );
+
+    it("fuerza sin músculo principal sigue fallando", () => {
+        const draft = validDraft({ objetivo_entrenamiento: "strength" });
+        const result = validateCatalogBundleDraft({
+            ...draft,
+            muscles: [{ muscle_id: 1, role: "synergist" }],
+        });
+        expect(result.firstSectionWithError).toBe("musculos");
+    });
+
+    it("finalizeCatalogBundle no produce payload sin objetivo", () => {
+        expect(finalizeCatalogBundle(validDraft({ objetivo_entrenamiento: null }))).toBeNull();
     });
 });
 

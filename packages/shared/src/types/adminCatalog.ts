@@ -9,6 +9,14 @@
  */
 
 import type { Exercise } from "../hooks/exercises/useExercises";
+import type {
+    CatalogReviewState,
+    CatalogSource,
+    ExerciseContractMissingCode,
+    ExerciseContractStatus,
+    MuscleEvidenceFields,
+    TrainingObjective,
+} from "./exerciseContract";
 
 export type CatalogReviewStatus = "pending" | "reviewed";
 
@@ -20,7 +28,7 @@ export type CatalogPatternRole = "primary" | "secondary";
 export type CatalogAxialLoad = "none" | "low" | "medium" | "high";
 
 /** POST/PUT body muscle line — priority lo asigna el servidor por orden PM. */
-export interface CatalogMuscleIn {
+export interface CatalogMuscleIn extends MuscleEvidenceFields {
     muscle_id: number;
     role: CatalogMuscleRole;
 }
@@ -44,6 +52,14 @@ export interface ExerciseCatalogCoreIn {
     nivel: string;
     laterality?: string | null;
     axial_load: CatalogAxialLoad;
+    /** Obligatorio (H1): decide si el ejercicio suma volumen muscular. */
+    objetivo_entrenamiento: TrainingObjective;
+    /** null = regla del servidor (admin: revisado al cambiar el valor). */
+    axial_load_review?: CatalogReviewState | null;
+    nivel_review?: CatalogReviewState | null;
+    /** null = conserva el origen (alta admin: nexia). */
+    source?: CatalogSource | null;
+    source_ref?: string | null;
     descripcion?: string | null;
     instrucciones?: string | null;
     notas?: string | null;
@@ -117,6 +133,10 @@ export interface AdminCatalogExerciseListItemOut {
     catalog_reviewed_at?: string | null;
     /** Códigos backend: OK, NO_PM, PM_PRIORITY, NO_PRIMARY_PATTERN, NO_EQUIPMENT, INCOMPLETE_JOINT_ACTIONS, VOLUME_MAPPING. */
     quality_flags: string[];
+    objetivo_entrenamiento?: TrainingObjective | null;
+    /** Derivado por el backend (H1); null si no se calculó. */
+    contract_status?: ExerciseContractStatus | null;
+    contract_missing?: ExerciseContractMissingCode[] | null;
 }
 
 /** Progreso de revisión F9 — alcance activos. */
@@ -166,6 +186,13 @@ export interface CatalogImportUpdatedEntryOut {
     was_inactive?: boolean;
 }
 
+/** Carga axial / nivel existentes que el import no sobrescribe: before = BD, after = archivo. */
+export interface CatalogImportPreservedEntryOut {
+    exercise_id: string | null;
+    exercise_name_es?: string | null;
+    fields: CatalogImportFieldChangeOut[];
+}
+
 export interface CatalogImportNewEntryOut {
     exercise_id: string;
     exercise_name_es: string;
@@ -183,6 +210,7 @@ export interface CatalogImportChangeSummaryOut {
     /** Detalle con nombres para UI (preferir frente a `new`). */
     new_entries?: CatalogImportNewEntryOut[];
     updated: CatalogImportUpdatedEntryOut[];
+    preserved?: CatalogImportPreservedEntryOut[];
     unchanged_count: number;
     assigned_exercise_ids?: CatalogImportAssignedExerciseIdOut[];
 }

@@ -55,7 +55,13 @@ function toBundleDraft(draft: AdminCatalogFormDraft): CatalogBundleDraft {
     const muscles: CatalogMuscleIn[] = orderMusclesForCommit(
         draft.muscles
             .filter((m): m is MuscleRowDraft & { muscle_id: number } => m.muscle_id != null)
-            .map((m) => ({ muscle_id: m.muscle_id, role: m.role }))
+            .map((m) => ({
+                muscle_id: m.muscle_id,
+                role: m.role,
+                evidence_level: m.evidence_level ?? null,
+                is_coach_decision: m.is_coach_decision ?? false,
+                evidence_note: m.evidence_note ?? null,
+            }))
     );
     const movement_patterns: CatalogPatternIn[] = draft.patterns
         .filter(

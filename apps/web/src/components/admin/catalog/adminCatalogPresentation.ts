@@ -454,6 +454,11 @@ export const ADMIN_CATALOG_COPY = {
     importGoToList: "Ir al listado",
     importGoToPendingReview: "Ver pendientes de revisión",
     importPendingValidation: "Valida el archivo antes de confirmar",
+    importPreservedTitle: "Valores que se conservan",
+    importPreservedHint:
+        "La carga axial y el nivel de un ejercicio existente no se cambian desde el Excel. Si son incorrectos, edítalos en la ficha del ejercicio.",
+    importPreservedKeep: "se mantiene",
+    importPreservedFile: "en el archivo",
 } as const;
 
 const CATALOG_IMPORT_FIELD_LABELS: Record<string, string> = {
@@ -464,6 +469,11 @@ const CATALOG_IMPORT_FIELD_LABELS: Record<string, string> = {
     "core.nivel": "Nivel",
     "core.laterality": "Lateralidad",
     "core.axial_load": "Carga axial",
+    "core.objetivo_entrenamiento": "Objetivo de entrenamiento",
+    "core.axial_load_review": "Revisión carga axial",
+    "core.nivel_review": "Revisión nivel",
+    "core.source": "Origen",
+    "core.source_ref": "Referencia de origen",
     "core.notas": "Notas",
     muscles: "Músculos",
     movement_patterns: "Patrones",
