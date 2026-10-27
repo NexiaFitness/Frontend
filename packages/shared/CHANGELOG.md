@@ -1,5 +1,13 @@
 # Changelog — @nexia/shared
 
+## 3.0.0 — 2026-10-27
+
+### Breaking (cierre de H4, D1)
+
+- `POST /metrics/check-thresholds` es un cálculo puro: las alertas se devuelven y nunca se guardan. `CheckThresholdsRequestV2` pierde `create_alerts`, `client_id` y `trainer_id`; `CheckThresholdsResponseV2` pierde `created_fatigue_alerts`.
+- `useMetricsAlertsV2`: sin `trainerId` ni `create_alerts`.
+- Se retira `useMetricsAlerts` (legacy, sin consumidores; era el único que enviaba `client_id` / `trainer_id` a `check-thresholds`).
+
 ## 2.0.0 — 2026-10-27
 
 ### Breaking (H4, motor v2)

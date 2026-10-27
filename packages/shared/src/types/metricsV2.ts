@@ -50,7 +50,8 @@ export interface MonthlyMetricsRequestV2 {
 
 /**
  * Request V2 para verificación de umbrales
- * Backend espera: { items: CIDCalcIn[], start_date: date, thresholds, create_alerts?, client_id?, trainer_id? }
+ * Backend espera: { items: CIDCalcIn[], start_date: date, thresholds }.
+ * Cálculo puro: las alertas se devuelven, nunca se guardan (D1, 3.0.0).
  */
 export interface CheckThresholdsRequestV2 {
     items: CIDCalcIn[];
@@ -59,9 +60,6 @@ export interface CheckThresholdsRequestV2 {
     weekly_threshold?: number; // Default 450.0
     consecutive_threshold?: number; // Default 70.0
     consecutive_days?: number; // Default 3
-    create_alerts?: boolean; // Default false
-    client_id?: number; // Required if create_alerts=true
-    trainer_id?: number; // Required if create_alerts=true
 }
 
 /**
@@ -128,7 +126,7 @@ export interface MonthlyMetricsResponseV2 {
 
 /**
  * Response V2 para verificación de umbrales
- * Backend devuelve: { alerts, has_alerts, daily_max, weekly_max, consecutive_max, created_fatigue_alerts? }
+ * Backend devuelve: { alerts, has_alerts, daily_max, weekly_max, consecutive_max }
  */
 export interface ThresholdAlertV2 {
     type: "daily_high" | "weekly_high" | "consecutive_high";
@@ -145,7 +143,6 @@ export interface CheckThresholdsResponseV2 {
     daily_max: number;
     weekly_max: number;
     consecutive_max: number;
-    created_fatigue_alerts?: number | null; // Count if create_alerts=true
 }
 
 /**

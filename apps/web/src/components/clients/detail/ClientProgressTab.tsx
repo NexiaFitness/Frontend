@@ -272,12 +272,10 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
         clientId,
         startDate: metricsDateRange.startDate,
         endDate: metricsDateRange.endDate,
-        trainerId: client?.trainer_id,
         daily_threshold: 80.0,
         weekly_threshold: 450.0,
         consecutive_threshold: 70.0,
         consecutive_days: 3,
-        create_alerts: false,
     });
 
     // ── Derived state ──────────────────────────────────

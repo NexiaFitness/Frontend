@@ -5,7 +5,7 @@
  * - Hook V2 que obtiene sesiones, las transforma y verifica umbrales
  * - Usa useClientSessionsByDateRange y transformSessionsToCIDCalcIn
  * - Consume POST /metrics/check-thresholds con contrato real del backend
- * - NO reemplaza useMetricsAlerts legacy
+ * - Único hook de alertas de umbral (el legacy useMetricsAlerts se retiró en 3.0.0)
  * 
  * Flujo:
  * 1. Obtener sesiones del cliente en rango de fechas
@@ -29,12 +29,10 @@ export interface UseMetricsAlertsV2Params {
     clientId: number;
     startDate: string; // ISO date (YYYY-MM-DD)
     endDate: string; // ISO date (YYYY-MM-DD)
-    trainerId?: number;
     daily_threshold?: number; // Default 80.0
     weekly_threshold?: number; // Default 450.0
     consecutive_threshold?: number; // Default 70.0
     consecutive_days?: number; // Default 3
-    create_alerts?: boolean; // Default false
 }
 
 export interface UseMetricsAlertsV2Result {
@@ -56,7 +54,7 @@ export interface UseMetricsAlertsV2Result {
 /**
  * Hook V2 para verificar umbrales de métricas y obtener alertas
  * 
- * @param params - clientId, startDate, endDate, thresholds, trainerId, create_alerts
+ * @param params - clientId, startDate, endDate, thresholds
  * @returns Alertas formateadas, items transformados, resultado del endpoint, estado de carga y error
  * 
  * @example
@@ -77,12 +75,10 @@ export function useMetricsAlertsV2(
         clientId,
         startDate,
         endDate,
-        trainerId,
         daily_threshold = 80.0,
         weekly_threshold = 450.0,
         consecutive_threshold = 70.0,
         consecutive_days = 3,
-        create_alerts = false,
     } = params;
 
     // Paso 1: Obtener sesiones filtradas por rango de fechas
@@ -145,9 +141,6 @@ export function useMetricsAlertsV2(
             weekly_threshold,
             consecutive_threshold,
             consecutive_days,
-            create_alerts,
-            client_id: create_alerts ? clientId : undefined,
-            trainer_id: create_alerts ? trainerId : undefined,
         };
     }, [
         isLoadingSessions,
@@ -159,9 +152,6 @@ export function useMetricsAlertsV2(
         weekly_threshold,
         consecutive_threshold,
         consecutive_days,
-        create_alerts,
-        clientId,
-        trainerId,
     ]);
 
     const { data, isLoading: isLoadingMetrics, error: metricsError, refetch: refetchMetrics } =

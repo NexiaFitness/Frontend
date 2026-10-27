@@ -6,7 +6,6 @@
 
 // Legacy hooks (mantener para compatibilidad)
 export * from "./useWeeklyMetrics";
-export * from "./useMetricsAlerts";
 export * from "./useCalculateCID";
 
 // V2 hooks (Fase 1: Preparación)
