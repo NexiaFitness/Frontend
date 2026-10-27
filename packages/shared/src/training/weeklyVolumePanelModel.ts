@@ -3,7 +3,7 @@
  * Sin React. Umbrales alineados con SPEC tracking carga semanal (Fase A / Fase B).
  */
 
-import { formatHalfSetVolume } from "./volumeDisplay";
+import { formatSetVolume } from "./volumeDisplay";
 
 export type WeeklyVolumeRowStatus = "deficit" | "on_target" | "excess" | "no_target";
 
@@ -115,16 +115,16 @@ export function formatVolumeRatioHoy(
     _style: VolumeRatioHoyStyle = "constructor"
 ): string {
     if (row.targetToday != null && row.targetToday > 0) {
-        const base = `${formatHalfSetVolume(row.draftSets)} / ${row.targetToday}`;
+        const base = `${formatSetVolume(row.draftSets)} / ${row.targetToday}`;
         return `${base} programadas · hoy`;
     }
     if (row.rangeMax != null && row.rangeMax > 0 && row.targetCenter != null) {
         const numerator = row.dataScope === "session_draft" ? row.draftSets : row.accumulated;
         const unit = row.dataScope === "session_draft" ? "esta sesión" : "semana";
-        return `${formatHalfSetVolume(numerator)} / ${row.targetCenter} programadas · ${unit}`;
+        return `${formatSetVolume(numerator)} / ${row.targetCenter} programadas · ${unit}`;
     }
     const fallbackTotal = row.dataScope === "session_draft" ? row.draftSets : row.accumulated;
-    return `${formatHalfSetVolume(fallbackTotal)} programadas`;
+    return `${formatSetVolume(fallbackTotal)} programadas`;
 }
 
 /** Mapea fila validate-draft a input del panel: solo volumen de esta sesión. */
@@ -348,7 +348,7 @@ export function formatPriorWeekDelta(
         return "= sem. ant.";
     }
     const sign = delta > 0 ? "+" : "";
-    return `${sign}${formatHalfSetVolume(delta)} vs sem. ant.`;
+    return `${sign}${formatSetVolume(delta)} vs sem. ant.`;
 }
 
 export function priorWeekTotalByMuscle(

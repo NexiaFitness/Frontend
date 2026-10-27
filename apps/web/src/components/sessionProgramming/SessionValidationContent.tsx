@@ -30,7 +30,7 @@ import type {
     SessionValidationOverallStatus,
     ValidationStatus,
 } from "@nexia/shared/types/sessionValidation";
-import type { AxialScoreResponse, SessionSafetySummaryOut, ExerciseSafetyResponse } from "@nexia/shared/types/engineSafety";
+import type { AxialScoreResponse } from "@nexia/shared/types/engineSafety";
 import {
     summarizeVolumeRowStatuses,
     volumeMuscleValidationToPanelRow,
@@ -42,6 +42,13 @@ import {
     VOLUME_REVIEW_SECTION_TITLE,
 } from "@nexia/shared/training/weeklyVolumePanelPresentation";
 import { MuscleVolumeRow } from "./MuscleVolumeRow";
+import { SessionSafetySummarySection } from "./SessionSafetySummarySection";
+import {
+    SESSION_AXIAL_COPY,
+    SESSION_AXIAL_NOTE,
+    SESSION_AXIAL_PENDING_TAG,
+} from "./sessionSafetySummaryPresentation";
+import { VolumeNotesBlock } from "./VolumeNotesBlock";
 import { SessionPanelShell } from "./SessionPanelShell";
 import { VolumeReviewKpiStrip } from "./VolumeReviewKpiStrip";
 
@@ -468,62 +475,23 @@ const AxialLoadSection: React.FC<{ data: AxialScoreResponse | undefined }> = ({ 
                 tone={exceeds_threshold ? "destructive" : "success"}
                 aria-label={`Carga axial ${total_score} de ${threshold}`}
             />
+            {data.unverifiable_count > 0 ? (
+                <p className={SESSION_AXIAL_NOTE}>{SESSION_AXIAL_COPY.unverifiable(data.unverifiable_count)}</p>
+            ) : null}
             {exercises_breakdown.length > 0 && (
                 <div className="space-y-1.5">
                     <p className="text-xs font-medium text-muted-foreground">Desglose por ejercicio</p>
                     {exercises_breakdown.map((item) => (
                         <div key={item.exercise_id} className="flex items-center justify-between text-xs">
-                            <span className="text-foreground truncate flex-1">{item.exercise_name}</span>
-                            <span className="text-muted-foreground tabular-nums w-16 text-right">{item.score} pts</span>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
-
-const SafetySummarySection: React.FC<{ data: SessionSafetySummaryOut | undefined }> = ({ data }) => {
-    if (!data) return <p className="text-sm text-muted-foreground">Sin datos de seguridad.</p>;
-    const { blocking_count, warning_count, safe_count, details } = data;
-    return (
-        <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-md border border-success/30 bg-success/10 p-2 text-center">
-                    <p className="text-lg font-bold text-success">{safe_count}</p>
-                    <p className="text-[10px] text-success/80">Seguros</p>
-                </div>
-                <div className="rounded-md border border-warning/30 bg-warning/10 p-2 text-center">
-                    <p className="text-lg font-bold text-warning">{warning_count}</p>
-                    <p className="text-[10px] text-warning/80">Advertencias</p>
-                </div>
-                <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-center">
-                    <p className="text-lg font-bold text-destructive">{blocking_count}</p>
-                    <p className="text-[10px] text-destructive/80">Bloqueantes</p>
-                </div>
-            </div>
-            {blocking_count > 0 && (
-                <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-destructive">Ejercicios bloqueantes</p>
-                    {details.filter((d: ExerciseSafetyResponse) => d.blocking).map((d, i) => (
-                        <div key={i} className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-2">
-                            <NexiaSemanticIcon tone="error" size="sm" className="mt-0.5" />
-                            <div className="min-w-0">
-                                <p className="text-xs font-medium text-destructive">{d.reason ?? "Contraindicado"}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-            {warning_count > 0 && (
-                <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-warning">Advertencias</p>
-                    {details.filter((d: ExerciseSafetyResponse) => !d.blocking && !d.is_safe).map((d, i) => (
-                        <div key={i} className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-2">
-                            <NexiaSemanticIcon tone="warning" size="sm" className="mt-0.5" />
-                            <div className="min-w-0">
-                                <p className="text-xs font-medium text-warning">{d.reason ?? "Precaución"}</p>
-                            </div>
+                            <span className="text-foreground truncate flex-1">
+                                {item.exercise_name}
+                                {item.axial_load_review === "pending_review" ? (
+                                    <span className={SESSION_AXIAL_PENDING_TAG}>({SESSION_AXIAL_COPY.pendingReview})</span>
+                                ) : null}
+                            </span>
+                            <span className="text-muted-foreground tabular-nums w-16 text-right">
+                                {item.verifiable ? `${item.score} pts` : SESSION_AXIAL_COPY.unknown}
+                            </span>
                         </div>
                     ))}
                 </div>
@@ -647,7 +615,7 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                                     </span>
                                 }
                             >
-                                <SafetySummarySection data={data.safety_summary} />
+                                <SessionSafetySummarySection data={data.safety_summary} />
                             </ValidationInsightCard>
                         </div>
 
@@ -657,6 +625,7 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                             badge={<StatusBadge status={data.volume?.status ?? null} />}
                         >
                             <VolumeSection data={data.volume} variant="review" />
+                            <VolumeNotesBlock notes={data.volume_notes} />
                         </ValidationInsightCard>
                     </div>
                 </div>
@@ -735,6 +704,7 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                         defaultOpen
                     >
                         <VolumeSection data={data.volume} />
+                        <VolumeNotesBlock notes={data.volume_notes} />
                     </CollapsibleFormGroup>
 
                     <CollapsibleFormGroup title="Carga axial">
@@ -749,7 +719,7 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                                 : "No disponible"
                         }
                     >
-                        <SafetySummarySection data={data.safety_summary} />
+                        <SessionSafetySummarySection data={data.safety_summary} />
                     </CollapsibleFormGroup>
                 </>
             )}

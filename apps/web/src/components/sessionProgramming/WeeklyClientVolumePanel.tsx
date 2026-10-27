@@ -1,19 +1,21 @@
 /**
  * Panel «Volumen semanal del cliente» — solo presentación (datos vía useWeeklyClientVolumePanel).
+ * H4: las notas de volumen (calentamiento, líneas sin series, ejercicios sin mapeo) se pintan
+ * con VolumeNotesBlock.
  */
 
 import React, { useMemo, useState } from "react";
 import { ChevronDown, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Alert, LoadingSpinner } from "@/components/ui/feedback";
+import { LoadingSpinner } from "@/components/ui/feedback";
 import type {
-    SessionLoadUnmappedExerciseOut,
+    VolumeNotesOut,
     WeeklyClientVolumePanelIntent,
     WeeklyLoadCoverageStatus,
     WeeklySessionPlannedLoadSliceOut,
     WeeklyVolumePanelRowModel,
 } from "@nexia/shared";
-import { formatHalfSetVolume } from "@nexia/shared/training/volumeDisplay";
+import { formatSetVolume } from "@nexia/shared/training/volumeDisplay";
 import {
     VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE,
     VOLUME_CONSTRUCTOR_DRAFT_TITLE,
@@ -29,6 +31,7 @@ import {
     priorWeekTotalByMuscle,
 } from "@nexia/shared/training/weeklyVolumePanelModel";
 import { MuscleVolumeRow } from "./MuscleVolumeRow";
+import { VolumeNotesBlock } from "./VolumeNotesBlock";
 import {
     SESSION_PROGRAMMING_PANEL,
     SESSION_PROGRAMMING_PANEL_BODY,
@@ -47,7 +50,7 @@ export interface WeeklyClientVolumePanelProps {
     /** True cuando el panel refleja el borrador del constructor (no acumulado semanal). */
     usesDraftProjection?: boolean;
     weeklyTarget?: number | null;
-    unmappedExercises?: SessionLoadUnmappedExerciseOut[];
+    volumeNotes?: VolumeNotesOut | null;
     coverageStatus?: WeeklyLoadCoverageStatus | null;
     sessionsInWeek?: number | null;
     expectedTrainingDays?: number | null;
@@ -92,7 +95,7 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
     intent = "edit_session",
     usesDraftProjection = false,
     weeklyTarget = null,
-    unmappedExercises = [],
+    volumeNotes = null,
     coverageStatus = null,
     sessionsInWeek = null,
     expectedTrainingDays = null,
@@ -204,20 +207,7 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                                 </div>
                             ) : null}
 
-                            {unmappedExercises.length > 0 ? (
-                                <Alert
-                                    variant="warning"
-                                    className="text-xs"
-                                    title={
-                                        unmappedExercises.length === 1
-                                            ? "1 ejercicio no suma volumen muscular"
-                                            : `${unmappedExercises.length} ejercicios no suman volumen muscular`
-                                    }
-                                    description={`Falta mapeo en catálogo: ${unmappedExercises
-                                        .map((e) => e.name_es || e.exercise_code)
-                                        .join(", ")}. El admin debe corregir el catálogo.`}
-                                />
-                            ) : null}
+                            <VolumeNotesBlock notes={volumeNotes} />
 
                             {noBlockMode ? (
                                 <div
@@ -229,7 +219,7 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                                 </div>
                             ) : null}
 
-                            {rows.length === 0 && unmappedExercises.length === 0 ? (
+                            {rows.length === 0 && !volumeNotes?.unmapped_exercises.length ? (
                                 <p className="py-4 text-sm text-muted-foreground leading-relaxed">{emptyMessage}</p>
                             ) : (
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -288,14 +278,14 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                                                         </span>
                                                         <span className="text-muted-foreground tabular-nums">
                                                             {formatSessionDateLabel(slice.session_date)} ·{" "}
-                                                            {formatHalfSetVolume(slice.planned_sets_sum)} series prog.
+                                                            {formatSetVolume(slice.planned_sets_sum)} series prog.
                                                         </span>
                                                     </div>
                                                     <p className="mt-1 text-[11px] text-muted-foreground leading-snug">
                                                         {slice.rows
                                                             .map(
                                                                 (r) =>
-                                                                    `${r.name_es || "Grupo"}: ${formatHalfSetVolume(r.planned_sets_sum)}`
+                                                                    `${r.name_es || "Grupo"}: ${formatSetVolume(r.planned_sets_sum)}`
                                                             )
                                                             .join(" · ")}
                                                     </p>

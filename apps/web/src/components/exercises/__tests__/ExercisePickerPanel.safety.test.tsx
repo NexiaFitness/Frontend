@@ -1,5 +1,6 @@
 /**
  * ExercisePickerPanel.safety.test.tsx — Batch safety + flujo alternativas.
+ * H4: fila «no verificable» (sin acciones articulares) y fallo del lote (nunca «seguro»).
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -67,12 +68,14 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
             results: {
                 101: {
                     is_safe: false,
+                    status: "unsafe",
                     blocking: true,
                     reason: "Lesión activa de rodilla",
                     suggested_alternatives: [],
                 },
                 102: {
                     is_safe: true,
+                    status: "safe",
                     blocking: false,
                     suggested_alternatives: [],
                 },
@@ -208,5 +211,49 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
         expect(onSelect).toHaveBeenCalledWith(
             expect.objectContaining({ id: 101, nombre: "Press contraindicado" })
         );
+    });
+    it("H4: no verificable se marca y se añade solo con «Añadir sin verificar»", async () => {
+        const user = userEvent.setup();
+        const onSelect = vi.fn();
+        const payload: ExerciseSafetyBatchResponse = {
+            results: {
+                101: {
+                    is_safe: false,
+                    status: "not_verifiable",
+                    unverifiable_reason: "no_joint_actions",
+                    blocking: false,
+                    reason: "No se puede comprobar con la lesión activa.",
+                    suggested_alternatives: [],
+                },
+                102: { is_safe: true, status: "safe", blocking: false, suggested_alternatives: [] },
+            },
+        };
+        useCheckExerciseSafetyBatchMutation.mockReturnValue([
+            vi.fn(() => ({ unwrap: () => Promise.resolve(payload) })),
+            { isLoading: false },
+        ]);
+        render(
+            <ExercisePickerPanel isOpen onClose={vi.fn()} onSelect={onSelect} clientId={1} activeInjuries={[]} />
+        );
+
+        expect(await screen.findByText("SIN VERIFICAR")).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: /Press contraindicado/i }));
+        expect(onSelect).not.toHaveBeenCalled();
+        await user.click(screen.getByRole("button", { name: /añadir sin verificar/i }));
+        expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 101 }));
+    });
+
+    it("H4: si falla el lote se avisa, se puede reintentar y nada aparece como seguro", async () => {
+        const user = userEvent.setup();
+        const checkBatch = vi.fn(() => ({ unwrap: () => Promise.reject(new Error("network")) }));
+        useCheckExerciseSafetyBatchMutation.mockReturnValue([checkBatch, { isLoading: false }]);
+        render(
+            <ExercisePickerPanel isOpen onClose={vi.fn()} onSelect={vi.fn()} clientId={1} activeInjuries={[]} />
+        );
+
+        expect(await screen.findByText(/no se pudo comprobar la seguridad/i)).toBeInTheDocument();
+        expect(screen.getAllByLabelText("Seguridad sin comprobar")).toHaveLength(2);
+        await user.click(screen.getByRole("button", { name: /reintentar/i }));
+        await waitFor(() => expect(checkBatch).toHaveBeenCalledTimes(2));
     });
 });

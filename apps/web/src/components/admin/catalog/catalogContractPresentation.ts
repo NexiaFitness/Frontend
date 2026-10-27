@@ -5,7 +5,8 @@
  * (lo que le falta al ejercicio para el motor). Esta función pura los une sin duplicar avisos y
  * sin mostrar «OK» cuando el contrato está incompleto.
  * Notas de mantenimiento: los códigos de contrato los define el backend (exercise_contract.py);
- * un código desconocido se muestra tal cual para no ocultarlo.
+ * un código desconocido se muestra tal cual para no ocultarlo. H4: los avisos informativos
+ * (p. ej. MULTI_JOINT_SINGLE_ACTION) no bloquean nada y llevan tono «info».
  *
  * @author Frontend Team
  * @since v1.1.0
@@ -33,10 +34,30 @@ const CONTRACT_CODE_COVERED_BY_FLAG: Partial<Record<ExerciseContractMissingCode,
     equipment: "NO_EQUIPMENT",
 };
 
+/** Avisos de calidad que solo informan (no faltan datos del contrato). */
+const INFO_QUALITY_FLAGS = new Set(["MULTI_JOINT_SINGLE_ACTION"]);
+
 export interface CatalogStatusBadge {
     key: string;
     label: string;
-    tone: "ok" | "warning";
+    tone: "ok" | "warning" | "info";
+}
+
+const BADGE_VARIANT_BY_TONE = {
+    ok: "subtle-success",
+    warning: "subtle-warning",
+    info: "subtle-secondary",
+} as const;
+
+export function catalogStatusBadgeVariant(
+    tone: CatalogStatusBadge["tone"]
+): (typeof BADGE_VARIANT_BY_TONE)[CatalogStatusBadge["tone"]] {
+    return BADGE_VARIANT_BY_TONE[tone];
+}
+
+function flagTone(flag: string): CatalogStatusBadge["tone"] {
+    if (flag === "OK") return "ok";
+    return INFO_QUALITY_FLAGS.has(flag) ? "info" : "warning";
 }
 
 export function contractMissingLabel(code: string): string {
@@ -52,7 +73,7 @@ export function catalogStatusBadges(
     const badges: CatalogStatusBadge[] = flags.map((flag) => ({
         key: flag,
         label: adminCatalogQualityFlagLabel(flag),
-        tone: flag === "OK" ? "ok" : "warning",
+        tone: flagTone(flag),
     }));
     for (const code of missing) {
         const coveringFlag = CONTRACT_CODE_COVERED_BY_FLAG[code as ExerciseContractMissingCode];

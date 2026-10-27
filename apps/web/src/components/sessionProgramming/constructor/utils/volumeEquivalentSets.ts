@@ -1,7 +1,9 @@
 /**
  * volumeEquivalentSets.ts — Series equivalentes por tipo (contrato volumen Nexia).
  *
- * El backend suma planned_sets por línea SessionBlockExercise sin lógica por set_type.
+ * El backend suma planned_sets por línea SessionBlockExercise sin lógica por set_type; desde H4
+ * excluye él solo los bloques de calentamiento y cuenta 1 serie a una línea por tiempo sin
+ * series (volume_lines). Aquí solo se calcula lo que se va a persistir.
  * Este módulo es la única fuente de verdad FE para:
  * - aggregateConstructorForSessionLoadDraft (validate-draft en vivo)
  * - buildExercisePayload (planned_sets al persistir)

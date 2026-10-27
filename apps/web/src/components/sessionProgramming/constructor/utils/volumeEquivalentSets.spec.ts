@@ -68,7 +68,7 @@ describe("B6 — volumeEquivalentSets", () => {
         });
         expect(getRowVolumeSetsPerExercise(r)).toBe(4);
         const draft = aggregateConstructorRowsForSessionLoadDraft([r]);
-        expect(draft).toEqual([{ exercise_id: 101, planned_sets: 4 }]);
+        expect(draft).toEqual([{ exercise_id: 101, planned_sets: 4, block_type_id: 1 }]);
     });
 
     it("superset: 3 rondas = 3 series por ejercicio", () => {
@@ -80,8 +80,8 @@ describe("B6 — volumeEquivalentSets", () => {
         expect(getRowVolumeSetsPerExercise(r)).toBe(3);
         const draft = aggregateConstructorRowsForSessionLoadDraft([r]);
         expect(draft).toEqual([
-            { exercise_id: 101, planned_sets: 3 },
-            { exercise_id: 102, planned_sets: 3 },
+            { exercise_id: 101, planned_sets: 3, block_type_id: 1 },
+            { exercise_id: 102, planned_sets: 3, block_type_id: 1 },
         ]);
     });
 

@@ -19,7 +19,11 @@ export interface AxialScoreItemOut {
     exercise_id: number;
     exercise_name: string;
     axial_load: string | null;
+    /** pending_review: valor propuesto aún sin revisar (se usa, marcado). */
+    axial_load_review?: string | null;
     score: number;
+    /** false: el ejercicio no tiene carga axial; suma 0 y no cuenta como «baja». */
+    verifiable: boolean;
 }
 
 export interface AxialScoreResponse {
@@ -28,11 +32,17 @@ export interface AxialScoreResponse {
     exceeds_threshold: boolean;
     threshold: number;
     exercises_breakdown: AxialScoreItemOut[];
+    /** Ejercicios sin carga axial: no entran en total_score. */
+    unverifiable_count: number;
 }
 
 // ---------------------------------------------------------------------------
 // Injury safety check
 // ---------------------------------------------------------------------------
+
+/** H4: «no verificable» nunca equivale a seguro. */
+export type ExerciseSafetyStatus = "safe" | "unsafe" | "not_verifiable";
+export type ExerciseUnverifiableReason = "no_joint_actions";
 
 export interface ExerciseSafetyResponse {
     is_safe: boolean;
@@ -45,6 +55,8 @@ export interface ExerciseSafetyResponse {
     conflicting_movement_name?: string | null;
     suggested_alternatives: number[];
     pain_level?: number | null;
+    status: ExerciseSafetyStatus;
+    unverifiable_reason?: ExerciseUnverifiableReason | null;
 }
 
 export interface ExerciseSafetyCheckRequest {
@@ -74,6 +86,8 @@ export interface SessionSafetySummaryOut {
     blocking_count: number;
     warning_count: number;
     safe_count: number;
+    /** Ejercicios que no se pudieron comprobar (sin acciones articulares). */
+    unverifiable_count: number;
     details: ExerciseSafetyResponse[];
 }
 

@@ -14,7 +14,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/Badge";
 import { PLATFORM_BADGE_ROW } from "@/components/ui/surface/platformPremiumPresentation";
-import { catalogStatusBadges } from "./catalogContractPresentation";
+import { catalogStatusBadgeVariant, catalogStatusBadges } from "./catalogContractPresentation";
 
 export interface AdminCatalogQualityFlagsProps {
     flags: string[];
@@ -29,7 +29,7 @@ export const AdminCatalogQualityFlags: React.FC<AdminCatalogQualityFlagsProps> =
         {catalogStatusBadges(flags, contractMissing).map((badge) => (
             <Badge
                 key={badge.key}
-                variant={badge.tone === "ok" ? "subtle-success" : "subtle-warning"}
+                variant={catalogStatusBadgeVariant(badge.tone)}
             >
                 {badge.label}
             </Badge>

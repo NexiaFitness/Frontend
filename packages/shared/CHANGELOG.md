@@ -1,5 +1,22 @@
 # Changelog — @nexia/shared
 
+## 2.0.0 — 2026-10-27
+
+### Breaking (H4, motor v2)
+
+- Volumen en pasos de **0,25**: `direct_sets`, `accumulated_direct` y `draft_direct` pueden ser fraccionales (descuento pliométrico ×0,5).
+- `formatHalfSetVolume` / `normalizeHalfSetVolume` pasan a `formatSetVolume` / `normalizeSetVolume` (cuartos: «2,25»). Nueva constante `VOLUME_SET_STEP`.
+- `SessionLoadDraftValidateOut.unmapped_exercises` se sustituye por `volume_notes.unmapped_exercises`; `SessionLoadUnmappedExerciseOut` pasa a `VolumeNoteExerciseOut`.
+- `useWeeklyClientVolumePanel`: `unmappedExercises` pasa a `volumeNotes`.
+- `SessionLoadDraftExerciseIn`: `planned_sets` opcional; nuevos `planned_duration` y `block_type_id`.
+
+### Added
+
+- `VolumeNotesOut` (`warmup_sets_excluded`, `lines_missing_sets`, `unmapped_exercises`) en el volumen semanal, el borrador y la validación de sesión; `volumeNotesCopy` para la UI.
+- Seguridad: `ExerciseSafetyResponse.status` (`safe` | `unsafe` | `not_verifiable`) y `unverifiable_reason`; `InjuryAlert.status`; `SessionSafetySummaryOut.unverifiable_count`; carga axial con `verifiable`, `axial_load_review` y `unverifiable_count`.
+- `utils/exerciseSafetyState`: `exerciseSafetyUiState` (incluye «unchecked» cuando falla la comprobación: nunca «seguro»).
+- `injuryAlertNeedsNotice` / `injuryAlertIsUnverifiable` para el portal del atleta.
+
 ## 1.3.0 — 2026-10-27
 
 ### Added (taxonomía v2, H2)

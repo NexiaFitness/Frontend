@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCheckInjuryAlertMutation } from "@nexia/shared/api/injuriesApi";
+import { injuryAlertNeedsNotice } from "@nexia/shared/utils/athlete/athleteInjuryAlertUtils";
 import type {
     ExerciseInjuryConflict,
     SessionExerciseRef,
@@ -82,7 +83,7 @@ export function useAthleteSessionInjuryAlerts(
                         })
                         .unwrap();
 
-                    if (alert.has_conflict) {
+                    if (injuryAlertNeedsNotice(alert)) {
                         found.push({
                             exerciseId: exercise.exerciseId,
                             exerciseName: exercise.exerciseName,

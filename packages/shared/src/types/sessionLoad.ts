@@ -1,6 +1,27 @@
 /**
- * Tipos para GET /clients/{id}/session-load/weekly-by-muscle (espejo OpenAPI / Pydantic).
+ * Tipos para GET /clients/{id}/session-load/weekly-by-muscle y POST /session-load/validate-draft
+ * (espejo OpenAPI / Pydantic).
+ *
+ * H4 (motor v2): volumen en pasos de 0,25 (el directo también puede ser fraccional por el
+ * descuento pliométrico) y `volume_notes` en todas las respuestas de volumen.
  */
+
+/** Ejercicio citado en una nota de volumen. */
+export interface VolumeNoteExerciseOut {
+    exercise_id: number;
+    exercise_code: string;
+    name_es: string;
+}
+
+/** Lo que el volumen excluye o no puede contar (backend: VolumeNotesOut). Nunca se oculta. */
+export interface VolumeNotesOut {
+    /** Series en bloques de calentamiento: no son volumen muscular (D1). */
+    warmup_sets_excluded: number;
+    /** Líneas sin series ni duración: cuentan 0; las completa el entrenador. */
+    lines_missing_sets: VolumeNoteExerciseOut[];
+    /** Ejercicios de fuerza sin músculo con grupo; los completa el administrador. */
+    unmapped_exercises: VolumeNoteExerciseOut[];
+}
 
 export interface WeeklyMusclePlannedLoadRowOut {
     muscle_group_id: number;
@@ -36,6 +57,7 @@ export interface WeeklyMusclePlannedLoadOut {
     sessions_in_week: number;
     expected_training_days?: number | null;
     session_slices?: WeeklySessionPlannedLoadSliceOut[] | null;
+    volume_notes: VolumeNotesOut;
 }
 
 export interface GetWeeklySessionLoadByMuscleArg {
@@ -49,10 +71,18 @@ export interface GetWeeklySessionLoadByMuscleArg {
     includeSessionBreakdown?: boolean;
 }
 
-/** POST /session-load/validate-draft (Fase B) — cuerpo JSON (snake_case). */
+/**
+ * POST /session-load/validate-draft (Fase B) — una línea del constructor (snake_case).
+ * El backend la resuelve con la misma regla que las líneas guardadas (calentamiento,
+ * isométrico por tiempo, sin series).
+ */
 export interface SessionLoadDraftExerciseIn {
     exercise_id: number;
-    planned_sets: number;
+    planned_sets?: number | null;
+    /** Segundos por serie; sin series = una serie por tiempo. */
+    planned_duration?: number | null;
+    /** Tipo de bloque de la línea; un bloque de calentamiento no suma volumen. */
+    block_type_id?: number | null;
 }
 
 export interface SessionLoadDraftValidateIn {
@@ -93,12 +123,6 @@ export interface SessionLoadHintOut {
     severity: "info" | "warning" | "excess";
 }
 
-export interface SessionLoadUnmappedExerciseOut {
-    exercise_id: number;
-    exercise_code: string;
-    name_es: string;
-}
-
 export interface SessionLoadDraftValidateOut {
     client_id: number;
     week_start: string;
@@ -110,6 +134,6 @@ export interface SessionLoadDraftValidateOut {
     axial_score?: import("./engineSafety").AxialScoreResponse;
     /** Fase 4 — safety flags per exercise in the draft */
     safety_flags?: import("./engineSafety").ExerciseSafetyResponse[];
-    /** B6 — ejercicios del borrador sin mapeo muscular volumétrico */
-    unmapped_exercises?: SessionLoadUnmappedExerciseOut[];
+    /** Notas del borrador: calentamiento excluido, líneas sin series y ejercicios sin mapeo (B6). */
+    volume_notes: VolumeNotesOut;
 }

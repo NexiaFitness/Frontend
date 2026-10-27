@@ -3,6 +3,9 @@
  *
  * Doc: DESIGN_PREMIUM.md · 13_UX_ADMIN_CATALOGO.md
  * Sin clases sueltas en pages.
+ * Más de 400 líneas (deuda previa a H4): reúne copy y tokens de listado, ficha e importación.
+ * Las pantallas nuevas (H5: revisión, biblioteca) llevan su propio *Presentation.ts; la
+ * división por pantalla de este archivo queda pendiente para el primer cambio grande en él.
  *
  * @author Frontend Team
  * @since v1.0.0
@@ -534,6 +537,7 @@ export const ADMIN_CATALOG_QUALITY_FLAG_LABELS: Record<string, string> = {
     NO_PRIMARY_PATTERN: "Patrón",
     NO_EQUIPMENT: "Material",
     INCOMPLETE_JOINT_ACTIONS: "Articulaciones",
+    MULTI_JOINT_SINGLE_ACTION: "Una sola acción articular",
     VOLUME_MAPPING: "Mapeo volumen",
 };
 

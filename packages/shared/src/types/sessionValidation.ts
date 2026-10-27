@@ -96,4 +96,6 @@ export interface SessionValidationOut {
     axial_score?: import("./engineSafety").AxialScoreResponse;
     /** Fase 4 — safety summary for all exercises in the session */
     safety_summary?: import("./engineSafety").SessionSafetySummaryOut;
+    /** H4 — calentamiento excluido, líneas sin series y ejercicios sin mapeo (null si no aplica). */
+    volume_notes?: import("./sessionLoad").VolumeNotesOut | null;
 }

@@ -78,8 +78,8 @@ export interface UseWeeklyClientVolumePanelResult {
     axialScore: import("../../types/engineSafety").AxialScoreResponse | null;
     safetyFlags: import("../../types/engineSafety").ExerciseSafetyResponse[];
     weeklyTarget: number | null;
-    /** Ejercicios del borrador sin mapeo muscular (B6). */
-    unmappedExercises: import("../../types/sessionLoad").SessionLoadUnmappedExerciseOut[];
+    /** H4: calentamiento excluido, líneas sin series y ejercicios sin mapeo (borrador o semana). */
+    volumeNotes: import("../../types/sessionLoad").VolumeNotesOut | null;
     coverageStatus: WeeklyLoadCoverageStatus | null;
     sessionsInWeek: number | null;
     expectedTrainingDays: number | null;
@@ -312,7 +312,11 @@ export function useWeeklyClientVolumePanel(
         axialScore: showDraftSafety ? draftProjection?.axial_score ?? null : null,
         safetyFlags: showDraftSafety ? draftProjection?.safety_flags ?? [] : [],
         weeklyTarget: effectiveTargetCenter,
-        unmappedExercises: showDraftSafety ? draftProjection?.unmapped_exercises ?? [] : [],
+        volumeNotes: showDraftSafety
+            ? draftProjection?.volume_notes ?? null
+            : showWeeklyConsultExtras
+              ? q.data?.volume_notes ?? null
+              : null,
         coverageStatus: showWeeklyConsultExtras ? q.data?.coverage_status ?? null : null,
         sessionsInWeek: showWeeklyConsultExtras ? q.data?.sessions_in_week ?? null : null,
         expectedTrainingDays: showWeeklyConsultExtras

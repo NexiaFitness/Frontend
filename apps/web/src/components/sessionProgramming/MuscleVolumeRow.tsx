@@ -7,7 +7,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import type { WeeklyVolumePanelRowModel, VolumeRatioHoyStyle } from "@nexia/shared";
 import {
-    formatHalfSetVolume,
+    formatSetVolume,
     formatVolumeRatioHoy,
     volumeBarWidthPct,
     volumeStatusLabel,
@@ -108,19 +108,19 @@ export const MuscleVolumeRow: React.FC<MuscleVolumeRowProps> = ({
                     <span className="tabular-nums">
                         Directo:{" "}
                         <span className="font-medium text-foreground/70">
-                            {formatHalfSetVolume(row.directSets ?? 0)}
+                            {formatSetVolume(row.directSets ?? 0)}
                         </span>
                     </span>
                     <span className="tabular-nums">
                         Indirecto:{" "}
                         <span className="font-medium text-foreground/70">
-                            {formatHalfSetVolume(row.indirectSets ?? 0)}
+                            {formatSetVolume(row.indirectSets ?? 0)}
                         </span>
                     </span>
                     <span className="tabular-nums">
                         Total:{" "}
                         <span className="font-medium text-foreground/70">
-                            {formatHalfSetVolume(totalSets)}
+                            {formatSetVolume(totalSets)}
                         </span>
                     </span>
                 </div>

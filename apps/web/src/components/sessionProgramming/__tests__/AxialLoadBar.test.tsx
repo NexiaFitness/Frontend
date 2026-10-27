@@ -11,6 +11,7 @@ function score(partial: Partial<AxialScoreResponse> & Pick<AxialScoreResponse, "
     return {
         exercises_count: 1,
         exercises_breakdown: [],
+        unverifiable_count: 0,
         ...partial,
     };
 }

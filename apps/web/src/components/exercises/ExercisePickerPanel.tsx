@@ -8,6 +8,11 @@
  * - Lista agrupada por letra inicial, busqueda en tiempo real.
  * - Fase 4: safety-check batch via motor real, alternativas integradas en panel.
  * - UX: el motor recomienda; el entrenador puede añadir con precaución (nunca bloqueo duro en UI).
+ * - H4: tres estados (seguro / contraindicado / no verificable) en ExercisePickerRow; si el lote
+ *   de seguridad falla, se avisa con reintento y ningún ejercicio se marca como seguro.
+ * - Más de 400 líneas (deuda previa, 562 antes de H4): panel, lista y vista de alternativas
+ *   comparten el estado de seguridad. H4 extrajo la fila (ExercisePickerRow); la vista de
+ *   alternativas es la siguiente extracción pendiente.
  * - Reutilizable: CreateSession, EditSession.
  *
  * @author Frontend Team
@@ -16,7 +21,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from "react";
-import { X, Search, Plus, TriangleAlert, ArrowLeft, CheckCircle2, ShieldAlert } from "lucide-react";
+import { X, Search, Plus, TriangleAlert, ArrowLeft, CheckCircle2, RotateCcw } from "lucide-react";
 import {
     useGetExercisesQuery,
     useCheckExerciseSafetyBatchMutation,
@@ -29,11 +34,15 @@ import type {
     ExerciseSafetyBatchResponse,
 } from "@nexia/shared/types/engineSafety";
 import { exerciseDisplayName } from "@nexia/shared";
+import { exerciseSafetyUiState } from "@nexia/shared/utils/exerciseSafetyState";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input } from "@/components/ui/forms";
 import { cn } from "@/lib/utils";
 import { equipmentDisplayLine } from "@/utils/exercises";
+import { Button } from "@/components/ui/buttons";
+import { ExercisePickerRow } from "./ExercisePickerRow";
+import { EXERCISE_PICKER_BATCH_ALERT, EXERCISE_PICKER_COPY } from "./exercisePickerPresentation";
 
 /** Normaliza texto para búsqueda insensible a mayúsculas y tildes. */
 function foldForSearch(value: string): string {
@@ -76,6 +85,8 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
     const [selectedExerciseIdForAlternatives, setSelectedExerciseIdForAlternatives] = useState<number | null>(null);
     const [expandedExerciseId, setExpandedExerciseId] = useState<number | null>(null);
     const [safetyResults, setSafetyResults] = useState<Map<number, ExerciseSafetyResponse>>(new Map());
+    const [safetyCheckFailed, setSafetyCheckFailed] = useState(false);
+    const [safetyRetry, setSafetyRetry] = useState(0);
 
     // Solo ejercicios con contrato completo: los incompletos no se pueden añadir (H1 R3).
     const { data, isLoading } = useGetExercisesQuery({
@@ -96,6 +107,7 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
 
     // Batch safety-check al montar o cuando cambia clientId / exercises / lesiones activas
     useEffect(() => {
+        setSafetyCheckFailed(false);
         if (!clientId || exercises.length === 0) {
             setSafetyResults(new Map());
             return;
@@ -111,10 +123,11 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
                 setSafetyResults(map);
             })
             .catch(() => {
-                // Fallback: no safety data => all exercises appear safe
+                // H4: no data is never «safe»; rows stay unchecked and the error is shown.
                 setSafetyResults(new Map());
+                setSafetyCheckFailed(true);
             });
-    }, [clientId, exercises, checkBatch, activeInjuriesKey]);
+    }, [clientId, exercises, checkBatch, activeInjuriesKey, safetyRetry]);
 
     const filteredAndGrouped = useMemo(() => {
         const term = foldForSearch(search.trim());
@@ -197,6 +210,8 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
                     setSearch={setSearch}
                     filteredAndGrouped={filteredAndGrouped}
                     safetyResults={safetyResults}
+                    safetyCheckFailed={safetyCheckFailed}
+                    onRetrySafety={() => setSafetyRetry((n) => n + 1)}
                     expandedExerciseId={expandedExerciseId}
                     setExpandedExerciseId={setExpandedExerciseId}
                     onSelect={onSelect}
@@ -225,6 +240,8 @@ interface ListViewProps {
     setSearch: (s: string) => void;
     filteredAndGrouped: [string, Exercise[]][];
     safetyResults: Map<number, ExerciseSafetyResponse>;
+    safetyCheckFailed: boolean;
+    onRetrySafety: () => void;
     expandedExerciseId: number | null;
     setExpandedExerciseId: (id: number | null) => void;
     onSelect: (exercise: Exercise) => void;
@@ -239,6 +256,8 @@ const ListView: React.FC<ListViewProps> = ({
     setSearch,
     filteredAndGrouped,
     safetyResults,
+    safetyCheckFailed,
+    onRetrySafety,
     expandedExerciseId,
     setExpandedExerciseId,
     onSelect,
@@ -261,6 +280,20 @@ const ListView: React.FC<ListViewProps> = ({
                     <span>Verificando seguridad...</span>
                 </div>
             )}
+
+            {safetyCheckFailed ? (
+                <Alert
+                    variant="error"
+                    className={EXERCISE_PICKER_BATCH_ALERT}
+                    description={EXERCISE_PICKER_COPY.batchFailed}
+                    action={
+                        <Button variant="ghost-primary" size="sm" onClick={onRetrySafety}>
+                            <RotateCcw aria-hidden />
+                            {EXERCISE_PICKER_COPY.retry}
+                        </Button>
+                    }
+                />
+            ) : null}
 
             {/* Busqueda */}
             <div className="relative mx-3 mt-3 min-w-0">
@@ -295,89 +328,20 @@ const ListView: React.FC<ListViewProps> = ({
                             <div className="space-y-0.5">
                                 {groupExercises.map((ex) => {
                                     const safety = safetyResults.get(ex.id);
-                                    const isUnsafe = safety ? !safety.is_safe : false;
                                     const isExpanded = expandedExerciseId === ex.id;
-
                                     return (
-                                        <div key={ex.id}>
-                                            <button
-                                                type="button"
-                                                aria-disabled={isUnsafe}
-                                                onClick={() => {
-                                                    if (isUnsafe) {
-                                                        setExpandedExerciseId(isExpanded ? null : ex.id);
-                                                    } else {
-                                                        onSelect(ex);
-                                                    }
-                                                }}
-                                                title={
-                                                    isUnsafe
-                                                        ? safety?.reason?.trim() ||
-                                                          "Contraindicado por lesión activa"
-                                                        : undefined
-                                                }
-                                                className={cn(
-                                                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors",
-                                                    isUnsafe
-                                                        ? "cursor-pointer opacity-90 hover:bg-surface-2"
-                                                        : "hover:bg-surface-2"
-                                                )}
-                                            >
-                                                {isUnsafe && (
-                                                    <TriangleAlert className="h-3 w-3 shrink-0 text-destructive" />
-                                                )}
-                                                <span className="flex-1 truncate text-xs">
-                                                    {exerciseDisplayName(ex)}
-                                                </span>
-                                                {isUnsafe ? (
-                                                    <span className="rounded bg-destructive/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-destructive ring-1 ring-destructive/40">
-                                                        LESIÓN
-                                                    </span>
-                                                ) : (
-                                                    <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                                                )}
-                                            </button>
-
-                                            {/* Expanded detail for unsafe exercise */}
-                                            {isExpanded && safety && (
-                                                <div className="mx-1 mb-1 rounded-md border border-destructive/30 bg-destructive/10 p-2 space-y-2">
-                                                    <div className="flex items-start gap-2">
-                                                        <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
-                                                        <div className="min-w-0">
-                                                            <p className="text-[11px] font-semibold text-destructive">
-                                                                Contraindicado
-                                                            </p>
-                                                            {safety.reason && (
-                                                                <p className="text-[11px] text-destructive/80 leading-snug">
-                                                                    {safety.reason}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex flex-col gap-2">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => onShowAlternatives(ex.id)}
-                                                            className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-2 py-1.5 text-[11px] font-medium text-primary transition-colors hover:bg-primary/20"
-                                                        >
-                                                            <ShieldAlert className="h-3 w-3 shrink-0" />
-                                                            Ver alternativas
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                onSelect(ex);
-                                                                setExpandedExerciseId(null);
-                                                            }}
-                                                            className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-warning/40 bg-warning/10 px-2 py-1.5 text-[11px] font-medium text-warning transition-colors hover:bg-warning/20"
-                                                        >
-                                                            <Plus className="h-3 w-3 shrink-0" />
-                                                            Añadir con precaución
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
+                                        <ExercisePickerRow
+                                            key={ex.id}
+                                            exercise={ex}
+                                            safety={safety}
+                                            state={exerciseSafetyUiState(safety, {
+                                                checkFailed: safetyCheckFailed,
+                                            })}
+                                            isExpanded={isExpanded}
+                                            onToggle={() => setExpandedExerciseId(isExpanded ? null : ex.id)}
+                                            onSelect={onSelect}
+                                            onShowAlternatives={onShowAlternatives}
+                                        />
                                     );
                                 })}
                             </div>

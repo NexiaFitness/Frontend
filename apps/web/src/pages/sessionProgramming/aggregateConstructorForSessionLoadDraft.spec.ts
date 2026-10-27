@@ -1,6 +1,7 @@
 /**
  * aggregateConstructorForSessionLoadDraft.spec.ts — Contrato validate-draft desde el constructor.
- * Casos críticos: filas sin ejercicio no inflan el borrador; mismo ejercicio en varias filas suma series.
+ * Casos críticos: filas sin ejercicio no inflan el borrador; mismo ejercicio en varias filas suma
+ * series; cada línea lleva su block_type_id (calentamiento y fuerza no se mezclan, H4).
  */
 
 import { describe, expect, it } from "vitest";
@@ -59,7 +60,7 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
                 exercises: [ex({ exerciseId: 10 })],
             }),
         ]);
-        expect(out).toEqual([{ exercise_id: 10, planned_sets: 4 }]);
+        expect(out).toEqual([{ exercise_id: 10, planned_sets: 4, block_type_id: 1 }]);
     });
 
     it("dos filas con el mismo exercise_id acumulan series (comportamiento actual)", () => {
@@ -67,7 +68,7 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
             row({ id: "r1", sets: 3, exercises: [ex({ exerciseId: 7 })] }),
             row({ id: "r2", sets: 2, exercises: [ex({ exerciseId: 7 })] }),
         ]);
-        expect(out).toEqual([{ exercise_id: 7, planned_sets: 5 }]);
+        expect(out).toEqual([{ exercise_id: 7, planned_sets: 5, block_type_id: 1 }]);
     });
 
     it("sets null en fila no aporta volumen (se omite)", () => {
@@ -93,7 +94,7 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
                 ],
             }),
         ]);
-        expect(out).toEqual([{ exercise_id: 12, planned_sets: 3 }]);
+        expect(out).toEqual([{ exercise_id: 12, planned_sets: 3, block_type_id: 1 }]);
     });
 
     it("varios ejercicios en la misma fila repiten sets de la fila para cada uno", () => {
@@ -106,8 +107,8 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
         ]);
         expect(out).toEqual(
             expect.arrayContaining([
-                { exercise_id: 1, planned_sets: 3 },
-                { exercise_id: 2, planned_sets: 3 },
+                { exercise_id: 1, planned_sets: 3, block_type_id: 1 },
+                { exercise_id: 2, planned_sets: 3, block_type_id: 1 },
             ])
         );
         expect(out).toHaveLength(2);
@@ -157,7 +158,7 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
                 exercises: [ex({ exerciseId: 99 })],
             }),
         ]);
-        expect(out).toEqual([{ exercise_id: 99, planned_sets: 3 }]);
+        expect(out).toEqual([{ exercise_id: 99, planned_sets: 3, block_type_id: 1 }]);
     });
 
     it("dropset: volumen = rondas, no pasos × rondas", () => {
@@ -193,7 +194,7 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
                 exercises: [ex({ exerciseId: 42 })],
             }),
         ]);
-        expect(out).toEqual([{ exercise_id: 42, planned_sets: 3 }]);
+        expect(out).toEqual([{ exercise_id: 42, planned_sets: 3, block_type_id: 1 }]);
     });
 
     it("for_time: volumen = rondas (row.rounds)", () => {
@@ -207,8 +208,8 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
         ]);
         expect(out).toEqual(
             expect.arrayContaining([
-                { exercise_id: 10, planned_sets: 4 },
-                { exercise_id: 11, planned_sets: 4 },
+                { exercise_id: 10, planned_sets: 4, block_type_id: 1 },
+                { exercise_id: 11, planned_sets: 4, block_type_id: 1 },
             ])
         );
     });
@@ -235,7 +236,7 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
                 exercises: [ex({ exerciseId: 20 })],
             }),
         ]);
-        expect(out).toEqual([{ exercise_id: 20, planned_sets: 5 }]);
+        expect(out).toEqual([{ exercise_id: 20, planned_sets: 5, block_type_id: 1 }]);
     });
 
     it("emom sin rondas → no aporta volumen", () => {
@@ -263,9 +264,19 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
         ]);
         expect(out).toEqual(
             expect.arrayContaining([
-                { exercise_id: 1, planned_sets: 5 },
-                { exercise_id: 2, planned_sets: 5 },
+                { exercise_id: 1, planned_sets: 5, block_type_id: 1 },
+                { exercise_id: 2, planned_sets: 5, block_type_id: 1 },
             ])
         );
+    });
+    it("mismo ejercicio en bloques distintos → una línea por tipo de bloque (H4)", () => {
+        const out = aggregateConstructorRowsForSessionLoadDraft([
+            row({ id: "warmup", blockTypeId: 7, sets: 2, exercises: [ex({ exerciseId: 3 })] }),
+            row({ id: "strength", blockTypeId: 1, sets: 4, exercises: [ex({ exerciseId: 3 })] }),
+        ]);
+        expect(out).toEqual([
+            { exercise_id: 3, planned_sets: 2, block_type_id: 7 },
+            { exercise_id: 3, planned_sets: 4, block_type_id: 1 },
+        ]);
     });
 });

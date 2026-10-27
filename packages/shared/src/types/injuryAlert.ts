@@ -2,6 +2,7 @@
  * injuryAlert.ts — Contrato POST /injuries/check-alert (OpenAPI verificado).
  */
 
+import type { ExerciseSafetyStatus, ExerciseUnverifiableReason } from "./engineSafety";
 import type { InjuryWithDetails } from "./injuries";
 
 /** Valores emitidos por BE: pain_level < 4 → warning; ≥ 4 → danger */
@@ -14,6 +15,9 @@ export interface InjuryAlertCheck {
 
 export interface InjuryAlert {
     has_conflict: boolean;
+    /** H4: not_verifiable = sin conflicto conocido, pero no se pudo comprobar. */
+    status: ExerciseSafetyStatus;
+    unverifiable_reason?: ExerciseUnverifiableReason | null;
     severity?: InjuryAlertSeverity | null;
     message?: string | null;
     injury_details?: InjuryWithDetails | null;

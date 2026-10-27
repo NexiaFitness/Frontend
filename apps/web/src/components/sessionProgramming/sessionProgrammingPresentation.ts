@@ -254,3 +254,14 @@ export const SESSION_PROGRAMMING_DAY_CONTEXT_GRID = cn(
     "md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:gap-4",
     "lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(220px,0.95fr)] lg:gap-3 xl:gap-4",
 );
+
+/** H4 — notas de volumen (lo que no cuenta o falta). Avisos: `Alert`; informativas: línea meta. */
+export const SESSION_PROGRAMMING_VOLUME_NOTES = "space-y-2";
+
+export const SESSION_PROGRAMMING_VOLUME_NOTE_ALERT = "text-xs";
+
+export const SESSION_PROGRAMMING_VOLUME_NOTE_INFO = cn(
+    "flex items-start gap-2 text-xs leading-relaxed text-muted-foreground",
+);
+
+export const SESSION_PROGRAMMING_VOLUME_NOTE_INFO_ICON = "mt-0.5 h-3.5 w-3.5 shrink-0";

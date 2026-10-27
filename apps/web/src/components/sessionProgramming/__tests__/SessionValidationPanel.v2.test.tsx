@@ -48,22 +48,24 @@ const basePayload: SessionValidationOut = {
         threshold: 100,
         exceeds_threshold: false,
         exercises_count: 1,
-        exercises_breakdown: [{ exercise_id: 10, exercise_name: "Press banca", axial_load: "moderada", score: 40 }],
+        exercises_breakdown: [{ exercise_id: 10, exercise_name: "Press banca", axial_load: "moderada", score: 40, verifiable: true }], unverifiable_count: 0,
     },
     safety_summary: {
         total_checks: 2,
         blocking_count: 1,
         warning_count: 1,
-        safe_count: 0,
+        safe_count: 0, unverifiable_count: 0,
         details: [
             {
                 is_safe: false,
+                status: "unsafe",
                 blocking: true,
                 reason: "Contraindicación rodilla",
                 suggested_alternatives: [],
             },
             {
                 is_safe: false,
+                status: "unsafe",
                 blocking: false,
                 reason: "Precaución hombro",
                 suggested_alternatives: [],

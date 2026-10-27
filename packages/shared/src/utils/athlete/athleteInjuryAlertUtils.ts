@@ -1,5 +1,8 @@
 /**
  * athleteInjuryAlertUtils.ts — Utilidades alerta lesión atleta (F3b-FE-01).
+ *
+ * H4: un ejercicio «no verificable» (sin acciones articulares en el catálogo) también se
+ * avisa, con su propio texto: no afirma un conflicto, dice que no se pudo comprobar.
  */
 
 import type { InjuryAlert, SessionExerciseRef } from "../../types/injuryAlert";
@@ -25,7 +28,19 @@ export function collectSessionExerciseRefs(view: SessionStructureView): SessionE
     }));
 }
 
+/** El aviso se muestra si hay conflicto o si no se pudo comprobar (nunca se calla). */
+export function injuryAlertNeedsNotice(alert: InjuryAlert): boolean {
+    return alert.has_conflict || alert.status === "not_verifiable";
+}
+
+export function injuryAlertIsUnverifiable(alert: InjuryAlert): boolean {
+    return alert.status === "not_verifiable";
+}
+
 export function buildInjuryConflictMessage(alert: InjuryAlert): string {
+    if (injuryAlertIsUnverifiable(alert)) {
+        return "No se ha podido comprobar este ejercicio con tu lesión. Pregúntale a tu entrenador.";
+    }
     const details = alert.injury_details;
     if (!details) {
         return "Este ejercicio puede afectar tu lesión activa.";
@@ -43,6 +58,9 @@ export function buildInjuryConflictMessage(alert: InjuryAlert): string {
 
 /** Copy corto para callouts móvil (run + preview). */
 export function buildInjuryConflictMessageShort(alert: InjuryAlert): string {
+    if (injuryAlertIsUnverifiable(alert)) {
+        return "Sin comprobar con tu lesión";
+    }
     const details = alert.injury_details;
     if (!details) {
         return "Precaución con tu lesión activa.";
