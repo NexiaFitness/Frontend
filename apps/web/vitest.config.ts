@@ -55,7 +55,14 @@ export default defineConfig({
         pool: 'threads',
         poolOptions: {
             threads: {
-                singleThread: false
+                singleThread: false,
+                // Cap de workers: con el default (un hilo por CPU) jsdom + MSW +
+                // 170+ archivos se sobre-suscriben bajo Windows y los tests
+                // asincrónicos se degradan >10x, expirando testTimeout sin que
+                // haya un bug real (verificado: 907/907 en verde y ~15% más
+                // rápido con 5 workers que con el default).
+                maxThreads: 5,
+                minThreads: 5
             }
         }
     },

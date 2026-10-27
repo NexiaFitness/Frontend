@@ -9,13 +9,20 @@
  */
 
 import "@testing-library/jest-dom";
+import { cleanup, configure } from "@testing-library/react";
 import { afterEach, beforeAll, afterAll, vi } from "vitest";
-import { cleanup } from "@testing-library/react";
 import { server } from "./utils/msw";
 import "@/test-utils/mocks/reactRouterMocks";
 import "@/test-utils/mocks/reactReduxMocks";
 import { initStorage } from '@nexia/shared/storage/IStorage';
 import type { IStorage } from '@nexia/shared/storage/IStorage';
+
+// El default de Testing Library es 1000ms. En la suite completa (jsdom + MSW +
+// 170+ archivos) el runner se satura bajo Windows y las queries asíncronas
+// (findBy*) pueden exceder ese margen sin que haya un bug real — los mismos
+// tests pasan aislados. Mismo criterio que testTimeout/hookTimeout en
+// vitest.config.ts: dar margen sin debilitar aserciones.
+configure({ asyncUtilTimeout: 10000 });
 
 // REMOVIDO: authApiMocks causa conflicto con MSW
 // import "@/test-utils/mocks/authApiMocks";
