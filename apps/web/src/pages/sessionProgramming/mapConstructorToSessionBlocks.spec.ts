@@ -9,6 +9,7 @@ import {
     mapConstructorRowsToCreateBlockGroups,
     mapConstructorRowsToFullUpdateBlocks,
 } from "./mapConstructorToSessionBlocks";
+import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 
 function singleSetRow(partial: Partial<ConstructorRow> & { id: string }): ConstructorRow {
     return {
@@ -75,5 +76,58 @@ describe("mapConstructorRowsToCreateBlockGroups", () => {
         expect(groups).toHaveLength(1);
         expect(groups[0].exercisePayloads).toHaveLength(2);
         expect(groups[0].exercisePayloads.map((e) => e.order_in_block)).toEqual([1, 2]);
+    });
+});
+
+/**
+ * QA H4 (sesión 4454): un EMOM de 6 rondas guarda planned_sets = 6 por ejercicio, y el
+ * borrador de validate-draft cuenta lo mismo. Contrato en volumeEquivalentSets.ts y en
+ * backend/docs/modules/session_load.md.
+ */
+describe("EMOM: planned_sets guardado = volumen del borrador", () => {
+    const emomExercise = (id: string, exerciseId: number) => ({
+        id,
+        exerciseId,
+        exerciseName: "Test",
+        plannedReps: "5",
+        plannedWeight: 60,
+        plannedAssistanceKg: null,
+        plannedDuration: null,
+        effortCharacter: null,
+        effortValue: null,
+        notes: null,
+    });
+
+    it("6 rondas y dos ventanas: cada ejercicio guarda 6 y el borrador cuenta 6", () => {
+        const row: ConstructorRow = {
+            id: "row-emom",
+            blockInstanceId: "emom-1",
+            blockTypeId: 24,
+            setType: SET_TYPE.EMOM,
+            sets: null,
+            rounds: 6,
+            timeCap: null,
+            intervalSeconds: 60,
+            exercises: [],
+            rest: null,
+            emomWindows: [
+                { id: "w1", exercises: [emomExercise("ex-a", 11)] },
+                { id: "w2", exercises: [emomExercise("ex-b", 36)] },
+            ],
+        };
+
+        const [block] = mapConstructorRowsToFullUpdateBlocks([row]);
+        expect(block.rounds).toBe(6);
+        expect(
+            block.exercises.map((e) => [e.exercise_id, e.planned_sets, e.superset_group_id]),
+        ).toEqual([
+            [11, 6, 1],
+            [36, 6, 2],
+        ]);
+
+        expect(aggregateConstructorRowsForSessionLoadDraft([row])).toEqual([
+            { exercise_id: 11, planned_sets: 6, block_type_id: 24 },
+            { exercise_id: 36, planned_sets: 6, block_type_id: 24 },
+        ]);
     });
 });
