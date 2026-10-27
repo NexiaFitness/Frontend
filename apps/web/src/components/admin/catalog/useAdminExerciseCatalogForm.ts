@@ -137,6 +137,10 @@ export function useAdminExerciseCatalogForm({
     const isTogglingActive = isDeactivating || isReactivating;
     const isSaving = isCreating || isUpdating || isMarking || isTogglingActive;
 
+    // Entre la llegada del catálogo y el flush del efecto de hidratación el draft aún
+    // está vacío: sin este gate el form renderizaría un commit con campos en blanco.
+    const awaitingHydration = mode === "edit" && catalog != null && catalog.id !== hydratedPk;
+
     useEffect(() => {
         if (mode === "create") {
             const empty = emptyDraft();
@@ -398,7 +402,7 @@ export function useAdminExerciseCatalogForm({
         draft,
         setDraft,
         isDirty,
-        isLoadingCatalog: mode === "edit" && isLoadingCatalog,
+        isLoadingCatalog: mode === "edit" && (isLoadingCatalog || awaitingHydration),
         isCatalogError: mode === "edit" && isCatalogError,
         isSaving,
         clientErrors,
