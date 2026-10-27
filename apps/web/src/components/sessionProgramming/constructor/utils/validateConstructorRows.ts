@@ -146,7 +146,7 @@ function validateAmrap(issues: ConstructorValidationIssue[], row: ConstructorRow
             issues,
             row,
             "rounds",
-            "Indica las rondas objetivo del AMRAP (mínimo 1). Sin rondas no se cuenta volumen."
+            "Indica las rondas objetivo del AMRAP (mínimo 1)."
         );
     }
     requireFilledExercises(issues, row, normalized.exercises, false);

@@ -159,7 +159,8 @@ export async function createWeightIntegritySession(
       set_type: "amrap",
       time_cap: 600,
       exercises: [
-        { exercise_id: exA, order_in_block: 1, set_type: "amrap", planned_reps: "10" },
+        // Bloques por tiempo: planned_sets = rondas del bloque (1 sin rondas), como el constructor.
+        { exercise_id: exA, order_in_block: 1, set_type: "amrap", planned_sets: 1, planned_reps: "10" },
       ],
     },
     {
@@ -169,7 +170,7 @@ export async function createWeightIntegritySession(
       interval_seconds: 60,
       rounds: 2,
       exercises: [
-        { exercise_id: exA, order_in_block: 1, set_type: "emom", superset_group_id: 1, planned_reps: "5" },
+        { exercise_id: exA, order_in_block: 1, set_type: "emom", superset_group_id: 1, planned_sets: 2, planned_reps: "5" },
       ],
     },
     {
@@ -178,7 +179,7 @@ export async function createWeightIntegritySession(
       set_type: "for_time",
       rounds: 1,
       exercises: [
-        { exercise_id: exA, order_in_block: 1, set_type: "for_time", planned_reps: "15" },
+        { exercise_id: exA, order_in_block: 1, set_type: "for_time", planned_sets: 1, planned_reps: "15" },
       ],
     },
   ];

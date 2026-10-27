@@ -214,7 +214,7 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
         );
     });
 
-    it("for_time sin rondas → no aporta volumen", () => {
+    it("for_time sin rondas → se expande a las rondas por defecto (3 líneas de 1)", () => {
         const out = aggregateConstructorRowsForSessionLoadDraft([
             row({
                 id: "r1",
@@ -223,7 +223,7 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
                 exercises: [ex({ exerciseId: 10 })],
             }),
         ]);
-        expect(out).toEqual([]);
+        expect(out).toEqual([{ exercise_id: 10, planned_sets: 3, block_type_id: 1 }]);
     });
 
     it("emom: volumen = rondas (row.rounds)", () => {
@@ -239,7 +239,7 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
         expect(out).toEqual([{ exercise_id: 20, planned_sets: 5, block_type_id: 1 }]);
     });
 
-    it("emom sin rondas → no aporta volumen", () => {
+    it("emom sin rondas → cuenta 1, como el backend (D3a)", () => {
         const out = aggregateConstructorRowsForSessionLoadDraft([
             row({
                 id: "r1",
@@ -249,7 +249,7 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
                 exercises: [ex({ exerciseId: 20 })],
             }),
         ]);
-        expect(out).toEqual([]);
+        expect(out).toEqual([{ exercise_id: 20, planned_sets: 1, block_type_id: 1 }]);
     });
 
     it("amrap: volumen = rondas objetivo (row.rounds)", () => {

@@ -4,6 +4,9 @@
  * El backend suma planned_sets por línea SessionBlockExercise sin lógica por set_type; desde H4
  * excluye él solo los bloques de calentamiento y cuenta 1 serie a una línea por tiempo sin
  * series (volume_lines). Aquí solo se calcula lo que se va a persistir.
+ * Bloques por tiempo (EMOM, AMRAP, For time): misma regla que el backend
+ * (app/domain/timed_block_planned_sets.py), que rechaza con 422 una línea que no cuadre:
+ * rondas del bloque, o 1 si el bloque no tiene rondas (D3a).
  * Este módulo es la única fuente de verdad FE para:
  * - aggregateConstructorForSessionLoadDraft (validate-draft en vivo)
  * - buildExercisePayload (planned_sets al persistir)
@@ -35,6 +38,11 @@ export function getPersistLinePlannedSets(
     return Math.max(0, getRowVolumeSetsPerExercise(row));
 }
 
+/** Rondas efectivas de un bloque por tiempo: las del bloque, o 1 sin rondas (D2/D3a). */
+function timedBlockRounds(rounds: number | null): number {
+    return rounds != null && rounds >= 1 ? rounds : 1;
+}
+
 /** Series equivalentes por ejercicio de la fila (validate-draft, hints en vivo). */
 export function getRowVolumeSetsPerExercise(row: ConstructorRow): number {
     switch (row.setType) {
@@ -58,7 +66,7 @@ export function getRowVolumeSetsPerExercise(row: ConstructorRow): number {
         case SET_TYPE.FOR_TIME:
         case SET_TYPE.EMOM:
         case SET_TYPE.AMRAP:
-            return row.rounds ?? row.sets ?? 0;
+            return timedBlockRounds(row.rounds);
         default:
             return row.sets ?? 0;
     }

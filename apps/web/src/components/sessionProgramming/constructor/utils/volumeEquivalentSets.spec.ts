@@ -109,7 +109,7 @@ describe("B6 — volumeEquivalentSets", () => {
         draft.forEach((line) => expect(line.planned_sets).toBe(5));
     });
 
-    it("amrap SIN rondas objetivo: volumen programado = 0 (gap producto)", () => {
+    it("amrap SIN rondas objetivo: cuenta 1, como el backend (D3a)", () => {
         const r = baseRow({
             setType: SET_TYPE.AMRAP,
             rounds: null,
@@ -117,8 +117,8 @@ describe("B6 — volumeEquivalentSets", () => {
             timeCap: 15,
             exercises: [press],
         });
-        expect(getRowVolumeSetsPerExercise(r)).toBe(0);
-        expect(aggregateConstructorRowsForSessionLoadDraft([r])).toEqual([]);
+        expect(getRowVolumeSetsPerExercise(r)).toBe(1);
+        expect(aggregateConstructorRowsForSessionLoadDraft([r]).map((l) => l.planned_sets)).toEqual([1]);
     });
 
     it("emom: usa rounds como amrap", () => {
@@ -130,7 +130,7 @@ describe("B6 — volumeEquivalentSets", () => {
         expect(getRowVolumeSetsPerExercise(r)).toBe(8);
     });
 
-    it("for_time: usa rounds ?? sets", () => {
+    it("for_time: usa las rondas del bloque", () => {
         const r = baseRow({
             setType: SET_TYPE.FOR_TIME,
             rounds: 4,
