@@ -222,7 +222,7 @@ export const SESSION_PROGRAMMING_FOOTER_SHELL = cn(
 );
 
 export const SESSION_PROGRAMMING_FOOTER_ROW = cn(
-    "pointer-events-auto flex w-full min-w-0 max-w-full flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between",
+    "flex w-full min-w-0 max-w-full flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between",
 );
 
 export const SESSION_PROGRAMMING_FOOTER_ACTIONS = cn(

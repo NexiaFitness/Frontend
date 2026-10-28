@@ -48,4 +48,43 @@ describe("applyConstructorExerciseCatalogNames", () => {
         const next = applyConstructorExerciseCatalogNames(rows, new Map());
         expect(next).toBe(rows);
     });
+
+    it("resuelve nombres dentro de ventanas EMOM", () => {
+        const map = new Map<number, string>([
+            [16, "Press banca"],
+            [18, "Press militar"],
+        ]);
+        const rows: ConstructorRow[] = [
+            {
+                ...rowWithExercise(14, "Ejercicio #14"),
+                setType: SET_TYPE.EMOM,
+                exercises: [],
+                emomWindows: [
+                    {
+                        id: "w1",
+                        exercises: [
+                            {
+                                ...rowWithExercise(16, "Ejercicio #16").exercises[0],
+                                exerciseId: 16,
+                                exerciseName: "Ejercicio #16",
+                            },
+                        ],
+                    },
+                    {
+                        id: "w2",
+                        exercises: [
+                            {
+                                ...rowWithExercise(18, "Ejercicio #18").exercises[0],
+                                exerciseId: 18,
+                                exerciseName: "Ejercicio #18",
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
+        const next = applyConstructorExerciseCatalogNames(rows, map);
+        expect(next[0].emomWindows?.[0].exercises[0].exerciseName).toBe("Press banca");
+        expect(next[0].emomWindows?.[1].exercises[0].exerciseName).toBe("Press militar");
+    });
 });

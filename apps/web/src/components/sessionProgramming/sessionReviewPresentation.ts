@@ -9,10 +9,7 @@ import {
     PLATFORM_DASHBOARD_FOOTER_BTN,
     PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
 } from "@/components/ui/forms/platformFormPresentation";
-import {
-    PLATFORM_PAGE_WITH_FIXED_FOOTER,
-    PLATFORM_PAGE_SHELL,
-} from "@/components/ui/surface/platformPremiumPresentation";
+import { PLATFORM_PAGE_WITH_FIXED_FOOTER } from "@/components/ui/surface/platformPremiumPresentation";
 import {
     NEXIA_GLASS_CARD,
     NEXIA_GLASS_CARD_DESKTOP,
@@ -32,8 +29,7 @@ import {
 
 export const SESSION_REVIEW_PAGE = cn(
     PLATFORM_PAGE_WITH_FIXED_FOOTER,
-    PLATFORM_PAGE_SHELL,
-    "relative space-y-5 px-4 sm:space-y-6 lg:px-8",
+    "relative min-w-0 space-y-5 px-4 sm:space-y-6 lg:px-8",
 );
 
 export const SESSION_REVIEW_GLOW =
@@ -180,7 +176,7 @@ export function sessionReviewConclusionItemClass(tone: "neutral" | "info" | "cau
 }
 
 export const SESSION_REVIEW_FOOTER_ROW = cn(
-    "pointer-events-auto flex w-full min-w-0 flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between",
+    "flex w-full min-w-0 flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between",
 );
 
 export const SESSION_REVIEW_FOOTER_MGMT = cn(
