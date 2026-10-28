@@ -27,6 +27,8 @@ import type { MonthlyMetricsResponseV2, MonthlyBucketV2 } from "../../types/metr
 
 export interface UseMonthlyMetricsV2Params {
     clientId: number;
+    /** Entrenador de alcance. Obligatorio para el admin: GET /training-sessions/ con client_id lo exige. */
+    trainerId?: number;
     startDate: string; // ISO date (YYYY-MM-DD)
     endDate: string; // ISO date (YYYY-MM-DD)
     w_fase?: number; // Phase weight 0.6-1.3, default 1.0
@@ -60,7 +62,7 @@ export interface UseMonthlyMetricsV2Result {
 export function useMonthlyMetricsV2(
     params: UseMonthlyMetricsV2Params
 ): UseMonthlyMetricsV2Result {
-    const { clientId, startDate, endDate, w_fase = 1.0 } = params;
+    const { clientId, trainerId, startDate, endDate, w_fase = 1.0 } = params;
 
     // Paso 1: Obtener sesiones filtradas por rango de fechas
     const {
@@ -70,6 +72,7 @@ export function useMonthlyMetricsV2(
         refetch: refetchSessions,
     } = useClientSessionsByDateRange({
         clientId,
+        trainerId,
         startDate,
         endDate,
     });

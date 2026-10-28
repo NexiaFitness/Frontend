@@ -12,6 +12,8 @@
  * - El backend no soporta filtrado por rango de fechas directamente
  * - Por lo tanto, obtenemos todas las sesiones y filtramos en frontend
  * - Para optimización futura, considerar paginación o límite de sesiones
+ * - trainerId: alcance explícito del admin (vista supervisada); el entrenador lo omite
+ *   porque el backend lo resuelve desde el token
  * 
  * @author Nelson Valero
  * @since v5.6.0 - Fase 1: Preparación V2
@@ -25,6 +27,8 @@ export interface UseClientSessionsByDateRangeParams {
     clientId: number;
     startDate: string; // ISO date (YYYY-MM-DD)
     endDate: string; // ISO date (YYYY-MM-DD)
+    /** Entrenador de alcance. Obligatorio para el admin: GET /training-sessions/ con client_id lo exige. */
+    trainerId?: number;
     skip?: number;
     limit?: number;
 }
@@ -55,7 +59,7 @@ export interface UseClientSessionsByDateRangeResult {
 export function useClientSessionsByDateRange(
     params: UseClientSessionsByDateRangeParams
 ): UseClientSessionsByDateRangeResult {
-    const { clientId, startDate, endDate, skip = 0, limit = 1000 } = params;
+    const { clientId, startDate, endDate, trainerId, skip = 0, limit = 1000 } = params;
 
     // Obtener todas las sesiones del cliente (sin filtro de fecha en backend)
     const {
@@ -65,6 +69,7 @@ export function useClientSessionsByDateRange(
         refetch: refetchQuery,
     } = useGetClientTrainingSessionsQuery({
         clientId,
+        trainerId,
         skip,
         limit,
     });

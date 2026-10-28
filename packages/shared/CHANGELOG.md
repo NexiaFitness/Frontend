@@ -1,5 +1,12 @@
 # Changelog — @nexia/shared
 
+## 3.1.0 — 2026-10-28
+
+### Added (admin: pestaña Progreso en la vista supervisada)
+
+- `getClientTrainingSessions` y `getClientTrainingPlans` (`clientsApi`): `trainerId` opcional, enviado como `trainer_id`. El backend lo exige al admin con `client_id`.
+- `useClientSessionsByDateRange`, `useWeeklyMetricsV2`, `useMonthlyMetricsV2`, `useDailyMetricsV2` y `useMetricsAlertsV2`: `trainerId` opcional que se pasa a la consulta de sesiones. Lo fija quien monta la vista (el admin, con el entrenador de la URL); nunca se deduce del rol. El entrenador lo omite.
+
 ## 3.0.0 — 2026-10-27
 
 ### Breaking (cierre de H4, D1)

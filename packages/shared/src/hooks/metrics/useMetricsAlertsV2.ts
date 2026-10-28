@@ -27,6 +27,8 @@ import type { CheckThresholdsResponseV2, ThresholdAlertV2 } from "../../types/me
 
 export interface UseMetricsAlertsV2Params {
     clientId: number;
+    /** Entrenador de alcance. Obligatorio para el admin: GET /training-sessions/ con client_id lo exige. */
+    trainerId?: number;
     startDate: string; // ISO date (YYYY-MM-DD)
     endDate: string; // ISO date (YYYY-MM-DD)
     daily_threshold?: number; // Default 80.0
@@ -73,6 +75,7 @@ export function useMetricsAlertsV2(
 ): UseMetricsAlertsV2Result {
     const {
         clientId,
+        trainerId,
         startDate,
         endDate,
         daily_threshold = 80.0,
@@ -89,6 +92,7 @@ export function useMetricsAlertsV2(
         refetch: refetchSessions,
     } = useClientSessionsByDateRange({
         clientId,
+        trainerId,
         startDate,
         endDate,
     });

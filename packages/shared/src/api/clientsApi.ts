@@ -631,11 +631,23 @@ export const clientsApi = baseApi.injectEndpoints({
         /**
          * Training plans del cliente
          */
-        getClientTrainingPlans: builder.query<TrainingPlanInstance[], { clientId: number; skip?: number; limit?: number }>({
-            query: ({ clientId, skip = 0, limit = 100 }) => ({
-                url: `/training-plans/?client_id=${clientId}&skip=${skip}&limit=${limit}`,
-                method: "GET",
-            }),
+        getClientTrainingPlans: builder.query<
+            TrainingPlanInstance[],
+            { clientId: number; skip?: number; limit?: number; trainerId?: number }
+        >({
+            query: ({ clientId, skip = 0, limit = 100, trainerId }) => {
+                const params = new URLSearchParams();
+                params.set("client_id", String(clientId));
+                params.set("skip", String(skip));
+                params.set("limit", String(limit));
+                if (trainerId != null) {
+                    params.set("trainer_id", String(trainerId));
+                }
+                return {
+                    url: `/training-plans/?${params.toString()}`,
+                    method: "GET",
+                };
+            },
             providesTags: (result, error, { clientId }) => [
                 { type: "Client", id: `PLANS-${clientId}` },
             ],
@@ -648,11 +660,23 @@ export const clientsApi = baseApi.injectEndpoints({
         /**
          * Sesiones de entrenamiento del cliente
          */
-        getClientTrainingSessions: builder.query<TrainingSession[], { clientId: number; skip?: number; limit?: number }>({
-            query: ({ clientId, skip = 0, limit = 100 }) => ({
-                url: `/training-sessions/?client_id=${clientId}&skip=${skip}&limit=${limit}`,
-                method: "GET",
-            }),
+        getClientTrainingSessions: builder.query<
+            TrainingSession[],
+            { clientId: number; skip?: number; limit?: number; trainerId?: number }
+        >({
+            query: ({ clientId, skip = 0, limit = 100, trainerId }) => {
+                const params = new URLSearchParams();
+                params.set("client_id", String(clientId));
+                params.set("skip", String(skip));
+                params.set("limit", String(limit));
+                if (trainerId != null) {
+                    params.set("trainer_id", String(trainerId));
+                }
+                return {
+                    url: `/training-sessions/?${params.toString()}`,
+                    method: "GET",
+                };
+            },
             providesTags: (result, error, { clientId }) => [
                 { type: "Client", id: `SESSIONS-${clientId}` },
             ],

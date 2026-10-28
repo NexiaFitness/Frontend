@@ -26,6 +26,8 @@ import { transformSessionsToCIDCalcInWithDates, calculateCIDFromItem } from "../
 
 export interface UseWeeklyMetricsV2Params {
     clientId: number;
+    /** Entrenador de alcance. Obligatorio para el admin: GET /training-sessions/ con client_id lo exige. */
+    trainerId?: number;
     startDate: string; // ISO date (YYYY-MM-DD)
     endDate: string; // ISO date (YYYY-MM-DD)
 }
@@ -62,7 +64,7 @@ export interface UseWeeklyMetricsV2Result {
 export function useWeeklyMetricsV2(
     params: UseWeeklyMetricsV2Params
 ): UseWeeklyMetricsV2Result {
-    const { clientId, startDate, endDate } = params;
+    const { clientId, trainerId, startDate, endDate } = params;
 
     // Paso 1: Obtener sesiones filtradas por rango de fechas
     const {
@@ -72,6 +74,7 @@ export function useWeeklyMetricsV2(
         refetch: refetchSessions,
     } = useClientSessionsByDateRange({
         clientId,
+        trainerId,
         startDate,
         endDate,
     });
