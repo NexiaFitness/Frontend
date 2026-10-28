@@ -56,196 +56,196 @@ export const AdminSupervisedClientSessions: React.FC<AdminSupervisedClientSessio
     const detailLoading = data.sessionDetailLoading || exercisesLoading;
 
     return (
-            <section className={ADMIN_SUP_TABLE_CARD}>
-                <NexiaGlassAccentRim />
-                <div className={ADMIN_SUP_TABLE_HEADER}>
-                    <h2 className={ADMIN_SUP_TABLE_TITLE}>
-                        {ADMIN_SUP_COPY.sessionsSection}
-                    </h2>
-                    <p className={ADMIN_SUP_META}>
-                        {ADMIN_SUP_COPY.upcomingSessions}
-                    </p>
-                </div>
-                {data.sessionsError ? (
-                    <Alert
-                        variant="error"
-                        className={ADMIN_SUP_TABLE_ALERT}
-                        action={
-                            <Button
+        <section className={ADMIN_SUP_TABLE_CARD}>
+            <NexiaGlassAccentRim />
+            <div className={ADMIN_SUP_TABLE_HEADER}>
+                <h2 className={ADMIN_SUP_TABLE_TITLE}>
+                    {ADMIN_SUP_COPY.sessionsSection}
+                </h2>
+                <p className={ADMIN_SUP_META}>
+                    {ADMIN_SUP_COPY.upcomingSessions}
+                </p>
+            </div>
+            {data.sessionsError ? (
+                <Alert
+                    variant="error"
+                    className={ADMIN_SUP_TABLE_ALERT}
+                    action={
+                        <Button
+                            type="button"
+                            variant="outline-destructive"
+                            size="sm"
+                            onClick={() => data.refetchSessions()}
+                        >
+                            {ADMIN_SUP_COPY.retry}
+                        </Button>
+                    }
+                >
+                    Error al cargar sesiones.
+                </Alert>
+            ) : null}
+            {data.sessionsLoading ? (
+                <p className={ADMIN_SUP_TABLE_EMPTY}>Cargando…</p>
+            ) : null}
+            {!data.sessionsLoading && data.sessions.length === 0 ? (
+                <p className={ADMIN_SUP_TABLE_EMPTY}>
+                    {ADMIN_SUP_COPY.noSessions}
+                </p>
+            ) : null}
+            {data.sessions.length > 0 ? (
+                <div className={ADMIN_SUP_SESSIONS_SPLIT}>
+                    <div className={ADMIN_SUP_SESSION_LIST}>
+                        {data.sessions.map((session) => (
+                            <button
+                                key={session.id}
                                 type="button"
-                                variant="outline-destructive"
-                                size="sm"
-                                onClick={() => data.refetchSessions()}
+                                className={cn(
+                                    ADMIN_SUP_SESSION_ROW,
+                                    data.selectedSessionId === session.id &&
+                                        ADMIN_SUP_SESSION_ROW_ACTIVE
+                                )}
+                                onClick={() => data.setSelectedSessionId(session.id)}
                             >
-                                {ADMIN_SUP_COPY.retry}
-                            </Button>
-                        }
-                    >
-                        Error al cargar sesiones.
-                    </Alert>
-                ) : null}
-                {data.sessionsLoading ? (
-                    <p className={ADMIN_SUP_TABLE_EMPTY}>Cargando…</p>
-                ) : null}
-                {!data.sessionsLoading && data.sessions.length === 0 ? (
-                    <p className={ADMIN_SUP_TABLE_EMPTY}>
-                        {ADMIN_SUP_COPY.noSessions}
-                    </p>
-                ) : null}
-                {data.sessions.length > 0 ? (
-                    <div className={ADMIN_SUP_SESSIONS_SPLIT}>
-                        <div className={ADMIN_SUP_SESSION_LIST}>
-                            {data.sessions.map((session) => (
-                                <button
-                                    key={session.id}
-                                    type="button"
-                                    className={cn(
-                                        ADMIN_SUP_SESSION_ROW,
-                                        data.selectedSessionId === session.id &&
-                                            ADMIN_SUP_SESSION_ROW_ACTIVE
-                                    )}
-                                    onClick={() => data.setSelectedSessionId(session.id)}
-                                >
-                                    <span className={ADMIN_SUP_STRONG}>{session.session_name}</span>
-                                    <span className={ADMIN_SUP_META}>
-                                        {formatSessionDate(session.session_date)} ·{" "}
-                                        {session.status}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                        <div className={ADMIN_SUP_SESSION_DETAIL_PANE}>
-                            <h3 className={ADMIN_SUP_SUBHEADING}>
-                                {ADMIN_SUP_COPY.sessionDetail}
-                            </h3>
-                            {data.selectedSessionId == null ? (
-                                <p className={ADMIN_SUP_DETAIL_HINT}>
-                                    {ADMIN_SUP_COPY.selectSession}
-                                </p>
-                            ) : null}
-                            {detailLoading ? (
-                                <p className={ADMIN_SUP_DETAIL_HINT}>
-                                    Cargando detalle…
-                                </p>
-                            ) : null}
-                            {data.sessionDetail && !detailLoading ? (
-                                <div className={ADMIN_SUP_SESSION_DETAIL_BODY}>
-                                    <div>
-                                        <p className={ADMIN_SUP_STRONG}>
-                                            {data.sessionDetail.session_name}
-                                        </p>
-                                        <p className={ADMIN_SUP_MUTED}>
-                                            {formatSessionDate(
-                                                data.sessionDetail.session_date
-                                            )}{" "}
-                                            · {data.sessionDetail.status}
-                                        </p>
-                                        {data.sessionDetail.notes ? (
-                                            <p className={ADMIN_SUP_SESSION_NOTES}>
-                                                {data.sessionDetail.notes}
-                                            </p>
-                                        ) : null}
-                                    </div>
-                                    {exercises.length > 0 ? (
-                                        <ul className={ADMIN_SUP_EXERCISE_LIST}>
-                                            {exercises.map((ex) => (
-                                                <li
-                                                    key={ex.id}
-                                                    className={ADMIN_SUP_LIST_ITEM}
-                                                >
-                                                    <p className={ADMIN_SUP_STRONG}>
-                                                        {ex.exerciseName}
-                                                    </p>
-                                                    <p className={ADMIN_SUP_META}>
-                                                        {ex.blockName
-                                                            ? `${ex.blockName} · `
-                                                            : ""}
-                                                        Plan: {ex.plannedSets ?? "—"}×
-                                                        {ex.plannedReps ?? "—"}
-                                                        {ex.plannedWeight != null
-                                                            ? ` @ ${ex.plannedWeight}`
-                                                            : ""}
-                                                        {" · "}
-                                                        Real: {ex.actualSets ?? "—"}×
-                                                        {ex.actualReps ?? "—"}
-                                                    </p>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <p className={ADMIN_SUP_MUTED}>
-                                            Sin ejercicios en esta sesión.
-                                        </p>
-                                    )}
-                                    <div className={ADMIN_SUP_LIST_ITEM}>
-                                        <p className={ADMIN_SUP_SUBHEADING}>
-                                            {ADMIN_SUP_COPY.sessionFeedback}
-                                        </p>
-                                        {data.sessionFeedbackError ? (
-                                            <p className={ADMIN_SUP_INLINE_ERROR}>
-                                                No se pudo cargar el feedback.
-                                            </p>
-                                        ) : null}
-                                        {!data.sessionFeedbackError &&
-                                        data.sessionFeedback ? (
-                                            <dl className={ADMIN_SUP_FEEDBACK_GRID}>
-                                                <div>
-                                                    <dt className={ADMIN_SUP_MUTED}>
-                                                        {ADMIN_SUP_COPY.feedbackRpe}
-                                                    </dt>
-                                                    <dd>
-                                                        {data.sessionFeedback
-                                                            .perceived_effort ?? "—"}
-                                                    </dd>
-                                                </div>
-                                                <div>
-                                                    <dt className={ADMIN_SUP_MUTED}>
-                                                        {ADMIN_SUP_COPY.feedbackFatigue}
-                                                    </dt>
-                                                    <dd>
-                                                        {data.sessionFeedback
-                                                            .fatigue_level ?? "—"}
-                                                    </dd>
-                                                </div>
-                                                <div>
-                                                    <dt className={ADMIN_SUP_MUTED}>
-                                                        {ADMIN_SUP_COPY.feedbackSleep}
-                                                    </dt>
-                                                    <dd>
-                                                        {data.sessionFeedback
-                                                            .sleep_quality ?? "—"}
-                                                    </dd>
-                                                </div>
-                                                <div>
-                                                    <dt className={ADMIN_SUP_MUTED}>
-                                                        {
-                                                            ADMIN_SUP_COPY.feedbackMotivation
-                                                        }
-                                                    </dt>
-                                                    <dd>
-                                                        {data.sessionFeedback
-                                                            .motivation_level ?? "—"}
-                                                    </dd>
-                                                </div>
-                                            </dl>
-                                        ) : null}
-                                        {!data.sessionFeedbackError &&
-                                        data.sessionFeedback == null ? (
-                                            <p className={ADMIN_SUP_META_SPACED}>
-                                                {ADMIN_SUP_COPY.noSessionFeedback}
-                                            </p>
-                                        ) : null}
-                                        {data.sessionFeedback?.notes ? (
-                                            <p className={ADMIN_SUP_META_SPACED}>
-                                                {data.sessionFeedback.notes}
-                                            </p>
-                                        ) : null}
-                                    </div>
-                                </div>
-                            ) : null}
-                        </div>
+                                <span className={ADMIN_SUP_STRONG}>{session.session_name}</span>
+                                <span className={ADMIN_SUP_META}>
+                                    {formatSessionDate(session.session_date)} ·{" "}
+                                    {session.status}
+                                </span>
+                            </button>
+                        ))}
                     </div>
-                ) : null}
-            </section>
+                    <div className={ADMIN_SUP_SESSION_DETAIL_PANE}>
+                        <h3 className={ADMIN_SUP_SUBHEADING}>
+                            {ADMIN_SUP_COPY.sessionDetail}
+                        </h3>
+                        {data.selectedSessionId == null ? (
+                            <p className={ADMIN_SUP_DETAIL_HINT}>
+                                {ADMIN_SUP_COPY.selectSession}
+                            </p>
+                        ) : null}
+                        {detailLoading ? (
+                            <p className={ADMIN_SUP_DETAIL_HINT}>
+                                Cargando detalle…
+                            </p>
+                        ) : null}
+                        {data.sessionDetail && !detailLoading ? (
+                            <div className={ADMIN_SUP_SESSION_DETAIL_BODY}>
+                                <div>
+                                    <p className={ADMIN_SUP_STRONG}>
+                                        {data.sessionDetail.session_name}
+                                    </p>
+                                    <p className={ADMIN_SUP_MUTED}>
+                                        {formatSessionDate(
+                                            data.sessionDetail.session_date
+                                        )}{" "}
+                                        · {data.sessionDetail.status}
+                                    </p>
+                                    {data.sessionDetail.notes ? (
+                                        <p className={ADMIN_SUP_SESSION_NOTES}>
+                                            {data.sessionDetail.notes}
+                                        </p>
+                                    ) : null}
+                                </div>
+                                {exercises.length > 0 ? (
+                                    <ul className={ADMIN_SUP_EXERCISE_LIST}>
+                                        {exercises.map((ex) => (
+                                            <li
+                                                key={ex.id}
+                                                className={ADMIN_SUP_LIST_ITEM}
+                                            >
+                                                <p className={ADMIN_SUP_STRONG}>
+                                                    {ex.exerciseName}
+                                                </p>
+                                                <p className={ADMIN_SUP_META}>
+                                                    {ex.blockName
+                                                        ? `${ex.blockName} · `
+                                                        : ""}
+                                                    Plan: {ex.plannedSets ?? "—"}×
+                                                    {ex.plannedReps ?? "—"}
+                                                    {ex.plannedWeight != null
+                                                        ? ` @ ${ex.plannedWeight}`
+                                                        : ""}
+                                                    {" · "}
+                                                    Real: {ex.actualSets ?? "—"}×
+                                                    {ex.actualReps ?? "—"}
+                                                </p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className={ADMIN_SUP_MUTED}>
+                                        Sin ejercicios en esta sesión.
+                                    </p>
+                                )}
+                                <div className={ADMIN_SUP_LIST_ITEM}>
+                                    <p className={ADMIN_SUP_SUBHEADING}>
+                                        {ADMIN_SUP_COPY.sessionFeedback}
+                                    </p>
+                                    {data.sessionFeedbackError ? (
+                                        <p className={ADMIN_SUP_INLINE_ERROR}>
+                                            No se pudo cargar el feedback.
+                                        </p>
+                                    ) : null}
+                                    {!data.sessionFeedbackError &&
+                                    data.sessionFeedback ? (
+                                        <dl className={ADMIN_SUP_FEEDBACK_GRID}>
+                                            <div>
+                                                <dt className={ADMIN_SUP_MUTED}>
+                                                    {ADMIN_SUP_COPY.feedbackRpe}
+                                                </dt>
+                                                <dd>
+                                                    {data.sessionFeedback
+                                                        .perceived_effort ?? "—"}
+                                                </dd>
+                                            </div>
+                                            <div>
+                                                <dt className={ADMIN_SUP_MUTED}>
+                                                    {ADMIN_SUP_COPY.feedbackFatigue}
+                                                </dt>
+                                                <dd>
+                                                    {data.sessionFeedback
+                                                        .fatigue_level ?? "—"}
+                                                </dd>
+                                            </div>
+                                            <div>
+                                                <dt className={ADMIN_SUP_MUTED}>
+                                                    {ADMIN_SUP_COPY.feedbackSleep}
+                                                </dt>
+                                                <dd>
+                                                    {data.sessionFeedback
+                                                        .sleep_quality ?? "—"}
+                                                </dd>
+                                            </div>
+                                            <div>
+                                                <dt className={ADMIN_SUP_MUTED}>
+                                                    {
+                                                        ADMIN_SUP_COPY.feedbackMotivation
+                                                    }
+                                                </dt>
+                                                <dd>
+                                                    {data.sessionFeedback
+                                                        .motivation_level ?? "—"}
+                                                </dd>
+                                            </div>
+                                        </dl>
+                                    ) : null}
+                                    {!data.sessionFeedbackError &&
+                                    data.sessionFeedback == null ? (
+                                        <p className={ADMIN_SUP_META_SPACED}>
+                                            {ADMIN_SUP_COPY.noSessionFeedback}
+                                        </p>
+                                    ) : null}
+                                    {data.sessionFeedback?.notes ? (
+                                        <p className={ADMIN_SUP_META_SPACED}>
+                                            {data.sessionFeedback.notes}
+                                        </p>
+                                    ) : null}
+                                </div>
+                            </div>
+                        ) : null}
+                    </div>
+                </div>
+            ) : null}
+        </section>
     );
 };
