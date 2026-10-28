@@ -10,23 +10,21 @@
  * @updated v7.0.0 - Rediseño completo UI, mismo patrón que Daily Coherence
  */
 
-import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useSubTabNavigation } from "@/hooks/useSubTabNavigation";
-import type { ClientProgress } from "@nexia/shared/types/progress";
 import type { Client } from "@nexia/shared/types/client";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
 import { useClientExecutedLoadTrend } from "@nexia/shared/hooks/clients/useClientExecutedLoadTrend";
 import { useWeeklyMetricsV2, useMetricsAlertsV2, useMonthlyMetricsV2 } from "@nexia/shared/hooks/metrics";
-import { LoadingSpinner, Alert, EmptyState } from "@/components/ui/feedback";
+import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { PageTitle } from "@/components/dashboard/shared";
-import { Button, SegmentButton } from "@/components/ui/buttons";
-import { ProgressForm } from "./ProgressForm";
-import { EditProgressModal } from "../modals/EditProgressModal";
+import { SegmentButton } from "@/components/ui/buttons";
+import { ClientProgressRecordsSection } from "./ClientProgressRecordsSection";
+import { useClientViewScope } from "./clientViewScope";
 import { ClientSetHistoryPanel } from "./ClientSetHistoryPanel";
 import { ClientExecutedLoadTrendChart } from "./ClientExecutedLoadTrendChart";
-import { ClipboardList, Pencil, Plus, X } from "lucide-react";
 import {
     LineChart,
     ComposedChart,
@@ -182,11 +180,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
     client,
 }) => {
     // ── State ──────────────────────────────────────────
-    const [showProgressForm, setShowProgressForm] = useState(false);
-    const [editModalOpen, setEditModalOpen] = useState(false);
-    const [selectedRecord, setSelectedRecord] = useState<ClientProgress | null>(null);
     const [metricsPeriod, setMetricsPeriod] = useState<MetricsPeriod>("weekly");
-    const formRef = useRef<HTMLDivElement>(null);
+    const { trainerId } = useClientViewScope();
     const [searchParams] = useSearchParams();
 
     const historyExerciseId = useMemo(() => {
@@ -257,12 +252,14 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
 
     const weeklyMetrics = useWeeklyMetricsV2({
         clientId,
+        trainerId,
         startDate: metricsDateRange.startDate,
         endDate: metricsDateRange.endDate,
     });
 
     const monthlyMetrics = useMonthlyMetricsV2({
         clientId,
+        trainerId,
         startDate: metricsDateRange.startDate,
         endDate: metricsDateRange.endDate,
         w_fase: 1.0,
@@ -270,6 +267,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
 
     const metricsAlerts = useMetricsAlertsV2({
         clientId,
+        trainerId,
         startDate: metricsDateRange.startDate,
         endDate: metricsDateRange.endDate,
         daily_threshold: 80.0,
@@ -433,29 +431,6 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
     const hasEnergyData = energyChartData.some((d) => d.pre_energy != null || d.post_energy != null);
     const hasFatigueEnergyCharts = fatigueChartData.length > 0 || energyChartData.length > 0;
     const hasWorkloadChart = workloadChartData.length > 0;
-
-    // ── Callbacks ──────────────────────────────────────
-    const handleEditClick = useCallback((record: ClientProgress) => {
-        setSelectedRecord(record);
-        setEditModalOpen(true);
-    }, []);
-
-    const handleCloseModal = useCallback(() => {
-        setEditModalOpen(false);
-        setSelectedRecord(null);
-    }, []);
-
-    const handleEditSuccess = useCallback(() => {
-        refetchProgress();
-        setEditModalOpen(false);
-        setSelectedRecord(null);
-    }, [refetchProgress]);
-
-    useEffect(() => {
-        if (showProgressForm && formRef.current) {
-            setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
-        }
-    }, [showProgressForm]);
 
     // ── Early returns ──────────────────────────────────
     if (isLoading) {
@@ -866,118 +841,12 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                         </div>
                     )}
 
-                    {/* Antropometría — registros manuales */}
                     {!isNotFoundError && (
-                        <div className="space-y-5 border-t border-border/50 pt-8">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                    <h3 className="text-sm font-semibold text-foreground">
-                                        Registros antropométricos
-                                    </h3>
-                                    <p className="mt-1 text-xs text-muted-foreground">
-                                        Peso, IMC y notas registrados manualmente.
-                                    </p>
-                                </div>
-                                {progressHistory && progressHistory.length > 0 && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setShowProgressForm((v) => !v)}
-                                        className="shrink-0"
-                                    >
-                                        {showProgressForm ? (
-                                            <X className="size-4" aria-hidden />
-                                        ) : (
-                                            <Plus className="size-4" aria-hidden />
-                                        )}
-                                        {showProgressForm ? "Cancelar" : "Nuevo registro"}
-                                    </Button>
-                                )}
-                            </div>
-
-                            {showProgressForm && (
-                                <div
-                                    ref={formRef}
-                                    className="rounded-lg border border-border bg-card p-5"
-                                >
-                                    <p className="mb-4 text-sm font-semibold text-foreground">
-                                        Nuevo registro de progreso
-                                    </p>
-                                    <ProgressForm clientId={clientId} />
-                                </div>
-                            )}
-
-                            {progressHistory && progressHistory.length > 0 ? (
-                                <div className="space-y-2">
-                                    {progressHistory.map((record: ClientProgress) => (
-                                        <div
-                                            key={record.id}
-                                            className="flex items-center gap-4 rounded-lg bg-surface p-4"
-                                        >
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-medium text-foreground">
-                                                    {new Date(record.fecha_registro).toLocaleDateString("es-ES", {
-                                                        day: "numeric",
-                                                        month: "long",
-                                                        year: "numeric",
-                                                    })}
-                                                </p>
-                                                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-                                                    <span>
-                                                        Peso:{" "}
-                                                        <strong className="text-foreground">
-                                                            {record.peso ? `${record.peso} kg` : "—"}
-                                                        </strong>
-                                                    </span>
-                                                    <span>
-                                                        IMC:{" "}
-                                                        <strong className="text-foreground">
-                                                            {record.imc ? record.imc.toFixed(1) : "—"}
-                                                        </strong>
-                                                    </span>
-                                                </div>
-                                                {record.notas && (
-                                                    <p className="mt-1 line-clamp-1 text-xs text-muted-foreground/70">
-                                                        {record.notas}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <button
-                                                onClick={() => handleEditClick(record)}
-                                                className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                                                title="Editar registro"
-                                                aria-label="Editar registro"
-                                            >
-                                                <Pencil className="h-4 w-4" aria-hidden />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div
-                                    className="rounded-lg border border-dashed border-border/50 bg-muted/10"
-                                    data-testid="progress-history-empty"
-                                >
-                                    <EmptyState
-                                        icon={<ClipboardList />}
-                                        title="Sin registros de progreso"
-                                        description="Registra peso, IMC y notas para seguir la evolución corporal del cliente."
-                                        action={
-                                            !showProgressForm ? (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => setShowProgressForm(true)}
-                                                >
-                                                    <Plus className="size-4" aria-hidden />
-                                                    Añadir primer registro
-                                                </Button>
-                                            ) : undefined
-                                        }
-                                    />
-                                </div>
-                            )}
-                        </div>
+                        <ClientProgressRecordsSection
+                            clientId={clientId}
+                            records={progressHistory}
+                            onRecordUpdated={refetchProgress}
+                        />
                     )}
                 </>
             )}
@@ -1161,17 +1030,6 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                         />
                     </div>
                 </div>
-            )}
-
-            {/* Edit modal */}
-            {selectedRecord && (
-                <EditProgressModal
-                    isOpen={editModalOpen}
-                    onClose={handleCloseModal}
-                    progressRecord={selectedRecord}
-                    clientId={clientId}
-                    onSuccess={handleEditSuccess}
-                />
             )}
         </div>
     );

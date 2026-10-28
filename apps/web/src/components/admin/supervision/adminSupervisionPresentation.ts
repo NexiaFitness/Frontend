@@ -2,6 +2,8 @@
  * adminSupervisionPresentation.ts — Tokens y copy Portal Admin SUP (solo lectura).
  *
  * Referencia: UX_SUPERVISION.md · adminUsersPresentation.ts
+ * Ficha supervisada: pestañas Ficha (perfil, planes, tests, sesiones) y Progreso
+ * (ClientProgressTab en solo lectura, con el entrenador de la URL como alcance).
  */
 
 import { cn } from "@/lib/utils";
@@ -95,6 +97,35 @@ export const ADMIN_SUP_SESSION_ROW = cn(
 
 export const ADMIN_SUP_SESSION_ROW_ACTIVE = "bg-primary/10";
 
+// Ficha supervisada (pestañas Ficha / Progreso)
+export const ADMIN_SUP_LIST_ITEM = "rounded-md border border-border/60 px-3 py-2";
+export const ADMIN_SUP_LIST = "space-y-2 text-sm";
+export const ADMIN_SUP_LIST_SPACED = "mt-2 space-y-2 text-sm";
+export const ADMIN_SUP_MUTED = "text-muted-foreground";
+export const ADMIN_SUP_EMPTY_TEXT = "text-sm text-muted-foreground";
+export const ADMIN_SUP_EMPTY_TEXT_SPACED = "mt-2 text-sm text-muted-foreground";
+export const ADMIN_SUP_DETAIL_HINT = "mt-3 text-sm text-muted-foreground";
+export const ADMIN_SUP_STRONG = "font-medium";
+export const ADMIN_SUP_META = "text-xs text-muted-foreground";
+export const ADMIN_SUP_META_SPACED = "mt-2 text-xs text-muted-foreground";
+export const ADMIN_SUP_EYEBROW = "text-xs font-medium uppercase tracking-wide text-muted-foreground";
+export const ADMIN_SUP_EYEBROW_SPACED = "mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground";
+export const ADMIN_SUP_SUBHEADING = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+export const ADMIN_SUP_TABLE_HEADER = "border-b border-border/60 px-4 py-3";
+export const ADMIN_SUP_TABLE_TITLE = "text-sm font-semibold";
+export const ADMIN_SUP_SESSIONS_SPLIT = "grid grid-cols-1 lg:grid-cols-2";
+export const ADMIN_SUP_SESSION_DETAIL_PANE = "border-t border-border/60 p-4 lg:border-l lg:border-t-0";
+export const ADMIN_SUP_TABLE_ALERT = "m-4";
+export const ADMIN_SUP_FEEDBACK_GRID = "mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4";
+export const ADMIN_SUP_PLAN_ACTIVE = "mt-2 space-y-1 text-sm";
+export const ADMIN_SUP_SESSION_NOTES = "mt-2 text-muted-foreground";
+export const ADMIN_SUP_INLINE_ERROR = "mt-2 text-xs text-destructive";
+export const ADMIN_SUP_SESSION_DETAIL_BODY = "mt-3 space-y-3 text-sm";
+export const ADMIN_SUP_TABLE_EMPTY = "px-4 py-6 text-sm text-muted-foreground";
+export const ADMIN_SUP_EXERCISE_LIST = "space-y-2";
+export const ADMIN_SUP_HEADER_META = "mt-1 text-sm text-muted-foreground";
+export const ADMIN_SUP_TAB_CONTENT = "space-y-6 lg:space-y-8";
+
 export const ADMIN_SUP_COPY = {
     banner:
         "Vista de supervisión, solo lectura. Las consultas quedan registradas.",
@@ -120,6 +151,9 @@ export const ADMIN_SUP_COPY = {
     adherenceUnavailable: "—",
     backToTrainer: "Volver",
     supervisedTitle: "Cliente supervisado",
+    tabsAriaLabel: "Secciones del cliente supervisado",
+    tabProfile: "Ficha",
+    tabProgress: "Progreso",
     scopeError:
         "Este cliente no está vinculado a este entrenador, o no tienes acceso.",
     profileSection: "Perfil",

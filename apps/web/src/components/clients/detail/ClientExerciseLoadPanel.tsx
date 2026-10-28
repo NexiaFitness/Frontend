@@ -1,11 +1,16 @@
 /**
  * ClientExerciseLoadPanel — PR automático por ejercicio (Spec 02 v2).
  * Layout: PR peso + PR e1RM | trend sesión | historial PR + modal manual.
+ * Solo lectura (useClientViewScope, vista supervisada del admin): sin registro manual ni
+ * enlace a la pestaña Tests del entrenador.
+ * Supera 400 líneas: panel cohesivo (PR, tendencia, historial); su división es deuda
+ * de un hito propio, no de este cambio.
  */
 
 import React, { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
+import { useClientViewScope } from "./clientViewScope";
 import {
     FlaskConical,
     History,
@@ -137,8 +142,10 @@ function resolveSourceLink(
     clientId: number,
     source: PerformanceSource | null | undefined,
     sessionId: number | null | undefined,
+    readOnly: boolean,
 ): { to: string; label: string } | null {
     if (source === "formal_test") {
+        if (readOnly) return null;
         return {
             to: `/dashboard/clients/${clientId}?tab=testing`,
             label: PR_FORMAL_TEST_LINK,
@@ -167,6 +174,7 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
     weeks = 12,
 }) => {
     const location = useLocation();
+    const { readOnly } = useClientViewScope();
     const [manualModalOpen, setManualModalOpen] = useState(false);
     const [showAllHistory, setShowAllHistory] = useState(false);
 
@@ -217,11 +225,13 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
         clientId,
         profile?.current_best_weight_source,
         weightPr?.training_session_id,
+        readOnly,
     );
     const e1rmSourceLink = resolveSourceLink(
         clientId,
         profile?.current_best_e1rm_source,
         e1rmPr?.training_session_id,
+        readOnly,
     );
 
     if (isLoading) {
@@ -255,16 +265,18 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
                             {EXERCISE_LOAD_PANEL_SUBTITLE}
                         </p>
                     </div>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0 gap-1.5"
-                        onClick={() => setManualModalOpen(true)}
-                    >
-                        <Plus className="size-3.5" aria-hidden />
-                        {PR_MANUAL_CTA}
-                    </Button>
+                    {!readOnly && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0 gap-1.5"
+                            onClick={() => setManualModalOpen(true)}
+                        >
+                            <Plus className="size-3.5" aria-hidden />
+                            {PR_MANUAL_CTA}
+                        </Button>
+                    )}
                 </div>
 
                 {isEmpty ? (
@@ -522,6 +534,7 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
                                             clientId,
                                             record.source,
                                             record.training_session_id,
+                                            readOnly,
                                         );
                                         return (
                                             <li
@@ -570,14 +583,16 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
                 )}
             </section>
 
-            <ManualPerformanceRecordModal
-                isOpen={manualModalOpen}
-                onClose={() => setManualModalOpen(false)}
-                clientId={clientId}
-                exerciseId={exerciseId}
-                exerciseName={title}
-                onSuccess={() => void refetch()}
-            />
+            {!readOnly && (
+                <ManualPerformanceRecordModal
+                    isOpen={manualModalOpen}
+                    onClose={() => setManualModalOpen(false)}
+                    clientId={clientId}
+                    exerciseId={exerciseId}
+                    exerciseName={title}
+                    onSuccess={() => void refetch()}
+                />
+            )}
         </>
     );
 };

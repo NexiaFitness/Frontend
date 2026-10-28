@@ -16,7 +16,6 @@ import {
 import {
     useGetTrainingSessionQuery,
     useGetTrainingSessionsByClientQuery,
-    useGetSessionExercisesQuery,
     useGetSessionFeedbackQuery,
 } from "@nexia/shared/api/trainingSessionsApi";
 import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
@@ -123,13 +122,6 @@ export function useAdminSupervisedClient({ userId, clientId }: UseAdminSupervise
     });
 
     const {
-        data: sessionExercises,
-        isLoading: sessionExercisesLoading,
-    } = useGetSessionExercisesQuery(selectedSessionId ?? 0, {
-        skip: selectedSessionId == null || selectedSessionId <= 0,
-    });
-
-    const {
         data: sessionFeedback,
         isLoading: sessionFeedbackLoading,
         isError: sessionFeedbackError,
@@ -199,7 +191,6 @@ export function useAdminSupervisedClient({ userId, clientId }: UseAdminSupervise
         selectedSessionId,
         setSelectedSessionId,
         sessionDetail,
-        sessionExercises: sessionExercises ?? [],
         sessionFeedback: sessionFeedbackMissing
             ? null
             : sessionFeedbackError
@@ -208,8 +199,7 @@ export function useAdminSupervisedClient({ userId, clientId }: UseAdminSupervise
         sessionFeedbackLoading,
         sessionFeedbackMissing,
         sessionFeedbackError: sessionFeedbackError && !sessionFeedbackMissing,
-        sessionDetailLoading:
-            sessionDetailLoading || sessionExercisesLoading || sessionFeedbackLoading,
+        sessionDetailLoading: sessionDetailLoading || sessionFeedbackLoading,
         sessionDetailError,
         testResults: testResults ?? [],
         injuries: activeInjuries,
@@ -230,3 +220,5 @@ export function useAdminSupervisedClient({ userId, clientId }: UseAdminSupervise
         refetchInjuries,
     };
 }
+
+export type AdminSupervisedClientData = ReturnType<typeof useAdminSupervisedClient>;
