@@ -20,8 +20,15 @@ export const TRAINING_OBJECTIVES: readonly TrainingObjective[] = [
     "mobility",
 ];
 
-/** legacy = valor heredado sin revisar con la rúbrica; pending_review = propuesta del sistema. */
-export type CatalogReviewState = "legacy" | "pending_review" | "reviewed";
+/**
+ * Estado de revisión guardado (lectura). legacy = heredado del catálogo anterior;
+ * rubric = puesto por la rúbrica H5b con revisión ciega, elegible en sesiones;
+ * pending_review = propuesta sin revisar (bloquea la carga axial); reviewed = confirmado.
+ */
+export type CatalogReviewState = "legacy" | "pending_review" | "rubric" | "reviewed";
+
+/** Estados que acepta la API como entrada: legacy y rubric los escribe solo el servidor. */
+export type CatalogReviewInputState = "pending_review" | "reviewed";
 
 export type CatalogSource = "nexia" | "adrian_excel" | "repdb";
 

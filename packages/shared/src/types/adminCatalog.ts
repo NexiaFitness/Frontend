@@ -10,7 +10,7 @@
 
 import type { Exercise } from "../hooks/exercises/useExercises";
 import type {
-    CatalogReviewState,
+    CatalogReviewInputState,
     CatalogSource,
     ExerciseContractMissingCode,
     ExerciseContractStatus,
@@ -55,8 +55,8 @@ export interface ExerciseCatalogCoreIn {
     /** Obligatorio (H1): decide si el ejercicio suma volumen muscular. */
     objetivo_entrenamiento: TrainingObjective;
     /** null = regla del servidor (admin: revisado al cambiar el valor). */
-    axial_load_review?: CatalogReviewState | null;
-    nivel_review?: CatalogReviewState | null;
+    axial_load_review?: CatalogReviewInputState | null;
+    nivel_review?: CatalogReviewInputState | null;
     /** null = conserva el origen (alta admin: nexia). */
     source?: CatalogSource | null;
     source_ref?: string | null;

@@ -1,5 +1,12 @@
 # Changelog — @nexia/shared
 
+## 3.2.0 — 2026-10-29
+
+### Added (H5 paso 1: estado de revisión `rubric`)
+
+- `CatalogReviewState` incluye `rubric` (valor puesto por la rúbrica H5b; elegible en sesiones).
+- `CatalogReviewInputState` (`pending_review` | `reviewed`): lo que acepta la API del admin. `ExerciseCatalogCoreIn.axial_load_review` y `nivel_review` pasan a usarlo; `legacy` y `rubric` los escribe solo el servidor. El formulario del admin ya solo enviaba `reviewed` o null.
+
 ## 3.1.0 — 2026-10-28
 
 ### Added (admin: pestaña Progreso en la vista supervisada)
