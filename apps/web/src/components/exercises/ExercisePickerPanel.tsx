@@ -112,10 +112,14 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
             setSafetyResults(new Map());
             return;
         }
+        // Vacía el mapa anterior: mientras llega el lote nuevo, ninguna fila queda como segura.
+        let cancelled = false;
+        setSafetyResults((current) => (current.size === 0 ? current : new Map()));
         const ids = exercises.map((e) => e.id);
         checkBatch({ client_id: clientId, exercise_ids: ids })
             .unwrap()
             .then((data: ExerciseSafetyBatchResponse) => {
+                if (cancelled) return;
                 const map = new Map<number, ExerciseSafetyResponse>();
                 for (const [key, value] of Object.entries(data.results)) {
                     map.set(Number(key), value as ExerciseSafetyResponse);
@@ -123,10 +127,14 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
                 setSafetyResults(map);
             })
             .catch(() => {
+                if (cancelled) return;
                 // H4: no data is never «safe»; rows stay unchecked and the error is shown.
                 setSafetyResults(new Map());
                 setSafetyCheckFailed(true);
             });
+        return () => {
+            cancelled = true;
+        };
     }, [clientId, exercises, checkBatch, activeInjuriesKey, safetyRetry]);
 
     const filteredAndGrouped = useMemo(() => {
@@ -142,6 +150,12 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
     }, [exercises, search]);
 
     const hasActiveInjuries = activeInjuries.length > 0;
+    // Con cliente, hasta que el lote trae un veredicto la fila no puede pintarse como segura.
+    const safetyPending =
+        Boolean(clientId) &&
+        !safetyCheckFailed &&
+        (isLoadingBatch || safetyResults.size === 0) &&
+        exercises.length > 0;
 
     const handleShowAlternatives = (exerciseId: number) => {
         setSelectedExerciseIdForAlternatives(exerciseId);
@@ -211,6 +225,7 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
                     filteredAndGrouped={filteredAndGrouped}
                     safetyResults={safetyResults}
                     safetyCheckFailed={safetyCheckFailed}
+                    safetyPending={safetyPending}
                     onRetrySafety={() => setSafetyRetry((n) => n + 1)}
                     expandedExerciseId={expandedExerciseId}
                     setExpandedExerciseId={setExpandedExerciseId}
@@ -241,6 +256,7 @@ interface ListViewProps {
     filteredAndGrouped: [string, Exercise[]][];
     safetyResults: Map<number, ExerciseSafetyResponse>;
     safetyCheckFailed: boolean;
+    safetyPending: boolean;
     onRetrySafety: () => void;
     expandedExerciseId: number | null;
     setExpandedExerciseId: (id: number | null) => void;
@@ -257,6 +273,7 @@ const ListView: React.FC<ListViewProps> = ({
     filteredAndGrouped,
     safetyResults,
     safetyCheckFailed,
+    safetyPending,
     onRetrySafety,
     expandedExerciseId,
     setExpandedExerciseId,
@@ -336,6 +353,7 @@ const ListView: React.FC<ListViewProps> = ({
                                             safety={safety}
                                             state={exerciseSafetyUiState(safety, {
                                                 checkFailed: safetyCheckFailed,
+                                                checkPending: safetyPending && safety == null,
                                             })}
                                             isExpanded={isExpanded}
                                             onToggle={() => setExpandedExerciseId(isExpanded ? null : ex.id)}

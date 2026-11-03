@@ -256,4 +256,24 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
         await user.click(screen.getByRole("button", { name: /reintentar/i }));
         await waitFor(() => expect(checkBatch).toHaveBeenCalledTimes(2));
     });
+
+    it("mientras el lote no ha vuelto, ninguna fila se pinta como segura", () => {
+        useCheckExerciseSafetyBatchMutation.mockReturnValue([
+            vi.fn(() => ({ unwrap: () => new Promise(() => undefined) })),
+            { isLoading: true },
+        ]);
+        render(
+            <ExercisePickerPanel
+                isOpen
+                onClose={vi.fn()}
+                onSelect={vi.fn()}
+                clientId={1}
+                activeInjuries={[]}
+            />
+        );
+
+        expect(screen.getByText(/verificando seguridad/i)).toBeInTheDocument();
+        expect(screen.getAllByLabelText("Seguridad sin comprobar")).toHaveLength(2);
+        expect(screen.queryByText("LESIÓN")).not.toBeInTheDocument();
+    });
 });
