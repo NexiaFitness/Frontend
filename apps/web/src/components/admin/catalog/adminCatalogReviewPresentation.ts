@@ -27,20 +27,20 @@ export const ADMIN_CATALOG_REVIEW_PAGE = PLATFORM_PAGE_WITH_FIXED_FOOTER;
 
 export const ADMIN_CATALOG_REVIEW_HEADER = PLATFORM_PAGE_HEADER;
 
-export const ADMIN_CATALOG_REVIEW_STACK = "relative space-y-4";
+export const ADMIN_CATALOG_REVIEW_STACK = "relative min-w-0 space-y-4";
 
 export const ADMIN_CATALOG_REVIEW_ALERT = PLATFORM_ALERT_SPACING;
 
-export const ADMIN_CATALOG_REVIEW_FILTERS = "space-y-3";
+export const ADMIN_CATALOG_REVIEW_FILTERS = "min-w-0 space-y-3";
 
-export const ADMIN_CATALOG_REVIEW_SEGMENTED_SHELL = NEXIA_SEGMENTED_SHELL;
+export const ADMIN_CATALOG_REVIEW_SEGMENTED_SHELL = cn(NEXIA_SEGMENTED_SHELL, "min-w-0 max-w-full");
 
 export const ADMIN_CATALOG_REVIEW_SEGMENTED_SCROLL = NEXIA_SEGMENTED_SCROLL;
 
-export const ADMIN_CATALOG_REVIEW_SEGMENTED_TRACK = nexiaSegmentedTrackClass("equal");
+export const ADMIN_CATALOG_REVIEW_SEGMENTED_TRACK = nexiaSegmentedTrackClass("content");
 
 export function adminCatalogReviewSegmentClass(selected: boolean): string {
-    return cn(nexiaSegmentedItemClass(selected, "equal"), "min-h-touch");
+    return cn(nexiaSegmentedItemClass(selected, "content"), "min-h-touch");
 }
 
 export const ADMIN_CATALOG_REVIEW_NARROW = "grid grid-cols-1 gap-3 sm:grid-cols-3";
@@ -54,13 +54,18 @@ export const ADMIN_CATALOG_REVIEW_ROW = cn(
 
 export const ADMIN_CATALOG_REVIEW_ROW_TOP = "flex items-start gap-3";
 
+/** El Checkbox de formulario trae `w-full`; en la fila solo debe ocupar el cuadro. */
+export const ADMIN_CATALOG_REVIEW_CHECK = "shrink-0 [&>div]:w-auto";
+
+export const ADMIN_CATALOG_REVIEW_ROW_BODY = "min-w-0 flex-1 space-y-1";
+
 export const ADMIN_CATALOG_REVIEW_TITLE = "text-left font-semibold leading-snug text-foreground";
 
 export const ADMIN_CATALOG_REVIEW_META = "text-caption leading-snug text-muted-foreground";
 
 export const ADMIN_CATALOG_REVIEW_CHIPS = "flex flex-wrap gap-2";
 
-export const ADMIN_CATALOG_REVIEW_NOTE = cn(PLATFORM_BODY_MUTED, "text-sm");
+export const ADMIN_CATALOG_REVIEW_NOTE = cn(PLATFORM_BODY_MUTED, "break-words text-sm");
 
 export const ADMIN_CATALOG_REVIEW_FIELDS = "grid w-full grid-cols-1 gap-3";
 

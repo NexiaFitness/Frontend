@@ -11,10 +11,10 @@ import { SessionOrPublicLayout } from "@/routes/SessionOrPublicLayout";
 
 const CreditsPage = lazyWithRetry(() => import("@/pages/CreditsPage"));
 
-export const CreditsRoutes: React.FC = () => {
+export function creditsRoutes(): React.ReactElement {
     return (
         <Route element={<SessionOrPublicLayout />}>
             <Route path="/creditos" element={<CreditsPage />} />
         </Route>
     );
-};
+}

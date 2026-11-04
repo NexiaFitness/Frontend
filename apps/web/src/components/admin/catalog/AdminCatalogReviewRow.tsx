@@ -13,12 +13,14 @@ import type { AdminCatalogExerciseListItemOut } from "@nexia/shared/types/adminC
 import { AXIAL_OPTIONS, NIVEL_OPTIONS } from "./adminCatalogFieldOptions";
 import {
     ADMIN_CATALOG_REVIEW_ACTIONS,
+    ADMIN_CATALOG_REVIEW_CHECK,
     ADMIN_CATALOG_REVIEW_CHIPS,
     ADMIN_CATALOG_REVIEW_COPY,
     ADMIN_CATALOG_REVIEW_FIELDS,
     ADMIN_CATALOG_REVIEW_META,
     ADMIN_CATALOG_REVIEW_NOTE,
     ADMIN_CATALOG_REVIEW_ROW,
+    ADMIN_CATALOG_REVIEW_ROW_BODY,
     ADMIN_CATALOG_REVIEW_ROW_TOP,
     ADMIN_CATALOG_REVIEW_TITLE,
 } from "./adminCatalogReviewPresentation";
@@ -71,12 +73,14 @@ export const AdminCatalogReviewRow: React.FC<AdminCatalogReviewRowProps> = ({
     return (
         <article className={ADMIN_CATALOG_REVIEW_ROW} data-testid={`catalog-review-row-${item.exercise_pk}`}>
             <div className={ADMIN_CATALOG_REVIEW_ROW_TOP}>
-                <Checkbox
-                    checked={selected}
-                    onChange={onToggle}
-                    aria-label={ADMIN_CATALOG_REVIEW_COPY.selectLabel(item.nombre)}
-                />
-                <div className="min-w-0 flex-1 space-y-1">
+                <div className={ADMIN_CATALOG_REVIEW_CHECK}>
+                    <Checkbox
+                        checked={selected}
+                        onChange={onToggle}
+                        aria-label={ADMIN_CATALOG_REVIEW_COPY.selectLabel(item.nombre)}
+                    />
+                </div>
+                <div className={ADMIN_CATALOG_REVIEW_ROW_BODY}>
                     <h2 className={ADMIN_CATALOG_REVIEW_TITLE}>{item.nombre}</h2>
                     {meta ? <p className={ADMIN_CATALOG_REVIEW_META}>{meta}</p> : null}
                 </div>

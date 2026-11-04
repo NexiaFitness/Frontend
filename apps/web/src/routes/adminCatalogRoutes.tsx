@@ -37,7 +37,7 @@ const AdminCatalogImportPage = lazyWithRetry(() =>
     }))
 );
 
-export const AdminCatalogRoutes: React.FC = () => {
+export function adminCatalogRoutes(): React.ReactElement {
     return (
         <>
             <Route
@@ -82,4 +82,4 @@ export const AdminCatalogRoutes: React.FC = () => {
             />
         </>
     );
-};
+}

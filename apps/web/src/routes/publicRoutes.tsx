@@ -6,9 +6,7 @@
  */
 
 import React from "react";
-import { useSelector } from "react-redux";
 import { Navigate, Route } from "react-router-dom";
-import type { RootState } from "@nexia/shared/store";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { PublicLayout } from "@/components/ui/layout/PublicLayout";
 import Home from "@/pages/Home";
@@ -20,9 +18,7 @@ const ResetPassword = lazyWithRetry(() => import("@/pages/auth/ResetPassword"));
 const VerifyEmail = lazyWithRetry(() => import("@/pages/auth/VerifyEmail"));
 const InvitationAcceptPage = lazyWithRetry(() => import("@/pages/invitation/InvitationAcceptPage"));
 
-export const PublicRoutes: React.FC = () => {
-    const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-
+export function publicRoutes(isAuthenticated: boolean): React.ReactElement {
     return (
         <Route element={<PublicLayout />}>
             <Route
@@ -38,4 +34,4 @@ export const PublicRoutes: React.FC = () => {
             <Route path="/invitation" element={<InvitationAcceptPage />} />
         </Route>
     );
-};
+}

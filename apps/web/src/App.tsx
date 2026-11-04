@@ -236,9 +236,9 @@ const NotFound = lazyWithRetry(() =>
 
 // Layouts
 import { DashboardShell } from "./components/dashboard/DashboardShell";
-import { PublicRoutes } from "./routes/publicRoutes";
-import { CreditsRoutes } from "./routes/creditsRoutes";
-import { AdminCatalogRoutes } from "./routes/adminCatalogRoutes";
+import { publicRoutes } from "./routes/publicRoutes";
+import { creditsRoutes } from "./routes/creditsRoutes";
+import { adminCatalogRoutes } from "./routes/adminCatalogRoutes";
 
 // UI Components
 import { ToastProvider } from "./components/ui/feedback";
@@ -313,8 +313,8 @@ function App() {
         <PwaUpdateBannerHost />
         <Suspense fallback={<AthleteMobileSuspenseFallback />}>
           <Routes>
-            <PublicRoutes />
-            <CreditsRoutes />
+            {publicRoutes(isAuthenticated)}
+            {creditsRoutes()}
 
         <Route
           path="/onboarding/athlete"
@@ -546,7 +546,7 @@ function App() {
             }
           />
 
-          <AdminCatalogRoutes />
+          {adminCatalogRoutes()}
 
           {/* Clients */}
           <Route
