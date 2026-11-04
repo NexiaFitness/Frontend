@@ -2,21 +2,17 @@
  * AdminExerciseCatalogForm.tsx — Ficha create/edit Admin (una página + índice / stepper).
  *
  * Spec: 13_UX_ADMIN_CATALOGO.md §3.2 · API GET/POST/PUT catalog + review + history.
+ * H5: las relaciones viven en AdminCatalogFormSections, la cabecera y el historial
+ * en AdminCatalogFormChrome, y los atajos de guardado en useAdminCatalogFormSubmit.
  *
  * @author Frontend Team
  * @since v1.0.0
  */
 
-import React, { useCallback, useEffect, useMemo } from "react";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
-import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
+import React, { useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
-import { Badge } from "@/components/ui/Badge";
 import { Alert, LoadingSpinner, useToast } from "@/components/ui/feedback";
-import { FormCombobox } from "@/components/ui/forms";
-import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
-import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
     useGetActionsQuery,
@@ -25,64 +21,36 @@ import {
     useGetTagsQuery,
 } from "@nexia/shared/api/exercisesApi";
 import { useGetJointsQuery, useGetMusclesQuery } from "@nexia/shared/api/injuriesApi";
-import type { CatalogMuscleRole, CatalogPatternRole } from "@nexia/shared/types/adminCatalog";
 import {
-    ADMIN_CATALOG_ADD_ROW,
     ADMIN_CATALOG_ALERT_SPACING,
-    ADMIN_CATALOG_CHIP_LIST,
     ADMIN_CATALOG_COPY,
-    ADMIN_CATALOG_FIELD_GROW,
-    ADMIN_CATALOG_FOOTER_ACTIONS,
-    ADMIN_CATALOG_FOOTER_BTN,
-    ADMIN_CATALOG_FOOTER_LEFT,
-    ADMIN_CATALOG_FOOTER_ROW,
-    ADMIN_CATALOG_FOOTER_SHELL,
     ADMIN_CATALOG_FORM_BODY,
     ADMIN_CATALOG_FORM_SHELL,
     ADMIN_CATALOG_GLOW,
-    ADMIN_CATALOG_HEADER_ACTIONS,
     ADMIN_CATALOG_INDEX,
     ADMIN_CATALOG_INDEX_ERROR_BADGE,
     ADMIN_CATALOG_INDEX_LINK,
     ADMIN_CATALOG_INDEX_LINK_ACTIVE,
     ADMIN_CATALOG_LAYOUT,
     ADMIN_CATALOG_LOADING_ROW,
-    ADMIN_CATALOG_META_ROW,
     ADMIN_CATALOG_MOBILE_STEPPER,
     ADMIN_CATALOG_PAGE,
-    ADMIN_CATALOG_PAGE_HEADER,
-    ADMIN_CATALOG_ROW,
-    ADMIN_CATALOG_ROW_DRAG,
-    ADMIN_CATALOG_ROW_DRAG_HANDLE,
     ADMIN_CATALOG_SECTION,
-    ADMIN_CATALOG_SECTION_HINT,
-    ADMIN_CATALOG_SECTION_TITLE,
     ADMIN_CATALOG_SECTIONS,
     ADMIN_CATALOG_STACK,
     ADMIN_CATALOG_STEPPER_CHIP,
     ADMIN_CATALOG_STEPPER_CHIP_ACTIVE,
     ADMIN_CATALOG_STEPPER_CHIP_ERROR,
-    ADMIN_CATALOG_TITLE_WRAP,
 } from "./adminCatalogPresentation";
-import { AdminCatalogConflictModal } from "./AdminCatalogConflictModal";
-import { AdminCatalogHistoryModal } from "./AdminCatalogHistoryModal";
-import { AdminCatalogRelationsSection } from "./AdminCatalogRelationsSection";
-import { AdminCatalogSearchPicker } from "./AdminCatalogSearchPicker";
-import { nextRowKey, retargetMuscleRow, type AdminCatalogSectionId } from "./adminCatalogFormTypes";
+import { type AdminCatalogSectionId } from "./adminCatalogFormTypes";
 import { useAdminExerciseCatalogForm } from "./useAdminExerciseCatalogForm";
-import { useGetCatalogExerciseUsageQuery } from "@nexia/shared/api/adminCatalogApi";
 import { AdminCatalogCoreSection } from "./AdminCatalogCoreSection";
-
-const MUSCLE_ROLE_OPTIONS = [
-    { value: "prime_mover", label: ADMIN_CATALOG_COPY.rolePrimeMover },
-    { value: "synergist", label: ADMIN_CATALOG_COPY.roleSynergist },
-    { value: "stabilizer", label: ADMIN_CATALOG_COPY.roleStabilizer },
-];
-
-const PATTERN_ROLE_OPTIONS = [
-    { value: "primary", label: ADMIN_CATALOG_COPY.rolePrimary },
-    { value: "secondary", label: ADMIN_CATALOG_COPY.roleSecondary },
-];
+import { AdminCatalogFormSections } from "./AdminCatalogFormSections";
+import {
+    AdminCatalogFormFooter,
+    AdminCatalogFormHeader,
+} from "./AdminCatalogFormChrome";
+import { useAdminCatalogFormSubmit } from "./useAdminCatalogFormSubmit";
 
 export interface AdminExerciseCatalogFormProps {
     mode: "create" | "edit";
@@ -134,10 +102,15 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
     const { data: tags = [] } = useGetTagsQuery({ limit: 200, is_active: true });
     const { data: joints = [] } = useGetJointsQuery();
     const { data: actions = [] } = useGetActionsQuery({ limit: 200, is_active: true });
-    const { data: usage, isFetching: usageLoading } = useGetCatalogExerciseUsageQuery(
-        exercisePk ?? 0,
-        { skip: exercisePk == null || !deactivateOpen }
-    );
+    const { usage, usageLoading, openHistory } = useAdminCatalogFormSubmit({
+        exercisePk,
+        currentPk,
+        deactivateOpen,
+        handleSave,
+        handleReviewedAndNext,
+        setHistoryOpen,
+        showError,
+    });
 
     const muscleOptions = useMemo(
         () =>
@@ -193,21 +166,6 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
         [tags]
     );
 
-    useEffect(() => {
-        const onKey = (event: KeyboardEvent) => {
-            if ((event.ctrlKey || event.metaKey) && event.key === "s") {
-                event.preventDefault();
-                void handleSave();
-            }
-            if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-                event.preventDefault();
-                void handleReviewedAndNext();
-            }
-        };
-        window.addEventListener("keydown", onKey);
-        return () => window.removeEventListener("keydown", onKey);
-    }, [handleReviewedAndNext, handleSave]);
-
     const title =
         mode === "create" ? ADMIN_CATALOG_COPY.createTitle : ADMIN_CATALOG_COPY.editTitle;
 
@@ -218,31 +176,6 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
             el.scrollIntoView({ behavior: "smooth", block: "start" });
         }
     }, [setMobileSection]);
-
-    const onPmDragStart = useCallback((index: number) => (event: React.DragEvent) => {
-        event.dataTransfer.setData("text/plain", String(index));
-        event.dataTransfer.effectAllowed = "move";
-    }, []);
-
-    const onPmDrop = useCallback(
-        (targetIndex: number) => (event: React.DragEvent) => {
-            event.preventDefault();
-            const from = Number(event.dataTransfer.getData("text/plain"));
-            if (!Number.isFinite(from) || from === targetIndex) return;
-            setDraft((prev) => {
-                const pm = prev.muscles.filter((m) => m.role === "prime_mover");
-                const rest = prev.muscles.filter((m) => m.role !== "prime_mover");
-                if (from < 0 || from >= pm.length || targetIndex < 0 || targetIndex >= pm.length) {
-                    return prev;
-                }
-                const nextPm = [...pm];
-                const [item] = nextPm.splice(from, 1);
-                nextPm.splice(targetIndex, 0, item);
-                return { ...prev, muscles: [...nextPm, ...rest] };
-            });
-        },
-        [setDraft]
-    );
 
     if (isLoadingCatalog) {
         return (
@@ -280,9 +213,6 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
         );
     }
 
-    const pmRows = draft.muscles.filter((m) => m.role === "prime_mover");
-    const otherMuscleRows = draft.muscles.filter((m) => m.role !== "prime_mover");
-
     const sectionClass = (id: AdminCatalogSectionId) =>
         cn(ADMIN_CATALOG_SECTION, mobileSection !== id && "hidden lg:block");
 
@@ -291,73 +221,17 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
             <div className={ADMIN_CATALOG_GLOW} aria-hidden />
 
             <div className={ADMIN_CATALOG_STACK}>
-                <div className={ADMIN_CATALOG_PAGE_HEADER}>
-                    <div className={ADMIN_CATALOG_TITLE_WRAP}>
-                        <PageTitle title={title} />
-                        <div className={ADMIN_CATALOG_META_ROW}>
-                            {draft.exercise_code ? (
-                                <span>
-                                    {ADMIN_CATALOG_COPY.exerciseIdReadonly}:{" "}
-                                    <strong className="text-foreground">{draft.exercise_code}</strong>
-                                </span>
-                            ) : null}
-                            {draft.review_status === "reviewed" ? (
-                                <Badge variant="subtle-success">
-                                    {ADMIN_CATALOG_COPY.reviewDone}
-                                </Badge>
-                            ) : mode === "edit" ? (
-                                <Badge variant="subtle-warning">
-                                    {ADMIN_CATALOG_COPY.reviewPending}
-                                </Badge>
-                            ) : null}
-                            {mode === "edit" && isInactive ? (
-                                <Badge variant="subtle-secondary">
-                                    {ADMIN_CATALOG_COPY.inactiveBadge}
-                                </Badge>
-                            ) : null}
-                        </div>
-                    </div>
-                    <div className={ADMIN_CATALOG_HEADER_ACTIONS}>
-                        {mode === "edit" ? (
-                            <Button
-                                type="button"
-                                variant="ghost-primary"
-                                size="sm"
-                                disabled={isSaving}
-                                onClick={() => void handleMarkReviewed()}
-                            >
-                                {ADMIN_CATALOG_COPY.markReviewed}
-                            </Button>
-                        ) : null}
-                        {mode === "edit" && isInactive ? (
-                            <Button
-                                type="button"
-                                variant="outline-primary"
-                                size="sm"
-                                disabled={isSaving}
-                                onClick={() => setReactivateOpen(true)}
-                            >
-                                {ADMIN_CATALOG_COPY.reactivate}
-                            </Button>
-                        ) : null}
-                        {mode === "edit" && !isInactive ? (
-                            <Button
-                                type="button"
-                                variant="outline-destructive"
-                                size="sm"
-                                disabled={isSaving}
-                                onClick={() => setDeactivateOpen(true)}
-                            >
-                                {ADMIN_CATALOG_COPY.deactivate}
-                            </Button>
-                        ) : null}
-                        <PlatformHeaderBackButton
-                            onClick={handleCancel}
-                            label={ADMIN_CATALOG_COPY.backToList}
-                            className="md:w-auto"
-                        />
-                    </div>
-                </div>
+                <AdminCatalogFormHeader
+                    mode={mode}
+                    title={title}
+                    draft={draft}
+                    isInactive={isInactive}
+                    isSaving={isSaving}
+                    onMarkReviewed={() => void handleMarkReviewed()}
+                    onReactivate={() => setReactivateOpen(true)}
+                    onDeactivate={() => setDeactivateOpen(true)}
+                    onCancel={handleCancel}
+                />
 
                 {serverErrors.length > 0 ? (
                     <Alert variant="error" className={ADMIN_CATALOG_ALERT_SPACING}>
@@ -430,560 +304,46 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                 }
                             />
 
-                            {/* MUSCULOS */}
-                            <section id="musculos" className={sectionClass("musculos")}>
-                                <h2 className={ADMIN_CATALOG_SECTION_TITLE}>
-                                    {ADMIN_CATALOG_COPY.sectionMusculos}
-                                </h2>
-                                <p className={ADMIN_CATALOG_SECTION_HINT}>
-                                    {ADMIN_CATALOG_COPY.musclesPmHint}
-                                </p>
-                                {(clientErrors.musculos ?? []).map((msg) => (
-                                    <Alert key={msg} variant="error" className={ADMIN_CATALOG_ALERT_SPACING}>
-                                        {msg}
-                                    </Alert>
-                                ))}
-                                <div className="space-y-3">
-                                    {pmRows.map((row, pmIndex) => (
-                                        <div
-                                            key={row.key}
-                                            className={ADMIN_CATALOG_ROW_DRAG}
-                                            draggable
-                                            onDragStart={onPmDragStart(pmIndex)}
-                                            onDragOver={(e) => e.preventDefault()}
-                                            onDrop={onPmDrop(pmIndex)}
-                                        >
-                                            <span
-                                                className={ADMIN_CATALOG_ROW_DRAG_HANDLE}
-                                                aria-label="Arrastrar prioridad"
-                                            >
-                                                <GripVertical className="h-4 w-4" aria-hidden />
-                                            </span>
-                                            <div className={ADMIN_CATALOG_FIELD_GROW}>
-                                                <AdminCatalogSearchPicker
-                                                    options={muscleOptions}
-                                                    excludeValues={draft.muscles
-                                                        .map((m) => m.muscle_id)
-                                                        .filter((id): id is number => id != null && id !== row.muscle_id)}
-                                                    onSelect={(value) => {
-                                                        const label =
-                                                            muscleOptions.find((o) => o.value === value)
-                                                                ?.label ?? String(value);
-                                                        setDraft((prev) => ({
-                                                            ...prev,
-                                                            muscles: prev.muscles.map((m) =>
-                                                                m.key === row.key
-                                                                    ? retargetMuscleRow(m, { muscle_id: value, label })
-                                                                    : m
-                                                            ),
-                                                        }));
-                                                    }}
-                                                />
-                                                {row.muscle_id ? (
-                                                    <p className="mt-1 text-xs text-muted-foreground">
-                                                        Seleccionado: {row.label ?? row.muscle_id} · prioridad{" "}
-                                                        {pmIndex + 1}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <FormCombobox
-                                                variant="premium"
-                                                value={row.role}
-                                                options={MUSCLE_ROLE_OPTIONS}
-                                                onChange={(value) =>
-                                                    setDraft((prev) => ({
-                                                        ...prev,
-                                                        muscles: prev.muscles.map((m) =>
-                                                            m.key === row.key
-                                                                ? retargetMuscleRow(m, { role: value as CatalogMuscleRole })
-                                                                : m
-                                                        ),
-                                                    }))
-                                                }
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                aria-label={ADMIN_CATALOG_COPY.removeRow}
-                                                onClick={() =>
-                                                    setDraft((prev) => ({
-                                                        ...prev,
-                                                        muscles: prev.muscles.filter((m) => m.key !== row.key),
-                                                    }))
-                                                }
-                                            >
-                                                <Trash2 className="h-4 w-4" aria-hidden />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                    {otherMuscleRows.map((row) => (
-                                        <div key={row.key} className={ADMIN_CATALOG_ROW}>
-                                            <div className={ADMIN_CATALOG_FIELD_GROW}>
-                                                <AdminCatalogSearchPicker
-                                                    options={muscleOptions}
-                                                    excludeValues={draft.muscles
-                                                        .map((m) => m.muscle_id)
-                                                        .filter((id): id is number => id != null && id !== row.muscle_id)}
-                                                    onSelect={(value) => {
-                                                        const label =
-                                                            muscleOptions.find((o) => o.value === value)
-                                                                ?.label ?? String(value);
-                                                        setDraft((prev) => ({
-                                                            ...prev,
-                                                            muscles: prev.muscles.map((m) =>
-                                                                m.key === row.key
-                                                                    ? retargetMuscleRow(m, { muscle_id: value, label })
-                                                                    : m
-                                                            ),
-                                                        }));
-                                                    }}
-                                                />
-                                                {row.muscle_id ? (
-                                                    <p className="mt-1 text-xs text-muted-foreground">
-                                                        Seleccionado: {row.label ?? row.muscle_id}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <FormCombobox
-                                                variant="premium"
-                                                value={row.role}
-                                                options={MUSCLE_ROLE_OPTIONS}
-                                                onChange={(value) =>
-                                                    setDraft((prev) => ({
-                                                        ...prev,
-                                                        muscles: prev.muscles.map((m) =>
-                                                            m.key === row.key
-                                                                ? retargetMuscleRow(m, { role: value as CatalogMuscleRole })
-                                                                : m
-                                                        ),
-                                                    }))
-                                                }
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                aria-label={ADMIN_CATALOG_COPY.removeRow}
-                                                onClick={() =>
-                                                    setDraft((prev) => ({
-                                                        ...prev,
-                                                        muscles: prev.muscles.filter((m) => m.key !== row.key),
-                                                    }))
-                                                }
-                                            >
-                                                <Trash2 className="h-4 w-4" aria-hidden />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className={ADMIN_CATALOG_ADD_ROW}>
-                                    <Button
-                                        type="button"
-                                        variant="ghost-primary"
-                                        size="sm"
-                                        onClick={() =>
-                                            setDraft((prev) => ({
-                                                ...prev,
-                                                muscles: [
-                                                    ...prev.muscles,
-                                                    {
-                                                        key: nextRowKey("m"),
-                                                        muscle_id: null,
-                                                        role: "synergist",
-                                                    },
-                                                ],
-                                            }))
-                                        }
-                                    >
-                                        <Plus className="h-4 w-4" aria-hidden />
-                                        {ADMIN_CATALOG_COPY.addMuscle}
-                                    </Button>
-                                </div>
-                            </section>
-
-                            {/* PATRONES */}
-                            <section id="patrones" className={sectionClass("patrones")}>
-                                <h2 className={ADMIN_CATALOG_SECTION_TITLE}>
-                                    {ADMIN_CATALOG_COPY.sectionPatrones}
-                                </h2>
-                                {(clientErrors.patrones ?? []).map((msg) => (
-                                    <Alert key={msg} variant="error" className={ADMIN_CATALOG_ALERT_SPACING}>
-                                        {msg}
-                                    </Alert>
-                                ))}
-                                <div className="space-y-3">
-                                    {draft.patterns.map((row) => (
-                                        <div key={row.key} className={ADMIN_CATALOG_ROW}>
-                                            <div className={ADMIN_CATALOG_FIELD_GROW}>
-                                                <FormCombobox
-                                                    variant="premium"
-                                                    value={
-                                                        row.movement_pattern_id != null
-                                                            ? String(row.movement_pattern_id)
-                                                            : ""
-                                                    }
-                                                    options={patternOptions}
-                                                    placeholder="Patrón"
-                                                    onChange={(value) =>
-                                                        setDraft((prev) => ({
-                                                            ...prev,
-                                                            patterns: prev.patterns.map((p) =>
-                                                                p.key === row.key
-                                                                    ? {
-                                                                          ...p,
-                                                                          movement_pattern_id: Number(value),
-                                                                      }
-                                                                    : p
-                                                            ),
-                                                        }))
-                                                    }
-                                                />
-                                            </div>
-                                            <FormCombobox
-                                                variant="premium"
-                                                value={row.role}
-                                                options={PATTERN_ROLE_OPTIONS}
-                                                onChange={(value) =>
-                                                    setDraft((prev) => ({
-                                                        ...prev,
-                                                        patterns: prev.patterns.map((p) =>
-                                                            p.key === row.key
-                                                                ? {
-                                                                      ...p,
-                                                                      role: value as CatalogPatternRole,
-                                                                  }
-                                                                : p
-                                                        ),
-                                                    }))
-                                                }
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                aria-label={ADMIN_CATALOG_COPY.removeRow}
-                                                onClick={() =>
-                                                    setDraft((prev) => ({
-                                                        ...prev,
-                                                        patterns: prev.patterns.filter((p) => p.key !== row.key),
-                                                    }))
-                                                }
-                                            >
-                                                <Trash2 className="h-4 w-4" aria-hidden />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className={ADMIN_CATALOG_ADD_ROW}>
-                                    <Button
-                                        type="button"
-                                        variant="ghost-primary"
-                                        size="sm"
-                                        onClick={() =>
-                                            setDraft((prev) => ({
-                                                ...prev,
-                                                patterns: [
-                                                    ...prev.patterns,
-                                                    {
-                                                        key: nextRowKey("p"),
-                                                        movement_pattern_id: null,
-                                                        role: "secondary",
-                                                    },
-                                                ],
-                                            }))
-                                        }
-                                    >
-                                        <Plus className="h-4 w-4" aria-hidden />
-                                        {ADMIN_CATALOG_COPY.addPattern}
-                                    </Button>
-                                </div>
-                            </section>
-
-                            {/* ARTICULACIONES */}
-                            <section id="articulaciones" className={sectionClass("articulaciones")}>
-                                <h2 className={ADMIN_CATALOG_SECTION_TITLE}>
-                                    {ADMIN_CATALOG_COPY.sectionArticulaciones}
-                                </h2>
-                                <p className={ADMIN_CATALOG_SECTION_HINT}>{ADMIN_CATALOG_COPY.jointsHint}</p>
-                                <p className={ADMIN_CATALOG_SECTION_HINT}>
-                                    {ADMIN_CATALOG_COPY.jointsBridgeHint}
-                                </p>
-                                {(clientErrors.articulaciones ?? []).map((msg) => (
-                                    <Alert key={msg} variant="error" className={ADMIN_CATALOG_ALERT_SPACING}>
-                                        {msg}
-                                    </Alert>
-                                ))}
-                                <div className="space-y-3">
-                                    {draft.joints.map((row) => (
-                                        <div key={row.key} className={ADMIN_CATALOG_ROW}>
-                                            <div className={ADMIN_CATALOG_FIELD_GROW}>
-                                                <FormCombobox
-                                                    variant="premium"
-                                                    value={row.joint_id != null ? String(row.joint_id) : ""}
-                                                    options={jointOptions}
-                                                    placeholder="Articulación"
-                                                    onChange={(value) =>
-                                                        setDraft((prev) => ({
-                                                            ...prev,
-                                                            joints: prev.joints.map((j) =>
-                                                                j.key === row.key
-                                                                    ? { ...j, joint_id: Number(value) }
-                                                                    : j
-                                                            ),
-                                                        }))
-                                                    }
-                                                />
-                                            </div>
-                                            <div className={ADMIN_CATALOG_FIELD_GROW}>
-                                                <AdminCatalogSearchPicker
-                                                    options={actionSearchOptions}
-                                                    onSelect={(value) =>
-                                                        setDraft((prev) => ({
-                                                            ...prev,
-                                                            joints: prev.joints.map((j) =>
-                                                                j.key === row.key
-                                                                    ? { ...j, action_id: value }
-                                                                    : j
-                                                            ),
-                                                        }))
-                                                    }
-                                                />
-                                                {row.action_id ? (
-                                                    <p className="mt-1 text-xs text-muted-foreground">
-                                                        Acción:{" "}
-                                                        {actionSearchOptions.find((a) => a.value === row.action_id)
-                                                            ?.label ?? row.action_id}
-                                                    </p>
-                                                ) : null}
-                                            </div>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                aria-label={ADMIN_CATALOG_COPY.removeRow}
-                                                onClick={() =>
-                                                    setDraft((prev) => ({
-                                                        ...prev,
-                                                        joints: prev.joints.filter((j) => j.key !== row.key),
-                                                    }))
-                                                }
-                                            >
-                                                <Trash2 className="h-4 w-4" aria-hidden />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className={ADMIN_CATALOG_ADD_ROW}>
-                                    <Button
-                                        type="button"
-                                        variant="ghost-primary"
-                                        size="sm"
-                                        onClick={() =>
-                                            setDraft((prev) => ({
-                                                ...prev,
-                                                joints: [
-                                                    ...prev.joints,
-                                                    {
-                                                        key: nextRowKey("j"),
-                                                        joint_id: null,
-                                                        action_id: null,
-                                                        role: "primary",
-                                                    },
-                                                ],
-                                            }))
-                                        }
-                                    >
-                                        <Plus className="h-4 w-4" aria-hidden />
-                                        {ADMIN_CATALOG_COPY.addJoint}
-                                    </Button>
-                                </div>
-                            </section>
-
-                            {/* MATERIAL */}
-                            <section id="material" className={sectionClass("material")}>
-                                <h2 className={ADMIN_CATALOG_SECTION_TITLE}>
-                                    {ADMIN_CATALOG_COPY.sectionMaterial}
-                                </h2>
-                                {(clientErrors.material ?? []).map((msg) => (
-                                    <Alert key={msg} variant="error" className={ADMIN_CATALOG_ALERT_SPACING}>
-                                        {msg}
-                                    </Alert>
-                                ))}
-                                <div className={ADMIN_CATALOG_CHIP_LIST}>
-                                    {draft.equipment_ids.map((id) => {
-                                        const label =
-                                            equipmentOptions.find((e) => e.value === id)?.label ?? String(id);
-                                        return (
-                                            <Button
-                                                key={id}
-                                                type="button"
-                                                variant="outline-primary"
-                                                size="sm"
-                                                onClick={() =>
-                                                    setDraft((prev) => ({
-                                                        ...prev,
-                                                        equipment_ids: prev.equipment_ids.filter((x) => x !== id),
-                                                    }))
-                                                }
-                                            >
-                                                {label} ×
-                                            </Button>
-                                        );
-                                    })}
-                                </div>
-                                <AdminCatalogSearchPicker
-                                    options={equipmentOptions}
-                                    excludeValues={draft.equipment_ids}
-                                    onSelect={(value) =>
-                                        setDraft((prev) => ({
-                                            ...prev,
-                                            equipment_ids: [...prev.equipment_ids, value],
-                                        }))
-                                    }
-                                    data-testid="admin-catalog-equipment-picker"
-                                />
-                            </section>
-
-                            {/* ETIQUETAS */}
-                            <section id="etiquetas" className={sectionClass("etiquetas")}>
-                                <h2 className={ADMIN_CATALOG_SECTION_TITLE}>
-                                    {ADMIN_CATALOG_COPY.sectionEtiquetas}
-                                </h2>
-                                <div className={ADMIN_CATALOG_CHIP_LIST}>
-                                    {draft.tag_ids.map((id) => {
-                                        const label =
-                                            tagOptions.find((t) => t.value === id)?.label ?? String(id);
-                                        return (
-                                            <Button
-                                                key={id}
-                                                type="button"
-                                                variant="outline-primary"
-                                                size="sm"
-                                                onClick={() =>
-                                                    setDraft((prev) => ({
-                                                        ...prev,
-                                                        tag_ids: prev.tag_ids.filter((x) => x !== id),
-                                                    }))
-                                                }
-                                            >
-                                                {label} ×
-                                            </Button>
-                                        );
-                                    })}
-                                </div>
-                                <AdminCatalogSearchPicker
-                                    options={tagOptions}
-                                    excludeValues={draft.tag_ids}
-                                    onSelect={(value) =>
-                                        setDraft((prev) => ({
-                                            ...prev,
-                                            tag_ids: [...prev.tag_ids, value],
-                                        }))
-                                    }
-                                />
-                            </section>
-
-                            <AdminCatalogRelationsSection exercisePk={currentPk} />
+                            <AdminCatalogFormSections
+                                draft={draft}
+                                setDraft={setDraft}
+                                clientErrors={clientErrors}
+                                sectionClass={sectionClass}
+                                muscleOptions={muscleOptions}
+                                patternOptions={patternOptions}
+                                jointOptions={jointOptions}
+                                actionSearchOptions={actionSearchOptions}
+                                equipmentOptions={equipmentOptions}
+                                tagOptions={tagOptions}
+                                currentPk={currentPk}
+                            />
                         </div>
                     </div>
                 </div>
             </div>
 
-            <DashboardFixedFooter className={ADMIN_CATALOG_FOOTER_SHELL}>
-                <div className={ADMIN_CATALOG_FOOTER_ROW}>
-                    <div className={ADMIN_CATALOG_FOOTER_LEFT}>
-                        <Button
-                            type="button"
-                            variant="ghost-primary"
-                            size="sm"
-                            className={ADMIN_CATALOG_FOOTER_BTN}
-                            disabled={currentPk == null}
-                            onClick={() => {
-                                if (currentPk == null) {
-                                    showError("Guarda el ejercicio para ver el historial");
-                                    return;
-                                }
-                                setHistoryOpen(true);
-                            }}
-                        >
-                            {ADMIN_CATALOG_COPY.history}
-                        </Button>
-                    </div>
-                    <div className={ADMIN_CATALOG_FOOTER_ACTIONS}>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className={ADMIN_CATALOG_FOOTER_BTN}
-                            disabled={isSaving}
-                            onClick={handleCancel}
-                        >
-                            {ADMIN_CATALOG_COPY.cancel}
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="outline-primary"
-                            size="sm"
-                            className={ADMIN_CATALOG_FOOTER_BTN}
-                            disabled={isSaving}
-                            onClick={() => void handleSave()}
-                        >
-                            {ADMIN_CATALOG_COPY.save}
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="primary"
-                            size="sm"
-                            className={ADMIN_CATALOG_FOOTER_BTN}
-                            disabled={isSaving}
-                            onClick={() => void handleReviewedAndNext()}
-                        >
-                            {ADMIN_CATALOG_COPY.reviewedAndNext}
-                        </Button>
-                    </div>
-                </div>
-            </DashboardFixedFooter>
-
-            <AdminCatalogHistoryModal
-                isOpen={historyOpen}
-                onClose={() => setHistoryOpen(false)}
-                exercisePk={currentPk}
+            <AdminCatalogFormFooter
+                currentPk={currentPk}
                 exerciseName={draft.core.nombre}
-            />
-            <AdminCatalogConflictModal
-                isOpen={conflict != null}
-                onClose={() => setConflict(null)}
-                onReload={() => void handleReloadConflict()}
+                isSaving={isSaving}
+                historyOpen={historyOpen}
+                onOpenHistory={openHistory}
+                onCloseHistory={() => setHistoryOpen(false)}
+                onCancel={handleCancel}
+                onSave={() => void handleSave()}
+                onReviewedAndNext={() => void handleReviewedAndNext()}
                 conflict={conflict}
-            />
-            <NexiaPremiumConfirmModal
-                isOpen={deactivateOpen}
-                onClose={() => setDeactivateOpen(false)}
-                onConfirm={() => void handleDeactivate()}
-                title={ADMIN_CATALOG_COPY.deactivateTitle}
-                description={
-                    usageLoading
-                        ? ADMIN_CATALOG_COPY.deactivateUsageLoading
-                        : usage
-                          ? `${ADMIN_CATALOG_COPY.deactivateUsageBody(usage.sessions, usage.templates)} ${ADMIN_CATALOG_COPY.deactivateBody}`
-                          : ADMIN_CATALOG_COPY.deactivateBody
-                }
-                confirmLabel={ADMIN_CATALOG_COPY.deactivateConfirm}
-                confirmVariant="destructive"
-                isLoading={isTogglingActive || usageLoading}
-                data-testid="admin-catalog-deactivate-modal"
-            />
-            <NexiaPremiumConfirmModal
-                isOpen={reactivateOpen}
-                onClose={() => setReactivateOpen(false)}
-                onConfirm={() => void handleReactivate()}
-                title={ADMIN_CATALOG_COPY.reactivateTitle}
-                description={ADMIN_CATALOG_COPY.reactivateBody}
-                confirmLabel={ADMIN_CATALOG_COPY.reactivateConfirm}
-                confirmVariant="primary"
-                isLoading={isTogglingActive}
-                data-testid="admin-catalog-reactivate-modal"
+                onCloseConflict={() => setConflict(null)}
+                onReloadConflict={() => void handleReloadConflict()}
+                deactivateOpen={deactivateOpen}
+                onCloseDeactivate={() => setDeactivateOpen(false)}
+                onDeactivate={() => void handleDeactivate()}
+                usageLoading={usageLoading}
+                usage={usage}
+                isTogglingActive={isTogglingActive}
+                reactivateOpen={reactivateOpen}
+                onCloseReactivate={() => setReactivateOpen(false)}
+                onReactivate={() => void handleReactivate()}
             />
         </div>
     );

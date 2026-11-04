@@ -507,6 +507,30 @@ export const confirmCatalogImportHandler = http.post(
         )
 );
 
+/** GET /admin/catalog/exercises/{pk}/usage — CatalogExerciseUsageOut. */
+export const getCatalogExerciseUsageHandler = http.get(
+    "*/admin/catalog/exercises/:pk/usage",
+    ({ params }) =>
+        HttpResponse.json({
+            exercise_pk: Number(params.pk) || 0,
+            sessions: 0,
+            templates: 0,
+            alternatives: 0,
+            performance_records: 0,
+        })
+);
+
+/** GET /exercise-alternatives/exercise/{id} — ExerciseAlternativeWithDetails[]. */
+export const getExerciseAlternativesHandler = http.get(
+    "*/exercise-alternatives/exercise/:exerciseId",
+    () => HttpResponse.json([])
+);
+
+/** GET /exercise-catalog/variants/ — ExerciseVariantCatalogOut[]. */
+export const getExerciseVariantsHandler = http.get("*/exercise-catalog/variants/", () =>
+    HttpResponse.json([])
+);
+
 export const adminCatalogHandlers = [
     getExerciseCatalogHandler,
     createExerciseCatalogHandler,
@@ -515,6 +539,9 @@ export const adminCatalogHandlers = [
     markCatalogReviewedHandler,
     reactivateCatalogExerciseHandler,
     getCatalogHistoryHandler,
+    getCatalogExerciseUsageHandler,
+    getExerciseAlternativesHandler,
+    getExerciseVariantsHandler,
     listAdminCatalogHandler,
     exportAdminCatalogHandler,
     validateCatalogImportHandler,
