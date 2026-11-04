@@ -51,7 +51,7 @@ export interface UseAdminExerciseCatalogFormArgs {
 }
 
 /** Normaliza el estado del formulario al draft del contrato; no rellena campos obligatorios. */
-function toBundleDraft(draft: AdminCatalogFormDraft): CatalogBundleDraft {
+export function toBundleDraft(draft: AdminCatalogFormDraft): CatalogBundleDraft {
     const muscles: CatalogMuscleIn[] = orderMusclesForCommit(
         draft.muscles
             .filter((m): m is MuscleRowDraft & { muscle_id: number } => m.muscle_id != null)

@@ -273,6 +273,42 @@ export interface AdminCatalogExportParams {
     include_inactive?: boolean;
 }
 
+export type CatalogPreviewVolumeRole = "prime_mover" | "synergist" | "stabilizer";
+
+export type CatalogPreviewEmptyReason = "not_strength";
+
+export type CatalogPreviewAxialReason = "axial_unknown" | "axial_pending_review";
+
+/** POST /admin/catalog/preview — one muscle group, one set. */
+export interface CatalogPreviewVolumeGroupOut {
+    muscle_group_id: number;
+    name: string;
+    role: CatalogPreviewVolumeRole;
+    multiplier: string;
+}
+
+export interface CatalogPreviewVolumeOut {
+    groups: CatalogPreviewVolumeGroupOut[];
+    empty_reason: CatalogPreviewEmptyReason | null;
+    is_plyometric: boolean;
+}
+
+export interface CatalogPreviewAxialOut {
+    verifiable: boolean;
+    weight: number | null;
+    reason: CatalogPreviewAxialReason | null;
+}
+
+/** POST /admin/catalog/preview. Same body as create. Writes nothing. */
+export interface CatalogPreviewOut {
+    validation_errors: string[];
+    contract_status: ExerciseContractStatus;
+    contract_missing: ExerciseContractMissingCode[];
+    volume_per_set: CatalogPreviewVolumeOut;
+    axial_weight: CatalogPreviewAxialOut;
+    selectable_in_sessions: boolean;
+}
+
 /** GET /admin/catalog/exercises/{pk}/usage */
 export interface CatalogExerciseUsageOut {
     exercise_pk: number;

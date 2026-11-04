@@ -25,6 +25,7 @@ import type {
     CatalogBulkReviewOut,
     CatalogExerciseOut,
     CatalogExerciseUsageOut,
+    CatalogPreviewOut,
     CatalogImportConfirmOut,
     CatalogImportValidateOut,
     CatalogReviewStatusOut,
@@ -82,6 +83,17 @@ export const adminCatalogApi = baseApi.injectEndpoints({
                 { type: "Exercise", id: exercisePk },
                 { type: "Exercise", id: "LIST" },
             ],
+        }),
+
+        previewAdminCatalog: builder.mutation<
+            CatalogPreviewOut,
+            ExerciseCatalogBundleCreateIn
+        >({
+            query: (body) => ({
+                url: "/admin/catalog/preview",
+                method: "POST",
+                body,
+            }),
         }),
 
         bulkReviewCatalog: builder.mutation<CatalogBulkReviewOut, CatalogBulkReviewIn>({
@@ -234,6 +246,7 @@ export const {
     useLazyGetExerciseCatalogQuery,
     useCreateExerciseCatalogMutation,
     useUpdateExerciseCatalogMutation,
+    usePreviewAdminCatalogMutation,
     useBulkReviewCatalogMutation,
     useMarkCatalogExerciseReviewedMutation,
     useGetCatalogExerciseHistoryQuery,

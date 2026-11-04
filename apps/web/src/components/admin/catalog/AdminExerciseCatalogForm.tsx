@@ -46,6 +46,8 @@ import { type AdminCatalogSectionId } from "./adminCatalogFormTypes";
 import { useAdminExerciseCatalogForm } from "./useAdminExerciseCatalogForm";
 import { AdminCatalogCoreSection } from "./AdminCatalogCoreSection";
 import { AdminCatalogFormSections } from "./AdminCatalogFormSections";
+import { AdminCatalogPreviewPanel } from "./AdminCatalogPreviewPanel";
+import { useAdminCatalogPreview } from "./useAdminCatalogPreview";
 import {
     AdminCatalogFormFooter,
     AdminCatalogFormHeader,
@@ -111,6 +113,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
         setHistoryOpen,
         showError,
     });
+    const preview = useAdminCatalogPreview(draft);
 
     const muscleOptions = useMemo(
         () =>
@@ -242,6 +245,8 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                         </ul>
                     </Alert>
                 ) : null}
+
+                <AdminCatalogPreviewPanel preview={preview} />
 
                 <div className={ADMIN_CATALOG_MOBILE_STEPPER} role="tablist" aria-label="Secciones">
                     {ADMIN_CATALOG_SECTIONS.map((section) => {

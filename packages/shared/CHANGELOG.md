@@ -1,5 +1,13 @@
 # Changelog — @nexia/shared
 
+## 3.6.0 — 2026-11-04
+
+### Added (H5: vista previa de cómo cuenta un ejercicio)
+
+- `CatalogPreviewOut`, copiado de `POST /admin/catalog/preview`.
+- `usePreviewAdminCatalogMutation`.
+- `formatCatalogVolumePerSet`: «Por serie: Cuádriceps 1 · Glúteo mayor 0,5 · Isquiotibiales 0».
+
 ## 3.5.0 — 2026-11-04
 
 ### Added (H5: revisión masiva de carga axial y nivel)

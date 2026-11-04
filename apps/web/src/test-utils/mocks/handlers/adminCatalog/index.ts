@@ -531,6 +531,18 @@ export const getExerciseVariantsHandler = http.get("*/exercise-catalog/variants/
     HttpResponse.json([])
 );
 
+/** POST /admin/catalog/preview — la ficha lo pide al editar; no escribe. */
+export const previewAdminCatalogHandler = http.post("*/admin/catalog/preview", () =>
+    HttpResponse.json({
+        validation_errors: [],
+        contract_status: "incomplete",
+        contract_missing: ["equipment"],
+        volume_per_set: { groups: [], empty_reason: null, is_plyometric: false },
+        axial_weight: { verifiable: true, weight: 0, reason: null },
+        selectable_in_sessions: false,
+    })
+);
+
 export const adminCatalogHandlers = [
     getExerciseCatalogHandler,
     createExerciseCatalogHandler,
@@ -543,6 +555,7 @@ export const adminCatalogHandlers = [
     getExerciseAlternativesHandler,
     getExerciseVariantsHandler,
     listAdminCatalogHandler,
+    previewAdminCatalogHandler,
     exportAdminCatalogHandler,
     validateCatalogImportHandler,
     confirmCatalogImportHandler,
