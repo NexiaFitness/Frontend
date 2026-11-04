@@ -1,5 +1,11 @@
 # Changelog — @nexia/shared
 
+## 3.4.0 — 2026-11-04
+
+### Added (H5: permiso de lectura del texto)
+
+- `canReadExerciseContent(role)`: entrenador y admin. El atleta no llama al endpoint.
+
 ## 3.3.0 — 2026-11-04
 
 ### Added (H5: texto de lectura del ejercicio)

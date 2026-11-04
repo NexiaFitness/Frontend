@@ -24,8 +24,7 @@ const CreditsPage: React.FC = () => {
                 <NexiaGlassAccentRim />
                 <h1 className={CREDITS_TITLE}>{CREDITS_COPY.title}</h1>
                 <p className={CREDITS_META}>{CREDITS_COPY.meta}</p>
-                <p className={CREDITS_BODY}>{CREDITS_COPY.lead}</p>
-                <p className={CREDITS_BODY}>{CREDITS_COPY.attributionAsk}</p>
+                <p className={CREDITS_BODY}>{CREDITS_COPY.sentence}</p>
                 <a
                     className={CREDITS_LINK}
                     href={CREDITS_URL}

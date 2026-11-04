@@ -7,7 +7,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { selectUser } from "@nexia/shared";
-import { USER_ROLES } from "@nexia/shared/utils/roles";
+import { canReadExerciseContent } from "@nexia/shared/utils/exerciseContentAccess";
 import { useGetExerciseContentQuery } from "@nexia/shared/api/exerciseContentApi";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
@@ -37,8 +37,7 @@ export const ExerciseDetailReadingContent: React.FC<ExerciseDetailReadingContent
     exerciseId,
 }) => {
     const user = useSelector(selectUser);
-    const canRead =
-        user?.role === USER_ROLES.TRAINER || user?.role === USER_ROLES.ADMIN;
+    const canRead = canReadExerciseContent(user?.role);
     const { data, isLoading, isError, refetch } = useGetExerciseContentQuery(exerciseId, {
         skip: !canRead,
     });

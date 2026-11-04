@@ -74,6 +74,7 @@ export {
 export * from "./api/exercisesApi";
 export * from "./api/exerciseContentApi";
 export * from "./types/exerciseContent";
+export { canReadExerciseContent } from "./utils/exerciseContentAccess";
 export * from "./api/fatigueApi";
 export * from "./api/injuriesApi";
 export * from "./api/notificationsApi";

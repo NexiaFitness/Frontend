@@ -20,17 +20,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { lazyWithRetry } from "./lib/lazyWithRetry";
 
-// Páginas públicas (críticas: estáticas)
-import Home from "./pages/Home";
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
-
-// Bloque 1: Públicas secundarias (lazy)
-const ForgotPassword = lazyWithRetry(() => import("./pages/auth/ForgotPassword"));
-const ResetPassword = lazyWithRetry(() => import("./pages/auth/ResetPassword"));
-const VerifyEmail = lazyWithRetry(() => import("./pages/auth/VerifyEmail"));
-const InvitationAcceptPage = lazyWithRetry(() => import("./pages/invitation/InvitationAcceptPage"));
-const CreditsPage = lazyWithRetry(() => import("./pages/CreditsPage"));
+// Bloque 1: onboarding (lazy). Las públicas viven en routes/publicRoutes.
 const AthleteOnboardingPage = lazyWithRetry(() => import("./pages/onboarding/AthleteOnboardingPage"));
 
 // Bloque 2: Dashboards por rol (lazy)
@@ -154,24 +144,6 @@ const ExerciseList = lazyWithRetry(() =>
 const ExerciseDetail = lazyWithRetry(() =>
   import("./pages/exercises").then((m) => ({ default: m.ExerciseDetail }))
 );
-const AdminCatalogListPage = lazyWithRetry(() =>
-  import("./pages/dashboard/admin/catalog").then((m) => ({ default: m.AdminCatalogListPage }))
-);
-const AdminCatalogExerciseCreatePage = lazyWithRetry(() =>
-  import("./pages/dashboard/admin/catalog").then((m) => ({
-    default: m.AdminCatalogExerciseCreatePage,
-  }))
-);
-const AdminCatalogExerciseEditPage = lazyWithRetry(() =>
-  import("./pages/dashboard/admin/catalog").then((m) => ({
-    default: m.AdminCatalogExerciseEditPage,
-  }))
-);
-const AdminCatalogImportPage = lazyWithRetry(() =>
-  import("./pages/dashboard/admin/catalog").then((m) => ({
-    default: m.AdminCatalogImportPage,
-  }))
-);
 const AdminUsersListPage = lazyWithRetry(() =>
   import("./pages/dashboard/admin/users").then((m) => ({ default: m.AdminUsersListPage }))
 );
@@ -263,8 +235,10 @@ const NotFound = lazyWithRetry(() =>
 );
 
 // Layouts
-import { PublicLayout } from "./components/ui/layout/PublicLayout";
 import { DashboardShell } from "./components/dashboard/DashboardShell";
+import { PublicRoutes } from "./routes/publicRoutes";
+import { CreditsRoutes } from "./routes/creditsRoutes";
+import { AdminCatalogRoutes } from "./routes/adminCatalogRoutes";
 
 // UI Components
 import { ToastProvider } from "./components/ui/feedback";
@@ -339,17 +313,8 @@ function App() {
         <PwaUpdateBannerHost />
         <Suspense fallback={<AthleteMobileSuspenseFallback />}>
           <Routes>
-            <Route element={<PublicLayout />}>
-          <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
-          <Route path="/login" element={<Navigate to="/auth/login" replace />} />
-          <Route path="/auth/login" element={<Login />} />
-          <Route path="/auth/register" element={<Register />} />
-          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/invitation" element={<InvitationAcceptPage />} />
-          <Route path="/creditos" element={<CreditsPage />} />
-        </Route>
+            <PublicRoutes />
+            <CreditsRoutes />
 
         <Route
           path="/onboarding/athlete"
@@ -581,39 +546,7 @@ function App() {
             }
           />
 
-          {/* Admin catalog (M5) */}
-          <Route
-            path="admin/catalog/new"
-            element={
-              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
-                <AdminCatalogExerciseCreatePage />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="admin/catalog/import"
-            element={
-              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
-                <AdminCatalogImportPage />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="admin/catalog/:exercisePk"
-            element={
-              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
-                <AdminCatalogExerciseEditPage />
-              </RoleProtectedRoute>
-            }
-          />
-          <Route
-            path="admin/catalog"
-            element={
-              <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
-                <AdminCatalogListPage />
-              </RoleProtectedRoute>
-            }
-          />
+          <AdminCatalogRoutes />
 
           {/* Clients */}
           <Route

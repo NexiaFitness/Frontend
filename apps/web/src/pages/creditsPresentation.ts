@@ -1,7 +1,7 @@
 /**
  * creditsPresentation.ts — Créditos de RepDB Free Tier (H5).
  *
- * El párrafo es el término 2 de LICENSE-DATA_b407c59: la parte que pide atribución.
+ * Una frase para quien lee la pantalla, y el enlace de atribución obligatorio.
  */
 
 import { cn } from "@/lib/utils";
@@ -20,9 +20,8 @@ export const CREDITS_URL = "https://repdb.co";
 export const CREDITS_COPY = {
     title: "Créditos",
     meta: "RepDB Free Tier v1.0",
-    lead: "Los textos de los ejercicios (descripción, cómo se hace y consejos) proceden de RepDB Free Tier v1.0.",
-    attributionAsk:
-        "Attribution required. Place a visible link — “Exercise data by RepDB (repdb.co)” — in your app's about/credits screen, your project's README, or your website footer.",
+    sentence:
+        "Los textos de los ejercicios (descripción, cómo se hace y consejos) proceden de RepDB y se usan bajo la licencia RepDB Free Tier v1.0.",
     linkLabel: "Exercise data by RepDB (repdb.co)",
     settingsLabel: "Créditos",
     settingsHint: "Origen de los textos de los ejercicios",
