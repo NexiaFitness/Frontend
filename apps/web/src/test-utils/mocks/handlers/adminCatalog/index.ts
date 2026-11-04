@@ -274,7 +274,7 @@ export const listAdminCatalogHandler = http.get(
                 total: items.length,
                 skip: Number(url.searchParams.get("skip") ?? 0),
                 limit: Number(url.searchParams.get("limit") ?? 50),
-                review_progress: { reviewed_count: 34, active_count: 107 },
+                review_progress: { reviewed_count: 34, active_count: 107, queue_count: 12 },
             },
             { status: 200 }
         );

@@ -58,6 +58,11 @@ import {
     ADMIN_CATALOG_TR_INACTIVE,
 } from "@/components/admin/catalog/adminCatalogPresentation";
 import { PLATFORM_PAGE_SHELL } from "@/components/ui/surface/platformPremiumPresentation";
+import {
+    ADMIN_CATALOG_REVIEW_COPY,
+    ADMIN_CATALOG_REVIEW_PATH,
+    ADMIN_CATALOG_REVIEW_QUEUE_LINK,
+} from "@/components/admin/catalog/adminCatalogReviewPresentation";
 
 const SKELETON_ROWS = [0, 1, 2, 3, 4, 5];
 
@@ -118,7 +123,7 @@ export const AdminCatalogListPage: React.FC = () => {
                 <div className={ADMIN_CATALOG_PAGE_HEADER}>
                     <div className={ADMIN_CATALOG_TITLE_WRAP}>
                         <PageTitle title={ADMIN_CATALOG_COPY.listTitle} />
-                        <p className={ADMIN_CATALOG_PROGRESS_ROW}>
+                        <div className={ADMIN_CATALOG_PROGRESS_ROW}>
                             <span className={ADMIN_CATALOG_PROGRESS_VALUE}>
                                 {ADMIN_CATALOG_COPY.progressLabel(
                                     reviewProgress?.reviewed_count ?? 0,
@@ -126,7 +131,14 @@ export const AdminCatalogListPage: React.FC = () => {
                                 )}
                             </span>
                             <span>{ADMIN_CATALOG_COPY.issuesLabel(issuesCount)}</span>
-                        </p>
+                            <button
+                                type="button"
+                                className={ADMIN_CATALOG_REVIEW_QUEUE_LINK}
+                                onClick={() => navigate(ADMIN_CATALOG_REVIEW_PATH)}
+                            >
+                                {ADMIN_CATALOG_REVIEW_COPY.queueLink(reviewProgress?.queue_count ?? 0)}
+                            </button>
+                        </div>
                     </div>
                     <div className={ADMIN_CATALOG_HEADER_ACTIONS}>
                         <PlatformHeaderBackButton

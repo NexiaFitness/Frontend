@@ -21,6 +21,8 @@ import type {
     AdminCatalogExerciseListOut,
     AdminCatalogExportParams,
     AdminCatalogListParams,
+    CatalogBulkReviewIn,
+    CatalogBulkReviewOut,
     CatalogExerciseOut,
     CatalogExerciseUsageOut,
     CatalogImportConfirmOut,
@@ -82,6 +84,18 @@ export const adminCatalogApi = baseApi.injectEndpoints({
             ],
         }),
 
+        bulkReviewCatalog: builder.mutation<CatalogBulkReviewOut, CatalogBulkReviewIn>({
+            query: (body) => ({
+                url: "/admin/catalog/review",
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: [
+                { type: "AdminCatalog", id: "LIST" },
+                { type: "Exercise", id: "LIST" },
+            ],
+        }),
+
         markCatalogExerciseReviewed: builder.mutation<CatalogReviewStatusOut, number>({
             query: (exercisePk) => ({
                 url: `/admin/catalog/exercises/${exercisePk}/review`,
@@ -117,6 +131,10 @@ export const adminCatalogApi = baseApi.injectEndpoints({
                     ...(params.review_status
                         ? { review_status: params.review_status }
                         : {}),
+                    ...(params.review ? { review: params.review } : {}),
+                    ...(params.axial_load ? { axial_load: params.axial_load } : {}),
+                    ...(params.nivel ? { nivel: params.nivel } : {}),
+                    ...(params.pattern ? { pattern: params.pattern } : {}),
                     include_inactive: params.include_inactive ?? false,
                     quality_issues_only: params.quality_issues_only ?? false,
                 },
@@ -216,6 +234,7 @@ export const {
     useLazyGetExerciseCatalogQuery,
     useCreateExerciseCatalogMutation,
     useUpdateExerciseCatalogMutation,
+    useBulkReviewCatalogMutation,
     useMarkCatalogExerciseReviewedMutation,
     useGetCatalogExerciseHistoryQuery,
     useLazyGetCatalogExerciseHistoryQuery,

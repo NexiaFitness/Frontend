@@ -1,5 +1,14 @@
 # Changelog — @nexia/shared
 
+## 3.5.0 — 2026-11-04
+
+### Added (H5: revisión masiva de carga axial y nivel)
+
+- El ítem de `GET /admin/catalog/exercises` incluye carga axial, nivel, sus estados, nota, desempates, patrón primario, material y `updated_at`. `review_progress.queue_count` cuenta la cola.
+- Query `review`, `axial_load`, `nivel` y `pattern`.
+- `POST /admin/catalog/review`: `CatalogBulkReviewIn` y el 409 con la lista de conflictos.
+- `buildCatalogReviewListParams`, `shownReviewValues`, `buildCatalogBulkReviewBody` y `parseCatalogBulkReviewConflicts`.
+
 ## 3.4.0 — 2026-11-04
 
 ### Added (H5: permiso de lectura del texto)

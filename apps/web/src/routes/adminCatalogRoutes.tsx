@@ -26,6 +26,11 @@ const AdminCatalogExerciseEditPage = lazyWithRetry(() =>
         default: m.AdminCatalogExerciseEditPage,
     }))
 );
+const AdminCatalogReviewPage = lazyWithRetry(() =>
+    import("@/pages/dashboard/admin/catalog").then((m) => ({
+        default: m.AdminCatalogReviewPage,
+    }))
+);
 const AdminCatalogImportPage = lazyWithRetry(() =>
     import("@/pages/dashboard/admin/catalog").then((m) => ({
         default: m.AdminCatalogImportPage,
@@ -35,6 +40,14 @@ const AdminCatalogImportPage = lazyWithRetry(() =>
 export const AdminCatalogRoutes: React.FC = () => {
     return (
         <>
+            <Route
+                path="admin/catalog/review"
+                element={
+                    <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                        <AdminCatalogReviewPage />
+                    </RoleProtectedRoute>
+                }
+            />
             <Route
                 path="admin/catalog/new"
                 element={

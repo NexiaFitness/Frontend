@@ -37,6 +37,7 @@ describe("AdminCatalogListPage", () => {
         expect(
             screen.getByText(ADMIN_CATALOG_COPY.progressLabel(34, 107))
         ).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "12 por revisar" })).toBeInTheDocument();
         // Tabla (>= md) y cards (< md) coexisten en el DOM; se alternan por CSS.
         expect(screen.getAllByText("Sentadilla trasera").length).toBeGreaterThan(0);
         expect(screen.getAllByText(/squat_back/).length).toBeGreaterThan(0);

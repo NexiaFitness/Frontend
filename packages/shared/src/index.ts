@@ -410,6 +410,7 @@ export type { IStorage } from './storage/IStorage';
 export * from "./utils/exerciseNames";
 export * from "./utils/adminCatalog/validateCatalogBundle";
 export * from "./utils/adminCatalog/catalogQueue";
+export * from "./utils/adminCatalog/catalogBulkReview";
 export * from "./utils/adminCatalog/parseCatalogApiError";
 export * from "./utils/charts/chartParsers";
 

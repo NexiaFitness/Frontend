@@ -20,6 +20,9 @@ import type {
 
 export type CatalogReviewStatus = "pending" | "reviewed";
 
+/** Filtro de la revisión masiva: rúbrica, pendiente o desempate. */
+export type CatalogValueReviewFilter = "rubric" | "pending" | "tiebreak";
+
 export type CatalogMuscleRole = "prime_mover" | "synergist" | "stabilizer";
 
 export type CatalogPatternRole = "primary" | "secondary";
@@ -137,12 +140,24 @@ export interface AdminCatalogExerciseListItemOut {
     /** Derivado por el backend (H1); null si no se calculó. */
     contract_status?: ExerciseContractStatus | null;
     contract_missing?: ExerciseContractMissingCode[] | null;
+    axial_load?: string | null;
+    axial_load_review?: string | null;
+    nivel?: string | null;
+    nivel_review?: string | null;
+    catalog_review_note?: string | null;
+    axial_load_tiebreak?: boolean;
+    nivel_tiebreak?: boolean;
+    primary_pattern?: string | null;
+    equipment?: string[];
+    updated_at?: string | null;
 }
 
 /** Progreso de revisión F9 — alcance activos. */
 export interface CatalogReviewProgressOut {
     reviewed_count: number;
     active_count: number;
+    /** Activos con carga o nivel en rúbrica, pendiente o desempate. */
+    queue_count?: number;
 }
 
 export interface AdminCatalogExerciseListOut {
@@ -159,8 +174,33 @@ export interface AdminCatalogListParams {
     limit?: number;
     search?: string;
     review_status?: CatalogReviewStatus;
+    review?: CatalogValueReviewFilter;
+    axial_load?: string;
+    nivel?: string;
+    pattern?: string;
     include_inactive?: boolean;
     quality_issues_only?: boolean;
+}
+
+export interface CatalogBulkReviewItemIn {
+    exercise_pk: number;
+    axial_load: string;
+    nivel: string;
+    expected_updated_at: string;
+}
+
+export interface CatalogBulkReviewIn {
+    items: CatalogBulkReviewItemIn[];
+}
+
+export interface CatalogBulkReviewOut {
+    updated_count: number;
+}
+
+export interface CatalogBulkReviewConflictItem {
+    exercise_pk: number;
+    nombre: string;
+    server_updated_at?: string | null;
 }
 
 export interface CatalogImportViolationOut {
