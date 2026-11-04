@@ -4,8 +4,9 @@
  * Contexto: extraída de AdminExerciseCatalogForm (H1, regla de tamaño) al añadir el objetivo
  * de entrenamiento. Solo render: el estado y la validación viven en useAdminExerciseCatalogForm
  * y en validateCatalogBundleDraft (shared).
- * Notas de mantenimiento: carga axial, nivel y objetivo empiezan vacíos y son obligatorios; una
- * propuesta pendiente de revisión solo pasa a revisada si el administrador la confirma.
+ * Notas de mantenimiento: carga axial, nivel y objetivo empiezan vacíos y son obligatorios.
+ * Una propuesta pending_review o rubric solo pasa a revisada si el administrador la confirma;
+ * el motivo y los chips de la rúbrica llegan con la pantalla de H5.
  *
  * @author Frontend Team
  * @since v1.1.0
@@ -33,6 +34,7 @@ import {
     OBJETIVO_OPTIONS,
     OBJETIVO_PLACEHOLDER,
     PENDING_REVIEW_HINT,
+    RUBRIC_CONFIRM_HINT,
     TIPO_OPTIONS,
 } from "./adminCatalogFieldOptions";
 import type { PendingReviewState } from "./adminCatalogFormTypes";
@@ -110,14 +112,19 @@ export const AdminCatalogCoreSection: React.FC<AdminCatalogCoreSectionProps> = (
                     onChange={(value) => onCoreChange({ nivel: value })}
                 />
                 {pendingReview.nivel ? (
-                    <Checkbox
-                        id="cat-nivel-review"
-                        label={NIVEL_PENDING_CONFIRM}
-                        checked={core.nivel_review === "reviewed"}
-                        onChange={(e) =>
-                            onCoreChange({ nivel_review: e.target.checked ? "reviewed" : null })
-                        }
-                    />
+                    <>
+                        {pendingReview.nivel === "rubric" ? (
+                            <p className={ADMIN_CATALOG_SECTION_HINT}>{RUBRIC_CONFIRM_HINT}</p>
+                        ) : null}
+                        <Checkbox
+                            id="cat-nivel-review"
+                            label={NIVEL_PENDING_CONFIRM}
+                            checked={core.nivel_review === "reviewed"}
+                            onChange={(e) =>
+                                onCoreChange({ nivel_review: e.target.checked ? "reviewed" : null })
+                            }
+                        />
+                    </>
                 ) : null}
             </FormField>
             <FormField label="Lateralidad" htmlFor="cat-lat" variant={FIELD}>
@@ -140,7 +147,11 @@ export const AdminCatalogCoreSection: React.FC<AdminCatalogCoreSectionProps> = (
                 />
                 {pendingReview.axial_load ? (
                     <>
-                        <p className={ADMIN_CATALOG_SECTION_HINT}>{PENDING_REVIEW_HINT}</p>
+                        <p className={ADMIN_CATALOG_SECTION_HINT}>
+                            {pendingReview.axial_load === "pending_review"
+                                ? PENDING_REVIEW_HINT
+                                : RUBRIC_CONFIRM_HINT}
+                        </p>
                         <Checkbox
                             id="cat-axial-review"
                             label={AXIAL_PENDING_CONFIRM}

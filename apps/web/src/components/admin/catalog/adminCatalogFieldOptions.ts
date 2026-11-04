@@ -58,4 +58,6 @@ export const AXIAL_PENDING_CONFIRM = "Confirmo la carga axial propuesta";
 export const NIVEL_PENDING_CONFIRM = "Confirmo el nivel propuesto";
 export const PENDING_REVIEW_HINT =
     "Valor propuesto por el sistema, pendiente de revisión. Mientras la carga axial esté pendiente, el ejercicio no se puede añadir a sesiones.";
+export const RUBRIC_CONFIRM_HINT =
+    "Valor propuesto por la rúbrica, pendiente de tu revisión.";
 

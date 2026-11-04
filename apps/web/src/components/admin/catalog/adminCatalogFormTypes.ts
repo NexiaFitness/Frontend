@@ -40,10 +40,16 @@ export interface JointRowDraft {
     role: string;
 }
 
-/** Valores guardados como propuesta sin revisar: la ficha pide confirmarlos de forma explícita. */
+/**
+ * Propuesta que la ficha puede confirmar sin cambiar el valor.
+ * pending_review bloquea el selector; rubric ya es elegible (H5b) y confirmarlo
+ * lo deja en reviewed (H1 R4). legacy y reviewed no piden confirmación.
+ */
+export type CatalogProposalKind = "pending_review" | "rubric";
+
 export interface PendingReviewState {
-    axial_load: boolean;
-    nivel: boolean;
+    axial_load: CatalogProposalKind | null;
+    nivel: CatalogProposalKind | null;
 }
 
 export interface AdminCatalogFormDraft {
@@ -75,6 +81,10 @@ export function retargetMuscleRow(
     return { ...row, ...patch, evidence_level: null, is_coach_decision: false, evidence_note: null };
 }
 
+function proposalKind(review: string | null | undefined): CatalogProposalKind | null {
+    return review === "pending_review" || review === "rubric" ? review : null;
+}
+
 let rowKeySeq = 0;
 export function nextRowKey(prefix: string): string {
     rowKeySeq += 1;
@@ -101,7 +111,7 @@ export function emptyCore(): CatalogCoreDraft {
 export function emptyDraft(): AdminCatalogFormDraft {
     return {
         core: emptyCore(),
-        pending_review: { axial_load: false, nivel: false },
+        pending_review: { axial_load: null, nivel: null },
         muscles: [
             {
                 key: nextRowKey("m"),
@@ -189,8 +199,8 @@ export function draftFromCatalog(exercise: CatalogExerciseOut): AdminCatalogForm
             is_active: exercise.is_active,
         },
         pending_review: {
-            axial_load: exercise.axial_load_review === "pending_review",
-            nivel: exercise.nivel_review === "pending_review",
+            axial_load: proposalKind(exercise.axial_load_review),
+            nivel: proposalKind(exercise.nivel_review),
         },
         muscles,
         patterns,

@@ -24,6 +24,11 @@ import {
 } from "@/test-utils/mocks/handlers/adminCatalog";
 import { AdminExerciseCatalogForm } from "../AdminExerciseCatalogForm";
 import { ADMIN_CATALOG_COPY } from "../adminCatalogPresentation";
+import {
+    AXIAL_PENDING_CONFIRM,
+    PENDING_REVIEW_HINT,
+    RUBRIC_CONFIRM_HINT,
+} from "../adminCatalogFieldOptions";
 
 describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
     beforeEach(() => {
@@ -176,6 +181,62 @@ describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
         expect(
             screen.getByText(ADMIN_CATALOG_COPY.reactivateBody)
         ).toBeInTheDocument();
+    });
+
+    it("rúbrica: confirmar la carga axial la envía como reviewed sin cambiar el valor", async () => {
+        const user = userEvent.setup();
+        let saved: {
+            core?: {
+                axial_load?: string;
+                nivel?: string;
+                axial_load_review?: string | null;
+                nivel_review?: string | null;
+            };
+        } | null = null;
+        server.use(
+            http.get("*/exercises/:id/catalog", () =>
+                HttpResponse.json({
+                    ...mockCatalogExercise,
+                    id: 168,
+                    nombre: "Remo Pendlay",
+                    axial_load: "high",
+                    nivel: "intermediate",
+                    axial_load_review: "rubric",
+                    nivel_review: "rubric",
+                })
+            ),
+            http.put("*/exercises/:id/catalog", async ({ request }) => {
+                saved = (await request.json()) as NonNullable<typeof saved>;
+                return HttpResponse.json({
+                    ...mockCatalogExercise,
+                    id: 168,
+                    nombre: "Remo Pendlay",
+                    axial_load: "high",
+                    nivel: "intermediate",
+                    axial_load_review: "reviewed",
+                    nivel_review: "rubric",
+                    updated_at: "2026-09-24T13:00:00.000Z",
+                });
+            })
+        );
+
+        render(<AdminExerciseCatalogForm mode="edit" exercisePk={168} />);
+
+        expect(
+            await screen.findByRole("checkbox", { name: AXIAL_PENDING_CONFIRM })
+        ).toBeInTheDocument();
+        expect(screen.getAllByText(RUBRIC_CONFIRM_HINT)).toHaveLength(2);
+        expect(screen.queryByText(PENDING_REVIEW_HINT)).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole("checkbox", { name: AXIAL_PENDING_CONFIRM }));
+        await user.click(screen.getByRole("button", { name: ADMIN_CATALOG_COPY.save }));
+
+        await waitFor(() => {
+            expect(saved?.core?.axial_load_review).toBe("reviewed");
+        });
+        expect(saved?.core?.axial_load).toBe("high");
+        expect(saved?.core?.nivel).toBe("intermediate");
+        expect(saved?.core?.nivel_review ?? null).toBeNull();
     });
 });
 
