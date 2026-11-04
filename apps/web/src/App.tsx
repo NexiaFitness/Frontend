@@ -30,6 +30,7 @@ const ForgotPassword = lazyWithRetry(() => import("./pages/auth/ForgotPassword")
 const ResetPassword = lazyWithRetry(() => import("./pages/auth/ResetPassword"));
 const VerifyEmail = lazyWithRetry(() => import("./pages/auth/VerifyEmail"));
 const InvitationAcceptPage = lazyWithRetry(() => import("./pages/invitation/InvitationAcceptPage"));
+const CreditsPage = lazyWithRetry(() => import("./pages/CreditsPage"));
 const AthleteOnboardingPage = lazyWithRetry(() => import("./pages/onboarding/AthleteOnboardingPage"));
 
 // Bloque 2: Dashboards por rol (lazy)
@@ -347,6 +348,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/invitation" element={<InvitationAcceptPage />} />
+          <Route path="/creditos" element={<CreditsPage />} />
         </Route>
 
         <Route

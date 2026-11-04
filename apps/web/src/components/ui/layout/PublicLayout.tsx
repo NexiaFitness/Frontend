@@ -18,6 +18,7 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import { AppNavbar } from "./navbar/AppNavbar";
+import { PublicSiteFooter } from "./PublicSiteFooter";
 import { NEXIA_SCROLLBAR } from "./scrollPresentation";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ export const PublicLayout: React.FC = () => {
             {/* Contenido principal, con scroll controlado */}
             <main className={cn("min-h-0 flex-1 overflow-x-hidden overflow-y-auto", NEXIA_SCROLLBAR)}>
                 <Outlet />
+                <PublicSiteFooter />
             </main>
         </div>
     );

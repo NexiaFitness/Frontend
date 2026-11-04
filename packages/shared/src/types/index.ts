@@ -58,6 +58,7 @@ export * from "./exercise";
 // Admin catalog (M4/M5)
 export * from "./adminCatalog";
 export * from "./exerciseContract";
+export * from "./exerciseContent";
 
 // Forms types
 export * from "./forms";

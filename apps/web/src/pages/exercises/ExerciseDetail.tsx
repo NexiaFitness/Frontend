@@ -36,6 +36,7 @@ import { ExerciseAlternativesSection } from "@/components/exercises/ExerciseAlte
 import { ExerciseDetailCatalogSections } from "@/components/exercises/ExerciseDetailCatalogSections";
 import { ExerciseDetailExpandableSection } from "@/components/exercises/ExerciseDetailExpandableSection";
 import { ExerciseDetailTrainerEssentials } from "@/components/exercises/ExerciseDetailTrainerEssentials";
+import { ExerciseDetailReadingContent } from "@/components/exercises/ExerciseDetailReadingContent";
 import {
     EXERCISE_DETAIL_ALERT_SPACING,
     EXERCISE_DETAIL_BADGE_MUTED,
@@ -315,6 +316,9 @@ export const ExerciseDetail: React.FC = () => {
                         ) : null}
 
                         <div className="order-3 min-w-0 space-y-5 lg:col-start-1 lg:row-start-1">
+                            {exerciseIdForApi ? (
+                                <ExerciseDetailReadingContent exerciseId={exerciseIdForApi} />
+                            ) : null}
                             <ExerciseDetailExpandableSection
                                 id="exercise-planning-section"
                                 title={EXERCISE_DETAIL_SECTION_LABELS.advancedPlanning}

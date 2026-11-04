@@ -72,6 +72,8 @@ export {
     useDeleteStandaloneSessionMutation,
 } from "./api/standaloneSessionsApi";
 export * from "./api/exercisesApi";
+export * from "./api/exerciseContentApi";
+export * from "./types/exerciseContent";
 export * from "./api/fatigueApi";
 export * from "./api/injuriesApi";
 export * from "./api/notificationsApi";

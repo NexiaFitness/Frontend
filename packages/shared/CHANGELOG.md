@@ -1,5 +1,12 @@
 # Changelog — @nexia/shared
 
+## 3.3.0 — 2026-11-04
+
+### Added (H5: texto de lectura del ejercicio)
+
+- `ExerciseContentOut` y `ExerciseContentAttribution`, copiados de `GET /exercises/{exercise_id}/content`.
+- `useGetExerciseContentQuery`. Lo usan la ficha del entrenador y la del admin. El atleta no llama a este endpoint.
+
 ## 3.2.0 — 2026-10-29
 
 ### Added (H5 paso 1: estado de revisión `rubric`)

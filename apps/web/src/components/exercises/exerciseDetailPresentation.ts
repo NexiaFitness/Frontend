@@ -28,6 +28,7 @@ export {
     PLATFORM_CARD_BODY as EXERCISE_DETAIL_BODY,
     PLATFORM_ALT_DIVIDER as EXERCISE_DETAIL_ALT_DIVIDER,
     PLATFORM_LINK_PRIMARY as EXERCISE_DETAIL_VIDEO_LINK,
+    PLATFORM_LINK_PRIMARY as EXERCISE_DETAIL_READING_LINK,
     PLATFORM_VIDEO_HERO as EXERCISE_DETAIL_VIDEO_HERO,
     PLATFORM_CHIP_ROW as EXERCISE_DETAIL_CHIP_ROW,
     PLATFORM_LINK_CENTERED as EXERCISE_DETAIL_VIDEO_LINK_CENTERED,
@@ -68,7 +69,39 @@ export const EXERCISE_DETAIL_SECTION_LABELS = {
     catalogPlanning: "Planificación y motor",
     advancedPlanning: "Planificación avanzada",
     exerciseContent: "Contenido del ejercicio",
+    howTo: "Cómo se hace",
+    tips: "Consejos",
+    inEnglish: "(en inglés)",
 } as const;
+
+export const EXERCISE_DETAIL_READING_COPY = {
+    loadingLabel: "Cargando el texto del ejercicio",
+    errorTitle: "No se ha podido cargar el texto del ejercicio",
+    retry: "Reintentar",
+} as const;
+
+export const EXERCISE_DETAIL_READING_STACK = "space-y-5";
+
+export const EXERCISE_DETAIL_READING_NOTE = "text-sm text-muted-foreground";
+
+export const EXERCISE_DETAIL_READING_LIST =
+    "mt-2 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-muted-foreground";
+
+export const EXERCISE_DETAIL_READING_TIPS =
+    "mt-2 list-disc space-y-2 pl-5 text-sm leading-relaxed text-muted-foreground";
+
+export const EXERCISE_DETAIL_READING_ATTRIBUTION = "text-sm text-muted-foreground";
+
+export const EXERCISE_DETAIL_READING_RETRY = "min-h-touch";
+
+export const EXERCISE_DETAIL_READING_SKELETON = "space-y-3";
+
+export const EXERCISE_DETAIL_READING_SKELETON_LINE =
+    "h-4 animate-pulse rounded-md bg-surface-2/50";
+
+export const EXERCISE_DETAIL_READING_SKELETON_LINE_SHORT = cn(
+    "h-4 w-2/3 animate-pulse rounded-md bg-surface-2/50"
+);
 
 /** Página: ancho completo del main dashboard (sin max-w centrado en desktop). */
 export const EXERCISE_DETAIL_PAGE = cn(

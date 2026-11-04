@@ -4,7 +4,9 @@
  */
 
 import React from "react";
-import { KeyRound, LogOut, UserRound } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { KeyRound, LogOut, ScrollText, UserRound } from "lucide-react";
+import { CREDITS_COPY, CREDITS_PATH } from "@/pages/creditsPresentation";
 import { AthleteAccountProfileHero } from "@/components/athlete/account/AthleteAccountProfileHero";
 import { AthleteProfileEditForm } from "@/components/athlete/account/AthleteProfileEditForm";
 import { AthleteSettingsRow } from "@/components/athlete/account/AthleteSettingsRow";
@@ -24,6 +26,7 @@ import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 
 export const AthleteAccountPage: React.FC = () => {
+    const navigate = useNavigate();
     const isDesktop = useIsAthleteDesktopLayout();
     const {
         user,
@@ -80,6 +83,16 @@ export const AthleteAccountPage: React.FC = () => {
                                 label="Cambiar contraseña"
                                 hint="Actualiza tu acceso de forma segura"
                                 onClick={openPasswordSheet}
+                                isLast
+                            />
+                        </AthleteSettingsSection>
+
+                        <AthleteSettingsSection title="Información">
+                            <AthleteSettingsRow
+                                icon={ScrollText}
+                                label={CREDITS_COPY.settingsLabel}
+                                hint={CREDITS_COPY.settingsHint}
+                                onClick={() => navigate(CREDITS_PATH)}
                                 isLast
                             />
                         </AthleteSettingsSection>
