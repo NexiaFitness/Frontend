@@ -174,11 +174,16 @@ export const AdminCatalogImportPage: React.FC = () => {
                     </section>
                 </div>
 
-                {validation && !validation.ok_for_import ? (
+                {validation && validation.violations.length > 0 ? (
                     <section className={ADMIN_CATALOG_IMPORT_CARD}>
                         <NexiaGlassAccentRim />
-                        <Alert variant="error" className={ADMIN_CATALOG_ALERT_SPACING}>
-                            {ADMIN_CATALOG_COPY.importViolationsTitle}
+                        <Alert
+                            variant={validation.ok_for_import ? "warning" : "error"}
+                            className={ADMIN_CATALOG_ALERT_SPACING}
+                        >
+                            {validation.ok_for_import
+                                ? ADMIN_CATALOG_COPY.importSkippedTitle
+                                : ADMIN_CATALOG_COPY.importViolationsTitle}
                         </Alert>
                         <ul
                             className={ADMIN_CATALOG_VIOLATION_LIST}
@@ -207,7 +212,9 @@ export const AdminCatalogImportPage: React.FC = () => {
                     </section>
                 ) : null}
 
-                {validation?.ok_for_import && !confirmation ? (
+                {validation?.ok_for_import &&
+                validation.violations.length === 0 &&
+                !confirmation ? (
                     <Alert variant="success" className={ADMIN_CATALOG_ALERT_SPACING}>
                         {ADMIN_CATALOG_COPY.importOkBody}
                     </Alert>

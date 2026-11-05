@@ -300,7 +300,9 @@ export const ADMIN_CATALOG_COPY = {
     progressLabel: (reviewed: number, active: number) =>
         `Progreso revisión: ${reviewed}/${active} activos`,
     issuesLabel: (count: number) =>
-        count === 1 ? "1 incidencia" : `${count} incidencias`,
+        count === 1
+            ? "1 incidencia en esta página"
+            : `${count} incidencias en esta página`,
     colCode: "ID",
     colName: "Nombre ES",
     colReview: "Revisión",
@@ -422,6 +424,8 @@ export const ADMIN_CATALOG_COPY = {
     importValidateError: "No se pudo validar el archivo",
     importNoFile: "Selecciona un archivo .xlsx",
     importViolationsTitle: "Errores que bloquean la importación",
+    importSkippedTitle:
+        "Estas filas no se aplicarán. El resto de los ejercicios válidos sí.",
     importOkTitle: "Archivo válido",
     importOkBody: "Revisa el resumen de cambios antes de confirmar. La importación es todo o nada.",
     importOverwriteWarning:

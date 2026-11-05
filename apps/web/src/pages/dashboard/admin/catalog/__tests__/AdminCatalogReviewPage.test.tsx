@@ -207,7 +207,10 @@ describe("AdminCatalogReviewPage", () => {
         await screen.findByText("Remo");
         expect(screen.queryByText("La rúbrica empata en tirón.")).not.toBeInTheDocument();
         await user.click(
-            screen.getByRole("button", { name: ADMIN_CATALOG_REVIEW_COPY.tiebreakChip, exact: true })
+            screen.getByRole("button", {
+                name: (accessibleName) =>
+                    accessibleName === ADMIN_CATALOG_REVIEW_COPY.tiebreakChip,
+            })
         );
         expect(screen.getByText("La rúbrica empata en tirón.")).toBeInTheDocument();
     });

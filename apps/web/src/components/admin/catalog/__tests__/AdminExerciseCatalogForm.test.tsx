@@ -185,14 +185,15 @@ describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
 
     it("rúbrica: confirmar la carga axial la envía como reviewed sin cambiar el valor", async () => {
         const user = userEvent.setup();
-        let saved: {
+        type SavedCatalogPut = {
             core?: {
                 axial_load?: string;
                 nivel?: string;
                 axial_load_review?: string | null;
                 nivel_review?: string | null;
             };
-        } | null = null;
+        };
+        const saved: { body: SavedCatalogPut | null } = { body: null };
         server.use(
             http.get("*/exercises/:id/catalog", () =>
                 HttpResponse.json({
@@ -206,7 +207,7 @@ describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
                 })
             ),
             http.put("*/exercises/:id/catalog", async ({ request }) => {
-                saved = (await request.json()) as NonNullable<typeof saved>;
+                saved.body = (await request.json()) as SavedCatalogPut;
                 return HttpResponse.json({
                     ...mockCatalogExercise,
                     id: 168,
@@ -232,11 +233,11 @@ describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
         await user.click(screen.getByRole("button", { name: ADMIN_CATALOG_COPY.save }));
 
         await waitFor(() => {
-            expect(saved?.core?.axial_load_review).toBe("reviewed");
+            expect(saved.body?.core?.axial_load_review).toBe("reviewed");
         });
-        expect(saved?.core?.axial_load).toBe("high");
-        expect(saved?.core?.nivel).toBe("intermediate");
-        expect(saved?.core?.nivel_review ?? null).toBeNull();
+        expect(saved.body?.core?.axial_load).toBe("high");
+        expect(saved.body?.core?.nivel).toBe("intermediate");
+        expect(saved.body?.core?.nivel_review ?? null).toBeNull();
     });
 });
 
