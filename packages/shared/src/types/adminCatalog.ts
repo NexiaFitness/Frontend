@@ -207,6 +207,7 @@ export interface CatalogImportViolationOut {
     exercise_id?: string | null;
     sheet: string;
     row?: number | null;
+    column?: string | null;
     rule: string;
     message: string;
 }

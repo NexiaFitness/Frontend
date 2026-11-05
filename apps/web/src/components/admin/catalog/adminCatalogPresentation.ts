@@ -411,7 +411,7 @@ export const ADMIN_CATALOG_COPY = {
     importTemplateError: "No se pudo descargar la plantilla",
     importTemplateToast: "Plantilla descargada",
     importFlowHelp:
-        "Cada ejercicio lleva un código numérico en la hoja «Ejercicio base». Para altas nuevas, elige un código que no aparezca en la exportación y repítelo en las hojas de mapeo (músculos, patrones, material…).",
+        "Para un ejercicio nuevo deja el código vacío: al validar verás el número que se le asignará. En las otras hojas puedes identificarlo por su nombre en español.",
     importInactiveIdWarning:
         "Hay actualizaciones sobre ejercicios que estaban inactivos. Revisa el antes/después (nombre y estado) antes de aplicar los cambios.",
     importUpdatedChangeSeparator: "→",
@@ -427,7 +427,11 @@ export const ADMIN_CATALOG_COPY = {
     importSkippedTitle:
         "Estas filas no se aplicarán. El resto de los ejercicios válidos sí.",
     importOkTitle: "Archivo válido",
-    importOkBody: "Revisa el resumen de cambios antes de confirmar. La importación es todo o nada.",
+    importOkBody:
+        "Revisa el resumen de cambios antes de confirmar. Las filas con error no se aplican; el resto sí.",
+    importAnnotateAction: "Descargar el archivo con los errores marcados",
+    importAnnotateError: "No se pudo marcar el archivo",
+    importErrorFileGroup: "Archivo",
     importOverwriteWarning:
         "Estos ejercicios se sobrescribirán con el contenido del Excel. Los cambios hechos en la web después de tu exportación se perderán.",
     importOverwriteCodesLabel: "Ejercicios afectados",
@@ -520,7 +524,8 @@ export function catalogImportSummaryEntryTitle(
 
 export function catalogImportViolationLocation(
     sheet: string,
-    row?: number | null
+    row?: number | null,
+    column?: string | null
 ): string | null {
     const parts: string[] = [];
     const sheetLabel = sheet.trim();
@@ -530,7 +535,29 @@ export function catalogImportViolationLocation(
     if (row != null && row > 0) {
         parts.push(`fila ${row}`);
     }
+    const columnLabel = (column ?? "").trim();
+    if (columnLabel) {
+        parts.push(`columna ${columnLabel}`);
+    }
     return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+export function catalogImportErrorSummary(exercises: number, errors: number): string {
+    if (exercises <= 0) {
+        return errors === 1 ? "1 error en el archivo" : `${errors} errores en el archivo`;
+    }
+    const exerciseLabel =
+        exercises === 1 ? "1 ejercicio con errores" : `${exercises} ejercicios con errores`;
+    const errorLabel = errors === 1 ? "1 error" : `${errors} errores`;
+    return `${exerciseLabel}, ${errorLabel}`;
+}
+
+export function catalogImportAssignedCodes(codes: string[]): string {
+    const listed = codes.join(", ");
+    if (codes.length === 1) {
+        return `Se creará 1 ejercicio: ${listed}`;
+    }
+    return `Se crearán ${codes.length} ejercicios: ${listed}`;
 }
 
 /** Etiquetas §3.1 para los códigos `quality_flags` del backend. */

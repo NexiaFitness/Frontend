@@ -157,6 +157,11 @@ describe("AdminCatalogImportPage", () => {
         expect(
             screen.getByText("El ejercicio no tiene prime mover")
         ).toBeInTheDocument();
+        expect(screen.getByText("1 ejercicio con errores, 1 error")).toBeInTheDocument();
+        expect(screen.getByText(/Hoja «exercises» · fila 12/)).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: ADMIN_CATALOG_COPY.importAnnotateAction })
+        ).toBeInTheDocument();
         expect(screen.queryByTestId("admin-catalog-import-summary")).not.toBeInTheDocument();
         expect(
             screen.queryByRole("button", { name: ADMIN_CATALOG_COPY.importConfirmAction })

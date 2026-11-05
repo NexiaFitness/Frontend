@@ -199,6 +199,15 @@ export const adminCatalogApi = baseApi.injectEndpoints({
             }),
         }),
 
+        annotateCatalogImport: builder.mutation<Blob, File>({
+            query: (file) => ({
+                url: "/admin/catalog/import/annotate",
+                method: "POST",
+                body: catalogImportFormData(file),
+                responseHandler: (response: Response) => response.blob(),
+            }),
+        }),
+
         confirmCatalogImport: builder.mutation<CatalogImportConfirmOut, File>({
             query: (file) => ({
                 url: "/admin/catalog/import/confirm",
@@ -257,6 +266,7 @@ export const {
     useLazyDownloadCatalogImportTemplateQuery,
     useGetCatalogExerciseUsageQuery,
     useValidateCatalogImportMutation,
+    useAnnotateCatalogImportMutation,
     useConfirmCatalogImportMutation,
     useReactivateCatalogExerciseMutation,
     useDeactivateCatalogExerciseMutation,

@@ -1,8 +1,8 @@
 /**
  * AdminCatalogImportPage.tsx — Wizard importación / exportación Excel v2 (13 §3.4).
  *
- * Contexto: paso 1 exportar catálogo, paso 2 validar archivo (informe de
- * violaciones bloqueante) y paso 3 confirmar el import todo-o-nada.
+ * Contexto: paso 1 exportar catálogo, paso 2 validar archivo y paso 3
+ * confirmar. Una fila inválida no bloquea las demás.
  *
  * Notas de mantenimiento: la orquestación vive en `useAdminCatalogImport`; aquí
  * solo se ensambla JSX con tokens de `adminCatalogPresentation.ts`.
@@ -21,6 +21,7 @@ import { Alert } from "@/components/ui/feedback";
 import { FormField } from "@/components/ui/forms";
 import { PageTitle } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { AdminCatalogImportErrors } from "@/components/admin/catalog/AdminCatalogImportErrors";
 import { AdminCatalogImportPreserved } from "@/components/admin/catalog/AdminCatalogImportPreserved";
 import { useAdminCatalogImport } from "@/components/admin/catalog/useAdminCatalogImport";
 import {
@@ -41,17 +42,14 @@ import {
     ADMIN_CATALOG_SUMMARY_ITEM,
     ADMIN_CATALOG_SUMMARY_ITEM_FIELDS,
     ADMIN_CATALOG_SUMMARY_LIST,
+    catalogImportAssignedCodes,
     catalogImportFieldLabel,
     catalogImportNewEntries,
     catalogImportSummaryEntryTitle,
-    catalogImportViolationLocation,
     ADMIN_CATALOG_SUMMARY_TILE,
     ADMIN_CATALOG_SUMMARY_TILE_LABEL,
     ADMIN_CATALOG_SUMMARY_TILE_VALUE,
     ADMIN_CATALOG_TITLE_WRAP,
-    ADMIN_CATALOG_VIOLATION_ITEM,
-    ADMIN_CATALOG_VIOLATION_LIST,
-    ADMIN_CATALOG_VIOLATION_META,
 } from "@/components/admin/catalog/adminCatalogPresentation";
 import { PLATFORM_PAGE_SHELL } from "@/components/ui/surface/platformPremiumPresentation";
 
@@ -67,9 +65,11 @@ export const AdminCatalogImportPage: React.FC = () => {
         isDownloadingTemplate,
         isValidating,
         isConfirming,
+        isDownloadingAnnotated,
         canConfirm,
         handleExport,
         handleDownloadTemplate,
+        handleDownloadAnnotated,
         handleValidate,
         handleConfirm,
     } = useAdminCatalogImport();
@@ -185,30 +185,11 @@ export const AdminCatalogImportPage: React.FC = () => {
                                 ? ADMIN_CATALOG_COPY.importSkippedTitle
                                 : ADMIN_CATALOG_COPY.importViolationsTitle}
                         </Alert>
-                        <ul
-                            className={ADMIN_CATALOG_VIOLATION_LIST}
-                            data-testid="admin-catalog-import-violations"
-                        >
-                            {validation.violations.map((violation, index) => {
-                                const location = catalogImportViolationLocation(
-                                    violation.sheet,
-                                    violation.row
-                                );
-                                return (
-                                    <li
-                                        key={`${violation.sheet}-${violation.row}-${index}`}
-                                        className={ADMIN_CATALOG_VIOLATION_ITEM}
-                                    >
-                                        <p>{violation.message}</p>
-                                        {location ? (
-                                            <p className={ADMIN_CATALOG_VIOLATION_META}>
-                                                {location}
-                                            </p>
-                                        ) : null}
-                                    </li>
-                                );
-                            })}
-                        </ul>
+                        <AdminCatalogImportErrors
+                            violations={validation.violations}
+                            onDownloadAnnotated={() => void handleDownloadAnnotated()}
+                            isDownloadingAnnotated={isDownloadingAnnotated}
+                        />
                     </section>
                 ) : null}
 
@@ -302,6 +283,19 @@ export const AdminCatalogImportPage: React.FC = () => {
                                 </p>
                             </div>
                         </div>
+
+                        {(summary.assigned_exercise_ids?.length ?? 0) > 0 ? (
+                            <p
+                                className={ADMIN_CATALOG_SECTION_HINT}
+                                data-testid="admin-catalog-import-assigned-codes"
+                            >
+                                {catalogImportAssignedCodes(
+                                    summary.assigned_exercise_ids?.map(
+                                        (item) => item.exercise_id
+                                    ) ?? []
+                                )}
+                            </p>
+                        ) : null}
 
                         {newEntries.length > 0 ? (
                             <ul className={ADMIN_CATALOG_SUMMARY_LIST}>

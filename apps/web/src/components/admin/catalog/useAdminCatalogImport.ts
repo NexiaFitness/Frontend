@@ -5,7 +5,7 @@
  * `GET /admin/catalog/export` y `POST /admin/catalog/import/{validate,confirm}`.
  *
  * Notas de mantenimiento: confirm solo se habilita con `ok_for_import=true` del
- * último validate; cambiar de archivo descarta el resultado previo (todo o nada).
+ * último validate. Cambiar de archivo descarta ese resultado.
  *
  * @author Frontend Team
  * @since v1.0.0
@@ -13,6 +13,7 @@
 
 import { useCallback, useState } from "react";
 import {
+    useAnnotateCatalogImportMutation,
     useConfirmCatalogImportMutation,
     useLazyDownloadCatalogImportTemplateQuery,
     useLazyExportAdminCatalogQuery,
@@ -28,6 +29,7 @@ import { ADMIN_CATALOG_COPY } from "./adminCatalogPresentation";
 
 const EXPORT_FILENAME = "nexia_catalog_export.xlsx";
 const TEMPLATE_FILENAME = "nexia_catalog_template_v2.xlsx";
+const ANNOTATED_FILENAME = "nexia_catalogo_errores.xlsx";
 
 function downloadBlob(blob: Blob, filename: string): void {
     const url = window.URL.createObjectURL(blob);
@@ -54,6 +56,8 @@ export function useAdminCatalogImport() {
         useValidateCatalogImportMutation();
     const [confirmImport, { isLoading: isConfirming }] =
         useConfirmCatalogImportMutation();
+    const [annotateImport, { isLoading: isDownloadingAnnotated }] =
+        useAnnotateCatalogImportMutation();
 
     const setFile = useCallback((next: File | null) => {
         setFileState(next);
@@ -100,6 +104,21 @@ export function useAdminCatalogImport() {
         }
     }, [file, showError, validateImport]);
 
+    const handleDownloadAnnotated = useCallback(async () => {
+        if (!file) {
+            showError(ADMIN_CATALOG_COPY.importNoFile);
+            return;
+        }
+        try {
+            const blob = await annotateImport(file).unwrap();
+            downloadBlob(blob, ANNOTATED_FILENAME);
+        } catch (err: unknown) {
+            showError(
+                catalogImportUploadErrorMessage(err, ADMIN_CATALOG_COPY.importAnnotateError)
+            );
+        }
+    }, [annotateImport, file, showError]);
+
     const handleConfirm = useCallback(async () => {
         if (!file) {
             showError(ADMIN_CATALOG_COPY.importNoFile);
@@ -129,9 +148,11 @@ export function useAdminCatalogImport() {
         isDownloadingTemplate,
         isValidating,
         isConfirming,
+        isDownloadingAnnotated,
         canConfirm: Boolean(file) && validation?.ok_for_import === true,
         handleExport,
         handleDownloadTemplate,
+        handleDownloadAnnotated,
         handleValidate,
         handleConfirm,
     };
