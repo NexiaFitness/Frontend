@@ -1,10 +1,11 @@
 /**
  * useAdminCatalogPreview.ts — Vista previa de la ficha, 400 ms después de editar.
  *
- * El retardo y la llamada viven aquí. El texto lo arma formatCatalogVolumePerSet.
+ * El resultado queda ligado al borrador que lo produjo. Una respuesta tardía
+ * no pinta las barras de una versión anterior.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePreviewAdminCatalogMutation } from "@nexia/shared/api/adminCatalogApi";
 import type { CatalogPreviewOut, ExerciseCatalogBundleCreateIn } from "@nexia/shared/types/adminCatalog";
 import { toBundleDraft } from "./useAdminExerciseCatalogForm";
@@ -31,13 +32,22 @@ export interface AdminCatalogPreviewState {
     retry: () => void;
 }
 
+interface SettledPreview {
+    key: string;
+    data: CatalogPreviewOut;
+}
+
 export function useAdminCatalogPreview(draft: AdminCatalogFormDraft): AdminCatalogPreviewState {
-    const [trigger, result] = usePreviewAdminCatalogMutation();
+    const [trigger] = usePreviewAdminCatalogMutation();
     const ready = catalogPreviewReady(draft);
     const serialized = ready ? JSON.stringify(toBundleDraft(draft)) : "";
     const [body, setBody] = useState<ExerciseCatalogBundleCreateIn | null>(null);
+    const [settled, setSettled] = useState<SettledPreview | null>(null);
+    const [errorKey, setErrorKey] = useState<string | null>(null);
+    const requestSeq = useRef(0);
 
     useEffect(() => {
+        const id = ++requestSeq.current;
         if (!serialized) {
             setBody(null);
             return;
@@ -45,20 +55,47 @@ export function useAdminCatalogPreview(draft: AdminCatalogFormDraft): AdminCatal
         const handle = window.setTimeout(() => {
             const parsed = JSON.parse(serialized) as ExerciseCatalogBundleCreateIn;
             setBody(parsed);
-            void trigger(parsed);
+            void trigger(parsed)
+                .unwrap()
+                .then((data) => {
+                    if (requestSeq.current !== id) return;
+                    setSettled({ key: serialized, data });
+                    setErrorKey(null);
+                })
+                .catch(() => {
+                    if (requestSeq.current !== id) return;
+                    setErrorKey(serialized);
+                });
         }, PREVIEW_DELAY_MS);
         return () => window.clearTimeout(handle);
     }, [serialized, trigger]);
 
     const retry = () => {
-        if (body) void trigger(body);
+        if (!serialized || !body) return;
+        const id = ++requestSeq.current;
+        const key = serialized;
+        setErrorKey(null);
+        void trigger(body)
+            .unwrap()
+            .then((data) => {
+                if (requestSeq.current !== id) return;
+                setSettled({ key, data });
+                setErrorKey(null);
+            })
+            .catch(() => {
+                if (requestSeq.current !== id) return;
+                setErrorKey(key);
+            });
     };
+
+    const failed = serialized !== "" && errorKey === serialized;
+    const current = !failed && settled?.key === serialized ? settled.data : undefined;
 
     return {
         ready,
-        data: result.data,
-        isError: result.isError,
-        showSkeleton: ready && result.data === undefined && !result.isError,
+        data: current,
+        isError: ready && failed,
+        showSkeleton: ready && !current && !failed,
         retry,
     };
 }

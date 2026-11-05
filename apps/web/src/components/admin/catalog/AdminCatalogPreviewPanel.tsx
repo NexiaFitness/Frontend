@@ -5,7 +5,8 @@
  */
 
 import React from "react";
-import { formatCatalogVolumePerSet } from "@nexia/shared";
+import { formatCatalogMultiplier, formatCatalogVolumePerSet } from "@nexia/shared";
+import type { CatalogPreviewOut } from "@nexia/shared/types/adminCatalog";
 import { Alert } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
@@ -20,9 +21,14 @@ import {
     ADMIN_CATALOG_PREVIEW_ROW,
     ADMIN_CATALOG_PREVIEW_SKELETON,
     ADMIN_CATALOG_PREVIEW_TITLE,
+    catalogPreviewSelectorCopy,
 } from "./adminCatalogPreviewPresentation";
 
 const SKELETON_ROWS = [0, 1, 2];
+
+function selectorSentence(data: CatalogPreviewOut): string {
+    return catalogPreviewSelectorCopy(data.selector_blocks);
+}
 
 function barPercent(multiplier: string): number {
     const value = Number(multiplier);
@@ -46,7 +52,8 @@ export const AdminCatalogPreviewPanel: React.FC<{ preview: AdminCatalogPreviewSt
             ) : null}
 
             {preview.ready && preview.showSkeleton ? (
-                <div>
+                <div className="space-y-2">
+                    <p className={ADMIN_CATALOG_PREVIEW_META}>{ADMIN_CATALOG_PREVIEW_COPY.calculating}</p>
                     {SKELETON_ROWS.map((row) => (
                         <div key={row} className={ADMIN_CATALOG_PREVIEW_SKELETON} />
                     ))}
@@ -70,17 +77,16 @@ export const AdminCatalogPreviewPanel: React.FC<{ preview: AdminCatalogPreviewSt
                 <div className="space-y-3">
                     {data.validation_errors.length > 0 ? (
                         <ul className={ADMIN_CATALOG_PREVIEW_META}>
-                            {data.validation_errors.map((message) => (
-                                <li key={message}>{message}</li>
+                            {data.validation_errors.map((message, index) => (
+                                <li key={`${index}-${message}`}>{message}</li>
                             ))}
                         </ul>
                     ) : null}
 
                     {data.volume_per_set.empty_reason === "not_strength" ? (
                         <p className={ADMIN_CATALOG_PREVIEW_LINE}>{ADMIN_CATALOG_PREVIEW_COPY.notStrength}</p>
-                    ) : (
-                        <p className={ADMIN_CATALOG_PREVIEW_LINE}>{sentence}</p>
-                    )}
+                    ) : null}
+                    {sentence ? <p className={ADMIN_CATALOG_PREVIEW_LINE}>{sentence}</p> : null}
 
                     {data.volume_per_set.is_plyometric ? (
                         <p className={ADMIN_CATALOG_PREVIEW_NOTE}>{ADMIN_CATALOG_PREVIEW_COPY.productCriterion}</p>
@@ -91,7 +97,7 @@ export const AdminCatalogPreviewPanel: React.FC<{ preview: AdminCatalogPreviewSt
                             <p className={ADMIN_CATALOG_PREVIEW_LINE}>
                                 {group.name}
                                 <span className={ADMIN_CATALOG_PREVIEW_META}>
-                                    {` · ${ADMIN_CATALOG_PREVIEW_COPY.role[group.role]} ${group.multiplier}`}
+                                    {` · ${ADMIN_CATALOG_PREVIEW_COPY.role[group.role]} ${formatCatalogMultiplier(group.multiplier)}`}
                                 </span>
                             </p>
                             <AthleteProgressBar
@@ -107,14 +113,13 @@ export const AdminCatalogPreviewPanel: React.FC<{ preview: AdminCatalogPreviewSt
                             ? ADMIN_CATALOG_PREVIEW_COPY.axial(data.axial_weight.weight)
                             : ADMIN_CATALOG_PREVIEW_COPY.notVerifiable}
                     </p>
+                    {data.axial_weight.verifiable ? (
+                        <p className={ADMIN_CATALOG_PREVIEW_NOTE}>{ADMIN_CATALOG_PREVIEW_COPY.axialScale}</p>
+                    ) : null}
                     {data.axial_weight.reason === "axial_pending_review" ? (
                         <p className={ADMIN_CATALOG_PREVIEW_NOTE}>{ADMIN_CATALOG_PREVIEW_COPY.pendingAxial}</p>
                     ) : null}
-                    <p className={ADMIN_CATALOG_PREVIEW_META}>
-                        {data.selectable_in_sessions
-                            ? ADMIN_CATALOG_PREVIEW_COPY.selectable
-                            : ADMIN_CATALOG_PREVIEW_COPY.notSelectable}
-                    </p>
+                    <p className={ADMIN_CATALOG_PREVIEW_META}>{selectorSentence(data)}</p>
                 </div>
             ) : null}
         </section>

@@ -352,7 +352,7 @@ export const ADMIN_CATALOG_COPY = {
         "Registra articulación y acción de movimiento tal como usa el motor de lesiones. Una acción incorrecta o genérica impide avisar al entrenador cuando un ejercicio coincide con la lesión activa del cliente.",
     jointsBridgeHint:
         "Las acciones se listan con búsqueda (todas las activas). El filtro por articulación válida llegará cuando exista la tabla joint_valid_movements.",
-    musclesPmHint: "Arrastra los prime movers para definir la prioridad (1…n al guardar).",
+    musclesPmHint: "Arrastra los músculos objetivo para definir la prioridad (1…n al guardar).",
     exerciseIdReadonly: "ID de negocio",
     conflictTitle: "La ficha cambió en el servidor",
     conflictBody:

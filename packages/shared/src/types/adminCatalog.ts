@@ -279,6 +279,9 @@ export type CatalogPreviewEmptyReason = "not_strength";
 
 export type CatalogPreviewAxialReason = "axial_unknown" | "axial_pending_review";
 
+/** Why the trainer picker would hide this draft. Empty means it would list it. */
+export type CatalogPreviewSelectorBlock = "inactive" | "incomplete_contract";
+
 /** POST /admin/catalog/preview — one muscle group, one set. */
 export interface CatalogPreviewVolumeGroupOut {
     muscle_group_id: number;
@@ -307,6 +310,7 @@ export interface CatalogPreviewOut {
     volume_per_set: CatalogPreviewVolumeOut;
     axial_weight: CatalogPreviewAxialOut;
     selectable_in_sessions: boolean;
+    selector_blocks: CatalogPreviewSelectorBlock[];
 }
 
 /** GET /admin/catalog/exercises/{pk}/usage */

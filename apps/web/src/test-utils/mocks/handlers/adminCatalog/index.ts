@@ -540,6 +540,7 @@ export const previewAdminCatalogHandler = http.post("*/admin/catalog/preview", (
         volume_per_set: { groups: [], empty_reason: null, is_plyometric: false },
         axial_weight: { verifiable: true, weight: 0, reason: null },
         selectable_in_sessions: false,
+        selector_blocks: ["incomplete_contract"],
     })
 );
 

@@ -39,6 +39,7 @@ const strengthPreview = {
     },
     axial_weight: { verifiable: true, weight: 3, reason: null },
     selectable_in_sessions: true,
+    selector_blocks: [],
 };
 
 function Host({ draft }: { draft: AdminCatalogFormDraft }) {
@@ -54,7 +55,81 @@ describe("Cómo cuenta este ejercicio", () => {
         expect(
             await screen.findByText("Por serie: Cuádriceps 1 · Glúteo mayor 0,5")
         ).toBeInTheDocument();
-        expect(screen.getByText("Peso axial: 3")).toBeInTheDocument();
+        expect(screen.getByText("Peso axial: 3 · Alta")).toBeInTheDocument();
+        expect(screen.getByText(ADMIN_CATALOG_PREVIEW_COPY.axialScale)).toBeInTheDocument();
+        expect(screen.getByText("· Objetivo 1")).toBeInTheDocument();
+        expect(screen.getByText("· Sinergista 0,5")).toBeInTheDocument();
+    });
+
+    it("al cambiar el borrador retira el cálculo anterior", async () => {
+        server.use(
+            http.post("*/admin/catalog/preview", async ({ request }) => {
+                const body = (await request.json()) as { core: { nombre: string } };
+                if (body.core.nombre === "Sentadilla frontal") {
+                    return HttpResponse.json({
+                        ...strengthPreview,
+                        volume_per_set: {
+                            groups: [
+                                {
+                                    muscle_group_id: 3,
+                                    name: "Isquiotibiales",
+                                    role: "stabilizer",
+                                    multiplier: "0",
+                                },
+                            ],
+                            empty_reason: null,
+                            is_plyometric: false,
+                        },
+                    });
+                }
+                return HttpResponse.json(strengthPreview);
+            })
+        );
+        const { rerender } = render(<Host draft={readyDraft()} />);
+        expect(
+            await screen.findByText("Por serie: Cuádriceps 1 · Glúteo mayor 0,5")
+        ).toBeInTheDocument();
+        const next = readyDraft();
+        next.core.nombre = "Sentadilla frontal";
+        rerender(<Host draft={next} />);
+        expect(screen.queryByText("Por serie: Cuádriceps 1 · Glúteo mayor 0,5")).not.toBeInTheDocument();
+        expect(screen.getByText(ADMIN_CATALOG_PREVIEW_COPY.calculating)).toBeInTheDocument();
+        expect(await screen.findByText("Por serie: Isquiotibiales 0")).toBeInTheDocument();
+    });
+
+    it("un ejercicio inactivo con contrato completo no dice que entra en el selector", async () => {
+        server.use(
+            http.post("*/admin/catalog/preview", () =>
+                HttpResponse.json({
+                    ...strengthPreview,
+                    selectable_in_sessions: false,
+                    selector_blocks: ["inactive"],
+                })
+            )
+        );
+        render(<Host draft={readyDraft()} />);
+        expect(
+            await screen.findByText(ADMIN_CATALOG_PREVIEW_COPY.notSelectableInactive)
+        ).toBeInTheDocument();
+        expect(screen.queryByText(ADMIN_CATALOG_PREVIEW_COPY.selectable)).not.toBeInTheDocument();
+    });
+
+    it("muestra en español el aviso que devuelve el servidor", async () => {
+        server.use(
+            http.post("*/admin/catalog/preview", () =>
+                HttpResponse.json({
+                    ...strengthPreview,
+                    validation_errors: ["Hace falta al menos un músculo objetivo."],
+                    selectable_in_sessions: false,
+                    selector_blocks: ["incomplete_contract"],
+                })
+            )
+        );
+        render(<Host draft={readyDraft()} />);
+        expect(await screen.findByText("Hace falta al menos un músculo objetivo.")).toBeInTheDocument();
+        expect(
+            screen.getByText(ADMIN_CATALOG_PREVIEW_COPY.notSelectable)
+        ).toBeInTheDocument();
     });
 
     it("el error ofrece reintento y luego muestra el cálculo", async () => {

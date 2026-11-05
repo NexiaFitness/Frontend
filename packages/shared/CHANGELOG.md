@@ -1,5 +1,12 @@
 # Changelog — @nexia/shared
 
+## 3.6.1 — 2026-11-05
+
+### Added
+
+- `CatalogPreviewOut.selector_blocks`: `inactive` y `incomplete_contract`. Vacío solo si el ejercicio está activo y el contrato está completo, que es la regla del selector del entrenador.
+- La validación de la ficha dice «Hace falta al menos un músculo objetivo.» y «Hace falta un patrón primario.», el mismo texto que el servidor.
+
 ## 3.6.0 — 2026-11-04
 
 ### Added (H5: vista previa de cómo cuenta un ejercicio)

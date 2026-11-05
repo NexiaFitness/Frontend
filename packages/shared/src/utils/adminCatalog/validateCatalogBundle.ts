@@ -128,7 +128,7 @@ export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogVa
             }
         }
         if (pmCount < 1 && requiresStrengthStructure) {
-            push(map, "musculos", "Se requiere al menos un prime mover");
+            push(map, "musculos", "Hace falta al menos un músculo objetivo.");
         }
     }
 
@@ -151,7 +151,7 @@ export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogVa
             }
         }
         if (primary < 1 && requiresStrengthStructure) {
-            push(map, "patrones", "Se requiere al menos un patrón con rol primary");
+            push(map, "patrones", "Hace falta un patrón primario.");
         }
     }
 
