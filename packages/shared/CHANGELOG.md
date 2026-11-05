@@ -1,5 +1,12 @@
 # Changelog — @nexia/shared
 
+## 3.7.0 — 2026-11-05
+
+### Added
+
+- Biblioteca RepDB: `LibraryCandidateListOut`, `LibraryCandidateDetailOut` y `LibraryAdoptOut`, copiados de `/admin/catalog/library/candidates`.
+- `useListLibraryCandidatesQuery`, `useGetLibraryCandidateQuery`, `useDiscardLibraryCandidateMutation`, `useMatchLibraryCandidateMutation` y `useAdoptLibraryCandidateMutation`. Adoptar envía el mismo cuerpo que el alta de catálogo.
+
 ## 3.6.1 — 2026-11-05
 
 ### Added

@@ -57,14 +57,16 @@ import { useAdminCatalogFormSubmit } from "./useAdminCatalogFormSubmit";
 export interface AdminExerciseCatalogFormProps {
     mode: "create" | "edit";
     exercisePk: number | null;
+    libraryCandidateId?: number | null;
 }
 
 export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> = ({
     mode,
     exercisePk,
+    libraryCandidateId = null,
 }) => {
     const { showError } = useToast();
-    const form = useAdminExerciseCatalogForm({ mode, exercisePk });
+    const form = useAdminExerciseCatalogForm({ mode, exercisePk, libraryCandidateId });
     const {
         draft,
         setDraft,
@@ -74,6 +76,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
         clientErrors,
         errorCountBySection,
         serverErrors,
+        libraryNotice,
         conflict,
         setConflict,
         historyOpen,
@@ -235,6 +238,12 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                     onDeactivate={() => setDeactivateOpen(true)}
                     onCancel={handleCancel}
                 />
+
+                {libraryNotice ? (
+                    <Alert variant="warning" className={ADMIN_CATALOG_ALERT_SPACING}>
+                        {libraryNotice}
+                    </Alert>
+                ) : null}
 
                 {serverErrors.length > 0 ? (
                     <Alert variant="error" className={ADMIN_CATALOG_ALERT_SPACING}>

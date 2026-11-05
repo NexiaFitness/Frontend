@@ -36,6 +36,11 @@ const AdminCatalogImportPage = lazyWithRetry(() =>
         default: m.AdminCatalogImportPage,
     }))
 );
+const AdminCatalogLibraryPage = lazyWithRetry(() =>
+    import("@/pages/dashboard/admin/catalog").then((m) => ({
+        default: m.AdminCatalogLibraryPage,
+    }))
+);
 
 export function adminCatalogRoutes(): React.ReactElement {
     return (
@@ -53,6 +58,14 @@ export function adminCatalogRoutes(): React.ReactElement {
                 element={
                     <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
                         <AdminCatalogExerciseCreatePage />
+                    </RoleProtectedRoute>
+                }
+            />
+            <Route
+                path="admin/catalog/library"
+                element={
+                    <RoleProtectedRoute allowedRoles={[USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                        <AdminCatalogLibraryPage />
                     </RoleProtectedRoute>
                 }
             />

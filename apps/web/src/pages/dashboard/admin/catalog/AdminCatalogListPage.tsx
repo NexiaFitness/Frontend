@@ -5,7 +5,8 @@
  * apertura de ficha guardando la cola «Revisado y siguiente».
  *
  * Notas de mantenimiento: la lógica vive en `useAdminCatalogList`; aquí solo se
- * ensambla JSX con tokens de `adminCatalogPresentation.ts`.
+ * ensambla JSX con tokens de `adminCatalogPresentation.ts`. Pasa de 400 líneas
+ * por el enlace a la biblioteca RepDB junto a importar y crear.
  *
  * @author Frontend Team
  * @since v1.0.0
@@ -63,6 +64,7 @@ import {
     ADMIN_CATALOG_REVIEW_PATH,
     ADMIN_CATALOG_REVIEW_QUEUE_LINK,
 } from "@/components/admin/catalog/adminCatalogReviewPresentation";
+import { LIBRARY_COPY } from "@/components/admin/catalog/adminCatalogLibraryPresentation";
 
 const SKELETON_ROWS = [0, 1, 2, 3, 4, 5];
 
@@ -145,6 +147,14 @@ export const AdminCatalogListPage: React.FC = () => {
                             onClick={() => goBack()}
                             label={ADMIN_CATALOG_COPY.backToAdmin}
                         />
+                        <Button
+                            type="button"
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={() => navigate("/dashboard/admin/catalog/library")}
+                        >
+                            {LIBRARY_COPY.openFromCatalog}
+                        </Button>
                         <Button
                             type="button"
                             variant="outline-primary"

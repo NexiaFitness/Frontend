@@ -2,12 +2,14 @@
  * useAdminExerciseCatalogForm.ts — Orquestación create/edit/review/cola Admin ficha.
  *
  * Pages delgadas; lógica fuera de JSX (agent.md + 13 §7).
+ * Pasa de 400 líneas: orquesta alta, edición, revisión, cola y el alta
+ * desde la biblioteca RepDB (SPEC_H5 §2.3).
  *
  * @author Frontend Team
  * @since v1.0.0
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 import {
@@ -18,6 +20,10 @@ import {
     useReactivateCatalogExerciseMutation,
     useUpdateExerciseCatalogMutation,
 } from "@nexia/shared/api/adminCatalogApi";
+import {
+    useAdoptLibraryCandidateMutation,
+    useGetLibraryCandidateQuery,
+} from "@nexia/shared/api/adminCatalogLibraryApi";
 import {
     finalizeCatalogBundle,
     getNextCatalogQueuePk,
@@ -44,10 +50,15 @@ import {
     type PatternRowDraft,
 } from "./adminCatalogFormTypes";
 import { ADMIN_CATALOG_COPY } from "./adminCatalogPresentation";
+import {
+    LIBRARY_COPY,
+    libraryRefusalMessage,
+} from "./adminCatalogLibraryPresentation";
 
 export interface UseAdminExerciseCatalogFormArgs {
     mode: "create" | "edit";
     exercisePk: number | null;
+    libraryCandidateId?: number | null;
 }
 
 /** Normaliza el estado del formulario al draft del contrato; no rellena campos obligatorios. */
@@ -100,6 +111,7 @@ export function toBundleDraft(draft: AdminCatalogFormDraft): CatalogBundleDraft 
 export function useAdminExerciseCatalogForm({
     mode,
     exercisePk,
+    libraryCandidateId = null,
 }: UseAdminExerciseCatalogFormArgs) {
     const navigate = useNavigate();
     const { goBack } = useReturnToOrigin({ fallbackPath: "/dashboard/admin/catalog" });
@@ -126,6 +138,13 @@ export function useAdminExerciseCatalogForm({
         skip: mode !== "edit" || exercisePk == null,
     });
 
+    const libraryPrefilled = useRef(false);
+    const { data: libraryCandidate, isLoading: isLoadingLibrary } = useGetLibraryCandidateQuery(
+        libraryCandidateId ?? 0,
+        { skip: mode !== "create" || libraryCandidateId == null }
+    );
+    const [adoptLibraryCandidate, { isLoading: isAdopting }] =
+        useAdoptLibraryCandidateMutation();
     const [createCatalog, { isLoading: isCreating }] = useCreateExerciseCatalogMutation();
     const [updateCatalog, { isLoading: isUpdating }] = useUpdateExerciseCatalogMutation();
     const [markReviewed, { isLoading: isMarking }] = useMarkCatalogExerciseReviewedMutation();
@@ -135,7 +154,9 @@ export function useAdminExerciseCatalogForm({
         useReactivateCatalogExerciseMutation();
 
     const isTogglingActive = isDeactivating || isReactivating;
-    const isSaving = isCreating || isUpdating || isMarking || isTogglingActive;
+    const isSaving = isCreating || isUpdating || isMarking || isTogglingActive || isAdopting;
+    const libraryNotice =
+        libraryCandidate != null && !libraryCandidate.writable ? LIBRARY_COPY.readonlyAdopt : null;
 
     // Entre la llegada del catálogo y el flush del efecto de hidratación el draft aún
     // está vacío: sin este gate el form renderizaría un commit con campos en blanco.
@@ -143,6 +164,7 @@ export function useAdminExerciseCatalogForm({
 
     useEffect(() => {
         if (mode === "create") {
+            if (libraryCandidateId != null) return;
             const empty = emptyDraft();
             setDraft(empty);
             setBaselineJson(JSON.stringify(empty));
@@ -158,7 +180,35 @@ export function useAdminExerciseCatalogForm({
             setServerErrors([]);
             setConflict(null);
         }
-    }, [mode, catalog, hydratedPk]);
+    }, [mode, catalog, hydratedPk, libraryCandidateId]);
+
+    useEffect(() => {
+        if (mode !== "create" || libraryCandidate == null || !libraryCandidate.writable) return;
+        if (libraryPrefilled.current) return;
+        libraryPrefilled.current = true;
+        const source = libraryCandidate.draft;
+        const objective = source.objetivo_entrenamiento;
+        const base = emptyDraft();
+        const next = {
+            ...base,
+            core: {
+                ...base.core,
+                nombre: source.nombre?.trim() || base.core.nombre,
+                nombre_ingles: source.nombre_ingles,
+                tipo: source.tipo || base.core.tipo,
+                objetivo_entrenamiento:
+                    objective === "strength" ||
+                    objective === "cardiovascular" ||
+                    objective === "mobility"
+                        ? objective
+                        : base.core.objetivo_entrenamiento,
+                laterality: source.laterality || base.core.laterality,
+                nivel: source.nivel ?? "",
+            },
+        };
+        setDraft(next);
+        setBaselineJson(JSON.stringify(next));
+    }, [libraryCandidate, mode]);
 
     const isDirty = useMemo(() => {
         if (!baselineJson) return false;
@@ -202,9 +252,22 @@ export function useAdminExerciseCatalogForm({
             showError(ADMIN_CATALOG_COPY.validationAlert);
             return null;
         }
+        if (libraryNotice) {
+            showError(libraryNotice);
+            return null;
+        }
         setServerErrors([]);
 
         try {
+            if (mode === "create" && libraryCandidateId != null) {
+                const adopted = await adoptLibraryCandidate({
+                    candidateId: libraryCandidateId,
+                    body: bundle,
+                }).unwrap();
+                showSuccess(LIBRARY_COPY.adoptedToast);
+                return adopted.exercise_pk;
+            }
+
             if (mode === "create") {
                 const created = await createCatalog(bundle).unwrap();
                 const next = draftFromCatalog(created);
@@ -234,6 +297,12 @@ export function useAdminExerciseCatalogForm({
             showSuccess(ADMIN_CATALOG_COPY.savedToast);
             return updated.id;
         } catch (err) {
+            const refused = libraryRefusalMessage(err);
+            if (refused) {
+                setServerErrors([refused]);
+                showError(refused);
+                return null;
+            }
             const concurrency = parseCatalogConcurrencyError(err);
             if (concurrency) {
                 setConflict(concurrency);
@@ -249,9 +318,12 @@ export function useAdminExerciseCatalogForm({
             return null;
         }
     }, [
+        adoptLibraryCandidate,
         createCatalog,
         draft,
         exercisePk,
+        libraryCandidateId,
+        libraryNotice,
         mode,
         runClientValidation,
         showError,
@@ -402,7 +474,10 @@ export function useAdminExerciseCatalogForm({
         draft,
         setDraft,
         isDirty,
-        isLoadingCatalog: mode === "edit" && (isLoadingCatalog || awaitingHydration),
+        isLoadingCatalog:
+            (mode === "edit" && (isLoadingCatalog || awaitingHydration)) ||
+            (libraryCandidateId != null && isLoadingLibrary),
+        libraryNotice,
         isCatalogError: mode === "edit" && isCatalogError,
         isSaving,
         clientErrors,

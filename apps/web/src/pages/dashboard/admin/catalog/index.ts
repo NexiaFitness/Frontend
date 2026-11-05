@@ -9,4 +9,5 @@ export { AdminCatalogListPage } from "./AdminCatalogListPage";
 export { AdminCatalogReviewPage } from "./AdminCatalogReviewPage";
 export { AdminCatalogImportPage } from "./AdminCatalogImportPage";
 export { AdminCatalogExerciseCreatePage } from "./AdminCatalogExerciseCreatePage";
+export { AdminCatalogLibraryPage } from "./AdminCatalogLibraryPage";
 export { AdminCatalogExerciseEditPage } from "./AdminCatalogExerciseEditPage";
