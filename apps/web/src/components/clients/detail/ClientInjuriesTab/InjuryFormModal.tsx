@@ -6,6 +6,8 @@
  * - Pain level 1-5 (selector visual pill).
  * - Tokens reutilizables: BaseModal, Input, Textarea, Button, Alert, FormCombobox.
  *
+ * El archivo pasa de 400 líneas: el alta y la edición comparten este formulario,
+ * y sacar el tope a otro componente dejaría el envío partido.
  * @author Nelson Valero
  * @since v5.7.0
  * @updated v7.0.0 — Rediseño: FormCombobox, name_es, tokens unificados
@@ -30,7 +32,13 @@ import {
     useGetMusclesQuery,
 } from "@nexia/shared/api/injuriesApi";
 import type { InjuryWithDetails, PainLevel } from "@nexia/shared/types/injuries";
-import { injuryPainChipClassName } from "./injuryPresentation";
+import {
+    AXIAL_CAP_HINT,
+    AXIAL_CAP_HINT_CLASS,
+    AXIAL_CAP_OPTIONS,
+    AXIAL_CAP_UNSET,
+    injuryPainChipClassName,
+} from "./injuryPresentation";
 
 /** Capitaliza cada palabra y deduplica nombres que solo difieren en casing. */
 function dedupeAndCapitalize(
@@ -69,6 +77,7 @@ interface FormState {
     restrictions: string;
     notes: string;
     injury_date: string;
+    max_axial_load: string;
 }
 
 const PAIN_LEVELS: PainLevel[] = [1, 2, 3, 4, 5];
@@ -88,6 +97,7 @@ const INITIAL_STATE: FormState = {
     restrictions: "",
     notes: "",
     injury_date: new Date().toISOString().split("T")[0],
+    max_axial_load: AXIAL_CAP_UNSET,
 };
 
 export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
@@ -134,6 +144,7 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                 restrictions: restrictionsStr,
                 notes: injury.notes || "",
                 injury_date: (injury.start_date ?? injury.injury_date ?? "")?.split("T")[0] || "",
+                max_axial_load: injury.max_axial_load || AXIAL_CAP_UNSET,
             });
         } else {
             setForm(INITIAL_STATE);
@@ -191,6 +202,10 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                         restrictions: restrictionsArray,
                         notes: form.notes || undefined,
                         is_active: true,
+                        max_axial_load:
+                            form.max_axial_load === AXIAL_CAP_UNSET
+                                ? null
+                                : (form.max_axial_load as "none" | "low" | "medium" | "high"),
                     },
                 }).unwrap();
             } else {
@@ -203,6 +218,10 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                             ? form.restrictions.split("\n").filter((r) => r.trim().length > 0)
                             : undefined,
                         notes: form.notes || undefined,
+                        max_axial_load:
+                            form.max_axial_load === AXIAL_CAP_UNSET
+                                ? null
+                                : (form.max_axial_load as "none" | "low" | "medium" | "high"),
                     },
                 }).unwrap();
             }
@@ -323,6 +342,20 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                         })}
                     </div>
                 </div>
+
+                <FormField label="Tope de carga axial" variant={FORM_VARIANT}>
+                    <FormCombobox
+                        variant={FORM_VARIANT}
+                        options={[...AXIAL_CAP_OPTIONS]}
+                        value={form.max_axial_load}
+                        onChange={(value) => handleChange("max_axial_load", value)}
+                        placeholder="Sin tope"
+                        disabled={isSubmitting}
+                        size="sm"
+                        ariaLabel="Tope de carga axial"
+                    />
+                </FormField>
+                <p className={AXIAL_CAP_HINT_CLASS}>{AXIAL_CAP_HINT}</p>
 
                 {/* Restricciones + Notas */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

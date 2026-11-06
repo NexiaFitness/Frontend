@@ -14,6 +14,8 @@ import { Alert } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import type { ExerciseInjuryConflict } from "@nexia/shared/types/injuryAlert";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
+import { buildPreviewConflictSummary } from "@nexia/shared/utils/athlete/athleteInjuryAlertUtils";
+import { ATHLETE_INJURY_CONSULT_COPY } from "@/components/athlete/athleteInjuryConsultPresentation";
 
 export interface AthleteInjuriesBannerProps {
     injuries: InjuryWithDetails[];
@@ -39,24 +41,27 @@ export const AthleteInjuriesBanner: React.FC<AthleteInjuriesBannerProps> = ({
     }
 
     const conflictCount = conflicts.length;
+    const blocking = conflicts.some((item) => item.alert.blocking === true);
 
     return (
         <Alert
-            variant="warning"
+            variant={blocking ? "error" : "warning"}
             title="Limitaciones registradas"
             description={
                 <div className="space-y-3">
-                    <p>Si sientes dolor, para y avisa a tu entrenador.</p>
+                    <p>{ATHLETE_INJURY_CONSULT_COPY.bannerPain}</p>
                     {isCheckingConflicts ? (
                         <p className="text-caption text-muted-foreground">
                             Revisando ejercicios de la sesión…
                         </p>
                     ) : null}
                     {!isCheckingConflicts && conflictCount > 0 ? (
-                        <p className="text-sm font-medium text-warning">
-                            {conflictCount === 1
-                                ? "1 ejercicio de esta sesión puede afectar tu lesión."
-                                : `${conflictCount} ejercicios de esta sesión pueden afectar tu lesión.`}
+                        <p className={blocking ? "text-sm font-medium text-destructive" : "text-sm font-medium text-warning"}>
+                            {buildPreviewConflictSummary(
+                                conflictCount,
+                                injuries,
+                                conflicts.map((item) => item.alert)
+                            )}
                         </p>
                     ) : null}
                     <ul className="space-y-1 text-sm">
@@ -81,7 +86,7 @@ export const AthleteInjuriesBanner: React.FC<AthleteInjuriesBannerProps> = ({
                     className="min-h-touch-athlete"
                     onClick={onConsultTrainer}
                 >
-                    Consultar
+                    {ATHLETE_INJURY_CONSULT_COPY.action}
                 </Button>
             }
         />

@@ -16,16 +16,18 @@ export type SafetyKpiTone = "success" | "warning" | "destructive" | "muted";
 
 export const SESSION_SAFETY_COPY = {
     empty: "Sin datos de seguridad.",
-    safe: "Seguros",
+    safe: "Sin hallazgo",
     warning: "Advertencias",
     blocking: "Bloqueantes",
     unverifiable: "No verificables",
     blockingTitle: "Ejercicios bloqueantes",
     warningTitle: "Advertencias",
     unverifiableTitle: "No se pudieron comprobar",
-    blockingFallback: "Contraindicado",
+    blockingFallback: "Bloqueado por una regla comprobada",
     warningFallback: "Precaución",
     unverifiableFallback: "Sin acciones articulares en el catálogo",
+    disclaimer:
+        "Solo se han comprobado las acciones articulares registradas y, si hay tope, la categoría de carga axial. Esa categoría es una estimación del catálogo, no una medida clínica.",
 } as const;
 
 export const SESSION_SAFETY_STACK = "space-y-3";

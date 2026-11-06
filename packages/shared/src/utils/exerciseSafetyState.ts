@@ -14,7 +14,12 @@
 
 import type { ExerciseSafetyResponse } from "../types/engineSafety";
 
-export type ExerciseSafetyUiState = "safe" | "unsafe" | "not_verifiable" | "unchecked";
+export type ExerciseSafetyUiState =
+    | "safe"
+    | "unsafe"
+    | "not_verifiable"
+    | "exceeds_limit"
+    | "unchecked";
 
 export function exerciseSafetyUiState(
     safety: ExerciseSafetyResponse | undefined,
@@ -23,8 +28,9 @@ export function exerciseSafetyUiState(
         checkPending = false,
     }: { checkFailed: boolean; checkPending?: boolean }
 ): ExerciseSafetyUiState {
-    // Sin respuesta el ejercicio no es seguro: o el lote falló, o todavía no ha vuelto.
-    if (!safety) return checkFailed || checkPending ? "unchecked" : "safe";
+    // Sin respuesta no hay hallazgo que mostrar: no se presenta como comprobado.
+    if (!safety || checkFailed || checkPending) return "unchecked";
     if (safety.status) return safety.status;
+    if (safety.blocking) return "exceeds_limit";
     return safety.is_safe ? "safe" : "unsafe";
 }

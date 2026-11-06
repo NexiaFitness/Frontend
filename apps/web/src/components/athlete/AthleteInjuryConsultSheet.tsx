@@ -11,6 +11,7 @@ import {
     ATHLETE_SETTINGS_CARD,
 } from "@/components/athlete/account/athleteSettingsPresentation";
 import { athleteSessionFeedbackPath } from "@/components/athlete/feedback/athleteSessionFeedbackNavigation";
+import { ATHLETE_INJURY_CONSULT_COPY } from "@/components/athlete/athleteInjuryConsultPresentation";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 
 export interface AthleteInjuryConsultSheetProps {
@@ -42,9 +43,9 @@ export const AthleteInjuryConsultSheet: React.FC<AthleteInjuryConsultSheetProps>
     const footerLabel =
         sessionCompleted && sessionId
             ? hasSessionFeedback
-                ? "Ver mis notas de esta sesión"
-                : "Cuéntale en el feedback"
-            : "Entendido";
+                ? ATHLETE_INJURY_CONSULT_COPY.viewNotes
+                : ATHLETE_INJURY_CONSULT_COPY.tellInFeedback
+            : ATHLETE_INJURY_CONSULT_COPY.understood;
 
     const handleFooterClick = () => {
         if (sessionCompleted && sessionId) {
@@ -75,8 +76,7 @@ export const AthleteInjuryConsultSheet: React.FC<AthleteInjuryConsultSheetProps>
             }
         >
             <p className="text-sm text-muted-foreground">
-                Ten en cuenta estas limitaciones al entrenar. Si sientes dolor, para y avisa a tu
-                entrenador.
+                {ATHLETE_INJURY_CONSULT_COPY.sheetIntro}
             </p>
             <ul className="mt-4 space-y-3">
                 {injuries.map((injury) => (

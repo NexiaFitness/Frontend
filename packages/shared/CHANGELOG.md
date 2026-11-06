@@ -1,5 +1,11 @@
 # Changelog — @nexia/shared
 
+## 3.9.0 — 2026-11-05
+
+### Added
+
+- H7: `exceeds_limit` en el veredicto de seguridad, `findings` por regla, y `max_axial_load` en la lesión. `safe` significa que no hubo hallazgo en las reglas comprobadas. El aviso del atleta incluye `findings` y, si hay tope, muestra el motivo unido. Un tope que no se puede comprobar (`axial_review_unchecked`, `axial_pending_review`, `axial_unknown`, `axial_cap_invalid`) también usa el motivo del motor. El resumen de la sesión nombra el tope cuando un ejercicio lo supera, y un bloqueo se presenta como error.
+
 ## 3.7.0 — 2026-11-05
 
 ### Added

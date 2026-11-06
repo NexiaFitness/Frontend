@@ -69,7 +69,7 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
                 101: {
                     is_safe: false,
                     status: "unsafe",
-                    blocking: true,
+                    blocking: false,
                     reason: "Lesión activa de rodilla",
                     suggested_alternatives: [],
                 },
@@ -178,7 +178,7 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
 
         await user.click(screen.getByRole("button", { name: /ver alternativas/i }));
 
-        expect(await screen.findByRole("heading", { name: /alternativas seguras/i })).toBeInTheDocument();
+        expect(await screen.findByRole("heading", { name: /alternativas sin hallazgo/i })).toBeInTheDocument();
 
         await user.click(screen.getByRole("button", { name: /Press alternativa segura/i }));
         expect(onSelect).toHaveBeenCalledTimes(1);
@@ -243,6 +243,64 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
         expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 101 }));
     });
 
+    it("H7: un resultado bloqueante no ofrece añadirlo", async () => {
+        const user = userEvent.setup();
+        const onSelect = vi.fn();
+        const payload: ExerciseSafetyBatchResponse = {
+            results: {
+                101: {
+                    is_safe: false,
+                    status: "exceeds_limit",
+                    blocking: true,
+                    reason: "Supera el tope de carga axial (Media).",
+                    suggested_alternatives: [],
+                },
+                102: { is_safe: true, status: "safe", blocking: false, suggested_alternatives: [] },
+            },
+        };
+        useCheckExerciseSafetyBatchMutation.mockReturnValue([
+            vi.fn(() => ({ unwrap: () => Promise.resolve(payload) })),
+            { isLoading: false },
+        ]);
+        render(
+            <ExercisePickerPanel isOpen onClose={vi.fn()} onSelect={onSelect} clientId={1} activeInjuries={[]} />
+        );
+
+        expect(await screen.findByText("TOPE")).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: /Press contraindicado/i }));
+        expect(screen.queryByRole("button", { name: /añadir/i })).not.toBeInTheDocument();
+        expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it("H7: un tope no comprobable tampoco ofrece añadirlo", async () => {
+        const user = userEvent.setup();
+        const onSelect = vi.fn();
+        const payload: ExerciseSafetyBatchResponse = {
+            results: {
+                101: {
+                    is_safe: false,
+                    status: "not_verifiable",
+                    unverifiable_reason: "axial_review_unchecked",
+                    blocking: true,
+                    reason: "No se puede comprobar el tope de carga axial.",
+                    suggested_alternatives: [],
+                },
+                102: { is_safe: true, status: "safe", blocking: false, suggested_alternatives: [] },
+            },
+        };
+        useCheckExerciseSafetyBatchMutation.mockReturnValue([
+            vi.fn(() => ({ unwrap: () => Promise.resolve(payload) })),
+            { isLoading: false },
+        ]);
+        render(
+            <ExercisePickerPanel isOpen onClose={vi.fn()} onSelect={onSelect} clientId={1} activeInjuries={[]} />
+        );
+
+        await user.click(await screen.findByRole("button", { name: /Press contraindicado/i }));
+        expect(screen.queryByRole("button", { name: /añadir/i })).not.toBeInTheDocument();
+        expect(onSelect).not.toHaveBeenCalled();
+    });
+
     it("H4: si falla el lote se avisa, se puede reintentar y nada aparece como seguro", async () => {
         const user = userEvent.setup();
         const checkBatch = vi.fn(() => ({ unwrap: () => Promise.reject(new Error("network")) }));
@@ -262,11 +320,12 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
             vi.fn(() => ({ unwrap: () => new Promise(() => undefined) })),
             { isLoading: true },
         ]);
+        const onSelect = vi.fn();
         render(
             <ExercisePickerPanel
                 isOpen
                 onClose={vi.fn()}
-                onSelect={vi.fn()}
+                onSelect={onSelect}
                 clientId={1}
                 activeInjuries={[]}
             />
@@ -274,6 +333,8 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
 
         expect(screen.getByText(/verificando seguridad/i)).toBeInTheDocument();
         expect(screen.getAllByLabelText("Seguridad sin comprobar")).toHaveLength(2);
+        screen.getAllByRole("button", { name: /Press/i })[0]?.click();
+        expect(onSelect).not.toHaveBeenCalled();
         expect(screen.queryByText("LESIÓN")).not.toBeInTheDocument();
     });
 });

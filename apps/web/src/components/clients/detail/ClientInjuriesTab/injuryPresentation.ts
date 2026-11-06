@@ -30,3 +30,18 @@ export function injuryPainChipClassName(level: number): string {
 /** Encabezado de sección (mismo patrón que PeriodizationSection / listas del cliente). */
 export const INJURY_SECTION_HEADING =
     "text-xs font-semibold uppercase tracking-wider text-muted-foreground";
+
+export const AXIAL_CAP_UNSET = "unset";
+
+export const AXIAL_CAP_OPTIONS = [
+    { value: AXIAL_CAP_UNSET, label: "Sin tope" },
+    { value: "none", label: "Ninguna" },
+    { value: "low", label: "Baja" },
+    { value: "medium", label: "Media" },
+    { value: "high", label: "Alta" },
+] as const;
+
+export const AXIAL_CAP_HINT =
+    "Tope opcional. Vacío no es «Ninguna». La categoría es una estimación del catálogo, no una medida clínica.";
+
+export const AXIAL_CAP_HINT_CLASS = "text-xs text-muted-foreground";

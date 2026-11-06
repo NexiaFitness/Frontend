@@ -85,9 +85,12 @@ describe("SessionValidationContent", () => {
                 }}
                 isLoading={false}
                 error={null}
+                layout="review"
             />
         );
         expect(screen.getByText("Fuera de un bloque de fase")).toBeInTheDocument();
+        expect(screen.getByText("Seguridad")).toBeInTheDocument();
+        expect(screen.getByText("Contraindicación rodilla")).toBeInTheDocument();
         expect(screen.queryByText(/Session does not belong/i)).not.toBeInTheDocument();
     });
 });

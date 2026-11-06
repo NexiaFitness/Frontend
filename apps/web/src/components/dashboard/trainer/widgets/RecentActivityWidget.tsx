@@ -48,15 +48,16 @@ function activityHref(item: RecentActivityItem): string | null {
 
 export const RecentActivityWidget: React.FC = () => {
     const navigate = useNavigate();
-    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+    const isTrainerScope = user?.role === "trainer" || user?.role === "admin";
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
-        skip: !isAuthenticated,
+        skip: !isAuthenticated || !isTrainerScope,
     });
 
     const { data, isLoading } = useGetRecentActivityQuery(
         { limit: 8, trainer_id: trainerProfile?.id },
         {
-            skip: !trainerProfile?.id,
+            skip: !isTrainerScope || !trainerProfile?.id,
             pollingInterval: 60_000,
         },
     );

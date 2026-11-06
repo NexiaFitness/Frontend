@@ -8,6 +8,7 @@ import React, { useMemo, useState } from "react";
 import { AlertTriangle, CloudOff, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { AthleteInjuryConsultSheet } from "@/components/athlete/AthleteInjuryConsultSheet";
+import { ATHLETE_INJURY_CONSULT_COPY } from "@/components/athlete/athleteInjuryConsultPresentation";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,9 @@ export interface AthleteContextStripProps {
     pendingCount: number;
     injuries?: InjuryWithDetails[];
     className?: string;
+    sessionId?: number;
+    sessionCompleted?: boolean;
+    hasSessionFeedback?: boolean;
 }
 
 type StripKind = "offline" | "syncing" | "injury";
@@ -43,6 +47,9 @@ export const AthleteContextStrip: React.FC<AthleteContextStripProps> = ({
     pendingCount,
     injuries = [],
     className,
+    sessionId,
+    sessionCompleted = false,
+    hasSessionFeedback = false,
 }) => {
     const [injurySheetOpen, setInjurySheetOpen] = useState(false);
 
@@ -115,7 +122,7 @@ export const AthleteContextStrip: React.FC<AthleteContextStripProps> = ({
                         className="h-8 shrink-0 px-2 text-xs font-semibold text-primary"
                         onClick={() => setInjurySheetOpen(true)}
                     >
-                        Consultar
+                        {ATHLETE_INJURY_CONSULT_COPY.action}
                     </Button>
                 )}
             </div>
@@ -125,6 +132,9 @@ export const AthleteContextStrip: React.FC<AthleteContextStripProps> = ({
                     isOpen={injurySheetOpen}
                     onClose={() => setInjurySheetOpen(false)}
                     injuries={injuries}
+                    sessionId={sessionId}
+                    sessionCompleted={sessionCompleted}
+                    hasSessionFeedback={hasSessionFeedback}
                 />
             )}
         </>

@@ -1,11 +1,10 @@
 /**
  * ExercisePickerRow.tsx — Una fila del selector de ejercicios con su estado de seguridad.
  *
- * Contexto: extraído de ExercisePickerPanel (H4). Estados: seguro (un clic añade),
- * contraindicado (detalle con alternativas y «Añadir con precaución») y no verificable
- * (detalle con el motivo y «Añadir sin verificar»); sin comprobar (falló el lote) se añade
- * con un clic pero con icono neutro. El motor recomienda; el entrenador
- * decide (nunca bloqueo duro en UI). «No verificable» nunca se pinta como seguro.
+ * Contexto: extraído de ExercisePickerPanel (H4). H7 añade el tope. Sin hallazgo: un clic
+ * añade. Aviso articular: detalle, alternativas y «Añadir con precaución». Tope o cualquier
+ * blocking: detalle y alternativas, sin botón de añadir. No verificable: «Añadir sin
+ * verificar». Si el lote no ha vuelto, el icono es neutro y no se pinta como sin hallazgo.
  * Notas de mantenimiento: estado con `exerciseSafetyUiState` (shared); copy y clases en
  * exercisePickerPresentation.ts.
  *
@@ -20,9 +19,9 @@ import type { ExerciseSafetyResponse } from "@nexia/shared/types/engineSafety";
 import { exerciseDisplayName } from "@nexia/shared";
 import type { ExerciseSafetyUiState } from "@nexia/shared/utils/exerciseSafetyState";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/buttons";
 import {
-    EXERCISE_PICKER_ACTION_ALTERNATIVES,
-    EXERCISE_PICKER_ACTION_CAUTION,
+    EXERCISE_PICKER_BADGE_EXCEEDS,
     EXERCISE_PICKER_BADGE_UNSAFE,
     EXERCISE_PICKER_BADGE_UNVERIFIABLE,
     EXERCISE_PICKER_COPY,
@@ -65,17 +64,28 @@ export const ExercisePickerRow: React.FC<ExercisePickerRowProps> = ({
 }) => {
     const unsafe = state === "unsafe";
     const unverifiable = state === "not_verifiable";
-    const flagged = unsafe || unverifiable;
+    const overCap = state === "exceeds_limit";
+    const blocking = Boolean(safety?.blocking) || overCap;
+    const unchecked = state === "unchecked";
+    const flagged = unsafe || unverifiable || overCap;
     const reason =
         safety?.reason?.trim() ||
-        (unsafe ? EXERCISE_PICKER_COPY.unsafeFallback : EXERCISE_PICKER_COPY.unverifiableFallback);
+        (overCap
+            ? EXERCISE_PICKER_COPY.exceedsFallback
+            : unsafe
+              ? EXERCISE_PICKER_COPY.unsafeFallback
+              : EXERCISE_PICKER_COPY.unverifiableFallback);
 
     return (
         <div>
             <button
                 type="button"
                 aria-expanded={flagged ? isExpanded : undefined}
-                onClick={() => (flagged ? onToggle() : onSelect(exercise))}
+                onClick={() => {
+                    if (unchecked) return;
+                    if (flagged) onToggle();
+                    else onSelect(exercise);
+                }}
                 title={flagged ? reason : undefined}
                 className={cn(EXERCISE_PICKER_ROW, flagged && EXERCISE_PICKER_ROW_FLAGGED)}
             >
@@ -84,7 +94,9 @@ export const ExercisePickerRow: React.FC<ExercisePickerRowProps> = ({
                     <CircleHelp className={EXERCISE_PICKER_ROW_ICON_UNVERIFIABLE} aria-hidden />
                 ) : null}
                 <span className={EXERCISE_PICKER_ROW_NAME}>{exerciseDisplayName(exercise)}</span>
-                {unsafe ? (
+                {overCap ? (
+                    <span className={EXERCISE_PICKER_BADGE_EXCEEDS}>{EXERCISE_PICKER_COPY.exceedsBadge}</span>
+                ) : unsafe ? (
                     <span className={EXERCISE_PICKER_BADGE_UNSAFE}>{EXERCISE_PICKER_COPY.unsafeBadge}</span>
                 ) : unverifiable ? (
                     <span className={EXERCISE_PICKER_BADGE_UNVERIFIABLE}>
@@ -101,38 +113,54 @@ export const ExercisePickerRow: React.FC<ExercisePickerRowProps> = ({
             </button>
 
             {flagged && isExpanded ? (
-                <div className={unsafe ? EXERCISE_PICKER_DETAIL_UNSAFE : EXERCISE_PICKER_DETAIL_UNVERIFIABLE}>
+                <div
+                    className={
+                        unverifiable && !overCap
+                            ? EXERCISE_PICKER_DETAIL_UNVERIFIABLE
+                            : EXERCISE_PICKER_DETAIL_UNSAFE
+                    }
+                >
                     <div className={EXERCISE_PICKER_DETAIL_HEAD}>
                         <ShieldAlert className={EXERCISE_PICKER_DETAIL_ICON} aria-hidden />
                         <div className={EXERCISE_PICKER_DETAIL_BODY}>
                             <p className={EXERCISE_PICKER_DETAIL_TITLE}>
-                                {unsafe ? EXERCISE_PICKER_COPY.unsafeTitle : EXERCISE_PICKER_COPY.unverifiableTitle}
+                                {overCap
+                                    ? EXERCISE_PICKER_COPY.exceedsTitle
+                                    : unsafe
+                                      ? EXERCISE_PICKER_COPY.unsafeTitle
+                                      : EXERCISE_PICKER_COPY.unverifiableTitle}
                             </p>
                             <p className={EXERCISE_PICKER_DETAIL_TEXT}>{reason}</p>
                         </div>
                     </div>
                     <div className={EXERCISE_PICKER_DETAIL_ACTIONS}>
-                        {unsafe ? (
-                            <button
+                        {unsafe || overCap ? (
+                            <Button
                                 type="button"
+                                variant="ghost-primary"
+                                size="sm"
+                                className="min-h-touch w-full"
                                 onClick={() => onShowAlternatives(exercise.id)}
-                                className={EXERCISE_PICKER_ACTION_ALTERNATIVES}
                             >
                                 <ShieldAlert className={EXERCISE_PICKER_ROW_ICON} aria-hidden />
                                 {EXERCISE_PICKER_COPY.showAlternatives}
-                            </button>
+                            </Button>
                         ) : null}
-                        <button
-                            type="button"
-                            onClick={() => {
-                                onSelect(exercise);
-                                onToggle();
-                            }}
-                            className={EXERCISE_PICKER_ACTION_CAUTION}
-                        >
-                            <Plus className={EXERCISE_PICKER_ROW_ICON} aria-hidden />
-                            {unsafe ? EXERCISE_PICKER_COPY.addWithCaution : EXERCISE_PICKER_COPY.addUnverified}
-                        </button>
+                        {blocking ? null : (
+                            <Button
+                                type="button"
+                                variant="primary"
+                                size="sm"
+                                className="min-h-touch w-full"
+                                onClick={() => {
+                                    onSelect(exercise);
+                                    onToggle();
+                                }}
+                            >
+                                <Plus className={EXERCISE_PICKER_ROW_ICON} aria-hidden />
+                                {unsafe ? EXERCISE_PICKER_COPY.addWithCaution : EXERCISE_PICKER_COPY.addUnverified}
+                            </Button>
+                        )}
                     </div>
                 </div>
             ) : null}

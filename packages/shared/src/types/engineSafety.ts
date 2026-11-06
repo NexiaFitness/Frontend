@@ -40,9 +40,34 @@ export interface AxialScoreResponse {
 // Injury safety check
 // ---------------------------------------------------------------------------
 
-/** H4: «no verificable» nunca equivale a seguro. */
-export type ExerciseSafetyStatus = "safe" | "unsafe" | "not_verifiable";
-export type ExerciseUnverifiableReason = "no_joint_actions";
+/**
+ * H7: `safe` means no finding on the rules that were checked.
+ * It is not a clinical clearance.
+ */
+export type ExerciseSafetyStatus = "safe" | "unsafe" | "not_verifiable" | "exceeds_limit";
+export type ExerciseUnverifiableReason =
+    | "no_joint_actions"
+    | "axial_unknown"
+    | "axial_pending_review"
+    | "axial_review_unchecked"
+    | "axial_cap_invalid";
+export type AxialLoadCap = "none" | "low" | "medium" | "high";
+
+export interface SafetyFinding {
+    rule: "joint_action" | "axial_cap";
+    status: ExerciseSafetyStatus;
+    blocking: boolean;
+    reason: string;
+    injury_id?: number | null;
+    unverifiable_reason?: ExerciseUnverifiableReason | null;
+    pain_level?: number | null;
+    max_axial_load?: AxialLoadCap | null;
+    exercise_axial_load?: string | null;
+    conflicting_joint_id?: number | null;
+    conflicting_joint_name?: string | null;
+    conflicting_movement_id?: number | null;
+    conflicting_movement_name?: string | null;
+}
 
 export interface ExerciseSafetyResponse {
     is_safe: boolean;
@@ -57,6 +82,7 @@ export interface ExerciseSafetyResponse {
     pain_level?: number | null;
     status: ExerciseSafetyStatus;
     unverifiable_reason?: ExerciseUnverifiableReason | null;
+    findings?: SafetyFinding[];
 }
 
 export interface ExerciseSafetyCheckRequest {

@@ -6,6 +6,7 @@
  * - Permite modificar todos los detalles de la sesión
  * - Redirige al plan después de actualizar
  * - Fase 8: Constructor por bloques con diff create/update/delete
+ * - Sigue por encima de 600 líneas: esta página es el editor. H7 solo enseña el motivo del 409.
  *
  * @author Frontend Team
  * @since v6.0.0
@@ -25,6 +26,7 @@ import {
     normalizeSessionTimeForApi,
     sessionTimeToPickerValue,
 } from "@nexia/shared/utils/athlete/athleteCalendarUtils";
+import { getMutationErrorMessage } from "@nexia/shared/utils/errorMessage";
 import { SessionMadridTimeField } from "@/components/sessionProgramming/SessionMadridTimeField";
 import { useGetClientQuery, useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
@@ -631,13 +633,7 @@ export const EditSession: React.FC = () => {
             });
         } catch (err) {
             console.error("Error actualizando sesión:", err);
-            const errorMessage =
-                err && typeof err === "object" && "data" in err
-                    ? String(
-                          (err as { data: unknown }).data || "Error al actualizar la sesión"
-                      )
-                    : "Error al actualizar la sesión";
-            showError(errorMessage);
+            showError(getMutationErrorMessage(err));
         } finally {
             setIsSaving(false);
         }
@@ -953,7 +949,7 @@ export const EditSession: React.FC = () => {
                                         .map((i) => i.joint_name_es || i.joint_name)
                                         .filter(Boolean)
                                         .join(", ") || "ver ficha del cliente"}
-                                    ). Los ejercicios contraindicados están marcados en la lista.
+                                    ). Los ejercicios con hallazgo están marcados en la lista.
                                 </Alert>
                             ) : null}
 

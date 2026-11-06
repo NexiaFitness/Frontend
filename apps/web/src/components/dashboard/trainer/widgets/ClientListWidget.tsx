@@ -28,9 +28,10 @@ import {
 
 export const ClientListWidget: React.FC = () => {
     const navigate = useNavigate();
-    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+    const isTrainerScope = user?.role === "trainer" || user?.role === "admin";
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
-        skip: !isAuthenticated,
+        skip: !isAuthenticated || !isTrainerScope,
     });
 
     const { data, isLoading } = useGetClientsWithMetricsQuery(
@@ -39,12 +40,12 @@ export const ClientListWidget: React.FC = () => {
             page: 1,
             page_size: 6,
         },
-        { skip: !trainerProfile?.id },
+        { skip: !isTrainerScope || !trainerProfile?.id },
     );
 
     const { data: activityData } = useGetRecentActivityQuery(
         { limit: 30, trainer_id: trainerProfile?.id },
-        { skip: !trainerProfile?.id, pollingInterval: 60_000 },
+        { skip: !isTrainerScope || !trainerProfile?.id, pollingInterval: 60_000 },
     );
 
     const activeClientIds = useMemo(() => {

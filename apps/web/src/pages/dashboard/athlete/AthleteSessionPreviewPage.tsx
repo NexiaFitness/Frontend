@@ -1,5 +1,5 @@
 /**
- * AthleteSessionPreviewPage.tsx — Vista previa sesión atleta (F1 / F3b-FE-01).
+ * Vista previa del atleta. Pasa de 400 líneas: sesión, aviso de lesión y feedback van juntos.
  */
 
 import React, { useId, useMemo, useState } from "react";
@@ -194,7 +194,11 @@ export const AthleteSessionPreviewPage: React.FC = () => {
         !isDesktop && hasActiveInjuries && !isChecking && conflictCount > 0;
 
     const mobileConflictSummary = showMobileConflictSummary
-        ? buildPreviewConflictSummary(conflictCount, activeInjuries)
+        ? buildPreviewConflictSummary(
+              conflictCount,
+              activeInjuries,
+              conflicts.map((item) => item.alert)
+          )
         : null;
 
     const trainerNote =
@@ -340,6 +344,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                                 isOnline
                                 pendingCount={0}
                                 injuries={activeInjuries}
+                                sessionId={sessionId} sessionCompleted={session.status === "completed"} hasSessionFeedback={hasSessionFeedback}
                             />
                         )
                     ))}

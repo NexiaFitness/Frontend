@@ -16,6 +16,7 @@ import React from "react";
 import { Alert } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
+import { ATHLETE_INJURY_CONSULT_COPY } from "@/components/athlete/athleteInjuryConsultPresentation";
 
 export interface AthleteInjuryCalloutProps {
     message: string;
@@ -42,10 +43,10 @@ export const AthleteInjuryCallout: React.FC<AthleteInjuryCalloutProps> = ({
                         type="button"
                         variant="ghost-primary"
                         size="sm"
-                        className="h-8 px-2 text-xs"
+                        className="min-h-touch-athlete px-3 text-xs"
                         onClick={onConsult}
                     >
-                        Consultar
+                        {ATHLETE_INJURY_CONSULT_COPY.action}
                     </Button>
                 ) : undefined
             }

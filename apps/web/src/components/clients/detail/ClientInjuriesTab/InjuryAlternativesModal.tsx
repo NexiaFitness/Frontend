@@ -75,7 +75,7 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
             <div className="space-y-4">
                 <FormField label="¿Qué ejercicio quieres sustituir?" variant={FORM_VARIANT}>
                     <p className="text-xs text-muted-foreground mb-2">
-                        Busca el ejercicio que el cliente debe evitar y verás alternativas seguras.
+                        Busca el ejercicio que quieres sustituir. La lista sigue el patrón de movimiento; no comprueba la lesión ni el tope.
                     </p>
                     <ExerciseSearch
                         onSearch={setExerciseSearch}

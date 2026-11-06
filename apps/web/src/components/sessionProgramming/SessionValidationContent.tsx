@@ -5,6 +5,7 @@
  * - Extraído de SessionValidationPanel para reutilizar en drawer y en página de review.
  * - No contiene lógica de fetching ni contenedor SidePanel.
  * - Renderiza las 4 secciones de validación: Patrones, Volumen, Carga axial, Seguridad.
+ * - Sigue por encima de 600 líneas por patrones y volumen; la tarjeta y el aviso sin plan viven en SessionValidationCards.
  *
  * Responsabilidades:
  * - Mostrar estados de carga, error y datos de validación.
@@ -21,7 +22,6 @@ import type { NexiaSemanticTone } from "@/components/ui/feedback/nexiaSemanticIc
 
 import {
     buildPatternReviewSummary,
-    getNotApplicableCopy,
     VOLUME_UNCOVERED_REVIEW_COPY,
 } from "./sessionValidationPresentation";
 
@@ -42,7 +42,11 @@ import {
     VOLUME_REVIEW_SECTION_TITLE,
 } from "@nexia/shared/training/weeklyVolumePanelPresentation";
 import { MuscleVolumeRow } from "./MuscleVolumeRow";
-import { SessionSafetySummarySection } from "./SessionSafetySummarySection";
+import {
+    SessionValidationNotApplicable,
+    SessionValidationSafetyBlock,
+    ValidationInsightCard,
+} from "./SessionValidationCards";
 import {
     SESSION_AXIAL_COPY,
     SESSION_AXIAL_NOTE,
@@ -59,14 +63,8 @@ import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBa
 import { cn } from "@/lib/utils";
 import { NexiaProgressBar } from "@/components/ui/progress";
 import { nexiaProgressToneFromDeviationPercent } from "@/components/ui/progress/nexiaProgressPresentation";
-import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
     SESSION_VALIDATION_EMPTY_HINT,
-    SESSION_VALIDATION_INSIGHT_BODY,
-    SESSION_VALIDATION_INSIGHT_CARD,
-    SESSION_VALIDATION_INSIGHT_HEADER,
-    SESSION_VALIDATION_INSIGHT_TITLE,
-    SESSION_VALIDATION_NOT_APPLICABLE,
     SESSION_VALIDATION_PATTERN_TILE,
     SESSION_VALIDATION_PATTERN_TILE_LABEL,
     SESSION_VALIDATION_REVIEW_GRID,
@@ -504,29 +502,6 @@ const AxialLoadSection: React.FC<{ data: AxialScoreResponse | undefined }> = ({ 
 // Props
 // ---------------------------------------------------------------------------
 
-function ValidationInsightCard({
-    title,
-    badge,
-    children,
-    className,
-}: {
-    title: string;
-    badge?: React.ReactNode;
-    children: React.ReactNode;
-    className?: string;
-}) {
-    return (
-        <article className={cn(SESSION_VALIDATION_INSIGHT_CARD, "relative pt-1", className)}>
-            <NexiaGlassAccentRim />
-            <div className={SESSION_VALIDATION_INSIGHT_HEADER}>
-                <h4 className={SESSION_VALIDATION_INSIGHT_TITLE}>{title}</h4>
-                {badge ?? null}
-            </div>
-            <div className={SESSION_VALIDATION_INSIGHT_BODY}>{children}</div>
-        </article>
-    );
-}
-
 export interface SessionValidationContentProps {
     data: SessionValidationOut | null;
     isLoading: boolean;
@@ -564,30 +539,16 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
             ) : null}
 
             {data?.overall_status === "not_applicable" ? (
-                <section className={SESSION_VALIDATION_NOT_APPLICABLE} aria-label="Alineación con el plan no aplicable">
-                    <NexiaGlassAccentRim />
-                    {(() => {
-                        const copy = getNotApplicableCopy(data.block_resolution_reason);
-                        return (
-                            <div className="relative z-[1]">
-                                <div className="flex items-start gap-2">
-                                    <Info
-                                        className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-                                        aria-hidden
-                                    />
-                                    <div className="min-w-0 space-y-1">
-                                        <p className="text-sm font-semibold text-foreground">
-                                            {copy.title}
-                                        </p>
-                                        <p className="text-sm leading-relaxed text-muted-foreground">
-                                            {copy.body}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })()}
-                </section>
+                <>
+                    <SessionValidationNotApplicable
+                        reason={data.block_resolution_reason}
+                        framed
+                    />
+                    <SessionValidationSafetyBlock
+                        summary={data.safety_summary}
+                        layout="review"
+                    />
+                </>
             ) : null}
 
             {data && data.overall_status !== "not_applicable" ? (
@@ -605,18 +566,10 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                                 <AxialLoadSection data={data.axial_score} />
                             </ValidationInsightCard>
 
-                            <ValidationInsightCard
-                                title="Seguridad"
-                                badge={
-                                    <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/30 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                        {data.safety_summary
-                                            ? `${data.safety_summary.blocking_count} bloqueos`
-                                            : "No disponible"}
-                                    </span>
-                                }
-                            >
-                                <SessionSafetySummarySection data={data.safety_summary} />
-                            </ValidationInsightCard>
+                            <SessionValidationSafetyBlock
+                                summary={data.safety_summary}
+                                layout="review"
+                            />
                         </div>
 
                         <ValidationInsightCard
@@ -662,30 +615,16 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
             )}
 
             {data?.overall_status === "not_applicable" && layout === "stack" ? (
-                <section
-                    className="rounded-lg border border-border/60 bg-muted/20 px-4 py-4"
-                    aria-label="Alineación con el plan no aplicable"
-                >
-                    {(() => {
-                        const copy = getNotApplicableCopy(data.block_resolution_reason);
-                        return (
-                            <div className="flex items-start gap-2">
-                                <Info
-                                    className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-                                    aria-hidden
-                                />
-                                <div className="min-w-0 space-y-1">
-                                    <p className="text-sm font-semibold text-foreground">
-                                        {copy.title}
-                                    </p>
-                                    <p className="text-sm leading-relaxed text-muted-foreground">
-                                        {copy.body}
-                                    </p>
-                                </div>
-                            </div>
-                        );
-                    })()}
-                </section>
+                <>
+                    <SessionValidationNotApplicable
+                        reason={data.block_resolution_reason}
+                        framed={false}
+                    />
+                    <SessionValidationSafetyBlock
+                        summary={data.safety_summary}
+                        layout="stack"
+                    />
+                </>
             ) : null}
 
             {data && data.overall_status !== "not_applicable" && layout === "stack" && (
@@ -711,16 +650,10 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                         <AxialLoadSection data={data.axial_score} />
                     </CollapsibleFormGroup>
 
-                    <CollapsibleFormGroup
-                        title="Seguridad"
-                        badge={
-                            data.safety_summary
-                                ? `${data.safety_summary.blocking_count} bloqueos`
-                                : "No disponible"
-                        }
-                    >
-                        <SessionSafetySummarySection data={data.safety_summary} />
-                    </CollapsibleFormGroup>
+                    <SessionValidationSafetyBlock
+                        summary={data.safety_summary}
+                        layout="stack"
+                    />
                 </>
             )}
         </div>

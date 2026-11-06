@@ -9,7 +9,7 @@
  * @since v2.2.0
  */
 
-import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useId } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -58,15 +58,21 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
     ariaLabel,
     id,
 }) => {
+    const autoId = useId();
+    const instanceId = id ?? autoId;
+    const listboxId = `${instanceId}-listbox`;
     const [open, setOpen] = useState(false);
+    const [activeIndex, setActiveIndex] = useState(0);
     const [coords, setCoords] = useState<PopoverCoords>({
         top: 0,
         left: 0,
         width: 0,
-        maxHeight: 240,
+        maxHeight: 320,
     });
     const containerRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
     const popoverRef = useRef<HTMLDivElement>(null);
+    const wasOpenRef = useRef(false);
 
     const selectedOption = options.find((opt) => opt.value === value);
     const displayText = selectedOption?.label || placeholder;
@@ -82,7 +88,7 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
         const spaceAbove = r.top - viewportPad;
         const preferBelow = spaceBelow >= Math.min(120, spaceAbove);
         const rawMax = preferBelow ? spaceBelow : spaceAbove - gap;
-        const maxHeight = Math.min(240, Math.max(1, rawMax));
+        const maxHeight = Math.max(1, Math.min(rawMax, 480));
         if (preferBelow) {
             setCoords({
                 top: belowTop,
@@ -113,6 +119,72 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
     }, [open, updatePopoverPosition]);
 
     useEffect(() => {
+        if (open && !wasOpenRef.current) {
+            const selected = options.findIndex((option) => option.value === value);
+            setActiveIndex(selected >= 0 ? selected : 0);
+        }
+        wasOpenRef.current = open;
+    }, [open, options, value]);
+
+    useEffect(() => {
+        if (!open || !popoverRef.current) return;
+        const node = popoverRef.current.querySelector<HTMLElement>(
+            `[data-option-index="${activeIndex}"]`
+        );
+        const scroller = node?.parentElement;
+        if (!node || !scroller) return;
+        const top = node.offsetTop;
+        const bottom = top + node.offsetHeight;
+        if (top < scroller.scrollTop) scroller.scrollTop = top;
+        else if (bottom > scroller.scrollTop + scroller.clientHeight) {
+            scroller.scrollTop = bottom - scroller.clientHeight;
+        }
+    }, [open, activeIndex]);
+
+    const focusTrigger = () => {
+        triggerRef.current?.focus();
+    };
+
+    const handleSelect = (optionValue: string) => {
+        onChange(optionValue);
+        setOpen(false);
+        focusTrigger();
+    };
+
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+        if (disabled) return;
+        if (!open) {
+            if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault();
+                setOpen(true);
+            }
+            return;
+        }
+        if (event.key === "ArrowDown") {
+            event.preventDefault();
+            setActiveIndex((index) => Math.min(options.length - 1, index + 1));
+        } else if (event.key === "ArrowUp") {
+            event.preventDefault();
+            setActiveIndex((index) => Math.max(0, index - 1));
+        } else if (event.key === "Home") {
+            event.preventDefault();
+            setActiveIndex(0);
+        } else if (event.key === "End") {
+            event.preventDefault();
+            setActiveIndex(Math.max(0, options.length - 1));
+        } else if (event.key === "Enter") {
+            event.preventDefault();
+            const option = options[activeIndex];
+            if (option) handleSelect(option.value);
+        } else if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            setOpen(false);
+            focusTrigger();
+        }
+    };
+
+    useEffect(() => {
         if (!open) return;
         const handlePointerDown = (e: PointerEvent) => {
             const t = e.target as Node;
@@ -124,14 +196,10 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
         return () => document.removeEventListener("pointerdown", handlePointerDown);
     }, [open]);
 
-    const handleSelect = (optionValue: string) => {
-        onChange(optionValue);
-        setOpen(false);
-    };
-
     return (
         <div ref={containerRef} className={cn("relative", className)}>
             <button
+                ref={triggerRef}
                 type="button"
                 id={id}
                 onClick={() => setOpen(!open)}
@@ -139,6 +207,11 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                 aria-label={ariaLabel}
                 aria-haspopup="listbox"
                 aria-expanded={open}
+                aria-controls={open ? listboxId : undefined}
+                aria-activedescendant={
+                    open ? `${instanceId}-option-${activeIndex}` : undefined
+                }
+                onKeyDown={handleKeyDown}
                 className={cn(
                     "flex w-full items-center justify-between rounded-md border border-border bg-surface-2 ring-offset-background",
                     "placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]",
@@ -163,8 +236,10 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                 createPortal(
                     <div
                         ref={popoverRef}
+                        id={listboxId}
                         role="listbox"
-                        className="fixed z-[300] w-max rounded-md border border-border bg-popover p-1 shadow-lg"
+                        onKeyDown={handleKeyDown}
+                        className="fixed z-[300] w-max overflow-hidden rounded-md border border-border bg-popover p-1 shadow-lg"
                         style={{
                             top: coords.top,
                             left: coords.left,
@@ -176,17 +251,20 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                             className="overflow-auto py-1 scrollbar-primary"
                             style={{ maxHeight: coords.maxHeight }}
                         >
-                            {options.map((option) => (
+                            {options.map((option, index) => (
                                 <button
                                     key={option.value}
+                                    id={`${instanceId}-option-${index}`}
                                     type="button"
                                     role="option"
+                                    data-option-index={index}
                                     aria-selected={value === option.value}
+                                    onMouseEnter={() => setActiveIndex(index)}
                                     onClick={() => handleSelect(option.value)}
                                     className={cn(
                                         "relative flex w-full cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none",
                                         "hover:bg-accent hover:text-accent-foreground",
-                                        value === option.value && "bg-accent"
+                                        (value === option.value || index === activeIndex) && "bg-accent"
                                     )}
                                 >
                                     <span className="flex-1 truncate text-left">{option.label}</span>

@@ -1,9 +1,9 @@
 /**
  * exercisePickerPresentation.ts — Copy y clases de las filas del selector de ejercicios.
  *
- * Contexto: ExercisePickerRow (selector del constructor de sesión). H4: tres estados de
- * seguridad con significado propio. Contraindicado = destructive en tinte glass; no
- * verificable = warning en tinte glass y con texto (nunca solo color); seguro = añadir.
+ * Contexto: ExercisePickerRow (selector del constructor de sesión). H7: cuatro estados.
+ * Tope y conflicto que bloquea = destructive en tinte glass; no verificable = warning
+ * en tinte glass y con texto (nunca solo color); sin hallazgo = añadir.
  * Notas de mantenimiento: receta de tinte de DESIGN_PREMIUM §3.1 (borde /30-/40, fondo
  * /10-/20); sin colores sueltos en el componente.
  *
@@ -16,20 +16,29 @@ import { cn } from "@/lib/utils";
 export const EXERCISE_PICKER_COPY = {
     unsafeBadge: "LESIÓN",
     unverifiableBadge: "SIN VERIFICAR",
-    unsafeTitle: "Contraindicado",
+    exceedsBadge: "TOPE",
+    unsafeTitle: "Conflicto con la lesión",
     unverifiableTitle: "No se puede comprobar con la lesión",
-    unsafeFallback: "Contraindicado por lesión activa",
+    exceedsTitle: "Supera el tope de carga axial",
+    unsafeFallback: "Conflicto con una lesión activa",
     unverifiableFallback: "El ejercicio no tiene acciones articulares en el catálogo.",
+    exceedsFallback:
+        "Supera el tope fijado. La carga axial es una categoría estimada del catálogo, no una medida clínica.",
     showAlternatives: "Ver alternativas",
     addWithCaution: "Añadir con precaución",
     addUnverified: "Añadir sin verificar",
-    batchFailed: "No se pudo comprobar la seguridad. Ningún ejercicio se marca como seguro.",
+    batchFailed:
+        "No se pudo comprobar la seguridad. Ningún ejercicio se marca como sin hallazgo.",
     retry: "Reintentar",
     uncheckedLabel: "Seguridad sin comprobar",
+    injuryBanner: "Ejercicios con hallazgo marcados.",
 } as const;
 
+export const EXERCISE_PICKER_INJURY_BANNER =
+    "mx-3 mt-3 flex items-start gap-2 rounded-md bg-warning/10 p-2 text-xs text-warning";
+
 export const EXERCISE_PICKER_ROW =
-    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-surface-2";
+    "flex min-h-touch w-full items-center gap-2 rounded-md px-2 text-left transition-colors hover:bg-surface-2";
 
 export const EXERCISE_PICKER_ROW_FLAGGED = "cursor-pointer opacity-90";
 
@@ -46,7 +55,7 @@ export const EXERCISE_PICKER_ROW_ICON_UNSAFE = cn(EXERCISE_PICKER_ROW_ICON, "tex
 
 export const EXERCISE_PICKER_ROW_ICON_UNVERIFIABLE = cn(EXERCISE_PICKER_ROW_ICON, "text-warning");
 
-const BADGE = "rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1";
+const BADGE = "rounded px-1.5 py-0.5 text-xs font-bold uppercase tracking-wide ring-1";
 
 export const EXERCISE_PICKER_BADGE_UNSAFE = cn(
     BADGE,
@@ -54,6 +63,11 @@ export const EXERCISE_PICKER_BADGE_UNSAFE = cn(
 );
 
 export const EXERCISE_PICKER_BADGE_UNVERIFIABLE = cn(BADGE, "bg-warning/15 text-warning ring-warning/40");
+
+export const EXERCISE_PICKER_BADGE_EXCEEDS = cn(
+    BADGE,
+    "bg-destructive/20 text-destructive ring-destructive/40"
+);
 
 const DETAIL = "mx-1 mb-1 space-y-2 rounded-md border p-2";
 

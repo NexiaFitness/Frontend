@@ -80,6 +80,9 @@ export interface ClientInjury {
     severity?: "mild" | "moderate" | "severe";
     is_active: boolean;
     restrictions?: string[] | string | null;
+    /** null: el entrenador no fijó tope. none/low/medium/high: categoría del catálogo. */
+    max_axial_load?: "none" | "low" | "medium" | "high" | null;
+    max_axial_load_set_by_user_id?: number | null;
     notes?: string | null;
     start_date: string; // ISO date (maps to DB start_date)
     created_at: string;
@@ -104,6 +107,7 @@ export interface CreateInjuryRequest {
     pain_level: PainLevel;
     severity: "mild" | "moderate" | "severe"; // Requerido por backend
     restrictions?: string[] | null; // Backend espera array, no string
+    max_axial_load?: "none" | "low" | "medium" | "high" | null;
     notes?: string | null;
     is_active?: boolean; // Default: true
     // Nota: injury_date NO se envía, el backend usa start_date automáticamente
@@ -115,6 +119,7 @@ export interface UpdateInjuryRequest {
     pain_level?: PainLevel;
     severity?: "mild" | "moderate" | "severe";
     restrictions?: string[] | null;
+    max_axial_load?: "none" | "low" | "medium" | "high" | null;
     notes?: string | null;
     is_active?: boolean;
 }

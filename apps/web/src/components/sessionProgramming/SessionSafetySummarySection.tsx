@@ -51,7 +51,7 @@ function groupsOf(details: ExerciseSafetyResponse[]): SafetyGroup[] {
             icon: "error" as const,
             title: SESSION_SAFETY_COPY.blockingTitle,
             fallback: SESSION_SAFETY_COPY.blockingFallback,
-            items: details.filter((d) => d.status === "unsafe" && d.blocking),
+            items: details.filter((d) => d.blocking),
         },
         {
             key: "warning",
@@ -84,6 +84,7 @@ export const SessionSafetySummarySection: React.FC<{ data: SessionSafetySummaryO
     ];
     return (
         <div className={SESSION_SAFETY_STACK}>
+            <p className={SESSION_SAFETY_EMPTY}>{SESSION_SAFETY_COPY.disclaimer}</p>
             <div className={SESSION_SAFETY_KPI_GRID}>
                 {kpis.map(([tone, value, label]) => (
                     <div key={label} className={sessionSafetyKpiClass(tone)}>

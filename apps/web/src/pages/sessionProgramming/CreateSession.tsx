@@ -1189,7 +1189,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 <Alert variant="warning">
                                     Atención: {displayClient.nombre} {displayClient.apellidos} tiene lesiones activas (
                                     {clientActiveInjuries.map((i) => i.joint_name_es || i.joint_name).filter(Boolean).join(", ") || "ver ficha del cliente"}
-                                    ). Los ejercicios contraindicados están marcados en la lista.
+                                    ). Los ejercicios con hallazgo están marcados en la lista.
                                 </Alert>
                             )}
 

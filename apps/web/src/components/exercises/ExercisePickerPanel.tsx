@@ -7,9 +7,9 @@
  * - En movil (< lg): oculto (hidden). Flujo alternativo: drawer/modal.
  * - Lista agrupada por letra inicial, busqueda en tiempo real.
  * - Fase 4: safety-check batch via motor real, alternativas integradas en panel.
- * - UX: el motor recomienda; el entrenador puede añadir con precaución (nunca bloqueo duro en UI).
- * - H4: tres estados (seguro / contraindicado / no verificable) en ExercisePickerRow; si el lote
- *   de seguridad falla, se avisa con reintento y ningún ejercicio se marca como seguro.
+ * - H7: si blocking es verdadero no hay botón de añadir. Un aviso articular sin bloqueo
+ *   sigue con «Añadir con precaución». Si el lote falla, se avisa y ninguna fila se pinta
+ *   como sin hallazgo.
  * - Más de 400 líneas (deuda previa, 562 antes de H4): panel, lista y vista de alternativas
  *   comparten el estado de seguridad. H4 extrajo la fila (ExercisePickerRow); la vista de
  *   alternativas es la siguiente extracción pendiente.
@@ -36,13 +36,17 @@ import type {
 import { exerciseDisplayName } from "@nexia/shared";
 import { exerciseSafetyUiState } from "@nexia/shared/utils/exerciseSafetyState";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { LoadingSpinner, Alert, NexiaSemanticIcon } from "@/components/ui/feedback";
 import { Input } from "@/components/ui/forms";
 import { cn } from "@/lib/utils";
 import { equipmentDisplayLine } from "@/utils/exercises";
 import { Button } from "@/components/ui/buttons";
 import { ExercisePickerRow } from "./ExercisePickerRow";
-import { EXERCISE_PICKER_BATCH_ALERT, EXERCISE_PICKER_COPY } from "./exercisePickerPresentation";
+import {
+    EXERCISE_PICKER_BATCH_ALERT,
+    EXERCISE_PICKER_COPY,
+    EXERCISE_PICKER_INJURY_BANNER,
+} from "./exercisePickerPresentation";
 
 /** Normaliza texto para búsqueda insensible a mayúsculas y tildes. */
 function foldForSearch(value: string): string {
@@ -191,7 +195,7 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
             {/* Cabecera */}
             <div className="flex items-center justify-between border-b border-border p-3">
                 <h3 className="text-sm font-semibold text-foreground">
-                    {view === "alternatives" ? "Alternativas seguras" : "Lista de Ejercicios"}
+                    {view === "alternatives" ? "Alternativas sin hallazgo" : "Lista de Ejercicios"}
                 </h3>
                 <div className="flex items-center gap-1">
                     {view === "alternatives" && (
@@ -284,9 +288,9 @@ const ListView: React.FC<ListViewProps> = ({
         <>
             {/* Aviso lesiones */}
             {hasActiveInjuries && (
-                <div className="mx-3 mt-3 flex items-start gap-2 rounded-md bg-warning/10 p-2 text-[11px] text-warning">
-                    <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                    <span>Ejercicios contraindicados marcados.</span>
+                <div className={EXERCISE_PICKER_INJURY_BANNER}>
+                    <NexiaSemanticIcon tone="warning" size="sm" />
+                    <span>{EXERCISE_PICKER_COPY.injuryBanner}</span>
                 </div>
             )}
 
@@ -488,7 +492,7 @@ const AlternativesView: React.FC<AlternativesViewProps> = ({
                             data.is_original_safe ? "text-success" : "text-destructive"
                         )}
                     >
-                        {data.is_original_safe ? "Seguro" : "Contraindicado"}
+                        {data.is_original_safe ? "Sin hallazgo" : "Con hallazgo"}
                     </span>
                 </div>
             </div>
@@ -514,7 +518,7 @@ const AlternativesView: React.FC<AlternativesViewProps> = ({
             ) : (
                 <div className="space-y-2">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        Alternativas seguras
+                        Alternativas sin hallazgo
                     </p>
                     {data.alternatives.map((alt: Exercise, _idx: number) => (
                         <button
