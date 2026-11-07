@@ -26,8 +26,6 @@ export const mockCatalogExercise = {
     objetivo_entrenamiento: "strength",
     axial_load_review: "legacy",
     nivel_review: "legacy",
-    source: "nexia",
-    source_ref: null,
     contract_status: "complete",
     contract_missing: [],
     descripcion: null,
@@ -428,6 +426,25 @@ export const validateCatalogImportNoUpdatesHandler = http.post(
                     ],
                     updated: [],
                     unchanged_count: 50,
+                },
+            },
+            { status: 200 }
+        )
+);
+
+/** Excel anterior a H8-P: trae Fuente y Referencia de fuente, que se ignoran. */
+export const validateCatalogImportIgnoredColumnsHandler = http.post(
+    "*/admin/catalog/import/validate",
+    async () =>
+        HttpResponse.json(
+            {
+                ok_for_import: true,
+                violations: [],
+                change_summary: {
+                    new: [],
+                    updated: [],
+                    unchanged_count: 12,
+                    ignored_columns: ["Fuente", "Referencia de fuente"],
                 },
             },
             { status: 200 }

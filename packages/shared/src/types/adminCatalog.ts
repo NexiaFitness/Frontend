@@ -11,7 +11,6 @@
 import type { Exercise } from "../hooks/exercises/useExercises";
 import type {
     CatalogReviewInputState,
-    CatalogSource,
     ExerciseContractMissingCode,
     ExerciseContractStatus,
     MuscleEvidenceFields,
@@ -60,9 +59,6 @@ export interface ExerciseCatalogCoreIn {
     /** null = regla del servidor (admin: revisado al cambiar el valor). */
     axial_load_review?: CatalogReviewInputState | null;
     nivel_review?: CatalogReviewInputState | null;
-    /** null = conserva el origen (alta admin: nexia). */
-    source?: CatalogSource | null;
-    source_ref?: string | null;
     descripcion?: string | null;
     instrucciones?: string | null;
     notas?: string | null;
@@ -254,6 +250,8 @@ export interface CatalogImportChangeSummaryOut {
     preserved?: CatalogImportPreservedEntryOut[];
     unchanged_count: number;
     assigned_exercise_ids?: CatalogImportAssignedExerciseIdOut[];
+    /** Columnas retiradas que traía el archivo y no se aplican (H8: Fuente, Referencia de fuente). */
+    ignored_columns?: string[];
 }
 
 export interface CatalogImportValidateOut {

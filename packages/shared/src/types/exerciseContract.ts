@@ -1,6 +1,6 @@
 /**
- * exerciseContract.ts — Contrato del ejercicio para el motor (H1): objetivo, revisión, origen
- * y estado de contrato derivado.
+ * exerciseContract.ts — Contrato del ejercicio para el motor (H1): objetivo, revisión y estado
+ * de contrato derivado. El origen (source, source_ref) es interno y la API no lo devuelve (H8).
  *
  * Fuente: OpenAPI local `/api/v1/openapi.json` (ExerciseOut, ExerciseCatalogCoreIn,
  * AdminCatalogExerciseListItemOut). Spec: docs/catalogo-ejercicios/motor-v2-2026-10/SPEC_H1.
@@ -30,8 +30,6 @@ export type CatalogReviewState = "legacy" | "pending_review" | "rubric" | "revie
 /** Estados que acepta la API como entrada: legacy y rubric los escribe solo el servidor. */
 export type CatalogReviewInputState = "pending_review" | "reviewed";
 
-export type CatalogSource = "nexia" | "adrian_excel" | "repdb";
-
 export type ExerciseContractStatus = "complete" | "incomplete";
 
 export type ExerciseContractMissingCode =
@@ -49,8 +47,6 @@ export interface ExerciseContractFields {
     objetivo_entrenamiento?: TrainingObjective | null;
     axial_load_review?: CatalogReviewState | null;
     nivel_review?: CatalogReviewState | null;
-    source?: CatalogSource | null;
-    source_ref?: string | null;
     contract_status?: ExerciseContractStatus | null;
     contract_missing?: ExerciseContractMissingCode[] | null;
 }

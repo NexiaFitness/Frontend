@@ -16,12 +16,17 @@ import { clearRouterMocks, setAuthenticatedUser } from "@/test-utils/mocks";
 import { validAdminUser } from "@/test-utils/fixtures/auth";
 import {
     validateCatalogImportBlockedHandler,
+    validateCatalogImportIgnoredColumnsHandler,
     validateCatalogImportNoUpdatesHandler,
     validateCatalogImportTooLargeHandler,
     validateCatalogImportUnsupportedTypeHandler,
 } from "@/test-utils/mocks/handlers/adminCatalog";
 import { AdminCatalogImportPage } from "../AdminCatalogImportPage";
 import { ADMIN_CATALOG_COPY } from "@/components/admin/catalog/adminCatalogPresentation";
+import {
+    ADMIN_CATALOG_IMPORT_IGNORED_COPY,
+    catalogImportIgnoredColumnsHint,
+} from "@/components/admin/catalog/adminCatalogImportIgnoredPresentation";
 
 function xlsxFile(): File {
     return new File(["contenido"], "catalogo.xlsx", {
@@ -113,6 +118,34 @@ describe("AdminCatalogImportPage", () => {
         ).not.toBeInTheDocument();
         expect(
             screen.queryByText(ADMIN_CATALOG_COPY.importOverwriteWarning)
+        ).not.toBeInTheDocument();
+    });
+
+    it("avisa una vez de las columnas retiradas que trae un Excel antiguo", async () => {
+        server.use(validateCatalogImportIgnoredColumnsHandler);
+        const user = userEvent.setup();
+        render(<AdminCatalogImportPage />);
+
+        await uploadAndValidate(user);
+
+        const notices = await screen.findAllByTestId("admin-catalog-import-ignored-columns");
+        expect(notices).toHaveLength(1);
+        expect(notices[0]).toHaveTextContent(ADMIN_CATALOG_IMPORT_IGNORED_COPY.title);
+        expect(notices[0]).toHaveTextContent(
+            catalogImportIgnoredColumnsHint(["Fuente", "Referencia de fuente"])
+        );
+    });
+
+    it("sin columnas retiradas no muestra el aviso", async () => {
+        server.use(validateCatalogImportNoUpdatesHandler);
+        const user = userEvent.setup();
+        render(<AdminCatalogImportPage />);
+
+        await uploadAndValidate(user);
+
+        expect(await screen.findByTestId("admin-catalog-import-summary")).toBeInTheDocument();
+        expect(
+            screen.queryByTestId("admin-catalog-import-ignored-columns")
         ).not.toBeInTheDocument();
     });
 

@@ -6,6 +6,9 @@
  *
  * Notas de mantenimiento: la orquestación vive en `useAdminCatalogImport`; aquí
  * solo se ensambla JSX con tokens de `adminCatalogPresentation.ts`.
+ * Más de 400 líneas: deuda anterior a H8 (416 antes de H8-P, que solo añade el aviso de
+ * columnas ignoradas como componente aparte). El resumen del paso 2 debe salir a su propio
+ * componente en un hito de deuda; no se añaden más bloques aquí.
  *
  * @author Frontend Team
  * @since v1.0.0
@@ -22,6 +25,7 @@ import { FormField } from "@/components/ui/forms";
 import { PageTitle } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { AdminCatalogImportErrors } from "@/components/admin/catalog/AdminCatalogImportErrors";
+import { AdminCatalogImportIgnoredColumns } from "@/components/admin/catalog/AdminCatalogImportIgnoredColumns";
 import { AdminCatalogImportPreserved } from "@/components/admin/catalog/AdminCatalogImportPreserved";
 import { useAdminCatalogImport } from "@/components/admin/catalog/useAdminCatalogImport";
 import {
@@ -360,6 +364,7 @@ export const AdminCatalogImportPage: React.FC = () => {
                             </ul>
                         ) : null}
 
+                        <AdminCatalogImportIgnoredColumns columns={summary.ignored_columns ?? []} />
                         <AdminCatalogImportPreserved entries={summary.preserved ?? []} />
 
                         {!confirmation && hasInactiveReuse ? (

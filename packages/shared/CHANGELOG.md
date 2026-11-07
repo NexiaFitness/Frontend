@@ -1,5 +1,15 @@
 # Changelog — @nexia/shared
 
+## 4.0.0 — 2026-11-07
+
+### Removed (H8-P: el origen del ejercicio es interno)
+
+- `source` y `source_ref` de `ExerciseCatalogCoreIn` y de `ExerciseContractFields`, y el tipo `CatalogSource`. La API ya no los acepta como entrada ni los devuelve; los escribe solo el servidor (cargador de tandas y adopción de la biblioteca). SPEC_H8 §9.0.
+
+### Added
+
+- `CatalogImportChangeSummaryOut.ignored_columns`: columnas retiradas que traía el Excel y no se aplican («Fuente», «Referencia de fuente»).
+
 ## 3.9.0 — 2026-11-05
 
 ### Added
