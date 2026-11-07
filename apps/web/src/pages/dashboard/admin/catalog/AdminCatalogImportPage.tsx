@@ -6,8 +6,9 @@
  *
  * Notas de mantenimiento: la orquestación vive en `useAdminCatalogImport`; aquí
  * solo se ensambla JSX con tokens de `adminCatalogPresentation.ts`.
- * Más de 400 líneas: deuda anterior a H8 (416 antes de H8-P, que solo añade el aviso de
- * columnas ignoradas como componente aparte). El resumen del paso 2 debe salir a su propio
+ * Más de 400 líneas: deuda anterior a H8 (416 antes de H8-P). H8-P añade el aviso de
+ * columnas ignoradas y saca cada campo cambiado a `AdminCatalogImportFieldChange`, ambos
+ * como componentes aparte. El resto del resumen del paso 2 debe salir a su propio
  * componente en un hito de deuda; no se añaden más bloques aquí.
  *
  * @author Frontend Team
@@ -25,6 +26,7 @@ import { FormField } from "@/components/ui/forms";
 import { PageTitle } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { AdminCatalogImportErrors } from "@/components/admin/catalog/AdminCatalogImportErrors";
+import { AdminCatalogImportFieldChange } from "@/components/admin/catalog/AdminCatalogImportFieldChange";
 import { AdminCatalogImportIgnoredColumns } from "@/components/admin/catalog/AdminCatalogImportIgnoredColumns";
 import { AdminCatalogImportPreserved } from "@/components/admin/catalog/AdminCatalogImportPreserved";
 import { useAdminCatalogImport } from "@/components/admin/catalog/useAdminCatalogImport";
@@ -47,7 +49,6 @@ import {
     ADMIN_CATALOG_SUMMARY_ITEM_FIELDS,
     ADMIN_CATALOG_SUMMARY_LIST,
     catalogImportAssignedCodes,
-    catalogImportFieldLabel,
     catalogImportNewEntries,
     catalogImportSummaryEntryTitle,
     ADMIN_CATALOG_SUMMARY_TILE,
@@ -337,18 +338,10 @@ export const AdminCatalogImportPage: React.FC = () => {
                                         {entry.changes && entry.changes.length > 0 ? (
                                             <ul className={ADMIN_CATALOG_SUMMARY_ITEM_FIELDS}>
                                                 {entry.changes.map((change) => (
-                                                    <li
+                                                    <AdminCatalogImportFieldChange
                                                         key={`${entry.exercise_id}-${change.field}`}
-                                                        data-testid="admin-catalog-import-field-change"
-                                                    >
-                                                        {catalogImportFieldLabel(change.field)}
-                                                        {": "}
-                                                        {change.before}
-                                                        {" "}
-                                                        {ADMIN_CATALOG_COPY.importUpdatedChangeSeparator}
-                                                        {" "}
-                                                        {change.after}
-                                                    </li>
+                                                        change={change}
+                                                    />
                                                 ))}
                                             </ul>
                                         ) : (

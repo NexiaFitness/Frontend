@@ -208,10 +208,37 @@ export interface CatalogImportViolationOut {
     message: string;
 }
 
+/** Atributo de una relación que cambia. `evidence_note` llega sin texto (solo se marca). */
+export type CatalogImportItemAttribute =
+    | "role"
+    | "priority"
+    | "evidence_level"
+    | "is_coach_decision"
+    | "evidence_note";
+
+export interface CatalogImportItemAttributeChangeOut {
+    attribute: CatalogImportItemAttribute;
+    before: string | null;
+    after: string | null;
+}
+
+/** Un músculo, patrón, acción, material o etiqueta que se añade, se quita o cambia. */
+export interface CatalogImportItemChangeOut {
+    change: "added" | "removed" | "changed";
+    /** Nombre en español. */
+    name: string;
+    /** Código del rol (prime_mover, synergist, stabilizer, primary, secondary), si tiene. */
+    role: string | null;
+    attributes: CatalogImportItemAttributeChangeOut[];
+}
+
 export interface CatalogImportFieldChangeOut {
     field: string;
+    /** Valor legible; vacío en una relación (entonces manda `items`). */
     before: string;
     after: string;
+    /** Relaciones: qué se añade, quita o cambia. Nunca la lista serializada. */
+    items?: CatalogImportItemChangeOut[];
 }
 
 /** Entrada de `change_summary.updated` — la produce `catalog_import_bundle._diff_fields`. */

@@ -17,6 +17,7 @@ import { validAdminUser } from "@/test-utils/fixtures/auth";
 import {
     validateCatalogImportBlockedHandler,
     validateCatalogImportIgnoredColumnsHandler,
+    validateCatalogImportMuscleItemsHandler,
     validateCatalogImportNoUpdatesHandler,
     validateCatalogImportTooLargeHandler,
     validateCatalogImportUnsupportedTypeHandler,
@@ -134,6 +135,23 @@ describe("AdminCatalogImportPage", () => {
         expect(notices[0]).toHaveTextContent(
             catalogImportIgnoredColumnsHint(["Fuente", "Referencia de fuente"])
         );
+    });
+
+    it("muestra los cambios de músculos como frases, nunca como JSON", async () => {
+        server.use(validateCatalogImportMuscleItemsHandler);
+        const user = userEvent.setup();
+        render(<AdminCatalogImportPage />);
+
+        await uploadAndValidate(user);
+
+        const items = await screen.findAllByTestId("admin-catalog-import-item-change");
+        expect(items.map((item) => item.textContent)).toEqual([
+            "Erectores espinales · Objetivo: prioridad 0 → 2; nota de evidencia cambiada",
+            "Añadido: Glúteo mayor (Sinergista)",
+        ]);
+        const summary = screen.getByTestId("admin-catalog-import-summary");
+        expect(summary).toHaveTextContent("Bilateral → Unilateral");
+        expect(summary.textContent).not.toMatch(/[{}[\]]|\\u00|muscle_id/);
     });
 
     it("sin columnas retiradas no muestra el aviso", async () => {

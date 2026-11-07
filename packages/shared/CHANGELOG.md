@@ -1,5 +1,11 @@
 # Changelog — @nexia/shared
 
+## 4.1.0 — 2026-11-07
+
+### Added (QA de H8-P: el resumen del import se lee como una persona)
+
+- `CatalogImportFieldChangeOut.items` con `CatalogImportItemChangeOut` y `CatalogImportItemAttributeChangeOut`: en músculos, patrones, acciones articulares, material y etiquetas, qué se añade, quita o cambia, con nombre en español. `before` y `after` llegan vacíos en esas relaciones. La nota de evidencia se marca como cambiada sin su texto.
+
 ## 4.0.0 — 2026-11-07
 
 ### Removed (H8-P: el origen del ejercicio es interno)
