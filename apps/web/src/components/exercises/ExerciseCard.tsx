@@ -1,12 +1,12 @@
 /**
  * ExerciseCard.tsx — Card de ejercicio (biblioteca / picker)
  *
- * Layout alineado con spec Lovable: nombre, badges grupo/tipo, equipo · nivel, video opcional.
+ * Layout: nombre, badges grupo/tipo, equipo · nivel. Sin aviso de vídeo: solo lo alimentaba el
+ * alta local de la biblioteca, retirada en H8-B.
  * appearance="plain" para picker modal legacy; "premium" (default) glass biblioteca.
  */
 
 import React from "react";
-import { Play } from "lucide-react";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,6 @@ import {
     EXERCISES_LIBRARY_CARD_TITLE,
     EXERCISES_LIBRARY_CARD_TYPE_BADGE,
     EXERCISES_LIBRARY_CARD_COMPLEX_TYPE_BADGE,
-    EXERCISES_LIBRARY_CARD_VIDEO,
 } from "./exercisesLibraryPresentation";
 import {
     ExercisePrimeMoverBadges,
@@ -39,7 +38,6 @@ import {
 
 export interface ExerciseCardProps {
     exercise: Exercise;
-    videoUrl?: string | null;
     onSelect?: (exercise: Exercise) => void;
     className?: string;
     appearance?: "premium" | "plain";
@@ -47,7 +45,6 @@ export interface ExerciseCardProps {
 
 export const ExerciseCard: React.FC<ExerciseCardProps> = ({
     exercise,
-    videoUrl = null,
     onSelect,
     className,
     appearance = "premium",
@@ -110,13 +107,6 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                 ) : null}
                 <span className={cn("font-medium", levelClass)}>{getLevelLabel(exercise.nivel || "")}</span>
             </p>
-
-            {videoUrl ? (
-                <div className={EXERCISES_LIBRARY_CARD_VIDEO}>
-                    <Play className="h-3 w-3 shrink-0" aria-hidden />
-                    <span>Video disponible</span>
-                </div>
-            ) : null}
         </button>
     );
 };

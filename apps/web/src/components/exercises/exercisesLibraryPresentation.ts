@@ -126,8 +126,6 @@ export const EXERCISES_LIBRARY_CARD_COMPLEX_TYPE_BADGE =
 
 export const EXERCISES_LIBRARY_CARD_META = "mt-3 text-xs text-muted-foreground";
 
-export const EXERCISES_LIBRARY_CARD_VIDEO = "mt-2 flex items-center gap-1 text-[10px] text-primary";
-
 export const EXERCISES_LIBRARY_TABLE_SHELL = cn(
     NEXIA_GLASS_CARD,
     NEXIA_GLASS_CARD_DESKTOP,
