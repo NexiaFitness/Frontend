@@ -3,11 +3,12 @@
  *
  * Filtros server-side vía GET /exercises/ + catálogo de referencia (muscle_groups, equipment, patterns).
  * Ruta: /dashboard/exercises
+ * Solo lectura: H8-B retiró el alta local (borradores ex-new-* que no llegaban al servidor). Los
+ * ejercicios se dan de alta en la ficha admin del catálogo o por Excel.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import type { ExerciseLoadType } from "@nexia/shared/types/exerciseLoadType";
 import {
@@ -23,10 +24,6 @@ import { PaginationBar } from "@/components/ui/pagination";
 import { PageTitle } from "@/components/dashboard/shared";
 import { ExerciseCard } from "@/components/exercises/ExerciseCard";
 import { ExercisesLibraryEmptyState } from "@/components/exercises/ExercisesLibraryEmptyState";
-import {
-    ExercisesLibraryNewFormPanel,
-    type NewExerciseFormState,
-} from "@/components/exercises/ExercisesLibraryNewFormPanel";
 import { ExercisesLibraryTable } from "@/components/exercises/ExercisesLibraryTable";
 import { ExercisesLibraryToolbar } from "@/components/exercises/ExercisesLibraryToolbar";
 import {
@@ -36,19 +33,11 @@ import {
     EXERCISES_LIBRARY_HEADER,
     EXERCISES_LIBRARY_LOADING_ROW,
     EXERCISES_LIBRARY_PAGE,
-    EXERCISES_LIBRARY_PRIMARY_CTA,
     EXERCISES_LIBRARY_STACK,
     EXERCISES_LIBRARY_TITLE_WRAP,
     exercisesLibraryHeading,
-    EXERCISE_MANUAL_CREATE_ENABLED,
 } from "@/components/exercises/exercisesLibraryPresentation";
-import type { LocalExerciseView } from "@/types/exerciseLocal";
-import {
-    buildCatalogFilterOptions,
-    catalogOptionLabels,
-    getMuscleLabel,
-    localViewToExercise,
-} from "@/utils/exercises";
+import { buildCatalogFilterOptions } from "@/utils/exercises";
 
 type ViewMode = "grid" | "list";
 type CatalogFilterId = number | "all";
@@ -56,23 +45,9 @@ type CatalogFilterId = number | "all";
 const PAGE_SIZE = 9;
 const SEARCH_DEBOUNCE_MS = 300;
 
-const emptyForm = (): NewExerciseFormState => ({
-    name: "",
-    muscleGroup: "",
-    tipo: "Compuesto",
-    equipment: "",
-    level: "intermediate",
-    movementPattern: "",
-    descripcion: "",
-    instrucciones: "",
-    notas: "",
-    videoUrl: "",
-});
-
 export const ExercisesPage: React.FC = () => {
     const navigate = useNavigate();
 
-    const [showForm, setShowForm] = useState(false);
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [muscleGroupFilterId, setMuscleGroupFilterId] = useState<CatalogFilterId>("all");
@@ -82,8 +57,6 @@ export const ExercisesPage: React.FC = () => {
     const [loadTypeFilter, setLoadTypeFilter] = useState<"all" | ExerciseLoadType>("all");
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
     const [currentPage, setCurrentPage] = useState(1);
-    const [localAdditions, setLocalAdditions] = useState<LocalExerciseView[]>([]);
-    const [form, setForm] = useState<NewExerciseFormState>(emptyForm());
 
     useEffect(() => {
         const timer = window.setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
@@ -149,18 +122,8 @@ export const ExercisesPage: React.FC = () => {
 
     const { data, isLoading, isError, isFetching, refetch } = useGetExercisesQuery(queryArgs);
 
-    const totalFromApi = data?.total ?? 0;
-
-    const exercises = useMemo(() => {
-        const apiExercises = data?.exercises ?? [];
-        if (hasServerFilters || localAdditions.length === 0) {
-            return apiExercises;
-        }
-        const localEx = localAdditions.map(localViewToExercise);
-        return [...localEx, ...apiExercises];
-    }, [data?.exercises, localAdditions, hasServerFilters]);
-
-    const totalFiltered = hasServerFilters ? totalFromApi : totalFromApi + localAdditions.length;
+    const exercises = data?.exercises ?? [];
+    const totalFiltered = data?.total ?? 0;
     const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
     const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
 
@@ -181,84 +144,19 @@ export const ExercisesPage: React.FC = () => {
         }
     }, [currentPage, totalPages]);
 
-    const paginatedExercises = exercises;
-
-    const videoUrlByExerciseId = useMemo(() => {
-        const map: Record<string, string | null | undefined> = {};
-        for (const ex of paginatedExercises) {
-            if (ex.exercise_id.startsWith("ex-new")) {
-                map[ex.exercise_id] =
-                    localAdditions.find((l) => l.rowId === ex.exercise_id)?.videoUrl ?? null;
-            }
-        }
-        return map;
-    }, [paginatedExercises, localAdditions]);
-
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
         scrollDashboardMainToTop("smooth");
     }, []);
 
-    const saveExercise = useCallback(() => {
-        if (!form.name.trim() || !form.muscleGroup.trim()) return;
-
-        const rowId = `ex-new-${Date.now()}`;
-        const tipoBackend = form.tipo === "Aislamiento" ? "monoarticular" : "multiarticular";
-        const newEx: LocalExerciseView = {
-            rowId,
-            nombre: form.name.trim(),
-            musculatura_principal: form.muscleGroup.trim(),
-            tipo: tipoBackend,
-            nivel: form.level,
-            equipo: form.equipment
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean)
-                .join(", ") || "bodyweight",
-            patron_movimiento: form.movementPattern.trim() || "general",
-            tipo_carga: "external",
-            descripcion: form.descripcion.trim() || null,
-            instrucciones: form.instrucciones.trim() || null,
-            notas: form.notas.trim() || null,
-            videoUrl: form.videoUrl.trim() || null,
-        };
-        setLocalAdditions((prev) => [newEx, ...prev]);
-        setShowForm(false);
-        setForm(emptyForm());
-    }, [form]);
-
     const openExercise = useCallback(
-        (ex: Exercise) => {
-            if (ex.exercise_id.startsWith("ex-new")) {
-                const local = localAdditions.find((l) => l.rowId === ex.exercise_id);
-                if (local) {
-                    navigate(`/dashboard/exercises/${local.rowId}`, {
-                        state: { localExercise: local },
-                    });
-                }
-            } else {
-                navigate(`/dashboard/exercises/${ex.id}`);
-            }
-        },
-        [navigate, localAdditions]
-    );
-
-    const formMuscleGroupLabels = useMemo(
-        () => catalogOptionLabels(muscleGroupOptions),
-        [muscleGroupOptions]
-    );
-    const formPatternLabels = useMemo(
-        () => catalogOptionLabels(patternOptions),
-        [patternOptions]
+        (ex: Exercise) => navigate(`/dashboard/exercises/${ex.id}`),
+        [navigate]
     );
 
     const showLoading = isLoading && !data;
     const hasListTotal = data != null;
-    const libraryIsEmpty =
-        hasListTotal &&
-        !hasServerFilters &&
-        totalFromApi === 0 &&
-        localAdditions.length === 0;
+    const libraryIsEmpty = hasListTotal && !hasServerFilters && totalFiltered === 0;
     const headingCount: number | null = hasListTotal ? totalFiltered : null;
 
     return (
@@ -274,31 +172,7 @@ export const ExercisesPage: React.FC = () => {
                     >
                         <PageTitle title={exercisesLibraryHeading(headingCount)} />
                     </div>
-                    {EXERCISE_MANUAL_CREATE_ENABLED && (
-                        <Button
-                            type="button"
-                            variant="primary"
-                            size="sm"
-                            onClick={() => setShowForm(!showForm)}
-                            className={EXERCISES_LIBRARY_PRIMARY_CTA}
-                        >
-                            <Plus className="h-4 w-4 shrink-0" aria-hidden />
-                            Nuevo ejercicio
-                        </Button>
-                    )}
                 </div>
-
-                {EXERCISE_MANUAL_CREATE_ENABLED && showForm && (
-                    <ExercisesLibraryNewFormPanel
-                        form={form}
-                        onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
-                        onSave={saveExercise}
-                        onClose={() => setShowForm(false)}
-                        groups={formMuscleGroupLabels}
-                        patterns={formPatternLabels}
-                        getMuscleLabel={getMuscleLabel}
-                    />
-                )}
 
                 <ExercisesLibraryToolbar
                     search={search}
@@ -347,54 +221,31 @@ export const ExercisesPage: React.FC = () => {
                     </div>
                 )}
 
-                {!showLoading && !isError && paginatedExercises.length === 0 && (
-                    <ExercisesLibraryEmptyState
-                        variant={libraryIsEmpty ? "library" : "filtered"}
-                        action={
-                            EXERCISE_MANUAL_CREATE_ENABLED && libraryIsEmpty ? (
-                                <Button
-                                    type="button"
-                                    variant="primary"
-                                    size="sm"
-                                    onClick={() => setShowForm(true)}
-                                    className={EXERCISES_LIBRARY_PRIMARY_CTA}
-                                >
-                                    <Plus className="h-4 w-4 shrink-0" aria-hidden />
-                                    Añadir primer ejercicio
-                                </Button>
-                            ) : undefined
-                        }
-                    />
+                {!showLoading && !isError && exercises.length === 0 && (
+                    <ExercisesLibraryEmptyState variant={libraryIsEmpty ? "library" : "filtered"} />
                 )}
 
-                {!showLoading && !isError && paginatedExercises.length > 0 && viewMode === "grid" && (
+                {!showLoading && !isError && exercises.length > 0 && viewMode === "grid" && (
                     <div className={EXERCISES_LIBRARY_CARD_GRID}>
-                        {paginatedExercises.map((ex) => {
-                            const key = ex.exercise_id.startsWith("ex-new")
-                                ? ex.exercise_id
-                                : String(ex.id);
-                            const vid = videoUrlByExerciseId[ex.exercise_id] ?? null;
-                            return (
-                                <ExerciseCard
-                                    key={key}
-                                    exercise={ex}
-                                    videoUrl={vid}
-                                    onSelect={() => openExercise(ex)}
-                                    appearance="premium"
-                                />
-                            );
-                        })}
+                        {exercises.map((ex) => (
+                            <ExerciseCard
+                                key={ex.id}
+                                exercise={ex}
+                                onSelect={() => openExercise(ex)}
+                                appearance="premium"
+                            />
+                        ))}
                     </div>
                 )}
 
-                {!showLoading && !isError && paginatedExercises.length > 0 && viewMode === "list" && (
+                {!showLoading && !isError && exercises.length > 0 && viewMode === "list" && (
                     <ExercisesLibraryTable
-                        exercises={paginatedExercises}
+                        exercises={exercises}
                         onSelect={openExercise}
                     />
                 )}
 
-                {!showLoading && !isError && paginatedExercises.length > 0 && totalPages > 1 && (
+                {!showLoading && !isError && exercises.length > 0 && totalPages > 1 && (
                     <PaginationBar
                         currentPage={safeCurrentPage}
                         totalPages={totalPages}

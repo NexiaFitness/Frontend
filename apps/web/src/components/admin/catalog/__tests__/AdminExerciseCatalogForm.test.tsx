@@ -89,6 +89,42 @@ describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
         expect(screen.queryByLabelText("Confirmo la carga axial propuesta")).not.toBeInTheDocument();
     });
 
+    it("H8-B: no ofrece descripción, instrucciones ni notas y no las envía al guardar", async () => {
+        const user = userEvent.setup();
+        const saved: { core: Record<string, unknown> | null } = { core: null };
+        server.use(
+            // Un servidor anterior a H8-B aún podía devolverlas.
+            http.get("*/exercises/:id/catalog", () =>
+                HttpResponse.json({
+                    ...mockCatalogExercise,
+                    descripcion: "D",
+                    instrucciones: "I",
+                    notas: "N",
+                })
+            ),
+            http.put("*/exercises/:id/catalog", async ({ request }) => {
+                saved.core = ((await request.json()) as { core: Record<string, unknown> }).core;
+                return HttpResponse.json({
+                    ...mockCatalogExercise,
+                    updated_at: "2026-09-24T13:00:00.000Z",
+                });
+            })
+        );
+
+        render(<AdminExerciseCatalogForm mode="edit" exercisePk={11} />);
+
+        expect(await screen.findByText(/squat_back/i, undefined, { timeout: 15_000 })).toBeInTheDocument();
+        for (const label of ["Descripción", "Instrucciones", "Notas"]) {
+            expect(screen.queryByLabelText(label)).not.toBeInTheDocument();
+        }
+        await user.click(screen.getByRole("button", { name: ADMIN_CATALOG_COPY.save }));
+
+        await waitFor(() => expect(saved.core).not.toBeNull());
+        for (const field of ["descripcion", "instrucciones", "notas"]) {
+            expect(saved.core).not.toHaveProperty(field);
+        }
+    });
+
     it("carga ficha edit y abre historial vacío", async () => {
         server.use(getCatalogHistoryEmptyHandler);
         const user = userEvent.setup();

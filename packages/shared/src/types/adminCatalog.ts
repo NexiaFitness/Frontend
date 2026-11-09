@@ -59,9 +59,6 @@ export interface ExerciseCatalogCoreIn {
     /** null = regla del servidor (admin: revisado al cambiar el valor). */
     axial_load_review?: CatalogReviewInputState | null;
     nivel_review?: CatalogReviewInputState | null;
-    descripcion?: string | null;
-    instrucciones?: string | null;
-    notas?: string | null;
     is_active?: boolean;
 }
 

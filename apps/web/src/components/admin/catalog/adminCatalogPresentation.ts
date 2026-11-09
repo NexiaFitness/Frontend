@@ -475,7 +475,6 @@ const CATALOG_IMPORT_FIELD_LABELS: Record<string, string> = {
     "core.objetivo_entrenamiento": "Objetivo de entrenamiento",
     "core.axial_load_review": "Revisión carga axial",
     "core.nivel_review": "Revisión nivel",
-    "core.notas": "Notas",
     muscles: "Músculos",
     movement_patterns: "Patrones",
     joint_actions: "Articulaciones",

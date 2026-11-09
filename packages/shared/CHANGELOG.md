@@ -1,5 +1,13 @@
 # Changelog — @nexia/shared
 
+## 6.0.0 — 2026-11-09
+
+### Removed (H8-B: limpieza conservadora del catálogo)
+
+- `descripcion`, `instrucciones` y `notas` de `Exercise` y de `ExerciseCatalogCoreIn`. La API ya no los acepta ni los devuelve; el texto del ejercicio es `exercise_content`. Las columnas siguen en la base (SPEC_H8 §9.1).
+- `ExerciseCreate`, `ExerciseUpdate`, `useCreateExerciseMutation` y `useUpdateExerciseMutation`: el servidor retiró `POST /exercises/` y `PUT /exercises/{id}`, que escribían el catálogo sin contrato H1 ni historial. El catálogo se escribe por `adminCatalogApi`. `GET` y `DELETE /exercises/{id}` siguen.
+- `VariantMuscleCreate` y `VariantMuscleUpdate`: `POST /exercise-catalog/variant-muscles/` se retiró; `VariantMuscle` (lectura) se queda.
+
 ## 5.0.0 — 2026-11-09
 
 ### Removed (H8-A)

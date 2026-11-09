@@ -67,6 +67,7 @@ const FIELD_LABELS: Record<string, string> = {
     "core.objetivo_entrenamiento": "Objetivo",
     "core.axial_load_review": "Revisión de la carga axial",
     "core.nivel_review": "Revisión del nivel",
+    // Retired in H8-B; history rows from before still carry them.
     "core.descripcion": "Descripción",
     "core.instrucciones": "Instrucciones",
     "core.notas": "Notas",

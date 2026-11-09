@@ -78,4 +78,16 @@ describe("ExercisesPage — heading count (UX-LOAD-01)", () => {
 
         expect(screen.getByText(/tu biblioteca está vacía/i)).toBeInTheDocument();
     });
+
+    it("H8-B: la biblioteca no ofrece alta local, ni en la cabecera ni con la biblioteca vacía", async () => {
+        useExerciseLibraryHandlers(() => HttpResponse.json(emptyListPayload));
+
+        render(<ExercisesPage />);
+
+        expect(await screen.findByText(/tu biblioteca está vacía/i)).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /nuevo ejercicio/i })).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: /añadir primer ejercicio/i })
+        ).not.toBeInTheDocument();
+    });
 });

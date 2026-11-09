@@ -101,9 +101,6 @@ export function emptyCore(): CatalogCoreDraft {
         laterality: "bilateral",
         axial_load: null,
         objetivo_entrenamiento: null,
-        descripcion: null,
-        instrucciones: null,
-        notas: null,
         is_active: true,
     };
 }
@@ -193,9 +190,6 @@ export function draftFromCatalog(exercise: CatalogExerciseOut): AdminCatalogForm
             laterality: exercise.laterality ?? null,
             axial_load: parseCatalogAxialLoad(exercise.axial_load),
             objetivo_entrenamiento: parseTrainingObjective(exercise.objetivo_entrenamiento),
-            descripcion: exercise.descripcion,
-            instrucciones: exercise.instrucciones,
-            notas: exercise.notas,
             is_active: exercise.is_active,
         },
         pending_review: {

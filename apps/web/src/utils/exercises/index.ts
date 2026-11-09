@@ -12,7 +12,6 @@ export * from './translations';
 export * from './exerciseUi';
 export * from './filterOptions';
 export * from './catalogFilterOptions';
-export * from './localExercise';
 
 
 

@@ -116,9 +116,6 @@ export interface Exercise extends ExerciseContractFields {
     axial_load?: string | null;
     musculatura_principal: string; // Comma-separated string
     musculatura_secundaria: string | null; // Comma-separated string
-    descripcion: string | null;
-    instrucciones: string | null;
-    notas: string | null;
     created_at: string;
     updated_at: string;
     is_active: boolean;
@@ -165,49 +162,8 @@ export interface ExerciseListResponse {
     has_more: boolean;
 }
 
-/**
- * ExerciseCreate - POST /exercises/
- * Backend schema: ExerciseCreate (ExerciseBase)
- */
-export interface ExerciseCreate {
-    exercise_id: string;
-    nombre: string;
-    nombre_ingles?: string | null;
-    tipo: string;
-    nivel: string;
-    equipo: string;
-    patron_movimiento: string;
-    tipo_carga: string;
-    musculatura_principal: string;
-    musculatura_secundaria?: string | null;
-    laterality?: string | null;
-    axial_load?: string | null;
-    descripcion?: string | null;
-    instrucciones?: string | null;
-    notas?: string | null;
-}
-
-/**
- * ExerciseUpdate - PUT /exercises/{id}
- * Backend schema: ExerciseUpdate (all optional)
- */
-export interface ExerciseUpdate {
-    exercise_id?: string;
-    nombre?: string;
-    nombre_ingles?: string | null;
-    tipo?: string;
-    nivel?: string;
-    equipo?: string;
-    patron_movimiento?: string;
-    tipo_carga?: string;
-    musculatura_principal?: string;
-    musculatura_secundaria?: string | null;
-    laterality?: string | null;
-    axial_load?: string | null;
-    descripcion?: string | null;
-    instrucciones?: string | null;
-    notas?: string | null;
-}
+// ExerciseCreate/ExerciseUpdate (POST /exercises/, PUT /exercises/{id}) se retiraron en
+// H8-B: el catálogo se escribe solo por la ficha (adminCatalogApi), el Excel y las tandas.
 
 /**
  * Estado de paginación
@@ -398,27 +354,6 @@ const exercisesListApi = baseApi.injectEndpoints({
             }),
             providesTags: (result, error, id) => [{ type: "Exercise" as const, id }],
         }),
-        createExercise: builder.mutation<Exercise, ExerciseCreate>({
-            query: (body) => ({
-                url: "/exercises/",
-                method: "POST",
-                body,
-                headers: { "Content-Type": "application/json" },
-            }),
-            invalidatesTags: [{ type: "Exercise", id: "LIST" }],
-        }),
-        updateExercise: builder.mutation<Exercise, { exerciseId: number; data: ExerciseUpdate }>({
-            query: ({ exerciseId, data }) => ({
-                url: `/exercises/${exerciseId}`,
-                method: "PUT",
-                body: data,
-                headers: { "Content-Type": "application/json" },
-            }),
-            invalidatesTags: (result, error, { exerciseId }) => [
-                { type: "Exercise", id: exerciseId },
-                { type: "Exercise", id: "LIST" },
-            ],
-        }),
         deleteExercise: builder.mutation<void, number>({
             query: (exerciseId) => ({
                 url: `/exercises/${exerciseId}`,
@@ -470,8 +405,6 @@ export const {
     useGetExercisesQuery,
     useGetExerciseLibraryQuery,
     useGetExerciseByIdQuery,
-    useCreateExerciseMutation,
-    useUpdateExerciseMutation,
     useDeleteExerciseMutation,
     useCheckExerciseSafetyMutation,
     useCheckExerciseSafetyBatchMutation,

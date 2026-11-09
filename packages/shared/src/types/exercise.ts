@@ -417,16 +417,6 @@ export interface VariantMovementPatternCreate {
 }
 
 /**
- * VariantMuscleCreate - Payload para crear relación variante-músculo
- * Backend schema: VariantMuscleCreate
- */
-export interface VariantMuscleCreate {
-    variant_id: number;
-    muscle_id: number;
-    role: MuscleRole;
-}
-
-/**
  * VariantEquipmentCreate - Payload para crear relación variante-equipamiento
  * Backend schema: VariantEquipmentCreate
  */
@@ -535,16 +525,6 @@ export interface VariantMovementPatternUpdate {
     variant_id?: number | null;
     movement_pattern_id?: number | null;
     role?: MovementPatternRole | null;
-}
-
-/**
- * VariantMuscleUpdate - Payload para actualizar relación variante-músculo
- * Backend schema: VariantMuscleUpdate
- */
-export interface VariantMuscleUpdate {
-    variant_id?: number | null;
-    muscle_id?: number | null;
-    role?: MuscleRole | null;
 }
 
 /**

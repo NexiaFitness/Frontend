@@ -133,7 +133,7 @@ describe("AdminCatalogImportPage", () => {
         expect(notices).toHaveLength(1);
         expect(notices[0]).toHaveTextContent(ADMIN_CATALOG_IMPORT_IGNORED_COPY.title);
         expect(notices[0]).toHaveTextContent(
-            catalogImportIgnoredColumnsHint(["Fuente", "Referencia de fuente"])
+            catalogImportIgnoredColumnsHint(["Fuente", "Referencia de fuente", "Notas"])
         );
     });
 

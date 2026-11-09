@@ -159,7 +159,7 @@ export const validateCatalogImportMuscleItemsHandler = http.post(
         )
 );
 
-/** Excel anterior a H8-P: trae Fuente y Referencia de fuente, que se ignoran. */
+/** Excel anterior a H8-P: trae Fuente, Referencia de fuente y Notas (H8-B), que se ignoran. */
 export const validateCatalogImportIgnoredColumnsHandler = http.post(
     "*/admin/catalog/import/validate",
     async () =>
@@ -171,7 +171,7 @@ export const validateCatalogImportIgnoredColumnsHandler = http.post(
                     new: [],
                     updated: [],
                     unchanged_count: 12,
-                    ignored_columns: ["Fuente", "Referencia de fuente"],
+                    ignored_columns: ["Fuente", "Referencia de fuente", "Notas"],
                 },
             },
             { status: 200 }

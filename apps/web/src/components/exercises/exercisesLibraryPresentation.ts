@@ -13,7 +13,6 @@ import {
     ATHLETE_EMPTY_STATE_GLOW,
     ATHLETE_EMPTY_STATE_TITLE,
 } from "@/components/athlete/empty/athleteEmptyStatePresentation";
-import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
 
 export {
     PLATFORM_LOADING_ROW as EXERCISES_LIBRARY_LOADING_ROW,
@@ -44,23 +43,12 @@ export function exercisesLibraryHeading(count: number | null): string {
     return `${EXERCISES_LIBRARY_TITLE_BASE} · ${count}`;
 }
 
-/**
- * Alta manual desde la biblioteca deshabilitada hasta crear mappings reales de catálogo
- * (equipment / muscle / movement_pattern). Ver docs/catalogo-ejercicios/02_ALTA_EJERCICIOS_OPERACIONES.md
- */
-export const EXERCISE_MANUAL_CREATE_ENABLED = false;
-
 export const EXERCISES_LIBRARY_PAGE = cn("relative w-full", "pb-10 lg:pb-12");
 
 export const EXERCISES_LIBRARY_GLOW =
     "pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.12),transparent_72%)]";
 
 export const EXERCISES_LIBRARY_STACK = "relative space-y-6 lg:space-y-8";
-
-export const EXERCISES_LIBRARY_PRIMARY_CTA = cn(
-    ATHLETE_PRIMARY_CTA,
-    "w-full min-h-touch sm:w-auto sm:min-h-0 sm:px-5"
-);
 
 export const EXERCISES_LIBRARY_TOOLBAR = cn(
     NEXIA_GLASS_CARD,
@@ -105,37 +93,6 @@ export const EXERCISES_LIBRARY_VIEW_TOGGLE_BTN =
 
 export const EXERCISES_LIBRARY_VIEW_TOGGLE_BTN_ACTIVE =
     "rounded bg-primary p-1.5 text-primary-foreground";
-
-export const EXERCISES_LIBRARY_FORM_PANEL = cn(
-    NEXIA_GLASS_CARD,
-    NEXIA_GLASS_CARD_DESKTOP,
-    "relative space-y-4 p-5 sm:p-6"
-);
-
-export const EXERCISES_LIBRARY_FORM_HEADING = "text-sm font-semibold text-foreground";
-
-export const EXERCISES_LIBRARY_FORM_CLOSE = "h-7 w-7 shrink-0 p-0";
-
-export const EXERCISES_LIBRARY_FORM_GRID = cn(
-    "grid grid-cols-1 gap-4",
-    "sm:grid-cols-2",
-    "lg:grid-cols-3"
-);
-
-export const EXERCISES_LIBRARY_FORM_GRID_WIDE = cn(
-    "grid grid-cols-1 gap-4",
-    "lg:grid-cols-2"
-);
-
-export const EXERCISES_LIBRARY_FORM_FIELD_LABEL = "mb-1 block text-xs font-medium text-muted-foreground";
-
-export const EXERCISES_LIBRARY_FORM_INPUT = "bg-surface/80";
-
-export const EXERCISES_LIBRARY_FORM_TEXTAREA_SM = cn(EXERCISES_LIBRARY_FORM_INPUT, "min-h-[80px]");
-
-export const EXERCISES_LIBRARY_FORM_TEXTAREA_XS = cn(EXERCISES_LIBRARY_FORM_INPUT, "min-h-[60px]");
-
-export const EXERCISES_LIBRARY_FORM_ACTIONS = "flex flex-wrap gap-2";
 
 export const EXERCISES_LIBRARY_CARD_GRID = cn(
     "grid grid-cols-1 gap-4",
@@ -257,16 +214,10 @@ export const EXERCISES_LIBRARY_EMPTY_COPY = {
 } as const;
 
 export const EXERCISES_LIBRARY_SECTION_LABELS = {
-    newExercise: "Nuevo ejercicio",
     search: "Buscar",
     muscleGroup: "Grupo muscular",
     equipment: "Equipamiento",
     level: "Nivel",
     movementPattern: "Patrón de movimiento",
     loadType: "Tipo de carga",
-    type: "Tipo",
-    description: "Descripción",
-    instructions: "Instrucciones",
-    notes: "Notas",
-    videoUrl: "URL de video (opcional)",
 } as const;

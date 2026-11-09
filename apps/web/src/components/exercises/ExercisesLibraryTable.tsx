@@ -68,14 +68,11 @@ export const ExercisesLibraryTable: React.FC<ExercisesLibraryTableProps> = ({
             <tbody>
                 {exercises.map((ex) => {
                     const ln = normalizeLevel(ex.nivel || "");
-                    const rowKey = ex.exercise_id.startsWith("ex-new")
-                        ? ex.exercise_id
-                        : String(ex.id);
                     const equipLine = equipmentDisplayLine(ex);
 
                     return (
                         <tr
-                            key={rowKey}
+                            key={ex.id}
                             className={EXERCISES_LIBRARY_TABLE_ROW}
                             onClick={() => onSelect(ex)}
                         >

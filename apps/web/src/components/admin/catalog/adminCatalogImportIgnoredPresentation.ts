@@ -1,9 +1,10 @@
 /**
  * adminCatalogImportIgnoredPresentation.ts — Copy del aviso de columnas ignoradas al importar.
  *
- * Contexto: SPEC_H8 §9.0 (H8-P). Un Excel anterior puede traer «Fuente» y «Referencia de
- * fuente». El servidor las lee solo para avisar (`change_summary.ignored_columns`) y no las
- * aplica: el origen del ejercicio es interno. El aviso no habla de origen ni de bases de datos.
+ * Contexto: SPEC_H8 §9.0 (H8-P) y §9.1 (H8-B). Un Excel anterior puede traer «Fuente»,
+ * «Referencia de fuente» y «Notas». El servidor las lee solo para avisar
+ * (`change_summary.ignored_columns`) y no las aplica: el origen del ejercicio es interno y una
+ * nota guardada no se borra ni se cambia. El aviso no habla de origen ni de bases de datos.
  * Notas de mantenimiento: vive aparte porque `adminCatalogPresentation.ts` está en el límite
  * de 600 líneas (agent.md §7.1).
  *

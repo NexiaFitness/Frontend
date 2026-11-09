@@ -29,8 +29,3 @@ export function buildCatalogFilterOptions(
 
     return [...byId.values()].sort((a, b) => a.label.localeCompare(b.label, "es"));
 }
-
-/** Etiquetas de grupo muscular para formulario legacy (solo sesión local). */
-export function catalogOptionLabels(options: ExercisesLibraryCatalogOption[]): string[] {
-    return options.map((o) => o.label);
-}

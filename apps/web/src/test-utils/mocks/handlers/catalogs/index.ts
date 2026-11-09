@@ -1,7 +1,7 @@
 /**
  * Handlers MSW para endpoints de catálogos (physical-qualities, etc.)
  *
- * Usados por PlanningTab (QualitiesEditor), ExerciseForm, etc.
+ * Usados por PlanningTab (QualitiesEditor), etc.
  *
  * @author Frontend Team
  * @since Fase 5

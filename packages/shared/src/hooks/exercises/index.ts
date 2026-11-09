@@ -21,13 +21,11 @@ export {
     useGetActionQuery,
 } from '../../api/exercisesApi';
 
-// Legacy exercises module hooks (GET/POST/PUT/DELETE /exercises/)
+// Exercises module hooks (GET and DELETE /exercises/; POST/PUT retired in H8-B)
 export {
     useGetExercisesQuery,
     useGetExerciseLibraryQuery,
     useGetExerciseByIdQuery,
-    useCreateExerciseMutation,
-    useUpdateExerciseMutation,
     useDeleteExerciseMutation,
     useCheckExerciseSafetyMutation,
     useCheckExerciseSafetyBatchMutation,
@@ -40,7 +38,5 @@ export {
     type ExerciseTagRef,
     type ExerciseFilters,
     type ExerciseListResponse,
-    type ExerciseCreate,
-    type ExerciseUpdate,
     type UseExercisesResult,
 } from './useExercises';

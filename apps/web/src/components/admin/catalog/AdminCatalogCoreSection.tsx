@@ -7,6 +7,8 @@
  * Notas de mantenimiento: carga axial, nivel y objetivo empiezan vacíos y son obligatorios.
  * Una propuesta pending_review o rubric solo pasa a revisada si el administrador la confirma;
  * el motivo y los chips de la rúbrica llegan con la pantalla de H5.
+ * Descripción, instrucciones y notas salieron de la ficha en H8-B: el texto que ve el
+ * entrenador y el atleta es el contenido del ejercicio (exercise_content).
  *
  * @author Frontend Team
  * @since v1.1.0
@@ -14,7 +16,7 @@
 
 import React from "react";
 import { Alert } from "@/components/ui/feedback";
-import { Checkbox, FormCombobox, FormField, Input, Textarea } from "@/components/ui/forms";
+import { Checkbox, FormCombobox, FormField, Input } from "@/components/ui/forms";
 import { parseCatalogAxialLoad, parseTrainingObjective, type CatalogCoreDraft } from "@nexia/shared";
 import {
     ADMIN_CATALOG_ALERT_SPACING,
@@ -166,32 +168,5 @@ export const AdminCatalogCoreSection: React.FC<AdminCatalogCoreSectionProps> = (
                 ) : null}
             </FormField>
         </div>
-        <FormField label="Descripción" htmlFor="cat-desc" variant={FIELD}>
-            <Textarea
-                id="cat-desc"
-                variant={FIELD}
-                rows={3}
-                value={core.descripcion ?? ""}
-                onChange={(e) => onCoreChange({ descripcion: e.target.value || null })}
-            />
-        </FormField>
-        <FormField label="Instrucciones" htmlFor="cat-inst" variant={FIELD}>
-            <Textarea
-                id="cat-inst"
-                variant={FIELD}
-                rows={3}
-                value={core.instrucciones ?? ""}
-                onChange={(e) => onCoreChange({ instrucciones: e.target.value || null })}
-            />
-        </FormField>
-        <FormField label="Notas" htmlFor="cat-notas" variant={FIELD}>
-            <Textarea
-                id="cat-notas"
-                variant={FIELD}
-                rows={2}
-                value={core.notas ?? ""}
-                onChange={(e) => onCoreChange({ notas: e.target.value || null })}
-            />
-        </FormField>
     </section>
 );

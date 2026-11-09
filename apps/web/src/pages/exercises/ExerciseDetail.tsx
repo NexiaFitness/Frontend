@@ -1,20 +1,21 @@
 /**
- * ExerciseDetail.tsx — Detalle de ejercicio (API) o borrador local (ex-new-* + location.state)
+ * ExerciseDetail.tsx — Ficha del ejercicio para el entrenador (GET /exercises/{id}).
  *
- * Diseño: docs/design/00_LEEME_PRIMERO.md
+ * Contexto: H8-B retiró el alta local de la biblioteca (borradores ex-new-* sin servidor) y
+ * el bloque de descripción, instrucciones y notas. El texto que se lee es el contenido del
+ * ejercicio (ExerciseDetailReadingContent, exercise_content).
+ *
+ * Diseño: DESIGN_PREMIUM.md (raíz)
  */
 
 import React, { useMemo } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ExternalLink } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
 import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import { useGetExerciseByIdQuery } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
-import type { Exercise } from "@nexia/shared/hooks/exercises";
 import {
     formatEquipmentLabelLine,
     getLevelLabel,
-    localViewToExercise,
     equipmentDisplayLine,
     tipoLabelFromBackend,
     isComplexExerciseTipo,
@@ -24,7 +25,6 @@ import {
 } from "@/utils/exercises";
 import { ExercisePrimeMoverBadges } from "@/components/exercises/ExercisePrimeMoverBadges";
 import { tipoCargaLabel, catalogRoleLabel } from "@/utils/exercises/exerciseDetailLabels";
-import type { LocalExerciseView } from "@/types/exerciseLocal";
 
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
@@ -38,18 +38,14 @@ import { ExerciseDetailExpandableSection } from "@/components/exercises/Exercise
 import { ExerciseDetailTrainerEssentials } from "@/components/exercises/ExerciseDetailTrainerEssentials";
 import { ExerciseDetailReadingContent } from "@/components/exercises/ExerciseDetailReadingContent";
 import {
-    EXERCISE_DETAIL_ALERT_SPACING,
     EXERCISE_DETAIL_BADGE_MUTED,
     EXERCISE_DETAIL_BADGE_NEUTRAL,
     EXERCISE_DETAIL_BADGE_ROW,
     EXERCISE_DETAIL_COMPLEX_TYPE_BADGE,
     EXERCISE_DETAIL_BODY,
-    EXERCISE_DETAIL_BODY_MUTED,
-    EXERCISE_DETAIL_BODY_MUTED_PRESERVE,
     EXERCISE_DETAIL_ERROR_ACTION,
     EXERCISE_DETAIL_ERROR_DETAIL,
     EXERCISE_DETAIL_HEADER,
-    EXERCISE_DETAIL_ICON_XS,
     EXERCISE_DETAIL_LAYOUT,
     EXERCISE_DETAIL_LEVEL_BADGE,
     EXERCISE_DETAIL_LOADING_ROW,
@@ -59,48 +55,20 @@ import {
     EXERCISE_DETAIL_PAGE,
     EXERCISE_DETAIL_SECTION_LABELS,
     EXERCISE_DETAIL_SHELL,
-    EXERCISE_DETAIL_SPEC_LABEL,
     EXERCISE_DETAIL_TITLE_WRAP,
-    EXERCISE_DETAIL_VIDEO_HERO,
-    EXERCISE_DETAIL_VIDEO_LINK_CENTERED,
 } from "@/components/exercises/exerciseDetailPresentation";
 import { cn } from "@/lib/utils";
-
-interface LocationState {
-    localExercise?: LocalExerciseView;
-}
 
 export const ExerciseDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const location = useLocation();
     const routeId = id ? decodeURIComponent(id) : "";
-    const isLocalRoute = routeId.startsWith("ex-new");
-    const locationState = location.state as LocationState | null;
-
     const numericId = routeId ? parseInt(routeId, 10) : NaN;
     const hasValidNumericId = !Number.isNaN(numericId) && numericId > 0;
 
-    const { data: apiExercise, isLoading, isError, error } = useGetExerciseByIdQuery(numericId, {
-        skip: isLocalRoute || !hasValidNumericId,
+    const { data: exercise, isLoading, isError, error } = useGetExerciseByIdQuery(numericId, {
+        skip: !hasValidNumericId,
     });
-
-    const localPayload = useMemo(() => {
-        if (!isLocalRoute) return undefined;
-        const l = locationState?.localExercise;
-        if (l && l.rowId === routeId) return l;
-        return undefined;
-    }, [isLocalRoute, locationState?.localExercise, routeId]);
-
-    const exercise: Exercise | undefined = useMemo(() => {
-        if (isLocalRoute) {
-            if (!localPayload) return undefined;
-            return localViewToExercise(localPayload);
-        }
-        return apiExercise;
-    }, [isLocalRoute, localPayload, apiExercise]);
-
-    const exerciseIdForApi = hasValidNumericId ? numericId : null;
 
     const handleBack = () => {
         navigate("/dashboard/exercises");
@@ -159,15 +127,8 @@ export const ExerciseDetail: React.FC = () => {
         : EXERCISE_DETAIL_BADGE_NEUTRAL;
     const tipoCarga = tipoCargaLabel(exercise?.tipo_carga);
     const equipLine = exercise ? equipmentDisplayLine(exercise) : "";
-    const hasVideo = Boolean(localPayload?.videoUrl);
 
-    const contentFieldCount = [
-        exercise?.descripcion,
-        exercise?.instrucciones,
-        exercise?.notas,
-    ].filter(Boolean).length;
-
-    if (!routeId) {
+    if (!hasValidNumericId) {
         return (
             <div className={EXERCISE_DETAIL_PAGE}>
                 <Alert variant="error">ID de ejercicio inválido</Alert>
@@ -178,32 +139,7 @@ export const ExerciseDetail: React.FC = () => {
         );
     }
 
-    if (isLocalRoute && !localPayload) {
-        return (
-            <div className={EXERCISE_DETAIL_PAGE}>
-                <Alert variant="error">
-                    Este ejercicio solo estaba disponible en la navegación anterior. Abre de nuevo el
-                    listado y selecciónalo desde ahí, o recarga la página de ejercicios.
-                </Alert>
-                <Button onClick={handleBack} className={EXERCISE_DETAIL_ERROR_ACTION}>
-                    Volver a Ejercicios
-                </Button>
-            </div>
-        );
-    }
-
-    if (!isLocalRoute && !hasValidNumericId) {
-        return (
-            <div className={EXERCISE_DETAIL_PAGE}>
-                <Alert variant="error">ID de ejercicio inválido</Alert>
-                <Button onClick={handleBack} className={EXERCISE_DETAIL_ERROR_ACTION}>
-                    Volver a Ejercicios
-                </Button>
-            </div>
-        );
-    }
-
-    if (!isLocalRoute && isLoading) {
+    if (isLoading) {
         return (
             <div className={EXERCISE_DETAIL_LOADING_ROW}>
                 <LoadingSpinner size="lg" />
@@ -212,7 +148,7 @@ export const ExerciseDetail: React.FC = () => {
         );
     }
 
-    if (!isLocalRoute && (isError || !exercise)) {
+    if (isError || !exercise) {
         return (
             <div className={EXERCISE_DETAIL_PAGE}>
                 <Alert variant="error">
@@ -230,22 +166,12 @@ export const ExerciseDetail: React.FC = () => {
         );
     }
 
-    if (!exercise) {
-        return null;
-    }
-
     const subtitleParts = [equipLine, exercise.nivel ? getLevelLabel(exercise.nivel) : ""]
         .filter(Boolean)
         .join(" · ");
 
     return (
         <div className={EXERCISE_DETAIL_PAGE}>
-            {isLocalRoute && (
-                <Alert variant="warning" className={EXERCISE_DETAIL_ALERT_SPACING}>
-                    Ejercicio solo en esta sesión (no guardado en el servidor).
-                </Alert>
-            )}
-
             <div className={EXERCISE_DETAIL_HEADER}>
                 <PageTitle
                     title={exerciseDisplayName(exercise)}
@@ -257,22 +183,7 @@ export const ExerciseDetail: React.FC = () => {
 
             <article className={EXERCISE_DETAIL_SHELL}>
                 <NexiaGlassAccentRim />
-                {hasVideo ? (
-                    <div className={EXERCISE_DETAIL_VIDEO_HERO}>
-                        <p className={EXERCISE_DETAIL_SPEC_LABEL}>{EXERCISE_DETAIL_SECTION_LABELS.video}</p>
-                        <a
-                            href={localPayload?.videoUrl ?? undefined}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={EXERCISE_DETAIL_VIDEO_LINK_CENTERED}
-                        >
-                            Abrir enlace de video
-                            <ExternalLink className={EXERCISE_DETAIL_ICON_XS} aria-hidden />
-                        </a>
-                    </div>
-                ) : (
-                    <ExerciseMediaEmptyState />
-                )}
+                <ExerciseMediaEmptyState />
 
                 <div className={EXERCISE_DETAIL_BODY}>
                     <div className={cn(EXERCISE_DETAIL_BADGE_ROW, "flex-wrap")}>
@@ -306,19 +217,12 @@ export const ExerciseDetail: React.FC = () => {
                     </div>
 
                     <div className={EXERCISE_DETAIL_LAYOUT}>
-                        {!isLocalRoute && exerciseIdForApi ? (
-                            <div className="order-2 min-w-0 lg:sticky lg:top-4 lg:col-start-2 lg:row-start-1 lg:self-start">
-                                <ExerciseAlternativesSection
-                                    exerciseId={exerciseIdForApi}
-                                    variant="sidebar"
-                                />
-                            </div>
-                        ) : null}
+                        <div className="order-2 min-w-0 lg:sticky lg:top-4 lg:col-start-2 lg:row-start-1 lg:self-start">
+                            <ExerciseAlternativesSection exerciseId={numericId} variant="sidebar" />
+                        </div>
 
                         <div className="order-3 min-w-0 space-y-5 lg:col-start-1 lg:row-start-1">
-                            {exerciseIdForApi ? (
-                                <ExerciseDetailReadingContent exerciseId={exerciseIdForApi} />
-                            ) : null}
+                            <ExerciseDetailReadingContent exerciseId={numericId} />
                             <ExerciseDetailExpandableSection
                                 id="exercise-planning-section"
                                 title={EXERCISE_DETAIL_SECTION_LABELS.advancedPlanning}
@@ -326,47 +230,6 @@ export const ExerciseDetail: React.FC = () => {
                                 <ExerciseDetailCatalogSections exercise={exercise} />
                             </ExerciseDetailExpandableSection>
 
-                            {contentFieldCount > 0 ? (
-                                <ExerciseDetailExpandableSection
-                                    id="exercise-content-section"
-                                    title={EXERCISE_DETAIL_SECTION_LABELS.exerciseContent}
-                                    badge={String(contentFieldCount)}
-                                    defaultOpen
-                                >
-                                    <div className="space-y-5">
-                                        {exercise.descripcion ? (
-                                            <div>
-                                                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                                                    {EXERCISE_DETAIL_SECTION_LABELS.description}
-                                                </p>
-                                                <p className={EXERCISE_DETAIL_BODY_MUTED}>
-                                                    {exercise.descripcion}
-                                                </p>
-                                            </div>
-                                        ) : null}
-                                        {exercise.instrucciones ? (
-                                            <div>
-                                                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                                                    {EXERCISE_DETAIL_SECTION_LABELS.instructions}
-                                                </p>
-                                                <p className={EXERCISE_DETAIL_BODY_MUTED_PRESERVE}>
-                                                    {exercise.instrucciones}
-                                                </p>
-                                            </div>
-                                        ) : null}
-                                        {exercise.notas ? (
-                                            <div>
-                                                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                                                    {EXERCISE_DETAIL_SECTION_LABELS.notes}
-                                                </p>
-                                                <p className={EXERCISE_DETAIL_BODY_MUTED}>
-                                                    {exercise.notas}
-                                                </p>
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                </ExerciseDetailExpandableSection>
-                            ) : null}
                         </div>
                     </div>
                 </div>
