@@ -20,7 +20,7 @@ import {
     ATHLETE_RUN_SLOT_ROW_TECHNIQUE,
 } from "./athleteRunPresentation";
 import {
-    hasTechniqueSheetContent,
+    canOpenTechnique,
     resolveTechniqueActionLabel,
     type AthleteExerciseTechniqueTarget,
 } from "./athleteExerciseTechniqueUtils";
@@ -57,10 +57,10 @@ export const AthleteExerciseSlotRow: React.FC<AthleteExerciseSlotRowProps> = ({
     const showTechnique =
         techniqueTarget &&
         onViewTechnique &&
-        (hasTechniqueSheetContent(techniqueTarget) || techniqueTarget.exerciseId > 0);
+        canOpenTechnique(techniqueTarget);
 
     const techniqueLabel = showTechnique && techniqueTarget
-        ? resolveTechniqueActionLabel(techniqueTarget)
+        ? resolveTechniqueActionLabel()
         : null;
 
     const handleViewTechnique = () => {

@@ -13,7 +13,7 @@ import { GroupRoundStepView } from "@/components/athlete/execution/GroupRoundSte
 import { TimedBlockStepView } from "@/components/athlete/execution/TimedBlockStepView";
 import { AthleteRunStepShell } from "@/components/athlete/execution/AthleteRunStepShell";
 import { AthleteExerciseTechniqueSheet } from "@/components/athlete/execution/AthleteExerciseTechniqueSheet";
-import type { AthleteExerciseTechniqueTarget } from "@/components/athlete/execution/athleteExerciseTechniqueUtils";
+import { useAthleteTechniqueSheet } from "@/hooks/athlete/useAthleteTechniqueSheet";
 import { RestTimerOverlay } from "@/components/athlete/execution/RestTimerOverlay";
 import { Button } from "@/components/ui/buttons";
 import { BottomSheet } from "@/components/ui/layout/BottomSheet";
@@ -47,9 +47,7 @@ export const AthleteSessionRunPage: React.FC = () => {
     const { clientId } = useAthleteContext();
     const { activeInjuries, hasActiveInjuries } = useAthleteInjuries();
     const [injurySheetOpen, setInjurySheetOpen] = useState(false);
-    const [techniqueTarget, setTechniqueTarget] = useState<AthleteExerciseTechniqueTarget | null>(
-        null
-    );
+    const technique = useAthleteTechniqueSheet(sessionId, clientId);
 
     // `data`/`isSuccess` siguen siendo los de la sesion anterior mientras carga la nueva (misma ruta).
     const {
@@ -487,7 +485,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                         blockWorkIsReady={blockWorkIsReady}
                         restPhase={restFlow.phase}
                         showLogger={restFlow.showLogger}
-                        onViewTechnique={setTechniqueTarget}
+                        onViewTechnique={technique.open}
                         injuryConflicts={mobileInjuryConflicts}
                         sessionReadyToFinish={showFinishSession}
                         runReference={timedRunReference}
@@ -510,7 +508,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                         onRoundRpeChange={setRoundRpe}
                         restPhase={restFlow.phase}
                         showLogger={restFlow.showLogger}
-                        onViewTechnique={setTechniqueTarget}
+                        onViewTechnique={technique.open}
                         injuryConflicts={mobileInjuryConflicts}
                         sessionReadyToFinish={showFinishSession}
                         slotReferences={slotReferences}
@@ -548,7 +546,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                         isRunReferenceLoading={isRunReferenceLoading}
                         groupContext={groupContext}
                         showLogger={restFlow.showLogger}
-                        onViewTechnique={setTechniqueTarget}
+                        onViewTechnique={technique.open}
                         sessionReadyToFinish={showFinishSession}
                         exerciseNote={
                             noteSlotIds[0] != null
@@ -585,10 +583,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                 />
             )}
 
-            <AthleteExerciseTechniqueSheet
-                target={techniqueTarget}
-                onClose={() => setTechniqueTarget(null)}
-            />
+            <AthleteExerciseTechniqueSheet {...technique.sheetProps} />
 
             <BottomSheet
                 isOpen={runMenu.menuOpen}

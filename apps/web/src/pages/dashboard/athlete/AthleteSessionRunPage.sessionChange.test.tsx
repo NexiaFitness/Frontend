@@ -54,6 +54,14 @@ vi.mock("@/hooks/athlete/useAthleteInjuries", () => ({
     useAthleteInjuries: () => ({ activeInjuries: [], hasActiveInjuries: false }),
 }));
 
+// H8-A: la hoja «Ver técnica» tiene su propio hook (pruebas en useAthleteTechniqueSheet.test).
+vi.mock("@/hooks/athlete/useAthleteTechniqueSheet", () => ({
+    useAthleteTechniqueSheet: () => ({
+        open: vi.fn(),
+        sheetProps: { target: null, state: { kind: "loading" }, onClose: vi.fn() },
+    }),
+}));
+
 vi.mock("@/hooks/athlete/useAthleteRunExerciseNotes", () => ({
     useAthleteRunExerciseNotes: () => ({
         persistSlots: vi.fn(),

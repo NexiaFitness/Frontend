@@ -25,7 +25,7 @@ import {
     formatRunSetLabel,
 } from "./athleteRunPresentation";
 import {
-    hasTechniqueSheetContent,
+    canOpenTechnique,
     resolveTechniqueActionLabel,
     type AthleteExerciseTechniqueTarget,
 } from "./athleteExerciseTechniqueUtils";
@@ -65,7 +65,7 @@ export const AthleteDropsetFunnelCard: React.FC<AthleteDropsetFunnelCardProps> =
     const showTechnique =
         techniqueTarget &&
         onViewTechnique &&
-        (hasTechniqueSheetContent(techniqueTarget) || techniqueTarget.exerciseId > 0);
+        canOpenTechnique(techniqueTarget);
 
     return (
         <div className={cn(ATHLETE_RUN_DROPSET_FUNNEL_CARD, className)}>
@@ -90,7 +90,7 @@ export const AthleteDropsetFunnelCard: React.FC<AthleteDropsetFunnelCardProps> =
                             className={cn(ATHLETE_RUN_TECHNIQUE_BTN, "shrink-0")}
                             onClick={() => onViewTechnique(techniqueTarget)}
                         >
-                            {resolveTechniqueActionLabel(techniqueTarget)}
+                            {resolveTechniqueActionLabel()}
                         </button>
                     ) : null}
                 </div>

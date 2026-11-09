@@ -1,68 +1,117 @@
 /**
- * AthleteExerciseTechniqueSheet.tsx — Vídeo / fotos / instrucciones (F3e stub V05).
+ * AthleteExerciseTechniqueSheet.tsx — Hoja «Ver técnica» del run (V05, H8-A).
+ *
+ * Contexto: SPEC_H8 §6. Enseña la descripción, los pasos y los consejos del ejercicio
+ * que decide `useAthleteTechniqueSheet` (servidor o caché propia sin red). Reutiliza
+ * `BottomSheet`: diálogo modal, foco en el diálogo al abrir y de vuelta al disparador al
+ * cerrar, Escape. Sin vídeo, sin imágenes y sin línea de procedencia.
+ * Contratos: agent.md, DESIGN.md, DESIGN_MOBILE_FIRST_ATLETA.md.
+ * Notas de mantenimiento: solo render; copy y tokens en `athleteTechniquePresentation`.
+ *
+ * @author Frontend Team
+ * @since v1.2.0
  */
 
 import React from "react";
 import { BottomSheet } from "@/components/ui/layout/BottomSheet";
 import { Button } from "@/components/ui/buttons";
 import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
-import { ATHLETE_RUN_INSTRUCTION } from "./athleteRunPresentation";
-import type { AthleteExerciseTechniqueTarget } from "./athleteExerciseTechniqueUtils";
+import type {
+    AthleteExerciseTechniqueTarget,
+    AthleteTechniqueSheetState,
+} from "./athleteExerciseTechniqueUtils";
+import {
+    ATHLETE_TECHNIQUE_BODY,
+    ATHLETE_TECHNIQUE_COPY,
+    ATHLETE_TECHNIQUE_HEADING,
+    ATHLETE_TECHNIQUE_SECTION,
+    ATHLETE_TECHNIQUE_SKELETON,
+    ATHLETE_TECHNIQUE_SKELETON_LINES,
+    ATHLETE_TECHNIQUE_STATE_BODY,
+    ATHLETE_TECHNIQUE_STEPS,
+    ATHLETE_TECHNIQUE_TEXT,
+    ATHLETE_TECHNIQUE_TIPS,
+} from "./athleteTechniquePresentation";
 
 export type { AthleteExerciseTechniqueTarget } from "./athleteExerciseTechniqueUtils";
 
 export interface AthleteExerciseTechniqueSheetProps {
     target: AthleteExerciseTechniqueTarget | null;
+    state: AthleteTechniqueSheetState;
     onClose: () => void;
 }
 
-export const AthleteExerciseTechniqueSheet: React.FC<AthleteExerciseTechniqueSheetProps> = ({
-    target,
-    onClose,
-}) => {
-    const isOpen = target != null;
-    const hasVideo = Boolean(target?.videoUrl?.trim());
-    const hasInstruction = Boolean(target?.instruction?.trim());
+const COPY = ATHLETE_TECHNIQUE_COPY;
 
-    return (
-        <BottomSheet
-            isOpen={isOpen}
-            onClose={onClose}
-            title={target?.exerciseName ?? "Técnica"}
-            subtitle={
-                hasVideo || hasInstruction
-                    ? "Demostración del ejercicio"
-                    : "Contenido próximamente"
-            }
-            footer={
-                <Button variant="primary" className={ATHLETE_PRIMARY_CTA} onClick={onClose}>
-                    Cerrar
-                </Button>
-            }
-        >
-            <div className="space-y-4">
-                {hasVideo ? (
-                    <div className="overflow-hidden rounded-xl border border-border/60 bg-black/40">
-                        <video
-                            src={target!.videoUrl!}
-                            controls
-                            playsInline
-                            className="aspect-video w-full object-contain"
-                        />
-                    </div>
-                ) : null}
+function subtitleFor(state: AthleteTechniqueSheetState): string | undefined {
+    if (state.kind === "empty") return COPY.emptyTitle;
+    if (state.kind === "unavailable") return COPY.unavailableTitle;
+    if (state.kind === "content" && state.content.in_english) return COPY.inEnglish;
+    return undefined;
+}
 
-                {hasInstruction ? (
-                    <p className={ATHLETE_RUN_INSTRUCTION}>{target!.instruction}</p>
-                ) : null}
-
-                {!hasVideo && !hasInstruction ? (
-                    <p className="text-sm text-muted-foreground">
-                        El contenido demostrativo de este ejercicio estará disponible pronto en el
-                        catálogo.
-                    </p>
-                ) : null}
+const TechniqueBody: React.FC<{ state: AthleteTechniqueSheetState }> = ({ state }) => {
+    if (state.kind === "loading") {
+        return (
+            <div className={ATHLETE_TECHNIQUE_SKELETON} aria-busy="true" aria-label={COPY.loading}>
+                {ATHLETE_TECHNIQUE_SKELETON_LINES.map((line) => (
+                    <div key={line} className={line} />
+                ))}
             </div>
-        </BottomSheet>
+        );
+    }
+    if (state.kind === "empty") return <p className={ATHLETE_TECHNIQUE_STATE_BODY}>{COPY.emptyBody}</p>;
+    if (state.kind === "unavailable") {
+        return <p className={ATHLETE_TECHNIQUE_STATE_BODY}>{COPY.unavailableBody}</p>;
+    }
+    const { content } = state;
+    return (
+        <div className={ATHLETE_TECHNIQUE_BODY} lang={content.in_english ? "en" : undefined}>
+            {content.description ? <p className={ATHLETE_TECHNIQUE_TEXT}>{content.description}</p> : null}
+            {content.steps.length > 0 ? (
+                <section className={ATHLETE_TECHNIQUE_SECTION}>
+                    <h3 className={ATHLETE_TECHNIQUE_HEADING} lang="es">
+                        {COPY.steps}
+                    </h3>
+                    <ol className={ATHLETE_TECHNIQUE_STEPS}>
+                        {content.steps.map((step, index) => (
+                            <li key={`${index}-${step}`}>{step}</li>
+                        ))}
+                    </ol>
+                </section>
+            ) : null}
+            {content.tips.length > 0 ? (
+                <section className={ATHLETE_TECHNIQUE_SECTION}>
+                    <h3 className={ATHLETE_TECHNIQUE_HEADING} lang="es">
+                        {COPY.tips}
+                    </h3>
+                    <ul className={ATHLETE_TECHNIQUE_TIPS}>
+                        {content.tips.map((tip, index) => (
+                            <li key={`${index}-${tip}`}>{tip}</li>
+                        ))}
+                    </ul>
+                </section>
+            ) : null}
+        </div>
     );
 };
+
+export const AthleteExerciseTechniqueSheet: React.FC<AthleteExerciseTechniqueSheetProps> = ({
+    target,
+    state,
+    onClose,
+}) => (
+    <BottomSheet
+        isOpen={target != null}
+        onClose={onClose}
+        title={target?.exerciseName ?? COPY.fallbackTitle}
+        subtitle={subtitleFor(state)}
+        footer={
+            <Button variant="primary" className={ATHLETE_PRIMARY_CTA} onClick={onClose}>
+                {COPY.close}
+            </Button>
+        }
+    >
+        <TechniqueBody state={state} />
+    </BottomSheet>
+);
