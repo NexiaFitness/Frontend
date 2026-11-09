@@ -7,7 +7,8 @@
  * Objetivo: prioridad 0 → 2». Las palabras son las del Excel (Objetivo, Primario,
  * Extrapolación, Sí/No) para que el administrador lea lo mismo en los dos sitios.
  * Notas de mantenimiento: vive aparte porque `adminCatalogPresentation.ts` está en el límite
- * de 600 líneas. La nota de evidencia nunca se muestra: solo que cambió.
+ * de 600 líneas. La nota de evidencia nunca se muestra: solo que cambió. Lo usan el resumen
+ * del import y el historial de la ficha: una sola forma de leer un cambio.
  *
  * @author Frontend Team
  * @since v1.2.0
@@ -25,6 +26,8 @@ export const ADMIN_CATALOG_IMPORT_CHANGE_COPY = {
     arrow: "→",
     empty: "—",
     noteChanged: "nota de evidencia cambiada",
+    /** El elemento ya no existe en el catálogo (p. ej. una etiqueta retirada). */
+    removedFromCatalog: "elemento ya eliminado del catálogo",
     attribute: {
         role: "rol",
         priority: "prioridad",
@@ -73,10 +76,11 @@ function attributeText(change: CatalogImportItemAttributeChangeOut): string {
 /** Una línea legible por elemento de una relación del ejercicio. */
 export function catalogImportItemLine(item: CatalogImportItemChangeOut): string {
     const role = roleLabel(item.role);
+    const name = item.name ?? COPY.removedFromCatalog;
     if (item.change === "added" || item.change === "removed") {
         const verb = item.change === "added" ? COPY.added : COPY.removed;
-        return role ? `${verb}: ${item.name} (${role})` : `${verb}: ${item.name}`;
+        return role ? `${verb}: ${name} (${role})` : `${verb}: ${name}`;
     }
-    const subject = role ? `${item.name} · ${role}` : item.name;
+    const subject = role ? `${name} · ${role}` : name;
     return `${subject}: ${item.attributes.map(attributeText).join("; ")}`;
 }

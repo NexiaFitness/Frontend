@@ -93,14 +93,40 @@ export interface CatalogReviewStatusOut {
     catalog_reviewed_by_user_id?: number | null;
 }
 
+/** Quién hizo un cambio del historial, clasificado por el servidor. */
+export type ExerciseChangeLogActorKind =
+    | "import"
+    | "admin"
+    | "bulk_review"
+    | "batch"
+    | "batch_rollback"
+    | "decision_nelson"
+    | "decision_adrian"
+    | "migration"
+    | "other";
+
+/**
+ * Qué puede enseñar la pantalla: `full` la diferencia; `same` nada distinto al leerlo
+ * (solo reordenado, vacío → «nan»); `unreadable` forma antigua o desconocida.
+ */
+export type ExerciseChangeLogDetail = "full" | "same" | "unreadable";
+
+/**
+ * Una entrada del historial, ya legible (backend `catalog_change_log_readable`).
+ * Los valores crudos se quedan en el registro de auditoría y no viajan. La procedencia
+ * (source, source_ref) no se devuelve.
+ */
 export interface ExerciseChangeLogEntryOut {
     id: number;
     field_path: string;
-    old_value?: string | null;
-    new_value?: string | null;
     actor_user_id?: number | null;
+    /** Etiqueta guardada (auditoría); la pantalla usa `actor_kind`. */
     actor_label: string;
+    actor_kind: ExerciseChangeLogActorKind;
+    batch_number?: number | null;
     created_at: string;
+    change: CatalogImportFieldChangeOut;
+    detail: ExerciseChangeLogDetail;
 }
 
 export interface ExerciseCatalogHistoryOut {
@@ -225,8 +251,8 @@ export interface CatalogImportItemAttributeChangeOut {
 /** Un músculo, patrón, acción, material o etiqueta que se añade, se quita o cambia. */
 export interface CatalogImportItemChangeOut {
     change: "added" | "removed" | "changed";
-    /** Nombre en español. */
-    name: string;
+    /** Nombre en español; null si ya no existe en el catálogo (nunca un id). */
+    name: string | null;
     /** Código del rol (prime_mover, synergist, stabilizer, primary, secondary), si tiene. */
     role: string | null;
     attributes: CatalogImportItemAttributeChangeOut[];

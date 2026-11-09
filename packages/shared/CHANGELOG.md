@@ -1,5 +1,12 @@
 # Changelog — @nexia/shared
 
+## 4.2.0 — 2026-11-09
+
+### Changed (historial de la ficha legible, QA de H8-P)
+
+- `ExerciseChangeLogEntryOut` llega legible desde el servidor: `change` (el mismo `CatalogImportFieldChangeOut` del resumen del import), `detail` (`full`, `same`, `unreadable`), `actor_kind` y `batch_number`. Ya no trae `old_value` ni `new_value`: el valor crudo se queda en el registro de auditoría. Las entradas de procedencia no se devuelven.
+- `CatalogImportItemChangeOut.name` puede ser `null` cuando el elemento ya no existe en el catálogo.
+
 ## 4.1.0 — 2026-11-07
 
 ### Added (QA de H8-P: el resumen del import se lee como una persona)

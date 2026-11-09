@@ -158,14 +158,6 @@ export const ADMIN_CATALOG_FOOTER_ACTIONS = cn(
 
 export const ADMIN_CATALOG_FOOTER_BTN = PLATFORM_DASHBOARD_FOOTER_BTN;
 
-export const ADMIN_CATALOG_HISTORY_LIST = "space-y-3";
-
-export const ADMIN_CATALOG_HISTORY_ITEM = cn(
-    "rounded-lg border border-border/70 bg-surface-2/30 px-3 py-2.5 text-sm"
-);
-
-export const ADMIN_CATALOG_HISTORY_META = "text-xs text-muted-foreground";
-
 /* ---------------------------------------------------------------------------
  * Listado (§3.1) — toolbar, tabla desktop, cards móvil, progreso.
  * ------------------------------------------------------------------------- */
