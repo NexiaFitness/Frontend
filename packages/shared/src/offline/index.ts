@@ -3,3 +3,4 @@ export * from "./athleteSessionSync";
 export * from "./sessionSyncPlatform";
 export * from "./athleteSessionQueueDedupe";
 export * from "./athleteSessionDb";
+export * from "./athleteTechniqueDb";

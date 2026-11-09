@@ -1,5 +1,16 @@
 # Changelog — @nexia/shared
 
+## 5.0.0 — 2026-11-09
+
+### Removed (H8-A)
+
+- `ExerciseContentOut.attribution` y el tipo `ExerciseContentAttribution`: sin atribución por ejercicio; la atribución a RepDB vive solo en /creditos (decisión de Nelson, 2026-11-06).
+
+### Added (H8-A: «Ver técnica» del atleta)
+
+- `AthleteSessionExerciseContentOut` y `useGetAthleteSessionExerciseContentQuery` (GET /athlete/sessions/{id}/exercise-content).
+- `offline/athleteTechniqueDb`: base IndexedDB propia (`nexia-athlete-technique`) para leer la técnica sin red. Clave atleta + sesión, texto por `exercise_id`, caducidad de 24 h; ninguna operación lanza. `clearSessionOfflineData` la limpia después de la cola y la copia del run, sin propagar su error.
+
 ## 4.2.0 — 2026-11-09
 
 ### Changed (historial de la ficha legible, QA de H8-P)

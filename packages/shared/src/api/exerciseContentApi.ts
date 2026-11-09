@@ -2,7 +2,8 @@
  * exerciseContentApi.ts — GET del texto de lectura de un ejercicio (H5).
  *
  * Contrato: GET /exercises/{exercise_id}/content → ExerciseContentOut.
- * Entrenador y admin. El atleta no llama a este endpoint.
+ * Entrenador y admin. El atleta lee por sesión en athleteApi
+ * (`useGetAthleteSessionExerciseContentQuery`, H8-A).
  */
 
 import { baseApi } from "./baseApi";

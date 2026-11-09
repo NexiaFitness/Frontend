@@ -28,6 +28,7 @@ import type {
 } from "../types/athleteRunProgress";
 import type { AthleteExerciseNoteUpsert } from "../utils/athlete/athleteExerciseNoteUtils";
 import type { AthleteLastPerformance } from "../types/athleteLastPerformance";
+import type { AthleteSessionExerciseContentOut } from "../types/exerciseContent";
 
 export interface AthleteExerciseNoteUpsertOut {
     training_session_id: number;
@@ -102,6 +103,11 @@ export const athleteApi = baseApi.injectEndpoints({
             providesTags: (_result, _error, trainingSessionId) => [
                 { type: "AthleteRunProgress" as const, id: trainingSessionId },
             ],
+        }),
+
+        /** H8-A: texto de «Ver técnica» de todos los ejercicios de una sesión propia. */
+        getAthleteSessionExerciseContent: builder.query<AthleteSessionExerciseContentOut, number>({
+            query: (trainingSessionId) => `/athlete/sessions/${trainingSessionId}/exercise-content`,
         }),
 
         getAthleteSessionsRegistrationMeta: builder.query<
@@ -209,6 +215,7 @@ export const {
     useGetAthleteWeeklySummaryQuery,
     useGetAthleteRunReferenceQuery,
     useGetAthleteRunProgressQuery,
+    useGetAthleteSessionExerciseContentQuery,
     useGetAthleteSessionsRegistrationMetaQuery,
     usePostAthleteRunExecutionMutation,
     usePostAthleteRunTimedResultMutation,

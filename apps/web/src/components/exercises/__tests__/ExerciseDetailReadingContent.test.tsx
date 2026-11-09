@@ -20,10 +20,6 @@ const spanish: ExerciseContentOut = {
     description: "Baja controlada hasta el pecho.",
     steps: ["Ajusta los pies.", "Baja el pecho."],
     tips: ["No rebotes en el fondo."],
-    attribution: {
-        label: "Exercise data by RepDB (repdb.co)",
-        url: "https://repdb.co",
-    },
 };
 
 const english: ExerciseContentOut = {
@@ -32,10 +28,6 @@ const english: ExerciseContentOut = {
     description: "Lower the bar to the chest.",
     steps: ["Set your feet."],
     tips: ["Do not bounce."],
-    attribution: {
-        label: "Exercise data by RepDB (repdb.co)",
-        url: "https://repdb.co",
-    },
 };
 
 const empty: ExerciseContentOut = {
@@ -44,7 +36,6 @@ const empty: ExerciseContentOut = {
     description: null,
     steps: [],
     tips: [],
-    attribution: null,
 };
 
 function contentHandler(body: ExerciseContentOut, status = 200) {
@@ -56,7 +47,7 @@ describe("ExerciseDetailReadingContent", () => {
         setAuthenticatedUser(validTrainerUser);
     });
 
-    it("muestra descripción, pasos numerados, consejos y atribución en español", async () => {
+    it("muestra descripción, pasos numerados y consejos en español, sin atribución", async () => {
         server.use(contentHandler(spanish));
         render(<ExerciseDetailReadingContent exerciseId={12} />);
 
@@ -69,8 +60,9 @@ describe("ExerciseDetailReadingContent", () => {
         expect(screen.getByRole("heading", { name: "Cómo se hace" })).toBeInTheDocument();
         expect(screen.getByRole("heading", { name: "Consejos" })).toBeInTheDocument();
         expect(screen.queryByText("(en inglés)")).not.toBeInTheDocument();
-        const link = screen.getByRole("link", { name: "Exercise data by RepDB (repdb.co)" });
-        expect(link).toHaveAttribute("href", "https://repdb.co");
+        // H8-A: la atribución a RepDB vive solo en /creditos.
+        expect(screen.queryByRole("link")).not.toBeInTheDocument();
+        expect(screen.queryByText(/RepDB/)).not.toBeInTheDocument();
     });
 
     it("marca el texto en inglés", async () => {

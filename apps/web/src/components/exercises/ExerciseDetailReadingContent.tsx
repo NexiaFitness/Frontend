@@ -1,7 +1,8 @@
 /**
  * ExerciseDetailReadingContent.tsx — Descripción, pasos y consejos del ejercicio.
  *
- * Solo entrenador y admin. Sin texto, no pinta secciones vacías.
+ * Solo entrenador y admin. Sin texto, no pinta secciones vacías. Sin atribución por
+ * ejercicio desde H8-A (decisión de Nelson, 2026-11-06): vive solo en /creditos.
  */
 
 import React from "react";
@@ -14,9 +15,7 @@ import { Alert } from "@/components/ui/feedback";
 import {
     EXERCISE_DETAIL_ALERT_SPACING,
     EXERCISE_DETAIL_BODY_MUTED_PRESERVE,
-    EXERCISE_DETAIL_READING_ATTRIBUTION,
     EXERCISE_DETAIL_READING_COPY,
-    EXERCISE_DETAIL_READING_LINK,
     EXERCISE_DETAIL_READING_LIST,
     EXERCISE_DETAIL_READING_NOTE,
     EXERCISE_DETAIL_READING_RETRY,
@@ -121,18 +120,6 @@ export const ExerciseDetailReadingContent: React.FC<ExerciseDetailReadingContent
                         ))}
                     </ul>
                 </section>
-            ) : null}
-            {data?.attribution ? (
-                <p className={EXERCISE_DETAIL_READING_ATTRIBUTION}>
-                    <a
-                        className={EXERCISE_DETAIL_READING_LINK}
-                        href={data.attribution.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        {data.attribution.label}
-                    </a>
-                </p>
             ) : null}
         </div>
     );

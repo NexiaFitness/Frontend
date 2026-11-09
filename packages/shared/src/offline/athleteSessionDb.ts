@@ -1,7 +1,11 @@
 /**
  * athleteSessionDb.ts — IndexedDB wrapper para offline atleta (F1).
+ *
+ * El texto de «Ver técnica» (H8-A) vive en otra base (athleteTechniqueDb) para no subir
+ * la versión de esta: la cola de series no depende de él.
  */
 
+import { clearSessionTechnique } from "./athleteTechniqueDb";
 import type {
     AthleteSessionSnapshot,
     PendingAthleteExerciseNoteLog,
@@ -271,6 +275,8 @@ export async function clearSessionOfflineData(sessionId: number): Promise<void> 
         tx.onerror = () => reject(tx.error ?? new Error("IDB clear failed"));
     });
     db.close();
+    // After the run data, and never failing it: the technique cache is secondary (H8-A).
+    await clearSessionTechnique(sessionId);
 }
 
 export async function countPendingForSession(sessionId: number): Promise<number> {

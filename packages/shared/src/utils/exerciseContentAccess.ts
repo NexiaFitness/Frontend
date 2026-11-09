@@ -1,8 +1,8 @@
 /**
  * exerciseContentAccess.ts — Quién puede leer el texto de un ejercicio.
  *
- * Entrenador y admin. El atleta queda fuera (H8): su «Ver técnica» no llama
- * a GET /exercises/{id}/content.
+ * Entrenador y admin. El atleta no llama a GET /exercises/{id}/content: su «Ver técnica»
+ * lee por sesión en GET /athlete/sessions/{id}/exercise-content (H8-A).
  */
 
 import { USER_ROLES } from "./roles";
