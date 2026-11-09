@@ -75,7 +75,11 @@ vi.mock("@nexia/shared/hooks/offline/useOnlineStatus", () => ({
 }));
 
 import { useOfflineSessionLog } from "@nexia/shared/hooks/offline/useOfflineSessionLog";
-import { flushPendingSessionSync } from "@nexia/shared/offline/athleteSessionSync";
+import {
+    finishOnlineSession,
+    flushPendingSessionSync,
+} from "@nexia/shared/offline/athleteSessionSync";
+import { AthleteSyncConflictError } from "@nexia/shared/offline/athleteSessionTypes";
 import {
     configureSessionSyncPlatform,
     resetSessionSyncPlatformForTests,
@@ -263,5 +267,62 @@ describe("cola offline — servidor en 5xx (DBG-E-04)", () => {
 
         expect(postExecution).toHaveBeenCalledTimes(1);
         expect(mem.executions.size).toBe(1);
+    });
+});
+
+describe("cola offline — conflicto 409 al sincronizar (regresión H8-A, spec §11.5)", () => {
+    const queueLog = (id: string, blockExerciseId: number, ts: number) =>
+        mem.logs.set(id, {
+            id,
+            sessionId: SESSION,
+            blockExerciseId,
+            payload: { actual_sets: 1 },
+            ts,
+            retryCount: 0,
+        });
+
+    it("un 409 en una serie detiene el drenaje, la conserva en la cola y no completa la sesión", async () => {
+        queueExecution("e1", "block-1-single-0-r1-S3-S1-1", 60, 100);
+        queueExecution("e2", "block-1-single-0-r1-S3-S2-2", 62.5, 200);
+        mem.completes.set(SESSION, { sessionId: SESSION, ts: 300 });
+        const postExecution = vi.fn(async () => {
+            throw { status: 409, data: { detail: "conflict" } };
+        });
+        const { adapter } = makeAdapter({ postExecution });
+
+        const result = await flushPendingSessionSync(SESSION, adapter);
+
+        expect(result.conflict).toBe(true);
+        expect(postExecution).toHaveBeenCalledTimes(1);
+        expect(mem.executions.size).toBe(2);
+        expect(adapter.completeSession).not.toHaveBeenCalled();
+        expect(mem.completes.has(SESSION)).toBe(true);
+    });
+
+    it("un 409 en la fila de bloque (registro clásico) también es conflicto y conserva el registro", async () => {
+        queueLog("l1", 55, 100);
+        const updateExercise = vi.fn(async () => {
+            throw { status: 409, data: { detail: "stale" } };
+        });
+        const { adapter } = makeAdapter({ updateExercise });
+
+        const result = await flushPendingSessionSync(SESSION, adapter);
+
+        expect(result.conflict).toBe(true);
+        expect(mem.logs.has("l1")).toBe(true);
+    });
+
+    it("al finalizar la sesión con un conflicto pendiente se lanza AthleteSyncConflictError", async () => {
+        queueExecution("e1", "block-1-single-0-r1-S3-S1-1", 60, 100);
+        const { adapter } = makeAdapter({
+            postExecution: vi.fn(async () => {
+                throw { status: 409 };
+            }),
+        });
+
+        await expect(finishOnlineSession(SESSION, adapter)).rejects.toBeInstanceOf(
+            AthleteSyncConflictError
+        );
+        expect(adapter.completeSession).not.toHaveBeenCalled();
     });
 });
