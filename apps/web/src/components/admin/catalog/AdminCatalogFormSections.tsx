@@ -5,6 +5,7 @@
  * ficha deje de crecer. Músculos viven en AdminCatalogMuscleSection por el
  * límite de 400 líneas.
  * Notas: el markup y los handlers de cada fila son los de la ficha original.
+ * H10: las relaciones (alternativas y variantes) se ocultan con su pestaña, igual que el resto.
  *
  * @author Frontend Team
  * @since v1.1.0
@@ -27,6 +28,7 @@ import {
     ADMIN_CATALOG_SECTION_TITLE,
 } from "./adminCatalogPresentation";
 import { AdminCatalogRelationsSection } from "./AdminCatalogRelationsSection";
+import { ADMIN_CATALOG_TAB_HIDDEN } from "./adminCatalogTabsPresentation";
 import { AdminCatalogSearchPicker } from "./AdminCatalogSearchPicker";
 import {
     nextRowKey,
@@ -60,6 +62,8 @@ export interface AdminCatalogFormSectionsProps {
     equipmentOptions: CatalogPickerOption[];
     tagOptions: CatalogPickerOption[];
     currentPk: number | null;
+    /** Pestaña «Relaciones» no activa (SPEC_H10 §6.3). */
+    relationsHidden: boolean;
 }
 
 export const AdminCatalogFormSections: React.FC<AdminCatalogFormSectionsProps> = (props) => {
@@ -75,6 +79,7 @@ export const AdminCatalogFormSections: React.FC<AdminCatalogFormSectionsProps> =
         equipmentOptions,
         tagOptions,
         currentPk,
+        relationsHidden,
     } = props;
 
     return (
@@ -368,7 +373,9 @@ export const AdminCatalogFormSections: React.FC<AdminCatalogFormSectionsProps> =
                 />
             </section>
 
-            <AdminCatalogRelationsSection exercisePk={currentPk} />
+            <div className={relationsHidden ? ADMIN_CATALOG_TAB_HIDDEN : undefined}>
+                <AdminCatalogRelationsSection exercisePk={currentPk} />
+            </div>
         </>
     );
 };

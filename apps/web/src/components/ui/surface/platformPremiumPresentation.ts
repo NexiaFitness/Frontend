@@ -196,6 +196,16 @@ export const NEXIA_SEGMENTED_ITEM_IDLE = cn(
     "text-muted-foreground/80 hover:bg-surface/40 hover:text-foreground"
 );
 
+/** Contador de errores en una pestaña (TabsBar `errorCount`): tinte destructive glass, sin sólido. */
+export const NEXIA_SEGMENTED_ERROR_BADGE = cn(
+    "inline-flex min-w-[1.25rem] items-center justify-center rounded-full",
+    "border border-destructive/30 bg-destructive/20 px-1.5 text-[10px] font-semibold leading-4 text-destructive"
+);
+
+export const NEXIA_SEGMENTED_COPY = {
+    errorCount: (count: number) => (count === 1 ? "1 error" : `${count} errores`),
+} as const;
+
 export type NexiaSegmentedDistribute = "equal" | "content";
 
 export function nexiaSegmentedTrackClass(distribute: NexiaSegmentedDistribute): string {

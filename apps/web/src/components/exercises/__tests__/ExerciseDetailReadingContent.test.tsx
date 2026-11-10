@@ -57,7 +57,7 @@ describe("ExerciseDetailReadingContent", () => {
         expect(firstStep.closest("ol")).not.toBeNull();
         expect(screen.getByText("Baja el pecho.")).toBeInTheDocument();
         expect(screen.getByText("No rebotes en el fondo.").closest("ul")).not.toBeNull();
-        expect(screen.getByRole("heading", { name: "Cómo se hace" })).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "Ejecución" })).toBeInTheDocument();
         expect(screen.getByRole("heading", { name: "Consejos" })).toBeInTheDocument();
         expect(screen.queryByText("(en inglés)")).not.toBeInTheDocument();
         // H8-A: la atribución a RepDB vive solo en /creditos.
@@ -82,7 +82,7 @@ describe("ExerciseDetailReadingContent", () => {
             expect(screen.queryByRole("status")).not.toBeInTheDocument();
         });
         expect(screen.queryByRole("heading", { name: "Descripción" })).not.toBeInTheDocument();
-        expect(screen.queryByRole("heading", { name: "Cómo se hace" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("heading", { name: "Ejecución" })).not.toBeInTheDocument();
         expect(screen.queryByRole("heading", { name: "Consejos" })).not.toBeInTheDocument();
         expect(screen.queryByRole("link")).not.toBeInTheDocument();
     });

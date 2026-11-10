@@ -89,7 +89,9 @@ describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
         expect(screen.queryByLabelText("Confirmo la carga axial propuesta")).not.toBeInTheDocument();
     });
 
-    it("H8-B: no ofrece descripción, instrucciones ni notas y no las envía al guardar", async () => {
+    // H10 (SPEC_H10): «Descripción» vuelve, pero como parte de la técnica (exercise_content),
+    // no como la columna antigua. El core sigue sin descripcion, instrucciones ni notas.
+    it("H8-B: el core no ofrece ni envía descripcion, instrucciones ni notas", async () => {
         const user = userEvent.setup();
         const saved: { core: Record<string, unknown> | null } = { core: null };
         server.use(
@@ -114,7 +116,7 @@ describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
         render(<AdminExerciseCatalogForm mode="edit" exercisePk={11} />);
 
         expect(await screen.findByText(/squat_back/i, undefined, { timeout: 15_000 })).toBeInTheDocument();
-        for (const label of ["Descripción", "Instrucciones", "Notas"]) {
+        for (const label of [/^instrucciones/i, /^notas/i]) {
             expect(screen.queryByLabelText(label)).not.toBeInTheDocument();
         }
         await user.click(screen.getByRole("button", { name: ADMIN_CATALOG_COPY.save }));

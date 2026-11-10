@@ -4,6 +4,8 @@
  * Pages delgadas; lógica fuera de JSX (agent.md + 13 §7).
  * Pasa de 400 líneas: orquesta alta, edición, revisión, cola y el alta
  * desde la biblioteca RepDB (SPEC_H5 §2.3).
+ * H10: la técnica viaja en el mismo bundle (resolveTechniqueSubmit, shared) y la pestaña
+ * activa vive en useAdminCatalogTab; este hook solo avisa de la sección con error.
  *
  * @author Frontend Team
  * @since v1.0.0
@@ -28,6 +30,7 @@ import {
     finalizeCatalogBundle,
     getNextCatalogQueuePk,
     orderMusclesForCommit,
+    resolveTechniqueSubmit,
     parseCatalogConcurrencyError,
     parseCatalogValidationErrors,
     validateCatalogBundleDraft,
@@ -59,6 +62,8 @@ export interface UseAdminExerciseCatalogFormArgs {
     mode: "create" | "edit";
     exercisePk: number | null;
     libraryCandidateId?: number | null;
+    /** Al guardar con errores: la ficha abre la pestaña de esa sección. */
+    onInvalidSection?: (section: AdminCatalogSectionId) => void;
 }
 
 /** Normaliza el estado del formulario al draft del contrato; no rellena campos obligatorios. */
@@ -112,6 +117,7 @@ export function useAdminExerciseCatalogForm({
     mode,
     exercisePk,
     libraryCandidateId = null,
+    onInvalidSection,
 }: UseAdminExerciseCatalogFormArgs) {
     const navigate = useNavigate();
     const { goBack } = useReturnToOrigin({ fallbackPath: "/dashboard/admin/catalog" });
@@ -124,7 +130,6 @@ export function useAdminExerciseCatalogForm({
     const [serverErrors, setServerErrors] = useState<string[]>([]);
     const [conflict, setConflict] = useState<CatalogConcurrencyErrorOut | null>(null);
     const [historyOpen, setHistoryOpen] = useState(false);
-    const [mobileSection, setMobileSection] = useState<AdminCatalogSectionId>("datos");
     const [hydratedPk, setHydratedPk] = useState<number | null>(null);
     const [deactivateOpen, setDeactivateOpen] = useState(false);
     const [reactivateOpen, setReactivateOpen] = useState(false);
@@ -223,31 +228,33 @@ export function useAdminExerciseCatalogForm({
         return counts;
     }, [clientErrors]);
 
+    const techniqueSubmit = useMemo(
+        () => resolveTechniqueSubmit(draft.technique, draft.saved_technique, mode),
+        [draft.technique, draft.saved_technique, mode]
+    );
+
     const runClientValidation = useCallback(() => {
-        const result = validateCatalogBundleDraft(toBundleDraft(draft));
+        const result = validateCatalogBundleDraft(toBundleDraft(draft), techniqueSubmit.errors);
         const next: Partial<Record<AdminCatalogSectionId, string[]>> = {};
         for (const item of result.bySection) {
             next[item.section] = item.messages;
         }
         setClientErrors(next);
         return result;
-    }, [draft]);
+    }, [draft, techniqueSubmit]);
 
     const persist = useCallback(async (): Promise<number | null> => {
         const result = runClientValidation();
         if (!result.ok) {
             if (result.firstSectionWithError) {
-                setMobileSection(result.firstSectionWithError);
-                const el = document.getElementById(result.firstSectionWithError);
-                if (el && typeof el.scrollIntoView === "function") {
-                    el.scrollIntoView({ behavior: "smooth", block: "start" });
-                }
+                onInvalidSection?.(result.firstSectionWithError);
             }
             showError(ADMIN_CATALOG_COPY.validationAlert);
             return null;
         }
 
-        const bundle = finalizeCatalogBundle(toBundleDraft(draft));
+        const finalized = finalizeCatalogBundle(toBundleDraft(draft));
+        const bundle = finalized ? { ...finalized, technique: techniqueSubmit.payload } : null;
         if (!bundle) {
             showError(ADMIN_CATALOG_COPY.validationAlert);
             return null;
@@ -325,9 +332,11 @@ export function useAdminExerciseCatalogForm({
         libraryCandidateId,
         libraryNotice,
         mode,
+        onInvalidSection,
         runClientValidation,
         showError,
         showSuccess,
+        techniqueSubmit,
         updateCatalog,
     ]);
 
@@ -487,8 +496,6 @@ export function useAdminExerciseCatalogForm({
         setConflict,
         historyOpen,
         setHistoryOpen,
-        mobileSection,
-        setMobileSection,
         catalog,
         refetch,
         isInactive: draft.core.is_active === false,

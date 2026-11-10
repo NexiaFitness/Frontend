@@ -1,5 +1,14 @@
 # Changelog — @nexia/shared
 
+## 6.1.0 — 2026-11-10
+
+### Added (H10: técnica del ejercicio editable, SPEC_H10)
+
+- `CatalogTechniqueIn` y `CatalogTechniqueOut`: descripción, pasos y consejos en español.
+- `ExerciseCatalogBundleCreateIn.technique` (opcional; `null` = no se toca) y `CatalogExerciseOut.technique`.
+- `utils/adminCatalog/catalogTechnique`: líneas (R6), límites (R5), errores por campo y `resolveTechniqueSubmit`, que solo manda la técnica al crear o si cambió (R8).
+- `AdminCatalogSectionId` gana `"tecnica"`; `validateCatalogBundleDraft` acepta los errores de técnica como segundo argumento y los ordena tras «datos».
+
 ## 6.0.0 — 2026-11-09
 
 ### Removed (H8-B: limpieza conservadora del catálogo)

@@ -47,50 +47,6 @@ export const ADMIN_CATALOG_GLOW =
 
 export const ADMIN_CATALOG_STACK = "relative space-y-6 lg:space-y-8";
 
-export const ADMIN_CATALOG_LAYOUT = cn(
-    "grid grid-cols-1 gap-6",
-    "lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8"
-);
-
-export const ADMIN_CATALOG_INDEX = cn(
-    "hidden lg:block",
-    "sticky top-4 self-start",
-    NEXIA_GLASS_CARD,
-    NEXIA_GLASS_CARD_DESKTOP,
-    "relative space-y-1 p-3"
-);
-
-export const ADMIN_CATALOG_INDEX_LINK = cn(
-    "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-sm",
-    "text-muted-foreground hover:bg-primary/10 hover:text-primary",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-);
-
-export const ADMIN_CATALOG_INDEX_LINK_ACTIVE = "bg-primary/15 text-primary";
-
-export const ADMIN_CATALOG_INDEX_ERROR_BADGE = cn(
-    "inline-flex min-w-[1.25rem] items-center justify-center rounded-full",
-    "bg-destructive/20 px-1.5 text-[10px] font-semibold text-destructive"
-);
-
-export const ADMIN_CATALOG_MOBILE_STEPPER = cn(
-    "flex gap-2 overflow-x-auto pb-1 lg:hidden",
-    "scrollbar-thin"
-);
-
-export const ADMIN_CATALOG_STEPPER_CHIP = cn(
-    "shrink-0 rounded-md border border-border/80 px-3 py-1.5 text-xs font-medium",
-    "text-muted-foreground"
-);
-
-export const ADMIN_CATALOG_STEPPER_CHIP_ACTIVE = cn(
-    "border-primary/40 bg-primary/15 text-primary"
-);
-
-export const ADMIN_CATALOG_STEPPER_CHIP_ERROR = cn(
-    "border-destructive/40 text-destructive"
-);
-
 export const ADMIN_CATALOG_FORM_SHELL = PLATFORM_FORM_SHELL;
 
 export const ADMIN_CATALOG_FORM_BODY = PLATFORM_FORM_BODY;
@@ -564,17 +520,6 @@ export const ADMIN_CATALOG_QUALITY_FLAG_LABELS: Record<string, string> = {
 export function adminCatalogQualityFlagLabel(flag: string): string {
     return ADMIN_CATALOG_QUALITY_FLAG_LABELS[flag] ?? flag;
 }
-
-export const ADMIN_CATALOG_SECTIONS = [
-    { id: "datos" as const, label: ADMIN_CATALOG_COPY.sectionDatos },
-    { id: "musculos" as const, label: ADMIN_CATALOG_COPY.sectionMusculos },
-    { id: "patrones" as const, label: ADMIN_CATALOG_COPY.sectionPatrones },
-    { id: "articulaciones" as const, label: ADMIN_CATALOG_COPY.sectionArticulaciones },
-    { id: "material" as const, label: ADMIN_CATALOG_COPY.sectionMaterial },
-    { id: "etiquetas" as const, label: ADMIN_CATALOG_COPY.sectionEtiquetas },
-    { id: "alternativas" as const, label: ADMIN_CATALOG_COPY.sectionAlternativas },
-    { id: "variantes" as const, label: ADMIN_CATALOG_COPY.sectionVariantes },
-];
 
 /** Copy dashboard admin — aviso catálogo (§6.1). */
 export const ADMIN_DASHBOARD_CATALOG_ALERT = {

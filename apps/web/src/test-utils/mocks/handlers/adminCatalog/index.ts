@@ -76,6 +76,11 @@ export const mockCatalogExercise = {
     review_status: "pending",
     catalog_reviewed_at: null,
     catalog_reviewed_by_user_id: null,
+    technique: {
+        description: "Sentadilla con la barra apoyada en la espalda alta.",
+        steps: ["Coloca la barra sobre los trapecios.", "Baja con el pecho alto.", "Sube empujando el suelo."],
+        tips: ["No despegues los talones."],
+    },
 };
 
 export const getExerciseCatalogHandler = http.get(

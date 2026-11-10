@@ -1,8 +1,9 @@
 /**
- * ExerciseDetailReadingContent.tsx — Descripción, pasos y consejos del ejercicio.
+ * ExerciseDetailReadingContent.tsx — Técnica del ejercicio en la ficha del entrenador.
  *
- * Solo entrenador y admin. Sin texto, no pinta secciones vacías. Sin atribución por
- * ejercicio desde H8-A (decisión de Nelson, 2026-11-06): vive solo en /creditos.
+ * Solo entrenador y admin. Carga el texto y delega el render en ExerciseTechniqueText
+ * (SPEC_H10 §6.2). Sin texto, no pinta nada. Sin atribución por ejercicio desde H8-A
+ * (decisión de Nelson, 2026-11-06): vive solo en /creditos.
  */
 
 import React from "react";
@@ -14,19 +15,13 @@ import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import {
     EXERCISE_DETAIL_ALERT_SPACING,
-    EXERCISE_DETAIL_BODY_MUTED_PRESERVE,
     EXERCISE_DETAIL_READING_COPY,
-    EXERCISE_DETAIL_READING_LIST,
-    EXERCISE_DETAIL_READING_NOTE,
     EXERCISE_DETAIL_READING_RETRY,
     EXERCISE_DETAIL_READING_SKELETON,
     EXERCISE_DETAIL_READING_SKELETON_LINE,
     EXERCISE_DETAIL_READING_SKELETON_LINE_SHORT,
-    EXERCISE_DETAIL_READING_STACK,
-    EXERCISE_DETAIL_READING_TIPS,
-    EXERCISE_DETAIL_SECTION_LABELS,
-    EXERCISE_DETAIL_SPEC_LABEL,
 } from "@/components/exercises/exerciseDetailPresentation";
+import { ExerciseTechniqueText } from "@/components/exercises/ExerciseTechniqueText";
 
 interface ExerciseDetailReadingContentProps {
     exerciseId: number;
@@ -83,44 +78,11 @@ export const ExerciseDetailReadingContent: React.FC<ExerciseDetailReadingContent
     if (!description && steps.length === 0 && tips.length === 0) return null;
 
     return (
-        <div className={EXERCISE_DETAIL_READING_STACK}>
-            {data?.in_english ? (
-                <p className={EXERCISE_DETAIL_READING_NOTE}>
-                    {EXERCISE_DETAIL_SECTION_LABELS.inEnglish}
-                </p>
-            ) : null}
-            {description ? (
-                <section>
-                    <h2 className={EXERCISE_DETAIL_SPEC_LABEL}>
-                        {EXERCISE_DETAIL_SECTION_LABELS.description}
-                    </h2>
-                    <p className={EXERCISE_DETAIL_BODY_MUTED_PRESERVE}>{description}</p>
-                </section>
-            ) : null}
-            {steps.length > 0 ? (
-                <section>
-                    <h2 className={EXERCISE_DETAIL_SPEC_LABEL}>
-                        {EXERCISE_DETAIL_SECTION_LABELS.howTo}
-                    </h2>
-                    <ol className={EXERCISE_DETAIL_READING_LIST}>
-                        {steps.map((step, index) => (
-                            <li key={`${index}-${step}`}>{step}</li>
-                        ))}
-                    </ol>
-                </section>
-            ) : null}
-            {tips.length > 0 ? (
-                <section>
-                    <h2 className={EXERCISE_DETAIL_SPEC_LABEL}>
-                        {EXERCISE_DETAIL_SECTION_LABELS.tips}
-                    </h2>
-                    <ul className={EXERCISE_DETAIL_READING_TIPS}>
-                        {tips.map((tip, index) => (
-                            <li key={`${index}-${tip}`}>{tip}</li>
-                        ))}
-                    </ul>
-                </section>
-            ) : null}
-        </div>
+        <ExerciseTechniqueText
+            description={description}
+            steps={steps}
+            tips={tips}
+            inEnglish={data?.in_english ?? false}
+        />
     );
 };

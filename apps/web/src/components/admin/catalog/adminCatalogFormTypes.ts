@@ -9,13 +9,16 @@ import type {
     CatalogMuscleRole,
     CatalogPatternRole,
     CatalogExerciseOut,
+    CatalogTechniqueOut,
 } from "@nexia/shared/types/adminCatalog";
 import type { MuscleEvidenceFields } from "@nexia/shared/types/exerciseContract";
 import {
     parseCatalogAxialLoad,
     parseTrainingObjective,
+    techniqueDraftFromOut,
     type AdminCatalogSectionId,
     type CatalogCoreDraft,
+    type CatalogTechniqueDraft,
 } from "@nexia/shared";
 
 export type { AdminCatalogSectionId };
@@ -60,6 +63,10 @@ export interface AdminCatalogFormDraft {
     joints: JointRowDraft[];
     equipment_ids: number[];
     tag_ids: number[];
+    /** Técnica tal como se escribe (SPEC_H10). */
+    technique: CatalogTechniqueDraft;
+    /** Técnica guardada al hidratar: decide si el guardado la manda (R8) o si vaciarla es borrar (R3). */
+    saved_technique: CatalogTechniqueOut | null;
     /** Optimistic lock — solo edit. */
     expected_updated_at: string | null;
     exercise_code: string | null;
@@ -133,6 +140,8 @@ export function emptyDraft(): AdminCatalogFormDraft {
         ],
         equipment_ids: [],
         tag_ids: [],
+        technique: techniqueDraftFromOut(null),
+        saved_technique: null,
         expected_updated_at: null,
         exercise_code: null,
         review_status: null,
@@ -201,6 +210,8 @@ export function draftFromCatalog(exercise: CatalogExerciseOut): AdminCatalogForm
         joints,
         equipment_ids: (exercise.equipment ?? []).map((e) => e.id),
         tag_ids: (exercise.tags ?? []).map((t) => t.id),
+        technique: techniqueDraftFromOut(exercise.technique),
+        saved_technique: exercise.technique ?? null,
         expected_updated_at: exercise.updated_at,
         exercise_code: exercise.exercise_id,
         review_status: exercise.review_status,

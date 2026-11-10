@@ -33,6 +33,15 @@ function validDraft(overrides: Partial<CatalogBundleDraft["core"]> = {}): Catalo
 }
 
 describe("validateCatalogBundleDraft", () => {
+    it("SPEC_H10: los errores de técnica van en «tecnica», justo después de «datos»", () => {
+        const result = validateCatalogBundleDraft(validDraft({ nombre: "" }), [
+            "La descripción es obligatoria.",
+        ]);
+        expect(result.bySection.map((item) => item.section)).toEqual(["datos", "tecnica"]);
+        expect(result.bySection[1]?.messages).toEqual(["La descripción es obligatoria."]);
+        expect(validateCatalogBundleDraft(validDraft(), ["x"]).firstSectionWithError).toBe("tecnica");
+    });
+
     it("ok con draft mínimo válido", () => {
         const result = validateCatalogBundleDraft({
             core: {

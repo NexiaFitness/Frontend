@@ -1,19 +1,22 @@
 /**
- * AdminExerciseCatalogForm.tsx — Ficha create/edit Admin (una página + índice / stepper).
+ * AdminExerciseCatalogForm.tsx — Ficha create/edit Admin, por pestañas.
  *
  * Spec: 13_UX_ADMIN_CATALOGO.md §3.2 · API GET/POST/PUT catalog + review + history.
  * H5: las relaciones viven en AdminCatalogFormSections, la cabecera y el historial
  * en AdminCatalogFormChrome, y los atajos de guardado en useAdminCatalogFormSubmit.
+ * H10 (SPEC_H10 §6.3, D-H10-2): TabsBar sustituye al índice lateral y al selector móvil;
+ * una pestaña visible cada vez, todas montadas (un solo borrador), pestaña en `?tab=`.
  *
  * @author Frontend Team
  * @since v1.0.0
  */
 
-import React, { useCallback, useMemo } from "react";
+import React, { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
 import { Alert, LoadingSpinner, useToast } from "@/components/ui/feedback";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { TabsBar } from "@/components/ui/tabs/TabsBar";
 import {
     useGetActionsQuery,
     useGetEquipmentQuery,
@@ -27,24 +30,22 @@ import {
     ADMIN_CATALOG_FORM_BODY,
     ADMIN_CATALOG_FORM_SHELL,
     ADMIN_CATALOG_GLOW,
-    ADMIN_CATALOG_INDEX,
-    ADMIN_CATALOG_INDEX_ERROR_BADGE,
-    ADMIN_CATALOG_INDEX_LINK,
-    ADMIN_CATALOG_INDEX_LINK_ACTIVE,
-    ADMIN_CATALOG_LAYOUT,
     ADMIN_CATALOG_LOADING_ROW,
-    ADMIN_CATALOG_MOBILE_STEPPER,
     ADMIN_CATALOG_PAGE,
     ADMIN_CATALOG_SECTION,
-    ADMIN_CATALOG_SECTIONS,
     ADMIN_CATALOG_STACK,
-    ADMIN_CATALOG_STEPPER_CHIP,
-    ADMIN_CATALOG_STEPPER_CHIP_ACTIVE,
-    ADMIN_CATALOG_STEPPER_CHIP_ERROR,
 } from "./adminCatalogPresentation";
+import {
+    ADMIN_CATALOG_TAB_HIDDEN,
+    ADMIN_CATALOG_TABS_ARIA_LABEL,
+    ADMIN_CATALOG_TABS_BAR,
+    adminCatalogTabItems,
+} from "./adminCatalogTabsPresentation";
 import { type AdminCatalogSectionId } from "./adminCatalogFormTypes";
 import { useAdminExerciseCatalogForm } from "./useAdminExerciseCatalogForm";
+import { useAdminCatalogTab } from "./useAdminCatalogTab";
 import { AdminCatalogCoreSection } from "./AdminCatalogCoreSection";
+import { AdminCatalogTechniqueSection } from "./AdminCatalogTechniqueSection";
 import { AdminCatalogFormSections } from "./AdminCatalogFormSections";
 import { AdminCatalogPreviewPanel } from "./AdminCatalogPreviewPanel";
 import { useAdminCatalogPreview } from "./useAdminCatalogPreview";
@@ -66,7 +67,13 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
     libraryCandidateId = null,
 }) => {
     const { showError } = useToast();
-    const form = useAdminExerciseCatalogForm({ mode, exercisePk, libraryCandidateId });
+    const tabs = useAdminCatalogTab();
+    const form = useAdminExerciseCatalogForm({
+        mode,
+        exercisePk,
+        libraryCandidateId,
+        onInvalidSection: tabs.showSection,
+    });
     const {
         draft,
         setDraft,
@@ -81,8 +88,6 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
         setConflict,
         historyOpen,
         setHistoryOpen,
-        mobileSection,
-        setMobileSection,
         handleSave,
         handleMarkReviewed,
         handleReviewedAndNext,
@@ -175,13 +180,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
     const title =
         mode === "create" ? ADMIN_CATALOG_COPY.createTitle : ADMIN_CATALOG_COPY.editTitle;
 
-    const scrollToSection = useCallback((id: AdminCatalogSectionId) => {
-        setMobileSection(id);
-        const el = document.getElementById(id);
-        if (el && typeof el.scrollIntoView === "function") {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-    }, [setMobileSection]);
+    const tabItems = useMemo(() => adminCatalogTabItems(errorCountBySection), [errorCountBySection]);
 
     if (isLoadingCatalog) {
         return (
@@ -220,7 +219,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
     }
 
     const sectionClass = (id: AdminCatalogSectionId) =>
-        cn(ADMIN_CATALOG_SECTION, mobileSection !== id && "hidden lg:block");
+        cn(ADMIN_CATALOG_SECTION, !tabs.isSectionVisible(id) && ADMIN_CATALOG_TAB_HIDDEN);
 
     return (
         <div className={ADMIN_CATALOG_PAGE} data-testid="admin-exercise-catalog-form">
@@ -257,81 +256,54 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
 
                 <AdminCatalogPreviewPanel preview={preview} />
 
-                <div className={ADMIN_CATALOG_MOBILE_STEPPER} role="tablist" aria-label="Secciones">
-                    {ADMIN_CATALOG_SECTIONS.map((section) => {
-                        const err = errorCountBySection[section.id] ?? 0;
-                        return (
-                            <button
-                                key={section.id}
-                                type="button"
-                                role="tab"
-                                aria-selected={mobileSection === section.id}
-                                className={cn(
-                                    ADMIN_CATALOG_STEPPER_CHIP,
-                                    mobileSection === section.id && ADMIN_CATALOG_STEPPER_CHIP_ACTIVE,
-                                    err > 0 && ADMIN_CATALOG_STEPPER_CHIP_ERROR
-                                )}
-                                onClick={() => setMobileSection(section.id)}
-                            >
-                                {section.label}
-                                {err > 0 ? ` (${err})` : ""}
-                            </button>
-                        );
-                    })}
-                </div>
+                <TabsBar
+                    className={ADMIN_CATALOG_TABS_BAR}
+                    items={tabItems}
+                    value={tabs.activeTab}
+                    onChange={tabs.selectTab}
+                    ariaLabel={ADMIN_CATALOG_TABS_ARIA_LABEL}
+                />
 
-                <div className={ADMIN_CATALOG_LAYOUT}>
-                    <nav className={ADMIN_CATALOG_INDEX} aria-label="Índice de secciones">
-                        <NexiaGlassAccentRim />
-                        {ADMIN_CATALOG_SECTIONS.map((section) => {
-                            const err = errorCountBySection[section.id] ?? 0;
-                            return (
-                                <button
-                                    key={section.id}
-                                    type="button"
-                                    className={cn(
-                                        ADMIN_CATALOG_INDEX_LINK,
-                                        mobileSection === section.id && ADMIN_CATALOG_INDEX_LINK_ACTIVE
-                                    )}
-                                    onClick={() => scrollToSection(section.id)}
-                                >
-                                    <span>{section.label}</span>
-                                    {err > 0 ? (
-                                        <span className={ADMIN_CATALOG_INDEX_ERROR_BADGE}>{err}</span>
-                                    ) : null}
-                                </button>
-                            );
-                        })}
-                    </nav>
+                <div className={ADMIN_CATALOG_FORM_SHELL}>
+                    <NexiaGlassAccentRim />
+                    <div className={ADMIN_CATALOG_FORM_BODY}>
+                        <AdminCatalogCoreSection
+                            className={sectionClass("datos")}
+                            core={draft.core}
+                            errors={clientErrors.datos ?? []}
+                            pendingReview={draft.pending_review}
+                            onCoreChange={(patch) =>
+                                setDraft((prev) => ({ ...prev, core: { ...prev.core, ...patch } }))
+                            }
+                        />
 
-                    <div className={ADMIN_CATALOG_FORM_SHELL}>
-                        <NexiaGlassAccentRim />
-                        <div className={ADMIN_CATALOG_FORM_BODY}>
-                            {/* DATOS */}
-                            <AdminCatalogCoreSection
-                                className={sectionClass("datos")}
-                                core={draft.core}
-                                errors={clientErrors.datos ?? []}
-                                pendingReview={draft.pending_review}
-                                onCoreChange={(patch) =>
-                                    setDraft((prev) => ({ ...prev, core: { ...prev.core, ...patch } }))
-                                }
-                            />
+                        <AdminCatalogTechniqueSection
+                            className={sectionClass("tecnica")}
+                            mode={mode}
+                            technique={draft.technique}
+                            errors={clientErrors.tecnica ?? []}
+                            onTechniqueChange={(patch) =>
+                                setDraft((prev) => ({
+                                    ...prev,
+                                    technique: { ...prev.technique, ...patch },
+                                }))
+                            }
+                        />
 
-                            <AdminCatalogFormSections
-                                draft={draft}
-                                setDraft={setDraft}
-                                clientErrors={clientErrors}
-                                sectionClass={sectionClass}
-                                muscleOptions={muscleOptions}
-                                patternOptions={patternOptions}
-                                jointOptions={jointOptions}
-                                actionSearchOptions={actionSearchOptions}
-                                equipmentOptions={equipmentOptions}
-                                tagOptions={tagOptions}
-                                currentPk={currentPk}
-                            />
-                        </div>
+                        <AdminCatalogFormSections
+                            draft={draft}
+                            setDraft={setDraft}
+                            clientErrors={clientErrors}
+                            sectionClass={sectionClass}
+                            muscleOptions={muscleOptions}
+                            patternOptions={patternOptions}
+                            jointOptions={jointOptions}
+                            actionSearchOptions={actionSearchOptions}
+                            equipmentOptions={equipmentOptions}
+                            tagOptions={tagOptions}
+                            currentPk={currentPk}
+                            relationsHidden={!tabs.isSectionVisible("alternativas")}
+                        />
                     </div>
                 </div>
             </div>

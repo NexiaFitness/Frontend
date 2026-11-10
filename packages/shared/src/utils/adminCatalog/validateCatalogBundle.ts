@@ -19,6 +19,7 @@ import type { TrainingObjective } from "../../types/exerciseContract";
 
 export type AdminCatalogSectionId =
     | "datos"
+    | "tecnica"
     | "musculos"
     | "patrones"
     | "articulaciones"
@@ -79,10 +80,18 @@ function push(
 
 /**
  * Valida el draft de ficha Admin. No muta el input.
+ * `techniqueErrors`: los de `resolveTechniqueSubmit` (SPEC_H10), que dependen del modo y de
+ * la técnica guardada; aquí solo se ordenan con el resto en la sección «tecnica».
  */
-export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogValidationResult {
+export function validateCatalogBundleDraft(
+    draft: CatalogBundleDraft,
+    techniqueErrors: readonly string[] = []
+): CatalogValidationResult {
     const map = new Map<AdminCatalogSectionId, string[]>();
     const { core, muscles, movement_patterns, joint_actions, equipment_ids } = draft;
+    for (const message of techniqueErrors) {
+        push(map, "tecnica", message);
+    }
 
     if (!core.nombre?.trim()) {
         push(map, "datos", "El nombre es obligatorio");
@@ -180,6 +189,7 @@ export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogVa
 
     const order: AdminCatalogSectionId[] = [
         "datos",
+        "tecnica",
         "musculos",
         "patrones",
         "articulaciones",

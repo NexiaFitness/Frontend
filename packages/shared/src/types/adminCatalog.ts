@@ -62,6 +62,18 @@ export interface ExerciseCatalogCoreIn {
     is_active?: boolean;
 }
 
+/**
+ * Técnica del ejercicio en español (SPEC_H10): descripción, pasos de ejecución y consejos.
+ * Se sustituye entera al guardar (R1); `steps` lleva al menos uno.
+ */
+export interface CatalogTechniqueIn {
+    description: string;
+    steps: string[];
+    tips: string[];
+}
+
+export type CatalogTechniqueOut = CatalogTechniqueIn;
+
 export interface ExerciseCatalogBundleCreateIn {
     core: ExerciseCatalogCoreIn;
     muscles: CatalogMuscleIn[];
@@ -69,6 +81,8 @@ export interface ExerciseCatalogBundleCreateIn {
     joint_actions: CatalogJointActionIn[];
     equipment_ids: number[];
     tag_ids?: number[];
+    /** null u omitido = la técnica no se toca (SPEC_H10 R8). Obligatoria al crear. */
+    technique?: CatalogTechniqueIn | null;
 }
 
 export interface ExerciseCatalogBundleUpdateIn extends ExerciseCatalogBundleCreateIn {
@@ -80,6 +94,8 @@ export interface CatalogExerciseOut extends Exercise {
     review_status: CatalogReviewStatus;
     catalog_reviewed_at: string | null;
     catalog_reviewed_by_user_id: number | null;
+    /** Técnica en español; null si el ejercicio aún no tiene (SPEC_H10). */
+    technique?: CatalogTechniqueOut | null;
 }
 
 export interface CatalogReviewStatusOut {

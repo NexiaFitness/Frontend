@@ -20,7 +20,8 @@ export const ATHLETE_TECHNIQUE_COPY = {
     fallbackTitle: "Técnica",
     close: "Cerrar",
     inEnglish: "(en inglés)",
-    steps: "Pasos",
+    /** D-H10-1: misma terminología que el admin y el entrenador. */
+    steps: "Ejecución",
     tips: "Consejos",
     loading: "Cargando la técnica",
     emptyTitle: "Contenido próximamente",
