@@ -1,5 +1,12 @@
 /**
- * adminCatalogFormTypes.ts — Estado local de la ficha Admin (draft UI).
+ * adminCatalogFormTypes.ts — Estado local de la ficha Admin (draft UI) y su hidratación.
+ *
+ * Contexto: lo usa useAdminExerciseCatalogForm; las operaciones sobre el borrador viven en
+ * adminCatalogDraft.ts. H10 (DISENO_H10_FICHA_ADMIN): los selectores con búsqueda añaden
+ * filas ya elegidas, así que no hay filas vacías; «Revisado» es parte del borrador y viaja
+ * en el guardado (D-H10-4).
+ * Notas de mantenimiento: el orden de los músculos objetivo es su prioridad (1…n al
+ * guardar, orderMusclesForCommit en shared).
  *
  * @author Frontend Team
  * @since v1.0.0
@@ -25,22 +32,21 @@ export type { AdminCatalogSectionId };
 
 export interface MuscleRowDraft extends MuscleEvidenceFields {
     key: string;
-    muscle_id: number | null;
+    muscle_id: number;
     role: CatalogMuscleRole;
-    label?: string;
 }
 
 export interface PatternRowDraft {
     key: string;
-    movement_pattern_id: number | null;
+    movement_pattern_id: number;
     role: CatalogPatternRole;
 }
 
 export interface JointRowDraft {
     key: string;
-    joint_id: number | null;
-    action_id: number | null;
-    role: string;
+    joint_id: number;
+    action_id: number;
+    role: CatalogPatternRole;
 }
 
 /**
@@ -67,25 +73,12 @@ export interface AdminCatalogFormDraft {
     technique: CatalogTechniqueDraft;
     /** Técnica guardada al hidratar: decide si el guardado la manda (R8) o si vaciarla es borrar (R3). */
     saved_technique: CatalogTechniqueOut | null;
+    /** Interruptor «Revisado» (D-H10-4): se aplica al guardar. */
+    reviewed: boolean;
     /** Optimistic lock — solo edit. */
     expected_updated_at: string | null;
     exercise_code: string | null;
     review_status: "pending" | "reviewed" | null;
-}
-
-/**
- * Cambia músculo o rol de una fila. La trazabilidad (fuente, decisión, nota) describía la fila
- * anterior: se limpia para no atribuir a una decisión nueva la evidencia de otra.
- */
-export function retargetMuscleRow(
-    row: MuscleRowDraft,
-    patch: Partial<Pick<MuscleRowDraft, "muscle_id" | "role" | "label">>
-): MuscleRowDraft {
-    const changed =
-        (patch.muscle_id !== undefined && patch.muscle_id !== row.muscle_id) ||
-        (patch.role !== undefined && patch.role !== row.role);
-    if (!changed) return { ...row, ...patch };
-    return { ...row, ...patch, evidence_level: null, is_coach_decision: false, evidence_note: null };
 }
 
 function proposalKind(review: string | null | undefined): CatalogProposalKind | null {
@@ -116,79 +109,27 @@ export function emptyDraft(): AdminCatalogFormDraft {
     return {
         core: emptyCore(),
         pending_review: { axial_load: null, nivel: null },
-        muscles: [
-            {
-                key: nextRowKey("m"),
-                muscle_id: null,
-                role: "prime_mover",
-            },
-        ],
-        patterns: [
-            {
-                key: nextRowKey("p"),
-                movement_pattern_id: null,
-                role: "primary",
-            },
-        ],
-        joints: [
-            {
-                key: nextRowKey("j"),
-                joint_id: null,
-                action_id: null,
-                role: "primary",
-            },
-        ],
+        muscles: [],
+        patterns: [],
+        joints: [],
         equipment_ids: [],
         tag_ids: [],
         technique: techniqueDraftFromOut(null),
         saved_technique: null,
+        reviewed: false,
         expected_updated_at: null,
         exercise_code: null,
         review_status: null,
     };
 }
 
+const ROLE_ORDER: Record<string, number> = { prime_mover: 0, synergist: 1, stabilizer: 2 };
+
 export function draftFromCatalog(exercise: CatalogExerciseOut): AdminCatalogFormDraft {
-    const musclesRaw = [...(exercise.muscles ?? [])];
-    musclesRaw.sort((a, b) => {
-        const aPm = a.role === "prime_mover" ? 0 : 1;
-        const bPm = b.role === "prime_mover" ? 0 : 1;
-        if (aPm !== bPm) return aPm - bPm;
-        return (a.priority ?? 0) - (b.priority ?? 0);
+    const musclesRaw = [...(exercise.muscles ?? [])].sort((a, b) => {
+        const byRole = (ROLE_ORDER[a.role ?? ""] ?? 9) - (ROLE_ORDER[b.role ?? ""] ?? 9);
+        return byRole !== 0 ? byRole : (a.priority ?? 0) - (b.priority ?? 0);
     });
-
-    const muscles: MuscleRowDraft[] =
-        musclesRaw.length > 0
-            ? musclesRaw.map((m) => ({
-                  key: nextRowKey("m"),
-                  muscle_id: m.id,
-                  role: (m.role as CatalogMuscleRole) || "prime_mover",
-                  label: m.name_es || m.name || m.name_en,
-                  // Trazabilidad: se conserva al guardar (su edición llega en H5).
-                  evidence_level: m.evidence_level ?? null,
-                  is_coach_decision: m.is_coach_decision ?? false,
-                  evidence_note: m.evidence_note ?? null,
-              }))
-            : [{ key: nextRowKey("m"), muscle_id: null, role: "prime_mover" }];
-
-    const patterns: PatternRowDraft[] =
-        (exercise.movement_patterns ?? []).length > 0
-            ? (exercise.movement_patterns ?? []).map((p) => ({
-                  key: nextRowKey("p"),
-                  movement_pattern_id: p.id,
-                  role: (p.role as CatalogPatternRole) || "primary",
-              }))
-            : [{ key: nextRowKey("p"), movement_pattern_id: null, role: "primary" }];
-
-    const joints: JointRowDraft[] =
-        (exercise.joint_action_details ?? []).length > 0
-            ? (exercise.joint_action_details ?? []).map((j) => ({
-                  key: nextRowKey("j"),
-                  joint_id: j.joint_id,
-                  action_id: j.action_id ?? null,
-                  role: j.role || "primary",
-              }))
-            : [{ key: nextRowKey("j"), joint_id: null, action_id: null, role: "primary" }];
 
     return {
         core: {
@@ -205,13 +146,33 @@ export function draftFromCatalog(exercise: CatalogExerciseOut): AdminCatalogForm
             axial_load: proposalKind(exercise.axial_load_review),
             nivel: proposalKind(exercise.nivel_review),
         },
-        muscles,
-        patterns,
-        joints,
+        muscles: musclesRaw.map((m) => ({
+            key: nextRowKey("m"),
+            muscle_id: m.id,
+            role: (m.role as CatalogMuscleRole) || "prime_mover",
+            // Trazabilidad: se conserva al guardar mientras la fila no cambie.
+            evidence_level: m.evidence_level ?? null,
+            is_coach_decision: m.is_coach_decision ?? false,
+            evidence_note: m.evidence_note ?? null,
+        })),
+        patterns: (exercise.movement_patterns ?? []).map((p) => ({
+            key: nextRowKey("p"),
+            movement_pattern_id: p.id,
+            role: (p.role as CatalogPatternRole) || "primary",
+        })),
+        joints: (exercise.joint_action_details ?? [])
+            .filter((j): j is typeof j & { action_id: number } => j.action_id != null)
+            .map((j) => ({
+                key: nextRowKey("j"),
+                joint_id: j.joint_id,
+                action_id: j.action_id,
+                role: (j.role as CatalogPatternRole) || "primary",
+            })),
         equipment_ids: (exercise.equipment ?? []).map((e) => e.id),
         tag_ids: (exercise.tags ?? []).map((t) => t.id),
         technique: techniqueDraftFromOut(exercise.technique),
         saved_technique: exercise.technique ?? null,
+        reviewed: exercise.review_status === "reviewed",
         expected_updated_at: exercise.updated_at,
         exercise_code: exercise.exercise_id,
         review_status: exercise.review_status,

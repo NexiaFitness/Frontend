@@ -83,6 +83,11 @@ export interface ExerciseCatalogBundleCreateIn {
     tag_ids?: number[];
     /** null u omitido = la técnica no se toca (SPEC_H10 R8). Obligatoria al crear. */
     technique?: CatalogTechniqueIn | null;
+    /**
+     * Marca de revisión en el mismo guardado (D-H10-4). null u omitido: un cambio la quita,
+     * como antes. true: revisado tras guardar. false: sin revisar.
+     */
+    reviewed?: boolean | null;
 }
 
 export interface ExerciseCatalogBundleUpdateIn extends ExerciseCatalogBundleCreateIn {
@@ -169,7 +174,7 @@ export interface AdminCatalogExerciseListItemOut {
     is_active: boolean;
     review_status: CatalogReviewStatus;
     catalog_reviewed_at?: string | null;
-    /** Códigos backend: OK, NO_PM, PM_PRIORITY, NO_PRIMARY_PATTERN, NO_EQUIPMENT, INCOMPLETE_JOINT_ACTIONS, VOLUME_MAPPING. */
+    /** Códigos backend: OK, NO_PM, PM_PRIORITY, NO_PRIMARY_PATTERN, NO_EQUIPMENT, INCOMPLETE_JOINT_ACTIONS, VOLUME_MAPPING, NO_TECHNIQUE. */
     quality_flags: string[];
     objetivo_entrenamiento?: TrainingObjective | null;
     /** Derivado por el backend (H1); null si no se calculó. */

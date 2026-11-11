@@ -1,14 +1,16 @@
 /**
  * catalogTechnique.ts — Técnica del ejercicio en la ficha admin: líneas, límites y envío.
  *
- * Contexto: SPEC_H10 (técnica editable). La ficha edita tres textos (descripción, un paso
- * por línea y un consejo por línea) y manda `technique` en el mismo guardado del bundle.
- * El servidor normaliza y valida igual (R5, R6); esto es el espejo para la ficha.
+ * Contexto: SPEC_H10 (técnica editable). La ficha edita la descripción y dos listas (un
+ * campo por paso y por consejo) y manda `technique` en el mismo guardado del bundle. El
+ * servidor normaliza y valida igual (exercise_technique.py); esto es el espejo de la ficha.
  * Notas de mantenimiento:
- * - R6: la normalización de líneas debe coincidir con `exercise_technique.normalize_lines`
- *   del backend. Si cambia una, cambia la otra.
+ * - R6: `techniqueLines` y `stripLineMarker` deben coincidir con `normalize_lines` del
+ *   backend. Si cambia uno, cambia el otro. Los mensajes también son los mismos.
  * - R8: en edición solo se manda la técnica si difiere de la guardada; si no, `null`.
  * - R3: se puede cambiar, nunca borrar. Vaciar una técnica que existía es un error.
+ * - Adoptar desde la Biblioteca: vacía vale `null` y el servidor copia el texto del
+ *   candidato; escrita, se valida y manda como al crear.
  *
  * @author Frontend Team
  * @since v6.1.0
@@ -24,12 +26,14 @@ export const CATALOG_TECHNIQUE_LIMITS = {
     lineMax: 400,
 } as const;
 
-/** Texto tal como se escribe en la ficha: pasos y consejos, uno por línea. */
+/** Texto tal como se edita: la descripción y una entrada por paso y por consejo. */
 export interface CatalogTechniqueDraft {
     description: string;
-    stepsText: string;
-    tipsText: string;
+    steps: string[];
+    tips: string[];
 }
+
+export type CatalogTechniqueMode = "create" | "edit" | "adopt";
 
 export interface CatalogTechniqueCounts {
     descriptionLength: number;
@@ -37,7 +41,7 @@ export interface CatalogTechniqueCounts {
     tips: number;
 }
 
-/** Errores en vivo por campo (solo límites; lo obligatorio se avisa al guardar). */
+/** Error por campo: límites siempre; lo obligatorio, solo si `required`. */
 export interface CatalogTechniqueFieldErrors {
     description: string | null;
     steps: string | null;
@@ -45,41 +49,65 @@ export interface CatalogTechniqueFieldErrors {
 }
 
 export interface CatalogTechniqueSubmit {
-    /** null = no se toca la técnica (R8). */
+    /** null = no se toca la técnica (R8, o adopción sin texto). */
     payload: CatalogTechniqueIn | null;
     errors: string[];
+    fieldErrors: CatalogTechniqueFieldErrors;
 }
+
+export const CATALOG_TECHNIQUE_REQUIRED = {
+    description: "La descripción es obligatoria.",
+    steps: "Añade al menos un paso de ejecución.",
+} as const;
 
 /** Numeración o viñeta pegada al principio de la línea: «1.», «1)», «-», «•», «*». */
 const LEADING_MARKER = /^\s*(?:\d+\s*[.)]|[-•*])\s+/;
+const LINE_BREAK = /\r\n|\r|\n/;
+
+const NO_FIELD_ERRORS: CatalogTechniqueFieldErrors = { description: null, steps: null, tips: null };
 
 function formatCount(value: number): string {
     return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
+/** Quita la numeración o viñeta pegada al principio de una línea (R6). */
+export function stripLineMarker(line: string): string {
+    return line.replace(LEADING_MARKER, "");
+}
+
 /** R6: una línea por paso o consejo, sin vacías, sin espacios en los extremos ni numeración. */
 export function techniqueLines(text: string): string[] {
     return text
-        .split(/\r\n|\r|\n/)
-        .map((line) => line.replace(LEADING_MARKER, "").trim())
+        .split(LINE_BREAK)
+        .map((line) => stripLineMarker(line).trim())
         .filter((line) => line.length > 0);
+}
+
+/** Texto pegado en un campo de paso: cada línea es una entrada, sin numeración. */
+export function splitPastedLines(text: string): string[] {
+    return techniqueLines(text);
+}
+
+export function emptyTechniqueDraft(): CatalogTechniqueDraft {
+    return { description: "", steps: [""], tips: [] };
 }
 
 export function techniqueDraftFromOut(
     technique: CatalogTechniqueOut | null | undefined
 ): CatalogTechniqueDraft {
+    if (!technique) return emptyTechniqueDraft();
     return {
-        description: technique?.description ?? "",
-        stepsText: (technique?.steps ?? []).join("\n"),
-        tipsText: (technique?.tips ?? []).join("\n"),
+        description: technique.description ?? "",
+        steps: technique.steps.length > 0 ? [...technique.steps] : [""],
+        tips: [...technique.tips],
     };
 }
 
 export function techniqueFromDraft(draft: CatalogTechniqueDraft): CatalogTechniqueIn {
     return {
         description: draft.description.trim(),
-        steps: techniqueLines(draft.stepsText),
-        tips: techniqueLines(draft.tipsText),
+        steps: techniqueLines(draft.steps.join("\n")),
+        tips: techniqueLines(draft.tips.join("\n")),
     };
 }
 
@@ -127,53 +155,62 @@ function linesError(
     return null;
 }
 
-export function techniqueFieldErrors(technique: CatalogTechniqueIn): CatalogTechniqueFieldErrors {
+/** Errores por campo. Con `required`, la descripción vacía o sin pasos también (R2, R3). */
+export function techniqueFieldErrors(
+    technique: CatalogTechniqueIn,
+    required = false
+): CatalogTechniqueFieldErrors {
     const { descriptionMax, stepsMax, tipsMax } = CATALOG_TECHNIQUE_LIMITS;
     const length = technique.description.length;
+    const descriptionLimit =
+        length > descriptionMax
+            ? `La descripción tiene ${formatCount(length)} caracteres; el máximo es ${formatCount(
+                  descriptionMax
+              )}.`
+            : null;
+    const stepsLimit = linesError(technique.steps, stepsMax, { plural: "pasos", singular: "paso" });
     return {
         description:
-            length > descriptionMax
-                ? `La descripción tiene ${formatCount(length)} caracteres; el máximo es ${formatCount(
-                      descriptionMax
-                  )}.`
-                : null,
-        steps: linesError(technique.steps, stepsMax, { plural: "pasos", singular: "paso" }),
+            required && length === 0 ? CATALOG_TECHNIQUE_REQUIRED.description : descriptionLimit,
+        steps:
+            required && technique.steps.length === 0 ? CATALOG_TECHNIQUE_REQUIRED.steps : stepsLimit,
         tips: linesError(technique.tips, tipsMax, { plural: "consejos", singular: "consejo" }),
     };
 }
 
-/** R2, R3 y R5: errores de una técnica que se va a guardar. */
+/** R2, R3 y R5: errores de una técnica que se va a guardar, en el orden del servidor. */
 export function techniqueErrors(technique: CatalogTechniqueIn): string[] {
     const errors: string[] = [];
-    if (technique.description.length === 0) {
-        errors.push("La descripción es obligatoria.");
-    }
-    if (technique.steps.length === 0) {
-        errors.push("Añade al menos un paso de ejecución.");
-    }
-    const fields = techniqueFieldErrors(technique);
-    for (const message of [fields.description, fields.steps, fields.tips]) {
+    if (technique.description.length === 0) errors.push(CATALOG_TECHNIQUE_REQUIRED.description);
+    if (technique.steps.length === 0) errors.push(CATALOG_TECHNIQUE_REQUIRED.steps);
+    const limits = techniqueFieldErrors(technique);
+    for (const message of [limits.description, limits.steps, limits.tips]) {
         if (message) errors.push(message);
     }
     return errors;
 }
 
 /**
- * Qué técnica manda el guardado. Al crear siempre se manda y es obligatoria (R2). Al editar
- * solo se manda si cambió respecto a la guardada (R8); si cambió, se valida entera, así que
- * vaciar una técnica que existía da error (R3).
+ * Qué técnica manda el guardado.
+ * - Crear: siempre, y es obligatoria (R2).
+ * - Editar: solo si cambió respecto a la guardada (R8); si cambió, se valida entera, así
+ *   que vaciar una técnica que existía da error (R3).
+ * - Adoptar: vacía no se manda (el servidor copia la del candidato); escrita, como al crear.
  */
 export function resolveTechniqueSubmit(
     draft: CatalogTechniqueDraft,
     saved: CatalogTechniqueOut | null | undefined,
-    mode: "create" | "edit"
+    mode: CatalogTechniqueMode
 ): CatalogTechniqueSubmit {
     const technique = techniqueFromDraft(draft);
-    if (mode === "edit") {
-        const baseline = techniqueFromDraft(techniqueDraftFromOut(saved));
-        if (sameTechnique(technique, baseline)) {
-            return { payload: null, errors: [] };
-        }
+    const unchanged =
+        mode === "edit" && sameTechnique(technique, techniqueFromDraft(techniqueDraftFromOut(saved)));
+    if (unchanged || (mode === "adopt" && isTechniqueEmpty(technique))) {
+        return { payload: null, errors: [], fieldErrors: NO_FIELD_ERRORS };
     }
-    return { payload: technique, errors: techniqueErrors(technique) };
+    return {
+        payload: technique,
+        errors: techniqueErrors(technique),
+        fieldErrors: techniqueFieldErrors(technique, true),
+    };
 }

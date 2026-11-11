@@ -11,15 +11,12 @@
  * @author Frontend Team
  * @since v6.x
  * @updated v9.2.3 — scrollIntoView activo; sin doble indicador scrollbar
- * @updated H10 — `errorCount` opcional por pestaña (ficha admin por pestañas, SPEC_H10 §6.3)
  */
 
 import React, { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import {
     NEXIA_SEGMENTED_SCROLL,
-    NEXIA_SEGMENTED_COPY,
-    NEXIA_SEGMENTED_ERROR_BADGE,
     NEXIA_SEGMENTED_SHELL,
     nexiaSegmentedItemClass,
     nexiaSegmentedTrackClass,
@@ -31,8 +28,6 @@ export interface TabsBarItem {
     label: string;
     icon?: React.ReactNode;
     disabled?: boolean;
-    /** Errores de validación dentro de la pestaña (formularios por pestañas). 0 u omitido: sin marca. */
-    errorCount?: number;
     /** Wizard: paso ya visitado (estilo secundario cuando no está activo). */
     completed?: boolean;
 }
@@ -125,14 +120,6 @@ export const TabsBar: React.FC<TabsBarProps> = ({
                                     </span>
                                 ) : null}
                                 {tab.label}
-                                {tab.errorCount ? (
-                                    <span
-                                        className={NEXIA_SEGMENTED_ERROR_BADGE}
-                                        aria-label={NEXIA_SEGMENTED_COPY.errorCount(tab.errorCount)}
-                                    >
-                                        {tab.errorCount}
-                                    </span>
-                                ) : null}
                             </button>
                         );
                     })}

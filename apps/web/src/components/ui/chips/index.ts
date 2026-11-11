@@ -1,5 +1,6 @@
 export { AddPill, type AddPillProps } from "./AddPill";
 export { AddPillGrid, type AddPillGridProps } from "./AddPillGrid";
+export { RemovableChip, type RemovableChipProps } from "./RemovableChip";
 export {
     ADD_PILL_GRID_PREMIUM_CLASS,
     ADD_PILL_PREMIUM_CLASS,

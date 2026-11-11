@@ -1,9 +1,11 @@
 /**
- * AdminCatalogTechnique.test.tsx — Pestañas de la ficha y pestaña «Técnica» (SPEC_H10).
+ * AdminCatalogTechnique.test.tsx — Tarjeta «Técnica» de la ficha admin (SPEC_H10).
  *
- * Qué se prueba: la técnica guardada se ve y se previsualiza; un guardado que no la toca
- * manda `technique: null` (R8); un cambio la manda entera y normalizada (R1, R6); al crear
- * es obligatoria (R2) y la pestaña marca sus errores; los límites avisan en vivo (R5).
+ * Qué se prueba: la técnica guardada aparece paso a paso y en la vista previa; guardar sin
+ * tocarla manda `technique: null` (R8); un cambio la manda entera y normalizada (R1, R6);
+ * pegar varias líneas crea un paso por línea; Intro añade un paso; al crear es obligatoria
+ * (R2) con el error bajo cada campo; un consejo demasiado largo avisa en vivo (R5).
+ * Entorno: móvil (jsdom sin lg), así que la tarjeta se abre antes de usarla.
  *
  * @author Frontend Team
  * @since v10.0.0
@@ -18,7 +20,7 @@ import { clearRouterMocks, setAuthenticatedUser } from "@/test-utils/mocks";
 import { validAdminUser } from "@/test-utils/fixtures/auth";
 import { mockCatalogExercise } from "@/test-utils/mocks/handlers/adminCatalog";
 import { AdminExerciseCatalogForm } from "../AdminExerciseCatalogForm";
-import { ADMIN_CATALOG_COPY } from "../adminCatalogPresentation";
+import { FICHA_COPY } from "../adminCatalogFichaPresentation";
 
 type SavedBody = { technique?: unknown } | null;
 
@@ -27,91 +29,90 @@ function captureSave(): { body: SavedBody } {
     server.use(
         http.put("*/exercises/:id/catalog", async ({ request }) => {
             saved.body = (await request.json()) as SavedBody;
-            return HttpResponse.json({ ...mockCatalogExercise, updated_at: "2026-11-10T12:00:00.000Z" });
+            return HttpResponse.json({ ...mockCatalogExercise, updated_at: "2026-11-11T12:00:00.000Z" });
         })
     );
     return saved;
 }
 
-async function openTechniqueTab(user: ReturnType<typeof userEvent.setup>) {
-    await user.click(screen.getByRole("tab", { name: /^Técnica/ }));
+async function openTechnique(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("button", { name: /^Técnica/ }));
 }
 
-describe("Ficha admin — pestañas y técnica", { timeout: 45_000 }, () => {
+async function renderEdit() {
+    render(<AdminExerciseCatalogForm mode="edit" exercisePk={11} />);
+    await screen.findByRole("heading", { level: 1, name: mockCatalogExercise.nombre }, { timeout: 15_000 });
+}
+
+const save = () => screen.getByRole("button", { name: FICHA_COPY.save });
+
+describe("Ficha admin — técnica", { timeout: 45_000 }, () => {
     beforeEach(() => {
         clearRouterMocks();
         setAuthenticatedUser(validAdminUser);
+        sessionStorage.clear();
         vi.clearAllMocks();
     });
 
-    it("muestra las seis pestañas y abre «Datos» por defecto", async () => {
-        render(<AdminExerciseCatalogForm mode="edit" exercisePk={11} />);
-        await screen.findByText(/squat_back/i, undefined, { timeout: 15_000 });
-
-        const tabs = screen.getAllByRole("tab").map((tab) => tab.textContent);
-        expect(tabs).toEqual(
-            expect.arrayContaining([
-                "Datos",
-                "Técnica",
-                "Músculos",
-                "Movimiento",
-                "Material y etiquetas",
-                "Relaciones",
-            ])
-        );
-        expect(screen.getByRole("tab", { name: "Datos" })).toHaveAttribute("aria-selected", "true");
-        expect(document.getElementById("tecnica")).toHaveClass("hidden");
-        expect(document.getElementById("datos")).not.toHaveClass("hidden");
-    });
-
-    it("la técnica guardada aparece en los campos y en la vista previa", async () => {
+    it("la técnica guardada aparece paso a paso y en la vista previa", async () => {
         const user = userEvent.setup();
-        render(<AdminExerciseCatalogForm mode="edit" exercisePk={11} />);
-        await screen.findByText(/squat_back/i, undefined, { timeout: 15_000 });
-        await openTechniqueTab(user);
+        await renderEdit();
+        expect(screen.getByRole("button", { name: /^Técnica/ })).toHaveTextContent("3 pasos · 1 consejo");
+        await openTechnique(user);
 
-        expect(document.getElementById("tecnica")).not.toHaveClass("hidden");
-        expect(screen.getByLabelText(/^Ejecución/)).toHaveValue(
-            "Coloca la barra sobre los trapecios.\nBaja con el pecho alto.\nSube empujando el suelo."
+        expect(screen.getByRole("textbox", { name: "Paso 1" })).toHaveValue("Coloca la barra sobre los trapecios.");
+        expect(screen.getByRole("textbox", { name: "Paso 3" })).toHaveValue("Sube empujando el suelo.");
+        expect(screen.getByRole("textbox", { name: "Consejo 1" })).toHaveValue("No despegues los talones.");
+        expect(screen.getByText("Intro añade un paso · 3 de 15")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("tab", { name: "Vista previa" }));
+        expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual(
+            expect.arrayContaining(["Baja con el pecho alto.", "No despegues los talones."])
         );
-        const preview = screen.getByRole("complementary", { name: "Vista previa" });
-        expect(within(preview).getAllByRole("listitem")).toHaveLength(4);
-        expect(screen.getByText("Un paso por línea, en orden · 3 de 15")).toBeInTheDocument();
     });
 
     it("R8: guardar sin tocar la técnica manda technique null", async () => {
         const user = userEvent.setup();
         const saved = captureSave();
-        render(<AdminExerciseCatalogForm mode="edit" exercisePk={11} />);
-        await screen.findByText(/squat_back/i, undefined, { timeout: 15_000 });
-
-        await user.click(screen.getByRole("button", { name: ADMIN_CATALOG_COPY.save }));
-
+        await renderEdit();
+        await user.click(save());
         await waitFor(() => expect(saved.body).not.toBeNull());
         expect(saved.body?.technique).toBeNull();
     });
 
-    it("un cambio manda la técnica entera, sin numeración ni líneas vacías", async () => {
+    it("pegar varios pasos los separa y el envío va entero y normalizado", async () => {
         const user = userEvent.setup();
         const saved = captureSave();
-        render(<AdminExerciseCatalogForm mode="edit" exercisePk={11} />);
-        await screen.findByText(/squat_back/i, undefined, { timeout: 15_000 });
-        await openTechniqueTab(user);
+        await renderEdit();
+        await openTechnique(user);
 
-        const steps = screen.getByLabelText(/^Ejecución/);
-        await user.clear(steps);
-        await user.type(steps, "1. Coloca la barra.{enter}{enter}2. Baja y sube.");
-        await user.click(screen.getByRole("button", { name: ADMIN_CATALOG_COPY.save }));
+        const first = screen.getByRole("textbox", { name: "Paso 1" });
+        await user.clear(first);
+        await user.click(first);
+        await user.paste("1. Coloca la barra.\n\n2. Baja y sube.");
+        expect(screen.getByRole("textbox", { name: "Paso 2" })).toHaveValue("Baja y sube.");
 
+        await user.click(save());
         await waitFor(() => expect(saved.body).not.toBeNull());
         expect(saved.body?.technique).toEqual({
             description: "Sentadilla con la barra apoyada en la espalda alta.",
-            steps: ["Coloca la barra.", "Baja y sube."],
+            steps: ["Coloca la barra.", "Baja y sube.", "Baja con el pecho alto.", "Sube empujando el suelo."],
             tips: ["No despegues los talones."],
         });
     });
 
-    it("R2: al crear sin técnica, la pestaña marca sus errores y no se guarda", async () => {
+    it("Intro en un paso crea el siguiente y le pasa el foco", async () => {
+        const user = userEvent.setup();
+        await renderEdit();
+        await openTechnique(user);
+        await user.click(screen.getByRole("textbox", { name: "Paso 3" }));
+        await user.keyboard("{Enter}");
+        const fourth = screen.getByRole("textbox", { name: "Paso 4" });
+        expect(fourth).toHaveValue("");
+        expect(fourth).toHaveFocus();
+    });
+
+    it("R2: al crear sin técnica, error bajo descripción y pasos, y no se guarda", async () => {
         const user = userEvent.setup();
         let posted = false;
         server.use(
@@ -123,27 +124,23 @@ describe("Ficha admin — pestañas y técnica", { timeout: 45_000 }, () => {
         render(<AdminExerciseCatalogForm mode="create" exercisePk={null} />);
         await screen.findByTestId("admin-exercise-catalog-form");
 
-        await user.click(screen.getByRole("button", { name: ADMIN_CATALOG_COPY.save }));
+        await user.click(save());
 
-        await waitFor(() =>
-            expect(screen.getByText("La descripción es obligatoria.")).toBeInTheDocument()
-        );
+        expect(await screen.findByText("La descripción es obligatoria.")).toBeInTheDocument();
         expect(screen.getByText("Añade al menos un paso de ejecución.")).toBeInTheDocument();
-        expect(within(screen.getByRole("tab", { name: /^Técnica/ })).getByLabelText("2 errores")).toBeInTheDocument();
+        const card = document.getElementById("ficha-tecnica") as HTMLElement;
+        expect(within(card).getByRole("img", { name: "2 errores" })).toBeInTheDocument();
         expect(posted).toBe(false);
     });
 
-    it("R5: un paso demasiado largo avisa en el campo", async () => {
+    it("R5: un consejo demasiado largo avisa en vivo", async () => {
         const user = userEvent.setup();
-        render(<AdminExerciseCatalogForm mode="edit" exercisePk={11} />);
-        await screen.findByText(/squat_back/i, undefined, { timeout: 15_000 });
-        await openTechniqueTab(user);
-
-        const tips = screen.getByLabelText(/^Consejos/);
-        await user.clear(tips);
-        await user.click(tips);
+        await renderEdit();
+        await openTechnique(user);
+        const tip = screen.getByRole("textbox", { name: "Consejo 1" });
+        await user.clear(tip);
+        await user.click(tip);
         await user.paste("x".repeat(401));
-
         expect(screen.getByText("El consejo 1 tiene 401 caracteres; el máximo es 400.")).toBeInTheDocument();
     });
 });

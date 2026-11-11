@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
     CATALOG_TECHNIQUE_LIMITS,
     resolveTechniqueSubmit,
+    splitPastedLines,
     techniqueCounts,
     techniqueDraftFromOut,
     techniqueFieldErrors,
@@ -52,7 +53,19 @@ describe("borrador", () => {
     });
 
     it("sin técnica guardada empieza vacío", () => {
-        expect(techniqueDraftFromOut(null)).toEqual({ description: "", stepsText: "", tipsText: "" });
+        expect(techniqueDraftFromOut(null)).toEqual({ description: "", steps: [""], tips: [] });
+    });
+
+    it("un paso con varias líneas pegadas cuenta como varios pasos", () => {
+        const draft = { ...techniqueDraftFromOut(saved), steps: ["1. Uno\n2. Dos", "", "Tres"] };
+        expect(techniqueFromDraft(draft).steps).toEqual(["Uno", "Dos", "Tres"]);
+    });
+
+    it("pegar varias líneas da una entrada por línea, sin numeración", () => {
+        expect(splitPastedLines("1. Coloca la barra.\r\n\n2) Baja.")).toEqual([
+            "Coloca la barra.",
+            "Baja.",
+        ]);
     });
 
     it("cuenta caracteres, pasos y consejos ya normalizados", () => {
@@ -89,31 +102,49 @@ describe("resolveTechniqueSubmit", () => {
 
     it("al editar sin cambios no manda nada (R8)", () => {
         const draft = techniqueDraftFromOut(saved);
-        expect(resolveTechniqueSubmit(draft, saved, "edit")).toEqual({ payload: null, errors: [] });
+        expect(resolveTechniqueSubmit(draft, saved, "edit").payload).toBeNull();
     });
 
     it("al editar, espacios o numeración añadidos no cuentan como cambio (R8)", () => {
-        const draft = { ...techniqueDraftFromOut(saved), stepsText: "1. Acuéstate de lado.\n\n2. Levanta las caderas.  " };
+        const draft = {
+            ...techniqueDraftFromOut(saved),
+            steps: ["1. Acuéstate de lado.", "", "2. Levanta las caderas.  "],
+        };
         expect(resolveTechniqueSubmit(draft, saved, "edit").payload).toBeNull();
     });
 
     it("un ejercicio sin técnica se guarda sin ella si no se escribe nada", () => {
-        expect(resolveTechniqueSubmit(techniqueDraftFromOut(null), null, "edit")).toEqual({
-            payload: null,
-            errors: [],
-        });
+        const result = resolveTechniqueSubmit(techniqueDraftFromOut(null), null, "edit");
+        expect(result.payload).toBeNull();
+        expect(result.errors).toEqual([]);
     });
 
     it("un cambio manda la técnica entera, normalizada", () => {
-        const draft = { ...techniqueDraftFromOut(saved), tipsText: "" };
-        expect(resolveTechniqueSubmit(draft, saved, "edit")).toEqual({
-            payload: { ...saved, tips: [] },
-            errors: [],
-        });
+        const draft = { ...techniqueDraftFromOut(saved), tips: [] };
+        const result = resolveTechniqueSubmit(draft, saved, "edit");
+        expect(result.payload).toEqual({ ...saved, tips: [] });
+        expect(result.errors).toEqual([]);
     });
 
     it("vaciar una técnica que existía es un error (R3)", () => {
         const result = resolveTechniqueSubmit(techniqueDraftFromOut(null), saved, "edit");
         expect(result.errors).toContain("La descripción es obligatoria.");
+        expect(result.fieldErrors).toEqual({
+            description: "La descripción es obligatoria.",
+            steps: "Añade al menos un paso de ejecución.",
+            tips: null,
+        });
+    });
+
+    it("adoptar sin texto no manda técnica: el servidor copia la del candidato", () => {
+        const result = resolveTechniqueSubmit(techniqueDraftFromOut(null), null, "adopt");
+        expect(result.payload).toBeNull();
+        expect(result.errors).toEqual([]);
+    });
+
+    it("adoptar con texto lo valida como al crear", () => {
+        const draft = { ...techniqueDraftFromOut(null), description: "Qué es." };
+        const result = resolveTechniqueSubmit(draft, null, "adopt");
+        expect(result.errors).toEqual(["Añade al menos un paso de ejecución."]);
     });
 });

@@ -1,10 +1,11 @@
 /**
  * useAdminCatalogFormSubmit.ts — Atajos de guardado, historial y uso al desactivar.
  *
- * Contexto: extraído de AdminExerciseCatalogForm (H5, SPEC §2.6). El guardado
- * en sí sigue en useAdminExerciseCatalogForm.
- * Notas: Ctrl/Cmd+S guarda; Ctrl/Cmd+Enter marca revisado y sigue. El historial
- * exige un ejercicio ya guardado. El uso solo se pide con el modal de baja abierto.
+ * Contexto: extraído de AdminExerciseCatalogForm (H5, SPEC §2.6). El guardado en sí sigue
+ * en useAdminExerciseCatalogForm.
+ * Notas: Ctrl/Cmd+S guarda y se queda; Ctrl/Cmd+Intro guarda y, en la cola de revisión,
+ * pasa al siguiente (H10: «Revisado» viaja en el guardado). El historial exige un
+ * ejercicio ya guardado. El uso solo se pide con el modal de baja abierto.
  *
  * @author Frontend Team
  * @since v1.1.0
@@ -17,8 +18,7 @@ interface UseAdminCatalogFormSubmitArgs {
     exercisePk: number | null;
     currentPk: number | null;
     deactivateOpen: boolean;
-    handleSave: () => Promise<void>;
-    handleReviewedAndNext: () => Promise<void>;
+    handleSave: (advance: boolean) => Promise<void>;
     setHistoryOpen: (open: boolean) => void;
     showError: (message: string) => void;
 }
@@ -28,29 +28,27 @@ export function useAdminCatalogFormSubmit({
     currentPk,
     deactivateOpen,
     handleSave,
-    handleReviewedAndNext,
     setHistoryOpen,
     showError,
 }: UseAdminCatalogFormSubmitArgs) {
     useEffect(() => {
         const onKey = (event: KeyboardEvent) => {
-            if ((event.ctrlKey || event.metaKey) && event.key === "s") {
+            if (!(event.ctrlKey || event.metaKey)) return;
+            if (event.key === "s") {
                 event.preventDefault();
-                void handleSave();
-            }
-            if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                void handleSave(false);
+            } else if (event.key === "Enter") {
                 event.preventDefault();
-                void handleReviewedAndNext();
+                void handleSave(true);
             }
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
-    }, [handleReviewedAndNext, handleSave]);
+    }, [handleSave]);
 
-    const { data: usage, isFetching: usageLoading } = useGetCatalogExerciseUsageQuery(
-        exercisePk ?? 0,
-        { skip: exercisePk == null || !deactivateOpen }
-    );
+    const { data: usage, isFetching: usageLoading } = useGetCatalogExerciseUsageQuery(exercisePk ?? 0, {
+        skip: exercisePk == null || !deactivateOpen,
+    });
 
     const openHistory = useCallback(() => {
         if (currentPk == null) {

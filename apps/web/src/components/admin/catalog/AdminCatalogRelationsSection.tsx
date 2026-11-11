@@ -1,10 +1,19 @@
 /**
- * AdminCatalogRelationsSection.tsx — Alternativas + variantes en ficha Admin (M6 F2).
+ * AdminCatalogRelationsSection.tsx — Contenido de la tarjeta «Alternativas y variantes» (M6 F2).
+ *
+ * Contexto: H10 (DISENO_H10_FICHA_ADMIN §3, D-H10-6). Las alternativas se guardan al
+ * añadirlas o quitarlas (su propia API), no con «Guardar», y la tarjeta lo dice. Las
+ * variantes se leen aquí y se crean desde la variante.
+ * Notas de mantenimiento: en el alta no hay ejercicio todavía: solo el aviso. Quitar pide
+ * confirmación (NexiaPremiumConfirmModal).
+ *
+ * @author Frontend Team
+ * @since v1.0.0
  */
 
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Trash2 } from "lucide-react";
+import { X } from "lucide-react";
 import {
     useCreateAlternativeMutation,
     useDeleteAlternativeMutation,
@@ -12,34 +21,35 @@ import {
 } from "@nexia/shared/api/exerciseAlternativesApi";
 import { useListAdminCatalogExercisesQuery } from "@nexia/shared/api/adminCatalogApi";
 import { useGetExerciseVariantsQuery } from "@nexia/shared/api/exercisesApi";
-import { Button } from "@/components/ui/buttons";
-import { Alert, useToast } from "@/components/ui/feedback";
+import { useToast } from "@/components/ui/feedback";
+import { NexiaSearchPicker } from "@/components/ui/forms";
 import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
-import { AdminCatalogSearchPicker } from "./AdminCatalogSearchPicker";
+import { ADMIN_CATALOG_COPY } from "./adminCatalogPresentation";
 import {
-    ADMIN_CATALOG_ALERT_SPACING,
-    ADMIN_CATALOG_CHIP_LIST,
-    ADMIN_CATALOG_COPY,
-    ADMIN_CATALOG_ROW,
-    ADMIN_CATALOG_SECTION,
-    ADMIN_CATALOG_SECTION_HINT,
-    ADMIN_CATALOG_SECTION_TITLE,
-} from "./adminCatalogPresentation";
+    FICHA_ADD,
+    FICHA_EMPTY,
+    FICHA_GROUP,
+    FICHA_GROUP_HEAD,
+    FICHA_GROUP_HINT,
+    FICHA_GROUP_LABEL,
+    FICHA_ICON_BUTTON_DANGER,
+    FICHA_PM_LIST,
+    FICHA_RELATION_LINK,
+    FICHA_RELATION_ROW,
+    FICHA_COPY,
+    RELATIONS_COPY,
+} from "./adminCatalogFichaPresentation";
 
 export interface AdminCatalogRelationsSectionProps {
     exercisePk: number | null;
 }
 
-export const AdminCatalogRelationsSection: React.FC<AdminCatalogRelationsSectionProps> = ({
-    exercisePk,
-}) => {
+export const AdminCatalogRelationsSection: React.FC<AdminCatalogRelationsSectionProps> = ({ exercisePk }) => {
     const { showSuccess, showError } = useToast();
     const [removeId, setRemoveId] = useState<number | null>(null);
-
     const skip = exercisePk == null;
-    const { data: alternatives = [], isLoading: loadingAlts } =
-        useGetExerciseAlternativesQuery(exercisePk ?? 0, { skip });
-    const { data: variants = [], isLoading: loadingVars } = useGetExerciseVariantsQuery(
+    const { data: alternatives = [] } = useGetExerciseAlternativesQuery(exercisePk ?? 0, { skip });
+    const { data: variants = [] } = useGetExerciseVariantsQuery(
         { base_exercise_id: exercisePk ?? 0, is_active: true },
         { skip }
     );
@@ -47,31 +57,31 @@ export const AdminCatalogRelationsSection: React.FC<AdminCatalogRelationsSection
         { skip: 0, limit: 500, include_inactive: false },
         { skip }
     );
-    const [createAlt, { isLoading: creating }] = useCreateAlternativeMutation();
+    const [createAlt] = useCreateAlternativeMutation();
     const [deleteAlt, { isLoading: deleting }] = useDeleteAlternativeMutation();
 
-    const pickerOptions = useMemo(() => {
-        const exclude = new Set<number>([
-            ...(exercisePk != null ? [exercisePk] : []),
-            ...alternatives.map((a) => a.alternative_exercise_id),
-        ]);
-        return (catalogList?.items ?? [])
-            .filter((item) => !exclude.has(item.exercise_pk))
-            .map((item) => ({
-                value: item.exercise_pk,
-                label: `${item.nombre} (${item.exercise_code})`,
-            }));
-    }, [alternatives, catalogList?.items, exercisePk]);
+    const options = useMemo(
+        () =>
+            (catalogList?.items ?? [])
+                .filter((item) => item.exercise_pk !== exercisePk)
+                .map((item) => ({ value: item.exercise_pk, label: item.nombre, hint: item.exercise_code })),
+        [catalogList?.items, exercisePk]
+    );
+    const taken = useMemo(
+        () => new Map(alternatives.map((alt) => [alt.alternative_exercise_id, FICHA_COPY.taken])),
+        [alternatives]
+    );
+    const nextPriority = alternatives.reduce((max, a) => Math.max(max, a.priority ?? 0), 0) + 1;
 
-    const nextPriority =
-        alternatives.reduce((max, a) => Math.max(max, a.priority ?? 0), 0) + 1;
+    if (exercisePk == null) {
+        return <p className={FICHA_EMPTY}>{RELATIONS_COPY.saveFirst}</p>;
+    }
 
-    const handleAdd = async (altPk: number) => {
-        if (exercisePk == null) return;
+    const handleAdd = async (alternativePk: number) => {
         try {
             await createAlt({
                 exercise_id: exercisePk,
-                alternative_exercise_id: altPk,
+                alternative_exercise_id: alternativePk,
                 priority: nextPriority,
             }).unwrap();
             showSuccess(ADMIN_CATALOG_COPY.altAddedToast);
@@ -84,106 +94,74 @@ export const AdminCatalogRelationsSection: React.FC<AdminCatalogRelationsSection
         if (removeId == null) return;
         try {
             await deleteAlt(removeId).unwrap();
-            setRemoveId(null);
             showSuccess(ADMIN_CATALOG_COPY.altRemovedToast);
         } catch {
             showError(ADMIN_CATALOG_COPY.altRemoveError);
+        } finally {
+            setRemoveId(null);
         }
     };
 
-    if (exercisePk == null) {
-        return (
-            <section id="alternativas" className={ADMIN_CATALOG_SECTION}>
-                <h2 className={ADMIN_CATALOG_SECTION_TITLE}>
-                    {ADMIN_CATALOG_COPY.sectionAlternativas}
-                </h2>
-                <p className={ADMIN_CATALOG_SECTION_HINT}>
-                    {ADMIN_CATALOG_COPY.altSaveFirstHint}
-                </p>
-            </section>
-        );
-    }
-
     return (
         <>
-            <section id="alternativas" className={ADMIN_CATALOG_SECTION} data-testid="admin-catalog-alternatives">
-                <h2 className={ADMIN_CATALOG_SECTION_TITLE}>
-                    {ADMIN_CATALOG_COPY.sectionAlternativas}
-                </h2>
-                <p className={ADMIN_CATALOG_SECTION_HINT}>{ADMIN_CATALOG_COPY.altHint}</p>
-                {loadingAlts ? (
-                    <p className="text-sm text-muted-foreground">Cargando…</p>
-                ) : alternatives.length === 0 ? (
-                    <Alert variant="info" className={ADMIN_CATALOG_ALERT_SPACING}>
-                        {ADMIN_CATALOG_COPY.altEmpty}
-                    </Alert>
-                ) : (
-                    <ul className={ADMIN_CATALOG_CHIP_LIST}>
-                        {alternatives.map((alt) => (
-                            <li key={alt.id} className={ADMIN_CATALOG_ROW}>
-                                <Link
-                                    to={`/dashboard/admin/catalog/${alt.alternative_exercise_id}`}
-                                    className="text-sm text-primary underline-offset-2 hover:underline"
-                                >
-                                    {alt.alternative_exercise_name ??
-                                        `#${alt.alternative_exercise_id}`}
-                                </Link>
-                                <span className="text-xs text-muted-foreground">
-                                    prior. {alt.priority}
-                                </span>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    aria-label={ADMIN_CATALOG_COPY.altRemove}
-                                    onClick={() => setRemoveId(alt.id)}
-                                >
-                                    <Trash2 className="h-4 w-4" aria-hidden />
-                                </Button>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-                <div className="mt-3">
-                    <AdminCatalogSearchPicker
-                        options={pickerOptions}
-                        onSelect={(v) => void handleAdd(v)}
-                        placeholder={ADMIN_CATALOG_COPY.altSearchPlaceholder}
-                        data-testid="admin-catalog-alt-picker"
-                    />
-                    {creating ? (
-                        <p className="mt-1 text-xs text-muted-foreground">Añadiendo…</p>
-                    ) : null}
+            <div className={FICHA_GROUP} data-testid="admin-catalog-alternatives">
+                <div className={FICHA_GROUP_HEAD}>
+                    <h3 className={FICHA_GROUP_LABEL}>{RELATIONS_COPY.alternatives}</h3>
+                    <span className={FICHA_GROUP_HINT}>{RELATIONS_COPY.savedOnAdd}</span>
                 </div>
-            </section>
-
-            <section id="variantes" className={ADMIN_CATALOG_SECTION} data-testid="admin-catalog-variants">
-                <h2 className={ADMIN_CATALOG_SECTION_TITLE}>
-                    {ADMIN_CATALOG_COPY.sectionVariantes}
-                </h2>
-                <p className={ADMIN_CATALOG_SECTION_HINT}>{ADMIN_CATALOG_COPY.variantsHint}</p>
-                {loadingVars ? (
-                    <p className="text-sm text-muted-foreground">Cargando…</p>
-                ) : variants.length === 0 ? (
-                    <Alert variant="info" className={ADMIN_CATALOG_ALERT_SPACING}>
-                        {ADMIN_CATALOG_COPY.variantsEmpty}
-                    </Alert>
+                {alternatives.length === 0 ? (
+                    <p className={FICHA_EMPTY}>{RELATIONS_COPY.alternativesEmpty}</p>
                 ) : (
-                    <ul className={ADMIN_CATALOG_CHIP_LIST}>
-                        {variants.map((v) => (
-                            <li key={v.id} className={ADMIN_CATALOG_ROW}>
-                                <span className="text-sm">
-                                    {v.name_es || v.name_en}
-                                    <span className="ml-2 text-xs text-muted-foreground">
-                                        {v.variant_type}
-                                    </span>
-                                </span>
+                    <ul className={FICHA_PM_LIST}>
+                        {alternatives.map((alt) => {
+                            const name = alt.alternative_exercise_name ?? `#${alt.alternative_exercise_id}`;
+                            return (
+                                <li key={alt.id} className={FICHA_RELATION_ROW}>
+                                    <Link
+                                        to={`/dashboard/admin/catalog/${alt.alternative_exercise_id}`}
+                                        className={FICHA_RELATION_LINK}
+                                    >
+                                        {name}
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        className={FICHA_ICON_BUTTON_DANGER}
+                                        aria-label={RELATIONS_COPY.remove(name)}
+                                        onClick={() => setRemoveId(alt.id)}
+                                    >
+                                        <X aria-hidden />
+                                    </button>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+                <NexiaSearchPicker
+                    title={RELATIONS_COPY.pickerTitle}
+                    triggerLabel={RELATIONS_COPY.add}
+                    triggerClassName={FICHA_ADD}
+                    options={options}
+                    unavailable={taken}
+                    searchPlaceholder={RELATIONS_COPY.search}
+                    emptyText={RELATIONS_COPY.empty}
+                    onSelect={(id) => void handleAdd(id)}
+                />
+            </div>
+            <div className={FICHA_GROUP} data-testid="admin-catalog-variants">
+                <h3 className={FICHA_GROUP_LABEL}>{RELATIONS_COPY.variants}</h3>
+                {variants.length === 0 ? (
+                    <p className={FICHA_EMPTY}>{RELATIONS_COPY.variantsEmpty}</p>
+                ) : (
+                    <ul className={FICHA_PM_LIST}>
+                        {variants.map((variant) => (
+                            <li key={variant.id} className={FICHA_RELATION_ROW}>
+                                <span>{variant.name_es || variant.name_en}</span>
+                                <span className={FICHA_GROUP_HINT}>{variant.variant_type}</span>
                             </li>
                         ))}
                     </ul>
                 )}
-            </section>
-
+            </div>
             <NexiaPremiumConfirmModal
                 isOpen={removeId != null}
                 onClose={() => setRemoveId(null)}

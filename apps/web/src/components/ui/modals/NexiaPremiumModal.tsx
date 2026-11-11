@@ -69,25 +69,36 @@ export const NexiaPremiumModal: React.FC<NexiaPremiumModalProps> = ({
     const descriptionId = useId();
 
     const blockClose = isLoading;
+    // H10: el último onClose sin repetir el efecto. Antes el efecto dependía de onClose y,
+    // con un onClose en línea, cada render del padre volvía a enfocar el marco y le quitaba
+    // el foco al campo que se estaba escribiendo.
+    const onCloseRef = useRef(onClose);
+    onCloseRef.current = onClose;
 
     useEffect(() => {
+        if (!isOpen) return undefined;
         const handleEscapeKey = (event: KeyboardEvent) => {
-            if (event.key === "Escape" && isOpen && closeOnEsc && !blockClose) {
-                onClose();
+            if (event.key === "Escape" && closeOnEsc && !blockClose) {
+                onCloseRef.current();
             }
         };
+        document.addEventListener("keydown", handleEscapeKey);
+        return () => document.removeEventListener("keydown", handleEscapeKey);
+    }, [isOpen, closeOnEsc, blockClose]);
 
-        if (isOpen) {
-            document.addEventListener("keydown", handleEscapeKey);
-            document.body.style.overflow = "hidden";
-            setTimeout(() => shellRef.current?.focus(), 100);
-        }
-
+    useEffect(() => {
+        if (!isOpen) return undefined;
+        document.body.style.overflow = "hidden";
+        // Foco inicial al abrir, salvo que un hijo ya lo tenga (p. ej. un buscador con autoFocus).
+        const timer = setTimeout(() => {
+            const shell = shellRef.current;
+            if (shell && !shell.contains(document.activeElement)) shell.focus();
+        }, 100);
         return () => {
-            document.removeEventListener("keydown", handleEscapeKey);
+            clearTimeout(timer);
             document.body.style.overflow = "unset";
         };
-    }, [isOpen, closeOnEsc, blockClose, onClose]);
+    }, [isOpen]);
 
     if (!isOpen) return null;
 

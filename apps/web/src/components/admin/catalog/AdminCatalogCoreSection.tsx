@@ -1,29 +1,25 @@
 /**
- * AdminCatalogCoreSection.tsx — Sección «Datos» de la ficha Admin (núcleo del ejercicio).
+ * AdminCatalogCoreSection.tsx — Contenido de la tarjeta «Datos» de la ficha admin.
  *
- * Contexto: extraída de AdminExerciseCatalogForm (H1, regla de tamaño) al añadir el objetivo
- * de entrenamiento. Solo render: el estado y la validación viven en useAdminExerciseCatalogForm
- * y en validateCatalogBundleDraft (shared).
- * Notas de mantenimiento: carga axial, nivel y objetivo empiezan vacíos y son obligatorios.
- * Una propuesta pending_review o rubric solo pasa a revisada si el administrador la confirma;
- * el motivo y los chips de la rúbrica llegan con la pantalla de H5.
- * Descripción, instrucciones y notas salieron de la ficha en H8-B: el texto que ve el
- * entrenador y el atleta es el contenido del ejercicio (exercise_content).
+ * Contexto: H10 (DISENO_H10_FICHA_ADMIN §2). Nombre e inglés a todo el ancho; objetivo de
+ * entrenamiento, tipo, nivel, lateralidad y carga axial en dos columnas. Cada error va bajo
+ * su campo (validateCatalogBundleDraft.byField). Las propuestas de nivel y carga axial
+ * (rúbrica o pendiente) se confirman con un interruptor, sin cambiar el valor (H1 R4).
+ * Notas de mantenimiento: solo pinta; el borrador vive en useAdminExerciseCatalogForm.
  *
  * @author Frontend Team
- * @since v1.1.0
+ * @since v1.0.0
  */
 
 import React from "react";
-import { Alert } from "@/components/ui/feedback";
-import { Checkbox, FormCombobox, FormField, Input } from "@/components/ui/forms";
-import { parseCatalogAxialLoad, parseTrainingObjective, type CatalogCoreDraft } from "@nexia/shared";
+import { FormCombobox, FormField, Input, NexiaSwitch } from "@/components/ui/forms";
+import { NEXIA_FORM_CONTROL_ERROR } from "@/components/ui/forms/formControlPresentation";
 import {
-    ADMIN_CATALOG_ALERT_SPACING,
-    ADMIN_CATALOG_COPY,
-    ADMIN_CATALOG_SECTION_HINT,
-    ADMIN_CATALOG_SECTION_TITLE,
-} from "./adminCatalogPresentation";
+    parseCatalogAxialLoad,
+    parseTrainingObjective,
+    type CatalogCoreDraft,
+    type CatalogCoreFieldId,
+} from "@nexia/shared";
 import {
     AXIAL_OPTIONS,
     AXIAL_PENDING_CONFIRM,
@@ -39,134 +35,163 @@ import {
     RUBRIC_CONFIRM_HINT,
     TIPO_OPTIONS,
 } from "./adminCatalogFieldOptions";
-import type { PendingReviewState } from "./adminCatalogFormTypes";
+import type { CatalogProposalKind, PendingReviewState } from "./adminCatalogFormTypes";
+import {
+    DATOS_COPY,
+    FICHA_FIELD_FULL,
+    FICHA_FIELD_GRID,
+    FICHA_FIELD_NOTE,
+} from "./adminCatalogFichaPresentation";
 
 interface AdminCatalogCoreSectionProps {
-    className: string;
     core: CatalogCoreDraft;
-    errors: string[];
+    errors: Partial<Record<CatalogCoreFieldId, string>>;
     pendingReview: PendingReviewState;
     onCoreChange: (patch: Partial<CatalogCoreDraft>) => void;
 }
 
 const FIELD = "premium" as const;
 
+function FieldError({ id, message }: { id: string; message?: string }) {
+    return message ? (
+        <p id={id} className={NEXIA_FORM_CONTROL_ERROR}>
+            {message}
+        </p>
+    ) : null;
+}
+
+function Proposal({
+    id,
+    kind,
+    label,
+    checked,
+    onChange,
+}: {
+    id: string;
+    kind: CatalogProposalKind | null;
+    label: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+}) {
+    if (!kind) return null;
+    return (
+        <>
+            <p className={FICHA_FIELD_NOTE}>{kind === "pending_review" ? PENDING_REVIEW_HINT : RUBRIC_CONFIRM_HINT}</p>
+            <NexiaSwitch id={id} label={label} checked={checked} onChange={onChange} />
+        </>
+    );
+}
+
 export const AdminCatalogCoreSection: React.FC<AdminCatalogCoreSectionProps> = ({
-    className,
     core,
     errors,
     pendingReview,
     onCoreChange,
 }) => (
-    <section id="datos" className={className}>
-        <h2 className={ADMIN_CATALOG_SECTION_TITLE}>{ADMIN_CATALOG_COPY.sectionDatos}</h2>
-        {errors.map((msg) => (
-            <Alert key={msg} variant="error" className={ADMIN_CATALOG_ALERT_SPACING}>
-                {msg}
-            </Alert>
-        ))}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="Nombre" htmlFor="cat-nombre" required variant={FIELD}>
-                <Input
-                    id="cat-nombre"
-                    variant={FIELD}
-                    value={core.nombre}
-                    onChange={(e) => onCoreChange({ nombre: e.target.value })}
-                />
-            </FormField>
-            <FormField label="Nombre EN" htmlFor="cat-nombre-en" variant={FIELD}>
-                <Input
-                    id="cat-nombre-en"
-                    variant={FIELD}
-                    value={core.nombre_ingles ?? ""}
-                    onChange={(e) => onCoreChange({ nombre_ingles: e.target.value || null })}
-                />
-            </FormField>
-            <FormField label="Objetivo de entrenamiento" htmlFor="cat-objetivo" required variant={FIELD}>
+    <>
+        <FormField label={DATOS_COPY.nombre} htmlFor="cat-nombre" required variant={FIELD}>
+            <Input
+                id="cat-nombre"
+                variant={FIELD}
+                value={core.nombre}
+                placeholder={DATOS_COPY.nombrePlaceholder}
+                error={errors.nombre}
+                aria-invalid={errors.nombre ? true : undefined}
+                onChange={(e) => onCoreChange({ nombre: e.target.value })}
+            />
+        </FormField>
+        <FormField label={DATOS_COPY.nombreIngles} htmlFor="cat-nombre-en" variant={FIELD}>
+            <Input
+                id="cat-nombre-en"
+                variant={FIELD}
+                value={core.nombre_ingles ?? ""}
+                placeholder={DATOS_COPY.nombreInglesPlaceholder}
+                onChange={(e) => onCoreChange({ nombre_ingles: e.target.value || null })}
+            />
+        </FormField>
+        <div className={FICHA_FIELD_GRID}>
+            <FormField label={DATOS_COPY.objetivo} htmlFor="cat-objetivo" required variant={FIELD} className={FICHA_FIELD_FULL}>
                 <FormCombobox
                     id="cat-objetivo"
                     variant={FIELD}
                     value={core.objetivo_entrenamiento ?? ""}
                     options={OBJETIVO_OPTIONS}
                     placeholder={OBJETIVO_PLACEHOLDER}
-                    onChange={(value) =>
-                        onCoreChange({ objetivo_entrenamiento: parseTrainingObjective(value) })
-                    }
+                    invalid={Boolean(errors.objetivo_entrenamiento)}
+                    describedBy="cat-objetivo-error"
+                    onChange={(value) => onCoreChange({ objetivo_entrenamiento: parseTrainingObjective(value) })}
                 />
-                <p className={ADMIN_CATALOG_SECTION_HINT}>{OBJETIVO_HINT}</p>
+                <FieldError id="cat-objetivo-error" message={errors.objetivo_entrenamiento} />
             </FormField>
-            <FormField label="Tipo" htmlFor="cat-tipo" required variant={FIELD}>
+            <FormField label={DATOS_COPY.tipo} htmlFor="cat-tipo" required variant={FIELD}>
                 <FormCombobox
                     id="cat-tipo"
                     variant={FIELD}
                     value={core.tipo}
                     options={TIPO_OPTIONS}
+                    invalid={Boolean(errors.tipo)}
+                    describedBy="cat-tipo-error"
                     onChange={(value) => onCoreChange({ tipo: value })}
                 />
+                <FieldError id="cat-tipo-error" message={errors.tipo} />
             </FormField>
-            <FormField label="Nivel" htmlFor="cat-nivel" required variant={FIELD}>
+            <FormField label={DATOS_COPY.lateralidad} htmlFor="cat-lat" variant={FIELD}>
+                <FormCombobox
+                    id="cat-lat"
+                    variant={FIELD}
+                    value={core.laterality ?? "bilateral"}
+                    options={LATERALITY_OPTIONS}
+                    invalid={Boolean(errors.laterality)}
+                    describedBy="cat-lat-error"
+                    onChange={(value) => onCoreChange({ laterality: value })}
+                />
+                <FieldError id="cat-lat-error" message={errors.laterality} />
+            </FormField>
+            <FormField label={DATOS_COPY.nivel} htmlFor="cat-nivel" required variant={FIELD}>
                 <FormCombobox
                     id="cat-nivel"
                     variant={FIELD}
                     value={core.nivel}
                     options={NIVEL_OPTIONS}
                     placeholder={NIVEL_PLACEHOLDER}
+                    invalid={Boolean(errors.nivel)}
+                    describedBy="cat-nivel-error"
                     onChange={(value) => onCoreChange({ nivel: value })}
                 />
-                {pendingReview.nivel ? (
-                    <>
-                        {pendingReview.nivel === "rubric" ? (
-                            <p className={ADMIN_CATALOG_SECTION_HINT}>{RUBRIC_CONFIRM_HINT}</p>
-                        ) : null}
-                        <Checkbox
-                            id="cat-nivel-review"
-                            label={NIVEL_PENDING_CONFIRM}
-                            checked={core.nivel_review === "reviewed"}
-                            onChange={(e) =>
-                                onCoreChange({ nivel_review: e.target.checked ? "reviewed" : null })
-                            }
-                        />
-                    </>
-                ) : null}
+                <FieldError id="cat-nivel-error" message={errors.nivel} />
             </FormField>
-            <FormField label="Lateralidad" htmlFor="cat-lat" variant={FIELD}>
-                <FormCombobox
-                    id="cat-lat"
-                    variant={FIELD}
-                    value={core.laterality ?? "bilateral"}
-                    options={LATERALITY_OPTIONS}
-                    onChange={(value) => onCoreChange({ laterality: value })}
-                />
-            </FormField>
-            <FormField label="Carga axial" htmlFor="cat-axial" required variant={FIELD}>
+            <FormField label={DATOS_COPY.cargaAxial} htmlFor="cat-axial" required variant={FIELD}>
                 <FormCombobox
                     id="cat-axial"
                     variant={FIELD}
                     value={core.axial_load ?? ""}
                     options={AXIAL_OPTIONS}
                     placeholder={AXIAL_PLACEHOLDER}
+                    invalid={Boolean(errors.axial_load)}
+                    describedBy="cat-axial-error"
                     onChange={(value) => onCoreChange({ axial_load: parseCatalogAxialLoad(value) })}
                 />
-                {pendingReview.axial_load ? (
-                    <>
-                        <p className={ADMIN_CATALOG_SECTION_HINT}>
-                            {pendingReview.axial_load === "pending_review"
-                                ? PENDING_REVIEW_HINT
-                                : RUBRIC_CONFIRM_HINT}
-                        </p>
-                        <Checkbox
-                            id="cat-axial-review"
-                            label={AXIAL_PENDING_CONFIRM}
-                            checked={core.axial_load_review === "reviewed"}
-                            onChange={(e) =>
-                                onCoreChange({
-                                    axial_load_review: e.target.checked ? "reviewed" : null,
-                                })
-                            }
-                        />
-                    </>
-                ) : null}
+                <FieldError id="cat-axial-error" message={errors.axial_load} />
             </FormField>
+            {pendingReview.nivel || pendingReview.axial_load ? (
+            <div className={FICHA_FIELD_FULL}>
+                <Proposal
+                    id="cat-nivel-review"
+                    kind={pendingReview.nivel}
+                    label={NIVEL_PENDING_CONFIRM}
+                    checked={core.nivel_review === "reviewed"}
+                    onChange={(checked) => onCoreChange({ nivel_review: checked ? "reviewed" : null })}
+                />
+                <Proposal
+                    id="cat-axial-review"
+                    kind={pendingReview.axial_load}
+                    label={AXIAL_PENDING_CONFIRM}
+                    checked={core.axial_load_review === "reviewed"}
+                    onChange={(checked) => onCoreChange({ axial_load_review: checked ? "reviewed" : null })}
+                />
+            </div>
+            ) : null}
         </div>
-    </section>
+        <p className={FICHA_FIELD_NOTE}>{OBJETIVO_HINT}</p>
+    </>
 );

@@ -15,6 +15,7 @@ import React from "react";
 import type { CatalogImportFieldChangeOut } from "@nexia/shared/types/adminCatalog";
 import {
     ADMIN_CATALOG_COPY,
+    ADMIN_CATALOG_SUMMARY_FIELD_CHANGE,
     ADMIN_CATALOG_SUMMARY_ITEM_FIELDS,
     catalogImportFieldLabel,
 } from "./adminCatalogPresentation";
@@ -31,7 +32,7 @@ export const AdminCatalogImportFieldChange: React.FC<AdminCatalogImportFieldChan
     const items = change.items ?? [];
     if (items.length === 0) {
         return (
-            <li data-testid="admin-catalog-import-field-change">
+            <li className={ADMIN_CATALOG_SUMMARY_FIELD_CHANGE} data-testid="admin-catalog-import-field-change">
                 {label}: {change.before} {ADMIN_CATALOG_COPY.importUpdatedChangeSeparator}{" "}
                 {change.after}
             </li>
