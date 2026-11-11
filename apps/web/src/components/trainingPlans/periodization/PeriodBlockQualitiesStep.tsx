@@ -15,7 +15,6 @@ import type {
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 
 import { Button } from "@/components/ui/buttons";
-import { ADD_PILL_SECTION_HINT_CLASS } from "@/components/ui/chips";
 import { HintTooltip } from "@/components/ui/feedback";
 import { QualityShareBar } from "./QualityShareBar";
 import { useToast } from "@/components/ui/feedback";
@@ -29,6 +28,7 @@ import {
     AUTHORING_QUALITY_PICKER_BTN_CLASS,
     AUTHORING_QUALITY_PICKER_GRID_CLASS,
     AUTHORING_STEP_INNER_PANEL_CLASS,
+    AUTHORING_STEP_SECTION_HINT_CLASS,
     AUTHORING_STEP_SECTION_LABEL_CLASS,
 } from "./phaseAuthoringPresentation";
 
@@ -226,7 +226,7 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                 >
                     <p className={AUTHORING_STEP_SECTION_LABEL_CLASS}>
                         Añadir cualidad
-                        <span className={ADD_PILL_SECTION_HINT_CLASS}>
+                        <span className={AUTHORING_STEP_SECTION_HINT_CLASS}>
                             (máx. {MAX_PERIOD_BLOCK_QUALITIES})
                         </span>
                     </p>

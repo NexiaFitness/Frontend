@@ -114,6 +114,10 @@ export const AUTHORING_STEP_INNER_PANEL_CLASS = cn(
 
 export const AUTHORING_STEP_SECTION_LABEL_CLASS = PLATFORM_SECTION_LABEL;
 
+/** Aclaración en línea tras la etiqueta de sección, p. ej. «(máx. 3)». */
+export const AUTHORING_STEP_SECTION_HINT_CLASS =
+    "ml-1.5 font-normal normal-case text-muted-foreground/80";
+
 /** Grid ancho completo — picker de cualidades (constructor D-PAP). */
 export const AUTHORING_QUALITY_PICKER_GRID_CLASS =
     "grid w-full grid-cols-2 gap-2 sm:grid-cols-3 md:gap-2.5";

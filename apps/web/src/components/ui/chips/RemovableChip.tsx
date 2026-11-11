@@ -1,8 +1,8 @@
 /**
  * RemovableChip.tsx — Un valor elegido en una selección múltiple, con su botón de quitar.
  *
- * Contexto: H10, ficha admin. Pareja de AddPill: el chip enseña lo elegido y AddPill
- * (o NexiaSearchPicker) añade más. `children` admite un control extra dentro del chip,
+ * Contexto: H10, ficha admin. El chip enseña lo elegido y NexiaSearchPicker añade más.
+ * `children` admite un control extra dentro del chip,
  * por ejemplo el rol «primario / secundario» de un patrón.
  * Notas de mantenimiento: el botón lleva aria-label con el nombre, porque solo es un icono.
  *
