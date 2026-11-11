@@ -1,8 +1,5 @@
 /**
  * AddPill.tsx — Pill reutilizable «+ etiqueta» para añadir ítems a una lista.
- *
- * H10: reenvía la ref y los atributos ARIA del botón, para servir de disparador de un
- * selector (NexiaSearchPicker: aria-haspopup, aria-expanded, foco de vuelta al cerrar).
  */
 
 import React from "react";
@@ -14,11 +11,7 @@ import {
     type AddPillVariant,
 } from "./addPillPresentation";
 
-export interface AddPillProps
-    extends Pick<
-        React.ButtonHTMLAttributes<HTMLButtonElement>,
-        "aria-expanded" | "aria-haspopup" | "aria-controls" | "aria-label" | "id"
-    > {
+export interface AddPillProps {
     label: string;
     onClick: () => void;
     variant?: AddPillVariant;
@@ -30,35 +23,25 @@ export interface AddPillProps
     prefix?: string;
 }
 
-export const AddPill = React.forwardRef<HTMLButtonElement, AddPillProps>(
-    (
-        {
-            label,
-            onClick,
-            variant = "premium",
-            fullWidth = false,
-            disabled = false,
+export const AddPill: React.FC<AddPillProps> = ({
+    label,
+    onClick,
+    variant = "premium",
+    fullWidth = false,
+    disabled = false,
+    className,
+    prefix = "+",
+}) => (
+    <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={cn(
+            addPillItemClass(variant, fullWidth),
+            disabled && "pointer-events-none opacity-45",
             className,
-            prefix = "+",
-            ...aria
-        },
-        ref
-    ) => (
-        <button
-            ref={ref}
-            type="button"
-            onClick={onClick}
-            disabled={disabled}
-            className={cn(
-                addPillItemClass(variant, fullWidth),
-                disabled && "pointer-events-none opacity-45",
-                className,
-            )}
-            {...aria}
-        >
-            {prefix ? `${prefix} ${label}` : label}
-        </button>
-    )
+        )}
+    >
+        {prefix ? `${prefix} ${label}` : label}
+    </button>
 );
-
-AddPill.displayName = "AddPill";

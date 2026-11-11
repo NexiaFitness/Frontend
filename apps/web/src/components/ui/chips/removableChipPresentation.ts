@@ -4,7 +4,8 @@
  * Contexto: H10, ficha admin (músculos sinergistas y estabilizadores, patrones,
  * articulaciones, material y etiquetas). Reutilizable en cualquier selección múltiple.
  * Notas de mantenimiento: 44 px de alto en móvil (DESIGN_PREMIUM §2.2 d) y 32 px desde
- * `sm`. El tono del patrón llega de patternBadgePresentation, no se redefine aquí.
+ * `sm`. Forma cuadrada (rounded-md), la misma que PatternBadge y el segmentado; nada de
+ * píldoras. El tono del patrón llega de patternBadgePresentation, no se redefine aquí.
  *
  * @author Frontend Team
  * @since v10.0.0
@@ -15,7 +16,7 @@ import { cn } from "@/lib/utils";
 export type RemovableChipTone = "neutral" | "primary";
 
 const CHIP_BASE = cn(
-    "inline-flex min-h-touch max-w-full items-center gap-1.5 rounded-full border pl-3 pr-1 text-sm",
+    "inline-flex min-h-touch max-w-full items-center gap-1.5 rounded-md border pl-3 pr-1 text-sm",
     "sm:min-h-8"
 );
 
@@ -31,7 +32,7 @@ export function removableChipClass(tone: RemovableChipTone, toneClassName?: stri
 export const REMOVABLE_CHIP_LABEL = "min-w-0 truncate";
 
 export const REMOVABLE_CHIP_REMOVE = cn(
-    "inline-flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground",
+    "inline-flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground",
     "transition-colors hover:bg-destructive/15 hover:text-destructive",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
     "sm:size-7 [&_svg]:size-3.5"

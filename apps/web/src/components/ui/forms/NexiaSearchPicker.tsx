@@ -4,7 +4,8 @@
  * Contexto: H10, ficha admin (músculos, patrones, articulaciones, material, etiquetas y
  * alternativas). En escritorio, panel anclado al botón «Añadir», en un portal para que
  * ninguna tarjeta lo recorte; en móvil, hoja inferior (NexiaPremiumModal). Reutilizable
- * en cualquier selector de una lista corta.
+ * en cualquier selector de una lista corta. El disparador es un Button ghost-primary con «+»
+ * (05_ACTION_HIERARCHY: acción auxiliar de marca), debajo de la lista a la que añade.
  * Notas de mantenimiento:
  * - El filtro es `filterSearchOptions` (@nexia/shared): sin acentos ni mayúsculas. Lo que
  *   no se puede elegir se enseña desactivado con su motivo, no se esconde.
@@ -19,10 +20,10 @@
 
 import React, { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { filterSearchOptions, type SearchOption, type SearchResult } from "@nexia/shared/utils/text/searchText";
 import { cn } from "@/lib/utils";
-import { AddPill } from "@/components/ui/chips";
+import { Button } from "@/components/ui/buttons";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import { useIsLgViewport } from "@/hooks/athlete/useIsLgViewport";
 import {
@@ -263,15 +264,20 @@ export function NexiaSearchPicker<T extends string | number>({
     return (
         <>
             {triggerLabel ? (
-                <AddPill
+                <Button
                     ref={triggerRef}
-                    label={triggerLabel}
+                    type="button"
+                    variant="ghost-primary"
+                    size="sm"
                     onClick={() => setOpen(!open)}
                     disabled={disabled}
                     className={triggerClassName}
                     aria-haspopup="dialog"
                     aria-expanded={open}
-                />
+                >
+                    <Plus aria-hidden />
+                    {triggerLabel}
+                </Button>
             ) : null}
             {open && isLg && position
                 ? createPortal(

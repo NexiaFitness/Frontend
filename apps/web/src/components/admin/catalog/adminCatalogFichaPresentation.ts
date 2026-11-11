@@ -191,26 +191,19 @@ export const FICHA_META_DIVIDER = "h-4 w-px bg-border";
 
 export const FICHA_META_LINK = "-ml-2 min-h-touch sm:min-h-0";
 
-/** Una pila en móvil; dos columnas en lg; tres en xl (cada columna es una pila). */
-export const FICHA_GRID = cn(
-    "flex flex-col gap-4",
-    "lg:grid lg:grid-cols-2 lg:items-start lg:gap-5 xl:grid-cols-3"
-);
+/**
+ * Filas (DISENO_H10 v2, Nelson 2026-11-11): Datos a todo el ancho; Músculos | Cómo cuenta y
+ * Relaciones; Material y etiquetas | Movimiento; Técnica. Las celdas de una fila se estiran
+ * a la misma altura (grid stretch) y la última tarjeta de una pila rellena lo que falta.
+ * El orden del HTML es el de móvil.
+ */
+export const FICHA_ROWS = "flex flex-col gap-4 lg:gap-5";
 
-/** En móvil la columna desaparece y sus tarjetas se ordenan por FICHA_CARD_ORDER. */
-export const FICHA_COLUMN = "contents lg:flex lg:flex-col lg:gap-5";
+export const FICHA_ROW_TWO = "grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5";
 
-export const FICHA_COLUMN_STICKY = cn(FICHA_COLUMN, "xl:sticky xl:top-6");
+export const FICHA_STACK = "flex flex-col gap-4 lg:gap-5";
 
-export const FICHA_CARD_ORDER: Record<AdminCatalogCardId, string> = {
-    datos: "order-1 lg:order-none",
-    musculos: "order-2 lg:order-none",
-    cuenta: "order-3 lg:order-none",
-    movimiento: "order-4 lg:order-none",
-    material: "order-5 lg:order-none",
-    tecnica: "order-6 lg:order-none lg:col-span-2 xl:col-span-3",
-    relaciones: "order-7 lg:order-none",
-};
+export const FICHA_CARD_FILL = "flex-1";
 
 export const FICHA_GROUP = "space-y-2.5";
 
@@ -226,9 +219,16 @@ export const FICHA_EMPTY = "text-sm text-muted-foreground";
 
 export const FICHA_ERRORS = "space-y-1 text-sm text-destructive";
 
-export const FICHA_FIELD_GRID = "grid grid-cols-2 gap-x-3 gap-y-4";
+/** Datos a todo el ancho: nombre e inglés en dos columnas; los cinco selects en una fila (lg). */
+export const FICHA_NAME_GRID = "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-x-4";
 
-export const FICHA_FIELD_FULL = "col-span-2";
+export const FICHA_FIELD_GRID = "grid grid-cols-2 gap-x-3 gap-y-4 lg:grid-cols-5 lg:gap-x-4";
+
+/** Objetivo de entrenamiento: fila propia en móvil, una celda más en lg. */
+export const FICHA_FIELD_LEAD = "col-span-2 lg:col-span-1";
+
+/** Fila completa dentro de la rejilla de selects (propuestas por confirmar). */
+export const FICHA_FIELD_ROW = "col-span-2 lg:col-span-5";
 
 export const FICHA_FIELD_NOTE = "text-xs leading-relaxed text-muted-foreground";
 

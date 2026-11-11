@@ -216,7 +216,7 @@ describe("AdminExerciseCatalogForm", { timeout: 45_000 }, () => {
         const saved = capturePut();
         await renderEdit();
         const synergists = screen.getByRole("heading", { name: MUSCLE_COPY.groups.synergist }).parentElement;
-        await user.click(within(synergists as HTMLElement).getByRole("button", { name: `+ ${MUSCLE_COPY.add}` }));
+        await user.click(within(synergists as HTMLElement).getByRole("button", { name: MUSCLE_COPY.add }));
         const sheet = await screen.findByRole("dialog");
         const search = within(sheet).getByRole("combobox", { name: MUSCLE_COPY.search });
         expect(search).toHaveFocus();

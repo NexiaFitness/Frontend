@@ -38,9 +38,11 @@ import {
 import type { CatalogProposalKind, PendingReviewState } from "./adminCatalogFormTypes";
 import {
     DATOS_COPY,
-    FICHA_FIELD_FULL,
     FICHA_FIELD_GRID,
+    FICHA_FIELD_LEAD,
     FICHA_FIELD_NOTE,
+    FICHA_FIELD_ROW,
+    FICHA_NAME_GRID,
 } from "./adminCatalogFichaPresentation";
 
 interface AdminCatalogCoreSectionProps {
@@ -89,6 +91,7 @@ export const AdminCatalogCoreSection: React.FC<AdminCatalogCoreSectionProps> = (
     onCoreChange,
 }) => (
     <>
+        <div className={FICHA_NAME_GRID}>
         <FormField label={DATOS_COPY.nombre} htmlFor="cat-nombre" required variant={FIELD}>
             <Input
                 id="cat-nombre"
@@ -109,8 +112,9 @@ export const AdminCatalogCoreSection: React.FC<AdminCatalogCoreSectionProps> = (
                 onChange={(e) => onCoreChange({ nombre_ingles: e.target.value || null })}
             />
         </FormField>
+        </div>
         <div className={FICHA_FIELD_GRID}>
-            <FormField label={DATOS_COPY.objetivo} htmlFor="cat-objetivo" required variant={FIELD} className={FICHA_FIELD_FULL}>
+            <FormField label={DATOS_COPY.objetivo} htmlFor="cat-objetivo" required variant={FIELD} className={FICHA_FIELD_LEAD}>
                 <FormCombobox
                     id="cat-objetivo"
                     variant={FIELD}
@@ -174,7 +178,7 @@ export const AdminCatalogCoreSection: React.FC<AdminCatalogCoreSectionProps> = (
                 <FieldError id="cat-axial-error" message={errors.axial_load} />
             </FormField>
             {pendingReview.nivel || pendingReview.axial_load ? (
-            <div className={FICHA_FIELD_FULL}>
+            <div className={FICHA_FIELD_ROW}>
                 <Proposal
                     id="cat-nivel-review"
                     kind={pendingReview.nivel}

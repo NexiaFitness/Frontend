@@ -38,7 +38,10 @@ export const LINE_LIST_REMOVE = cn(
     "disabled:pointer-events-none disabled:opacity-30 sm:size-8 [&_svg]:size-4"
 );
 
-export const LINE_LIST_FOOTER = "mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2";
+export const LINE_LIST_FOOTER = "mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1";
+
+/** «Añadir paso»: ghost-primary alineado con el número de la línea; 44 px en móvil. */
+export const LINE_LIST_ADD = "-ml-1 min-h-touch sm:min-h-0";
 
 export const LINE_LIST_HELPER = "text-xs text-muted-foreground";
 

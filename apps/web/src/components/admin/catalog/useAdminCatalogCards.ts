@@ -32,10 +32,10 @@ export const CARD_ORDER: AdminCatalogCardId[] = [
     "datos",
     "musculos",
     "cuenta",
-    "movimiento",
-    "material",
-    "tecnica",
     "relaciones",
+    "material",
+    "movimiento",
+    "tecnica",
 ];
 
 const OPEN_ON_EDIT: AdminCatalogCardId[] = ["datos", "musculos", "cuenta"];

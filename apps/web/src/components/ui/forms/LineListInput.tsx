@@ -16,13 +16,14 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { insertAfter, removeAt, replaceAt } from "@nexia/shared/utils/listOps";
 import { cn } from "@/lib/utils";
-import { AddPill } from "@/components/ui/chips";
+import { Button } from "@/components/ui/buttons";
 import { PLATFORM_FORM_FIELD_LABEL } from "./platformFormPresentation";
 import {
     LINE_LIST,
+    LINE_LIST_ADD,
     LINE_LIST_ERROR,
     LINE_LIST_FIELD,
     LINE_LIST_FIELD_INVALID,
@@ -171,11 +172,17 @@ export const LineListInput: React.FC<LineListInputProps> = ({
                 </p>
             ) : null}
             <div className={LINE_LIST_FOOTER}>
-                <AddPill
-                    label={addLabel}
+                <Button
+                    type="button"
+                    variant="ghost-primary"
+                    size="sm"
+                    className={LINE_LIST_ADD}
                     onClick={() => add(items.length - 1)}
                     disabled={items.length >= maxItems}
-                />
+                >
+                    <Plus aria-hidden />
+                    {addLabel}
+                </Button>
                 {helperText ? <span className={LINE_LIST_HELPER}>{helperText}</span> : null}
             </div>
         </div>

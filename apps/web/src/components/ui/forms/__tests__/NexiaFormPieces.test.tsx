@@ -56,7 +56,7 @@ describe("NexiaSearchPicker", () => {
                 emptyText="Nada"
             />
         );
-        const trigger = screen.getByRole("button", { name: "+ Añadir" });
+        const trigger = screen.getByRole("button", { name: "Añadir" });
         await user.click(trigger);
         const dialog = await screen.findByRole("dialog");
         const search = within(dialog).getByRole("combobox", { name: "Buscar músculo" });
@@ -83,7 +83,7 @@ describe("NexiaSearchPicker", () => {
                 emptyText="Ningún músculo con ese nombre"
             />
         );
-        await user.click(screen.getByRole("button", { name: "+ Añadir" }));
+        await user.click(screen.getByRole("button", { name: "Añadir" }));
         await user.type(screen.getByRole("combobox", { name: "Buscar" }), "zzz");
         expect(screen.getByText("Ningún músculo con ese nombre")).toBeInTheDocument();
     });
@@ -125,7 +125,7 @@ describe("LineListInput", () => {
         await user.click(screen.getByRole("textbox", { name: "Paso 1" }));
         await user.paste("1. A\n2. B\n3. C\n4. D");
         expect(screen.getAllByRole("textbox").map((f) => (f as HTMLTextAreaElement).value)).toEqual(["A", "B", "C"]);
-        expect(screen.getByRole("button", { name: "+ Añadir paso" })).toBeDisabled();
+        expect(screen.getByRole("button", { name: "Añadir paso" })).toBeDisabled();
     });
 
     it("con una sola línea, quitar la vacía", async () => {

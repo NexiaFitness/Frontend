@@ -1,10 +1,10 @@
 /**
  * AdminExerciseCatalogForm.tsx — Ficha admin del ejercicio: alta, edición y alta desde la Biblioteca.
  *
- * Contexto: DISENO_H10_FICHA_ADMIN. Escritorio: tres columnas de tarjetas (Datos y Material
- * | Músculos y Movimiento | Cómo cuenta y Relaciones, esta fija al hacer scroll) y la
- * Técnica debajo a todo el ancho. Móvil: una pila de tarjetas plegables en el orden en que
- * se trabaja. Un solo botón primario en el pie (Guardar, o Guardar y siguiente en la cola).
+ * Contexto: DISENO_H10_FICHA_ADMIN (v2, Nelson 2026-11-11). Escritorio: Datos a todo el
+ * ancho; Músculos | Cómo cuenta y Relaciones; Material y etiquetas | Movimiento, cada fila
+ * con sus columnas a la misma altura; Técnica a todo el ancho. Móvil: las mismas tarjetas,
+ * plegables, en ese orden. Un solo botón primario en el pie (Guardar, o Guardar y siguiente en la cola).
  * Notas de mantenimiento: solo compone. Datos y guardado en useAdminExerciseCatalogForm,
  * apertura de tarjetas en useAdminCatalogCards, activar/desactivar en
  * useAdminCatalogActiveToggle, atajos e historial en useAdminCatalogFormSubmit.
@@ -29,10 +29,10 @@ import {
 import {
     CARD_TITLES,
     COUNT_COPY,
-    FICHA_CARD_ORDER,
-    FICHA_COLUMN,
-    FICHA_COLUMN_STICKY,
-    FICHA_GRID,
+    FICHA_CARD_FILL,
+    FICHA_ROW_TWO,
+    FICHA_ROWS,
+    FICHA_STACK,
     FICHA_SERVER_ERRORS,
     type AdminCatalogCardId,
 } from "./adminCatalogFichaPresentation";
@@ -135,7 +135,11 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
         );
     }
 
-    const card = (id: AdminCatalogCardId, children: React.ReactNode, extra?: { aside?: string; headerAction?: React.ReactNode }) => (
+    const card = (
+        id: AdminCatalogCardId,
+        children: React.ReactNode,
+        extra?: { aside?: string; headerAction?: React.ReactNode; className?: string }
+    ) => (
         <NexiaSectionCard
             id={`ficha-${id}`}
             title={CARD_TITLES[id]}
@@ -143,7 +147,7 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
             onOpenChange={(open) => cards.setOpen(id, open)}
             summary={summaries[id] || undefined}
             errorCount={counts[id] ?? 0}
-            className={FICHA_CARD_ORDER[id]}
+            className={extra?.className}
             aside={extra?.aside}
             headerAction={extra?.headerAction}
         >
@@ -180,17 +184,34 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                 ) : null}
                 <AdminCatalogErrorSummary counts={counts} onReveal={cards.reveal} />
 
-                <div className={FICHA_GRID}>
-                    <div className={FICHA_COLUMN}>
+                <div className={FICHA_ROWS}>
+                    {card(
+                        "datos",
+                        <AdminCatalogCoreSection
+                            core={draft.core}
+                            errors={form.coreFieldErrors}
+                            pendingReview={draft.pending_review}
+                            onCoreChange={(patch) => update((d) => ({ ...d, core: { ...d.core, ...patch } }))}
+                        />
+                    )}
+                    <div className={FICHA_ROW_TWO}>
                         {card(
-                            "datos",
-                            <AdminCatalogCoreSection
-                                core={draft.core}
-                                errors={form.coreFieldErrors}
-                                pendingReview={draft.pending_review}
-                                onCoreChange={(patch) => update((d) => ({ ...d, core: { ...d.core, ...patch } }))}
+                            "musculos",
+                            <AdminCatalogMuscleSection
+                                draft={draft}
+                                update={update}
+                                muscles={options.muscles}
+                                errors={errorsOf("musculos")}
                             />
                         )}
+                        <div className={FICHA_STACK}>
+                            {card("cuenta", <AdminCatalogPreviewPanel preview={preview} />, { aside: COUNT_COPY.aside })}
+                            {card("relaciones", <AdminCatalogRelationsSection exercisePk={currentPk} />, {
+                                className: FICHA_CARD_FILL,
+                            })}
+                        </div>
+                    </div>
+                    <div className={FICHA_ROW_TWO}>
                         {card(
                             "material",
                             <AdminCatalogMaterialSection
@@ -199,17 +220,6 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                 equipment={options.equipment}
                                 tags={options.tags}
                                 errors={errorsOf("material", "etiquetas")}
-                            />
-                        )}
-                    </div>
-                    <div className={FICHA_COLUMN}>
-                        {card(
-                            "musculos",
-                            <AdminCatalogMuscleSection
-                                draft={draft}
-                                update={update}
-                                muscles={options.muscles}
-                                errors={errorsOf("musculos")}
                             />
                         )}
                         {card(
@@ -221,10 +231,6 @@ export const AdminExerciseCatalogForm: React.FC<AdminExerciseCatalogFormProps> =
                                 errors={errorsOf("patrones", "articulaciones")}
                             />
                         )}
-                    </div>
-                    <div className={FICHA_COLUMN_STICKY}>
-                        {card("cuenta", <AdminCatalogPreviewPanel preview={preview} />, { aside: COUNT_COPY.aside })}
-                        {card("relaciones", <AdminCatalogRelationsSection exercisePk={currentPk} />)}
                     </div>
                     {card(
                         "tecnica",
