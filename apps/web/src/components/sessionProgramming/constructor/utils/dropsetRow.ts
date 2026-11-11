@@ -85,7 +85,6 @@ export function normalizeDropsetRow(row: ConstructorRow): ConstructorRow {
         return row;
     }
 
-    const rounds = Math.max(1, row.sets ?? DEFAULT_DROPSET_ROUNDS);
     const maxSteps = 1 + MAX_DROPS_AFTER_MAIN;
     const restFallback = row.rest ?? 120;
 
@@ -102,7 +101,7 @@ export function normalizeDropsetRow(row: ConstructorRow): ConstructorRow {
 
     return {
         ...row,
-        sets: rounds,
+        sets: row.sets,
         rest: restFallback,
         repsTipo: row.repsTipo ?? "reps",
         setData,

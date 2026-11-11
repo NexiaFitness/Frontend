@@ -162,7 +162,7 @@ export function normalizeGiantSetRow(row: ConstructorRow): ConstructorRow {
         return row;
     }
 
-    const sets = row.sets ?? 3;
+    const effectiveSets = Math.max(1, row.sets ?? 3);
     const exercises: ConstructorExercise[] = [];
 
     const targetLength =
@@ -176,10 +176,10 @@ export function normalizeGiantSetRow(row: ConstructorRow): ConstructorRow {
             let setData: ConstructorSetData[];
             if (existing.setData?.length) {
                 const master = existing.setData[0];
-                setData = resizeExerciseSetData(existing.setData, sets, master);
+                setData = resizeExerciseSetData(existing.setData, effectiveSets, master);
             } else {
                 const master = exerciseLoadToSetData(existing);
-                setData = resizeExerciseSetData(undefined, sets, master);
+                setData = resizeExerciseSetData(undefined, effectiveSets, master);
             }
             exercises.push({ ...existing, setData });
         } else {
@@ -190,7 +190,7 @@ export function normalizeGiantSetRow(row: ConstructorRow): ConstructorRow {
     return {
         ...row,
         exercises,
-        sets,
+        sets: row.sets,
         rest: row.rest ?? 90,
         repsTipo: row.repsTipo ?? "reps",
     };
