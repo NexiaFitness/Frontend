@@ -193,7 +193,7 @@ function buildModeAwareHeadline(ctx: WeeklyInsightCopyContext): string | null {
     switch (ctx.mode) {
         case "train_today_done": {
             const extra = extraCompletedSuffix(adherence);
-            if (planned === 1) {
+            if (completed >= planned && planned === 1) {
                 return `Semana del plan cerrada.${extra} Buen trabajo.`;
             }
             if (completed >= planned) {
@@ -223,10 +223,13 @@ function buildModeAwareHeadline(ctx: WeeklyInsightCopyContext): string | null {
 
         case "week_done": {
             const extra = extraCompletedSuffix(adherence);
-            if (planned === 1) {
+            if (completed >= planned && planned === 1) {
                 return `Sesión hecha. Semana del plan cerrada.${extra}`;
             }
-            return `Buena semana: ${completed} de ${planned}.${extra} Mantén el ritmo.`;
+            if (completed >= planned) {
+                return `Buena semana: ${completed} de ${planned}.${extra} Mantén el ritmo.`;
+            }
+            return remainingSessionsPhrase(planned - completed);
         }
 
         case "week_recovery":

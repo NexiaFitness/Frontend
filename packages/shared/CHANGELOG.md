@@ -1,5 +1,12 @@
 # Changelog — @nexia/shared
 
+## 6.1.1 — 2026-11-12
+
+### Fixed (B-08)
+
+- El titular semanal (`athleteWeeklyCopy`) ya no dice «Semana del plan cerrada» solo porque hay 1 sesión planificada: exige `completed >= planned`.
+- `updateTrainingSession` y `createSessionFeedback` invalidan `AthleteWeeklySummary` (`CURRENT`), así que adherencia y racha se refrescan al cerrar la sesión.
+
 ## 6.1.0 — 2026-11-12
 
 ### Changed (B-07)

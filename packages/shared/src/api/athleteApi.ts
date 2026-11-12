@@ -3,6 +3,7 @@
  */
 
 import { baseApi } from "./baseApi";
+import { ATHLETE_WEEKLY_SUMMARY_TAG } from "./athleteWeeklySummaryTags";
 import type {
     AthleteWeeklySummary,
     AthleteWeeklySummaryQuery,
@@ -59,7 +60,7 @@ export const athleteApi = baseApi.injectEndpoints({
                 const qs = params.toString();
                 return `/athlete/weekly-summary${qs ? `?${qs}` : ""}`;
             },
-            providesTags: [{ type: "AthleteWeeklySummary" as const, id: "CURRENT" }],
+            providesTags: [ATHLETE_WEEKLY_SUMMARY_TAG],
         }),
 
         getAthleteRunReference: builder.query<AthleteRunReference, AthleteRunReferenceQuery>({

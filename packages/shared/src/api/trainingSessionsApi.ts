@@ -34,6 +34,10 @@ import type {
 } from '../types/sessionRecommendations';
 import type { SessionExecutionSummary } from '../types/trainerSetExecutions';
 import { getSubmitWellbeingInvalidationTags } from './wellbeingCheckInApi';
+import {
+    ATHLETE_WEEKLY_SUMMARY_TAG,
+    getUpdateTrainingSessionInvalidationTags,
+} from './athleteWeeklySummaryTags';
 
 /** Arg del listado por plan: número (primera página, limit 1000) o objeto con paginación. */
 export type GetTrainingSessionsQueryArg =
@@ -327,18 +331,8 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 method: 'PUT',
                 body,
             }),
-            invalidatesTags: (result, _error, { id }) => {
-                const tags: Array<{ type: 'TrainingSession' | 'TrainingPlan'; id: string | number }> = [
-                    { type: 'TrainingSession', id },
-                ];
-                if (result?.training_plan_id) {
-                    tags.push(
-                        { type: 'TrainingSession', id: `PLAN_${result.training_plan_id}` },
-                        { type: 'TrainingPlan', id: result.training_plan_id }
-                    );
-                }
-                return tags;
-            },
+            invalidatesTags: (result, _error, { id }) =>
+                getUpdateTrainingSessionInvalidationTags(id, result),
         }),
 
         /**
@@ -384,6 +378,7 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 { type: 'Client', id: 'FEEDBACK' },
                 { type: 'InboxNotification', id: 'LIST' },
                 { type: 'InboxNotification', id: 'COUNT' },
+                ATHLETE_WEEKLY_SUMMARY_TAG,
             ],
         }),
 
