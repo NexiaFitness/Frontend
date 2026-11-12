@@ -41,11 +41,13 @@ const PICK_DAY_HINTS = [
 interface Props {
     selectedDate: string | null;
     onCreateSession: () => void;
+    onPrepareCreateSession?: () => void;
 }
 
 export const ClientSessionPickDayPanel: React.FC<Props> = ({
     selectedDate,
     onCreateSession,
+    onPrepareCreateSession,
 }) => (
     <article
         className={PLANNING_CREATE_BLOCK_PANEL_CLASS}
@@ -104,7 +106,13 @@ export const ClientSessionPickDayPanel: React.FC<Props> = ({
                             Pulsa Crear sesión para abrir el constructor con esta fecha.
                         </p>
                         <div className="flex justify-end">
-                            <Button type="button" size="sm" onClick={onCreateSession}>
+                            <Button
+                                type="button"
+                                size="sm"
+                                onClick={onCreateSession}
+                                onMouseEnter={onPrepareCreateSession}
+                                onFocus={onPrepareCreateSession}
+                            >
                                 Crear sesión
                             </Button>
                         </div>
