@@ -1,5 +1,11 @@
 # Changelog — @nexia/shared
 
+## 6.0.1 — 2026-11-12
+
+### Fixed (B-06)
+
+- `releasePersistedRunStepTouch` (`utils/athlete/athleteRunProgressSteps`): el paso guiado seguía marcado como editado después de un guardado correcto, así que la última serie no llegaba a ofrecer «Finalizar sesión». Retira esas claves cuando la serie ya está persistida.
+
 ## 6.0.0 — 2026-11-09
 
 ### Removed (H8-B: limpieza conservadora del catálogo)
