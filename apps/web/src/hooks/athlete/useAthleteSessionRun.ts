@@ -44,9 +44,13 @@ import {
 import {
     canPersistRunStepAfterLocalComplete,
     isRunStepSavedForUi,
+    releasePersistedRunStepTouch,
     touchRunStepKeysForPersist,
 } from "@nexia/shared/utils/athlete/athleteRunProgressSteps";
-import { shouldAllowRestReconfirmSticky } from "@nexia/shared/utils/athlete/athleteRunRestPhase";
+import {
+    guidedRunConfirmLabel,
+    shouldShowGuidedStepActions,
+} from "./guidedRunStepActions";
 import {
     buildAthleteRunGroupContext,
     buildAthleteRunGroupContextFromForTimeRound,
@@ -568,6 +572,7 @@ export function useAthleteSessionRun({
                 );
             }
 
+            releasePersistedRunStepTouch(touchedWeightStepKeysRef.current, currentRunStep);
             completedStepKeysRef.current.add(current.stepKey);
             setSavedStepKeys(new Set(completedStepKeysRef.current));
 
@@ -833,6 +838,7 @@ export function useAthleteSessionRun({
                 completedStepKeysRef.current.add(currentRunStep.stepKey);
             }
 
+            releasePersistedRunStepTouch(touchedWeightStepKeysRef.current, currentRunStep);
             setSavedStepKeys(new Set(completedStepKeysRef.current));
             onSetSaved?.(lastResult, {
                 isGroupRound,
@@ -892,15 +898,12 @@ export function useAthleteSessionRun({
         );
     }, [amrapPartialReps, currentRunStep?.slots, isAmrapBlock]);
 
-    const confirmLabel = isTimedBlock
-        ? isAmrapBlock || isEmomBlock || isForTimeBlock
-            ? "Bloque completado"
-            : "Ronda completada"
-        : isGroupRound
-          ? isDropsetRound
-              ? "Dropset completado"
-              : "Ronda completada"
-          : "Guardar";
+    const confirmLabel = guidedRunConfirmLabel(
+        isTimedBlock,
+        isAmrapBlock || isEmomBlock || isForTimeBlock,
+        isGroupRound,
+        isDropsetRound
+    );
 
     const isConfirmValid = useMemo(() => {
         if (isBatchStep && currentRunStep) {
@@ -998,20 +1001,13 @@ export function useAthleteSessionRun({
 
     const showStepActions = useMemo(
         () =>
-            Boolean(currentRunStep) &&
-            (!isCurrentStepSaved ||
-                shouldAllowRestReconfirmSticky(
-                    restFlow.phase,
-                    restFlow.hasRestTimer,
-                    restFlow.remainingSeconds
-                )),
-        [
-            currentRunStep,
-            isCurrentStepSaved,
-            restFlow.phase,
-            restFlow.hasRestTimer,
-            restFlow.remainingSeconds,
-        ]
+            shouldShowGuidedStepActions(
+                currentRunStep != null,
+                isCurrentStepSaved,
+                isLastStep,
+                restFlow
+            ),
+        [currentRunStep, isCurrentStepSaved, isLastStep, restFlow]
     );
 
     useAthleteRunLoggerDefaultEffects({

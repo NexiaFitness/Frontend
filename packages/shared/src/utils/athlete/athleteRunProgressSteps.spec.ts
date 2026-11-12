@@ -11,6 +11,7 @@ import {
     findFirstPendingStepIndex,
     isRunStepSavedForUi,
     isRunStepResolved,
+    releasePersistedRunStepTouch,
     shouldSkipRunStepPersist,
     touchRunStepKeysForPersist,
 } from "./athleteRunProgressSteps";
@@ -219,6 +220,20 @@ describe("B2 — persistencia tras edición en mismo paso", () => {
         expect(
             isRunStepSavedForUi(step, step.stepKey, saved, progress, touched)
         ).toBe(false);
+    });
+
+    it("tras persistir, peso, reps o RPE dejan de ocultar el paso guardado", () => {
+        const step = singleStep("block-194-single-0-r1-S1-S1-1");
+        const saved = new Set([step.stepKey]);
+        const progress = progressPartial(194, [step.stepKey], []);
+        const touched = new Set<string>();
+        touchRunStepKeysForPersist(touched, step);
+        touched.add(step.stepKey);
+        releasePersistedRunStepTouch(touched, step);
+        expect(
+            isRunStepSavedForUi(step, step.stepKey, saved, progress, touched)
+        ).toBe(true);
+        expect(touched.size).toBe(0);
     });
 });
 
