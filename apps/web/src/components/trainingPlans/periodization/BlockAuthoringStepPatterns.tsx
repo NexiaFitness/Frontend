@@ -9,8 +9,9 @@ import type { MovementPattern } from "@nexia/shared/types/exercise";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 
 import {
+    AUTHORING_PATTERN_DAY_CARD_BODY_BTN_CLASS,
+    AUTHORING_PATTERN_DAY_CARD_EDIT_BTN_CLASS,
     AUTHORING_PATTERN_DAY_CARD_EMPTY_CLASS,
-    AUTHORING_PATTERN_DAY_CARD_EDIT_ICON_WRAP_CLASS,
     AUTHORING_PATTERN_DAY_CARD_TITLE_CLASS,
     AUTHORING_PATTERN_DAY_LIST_CLASS,
     authoringPatternDayCardClass,
@@ -194,23 +195,31 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
 
                     return (
                         <li key={dayOfWeek}>
-                            <button
-                                type="button"
+                            <article
                                 className={authoringPatternDayCardClass({
                                     hasPatterns,
                                     isEditing,
                                 })}
-                                onClick={() => setPickerDay(dayOfWeek)}
-                                aria-expanded={isEditing}
-                                aria-label={
-                                    hasPatterns
-                                        ? `${dayName}: ${patterns.length} patrones asignados. Pulsa para editar.`
-                                        : `${dayName}: sin patrones. Pulsa para asignar.`
-                                }
                                 data-testid={`authoring-pattern-day-${dayOfWeek}`}
                             >
-                                <div className="min-w-0 space-y-2 pr-8">
-                                    <p className={AUTHORING_PATTERN_DAY_CARD_TITLE_CLASS}>
+                                <button
+                                    type="button"
+                                    className={
+                                        AUTHORING_PATTERN_DAY_CARD_BODY_BTN_CLASS
+                                    }
+                                    onClick={() => setPickerDay(dayOfWeek)}
+                                    aria-expanded={isEditing}
+                                    aria-label={
+                                        hasPatterns
+                                            ? `${dayName}: ${patterns.length} patrones asignados. Pulsa para editar.`
+                                            : `${dayName}: sin patrones. Pulsa para asignar.`
+                                    }
+                                >
+                                    <p
+                                        className={
+                                            AUTHORING_PATTERN_DAY_CARD_TITLE_CLASS
+                                        }
+                                    >
                                         {dayName}
                                     </p>
                                     <div className="flex flex-wrap gap-1.5">
@@ -241,7 +250,9 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
                                                         name={patternDisplayName(
                                                             pattern,
                                                         )}
-                                                        uiBucket={pattern.ui_bucket}
+                                                        uiBucket={
+                                                            pattern.ui_bucket
+                                                        }
                                                         selected
                                                         size="sm"
                                                     />
@@ -249,23 +260,21 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
                                             })
                                         )}
                                     </div>
-                                </div>
-                                {isEditing ? (
-                                    <span
-                                        className={
-                                            AUTHORING_PATTERN_DAY_CARD_EDIT_ICON_WRAP_CLASS
-                                        }
+                                </button>
+                                <PeriodBlockIconButton
+                                    variant="edit"
+                                    className={
+                                        AUTHORING_PATTERN_DAY_CARD_EDIT_BTN_CLASS
+                                    }
+                                    onClick={() => setPickerDay(dayOfWeek)}
+                                    aria-label={`Editar patrones de ${dayName}`}
+                                >
+                                    <Pencil
+                                        className="h-3.5 w-3.5"
                                         aria-hidden
-                                    >
-                                        <PeriodBlockIconButton
-                                            variant="edit"
-                                            tabIndex={-1}
-                                        >
-                                            <Pencil className="h-3.5 w-3.5" />
-                                        </PeriodBlockIconButton>
-                                    </span>
-                                ) : null}
-                            </button>
+                                    />
+                                </PeriodBlockIconButton>
+                            </article>
                         </li>
                     );
                 })}

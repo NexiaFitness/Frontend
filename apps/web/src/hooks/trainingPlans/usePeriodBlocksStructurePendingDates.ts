@@ -3,7 +3,7 @@
  * de cada bloque. No materializa TrainingSession (O2-A prohibido).
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@nexia/shared/store";
 import { weeklyStructureApi } from "@nexia/shared/api/weeklyStructureApi";
@@ -11,6 +11,10 @@ import { collectStructureTrainingDates } from "@nexia/shared";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 
 const EMPTY_SET = new Set<string>();
+
+function clearDatesIfNeeded(setDates: Dispatch<SetStateAction<string[]>>): void {
+  setDates((prev) => (prev.length === 0 ? prev : []));
+}
 
 export function usePeriodBlocksStructurePendingDates(input: {
   planId: number | null | undefined;
@@ -32,7 +36,7 @@ export function usePeriodBlocksStructurePendingDates(input: {
 
   useEffect(() => {
     if (!enabled || !planId || planId <= 0 || blocks.length === 0) {
-      setDates([]);
+      clearDatesIfNeeded(setDates);
       return;
     }
 

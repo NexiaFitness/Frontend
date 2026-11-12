@@ -14,6 +14,8 @@ import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import { filterTrainingSessionsInCommittedAssignmentWindow } from "@nexia/shared/training/planAssignmentResolve";
 
+const EMPTY_BLOCKS: PlanPeriodBlock[] = [];
+
 export interface UseClientActivePlanSessionScheduleResult {
   activePlanForClient: ActivePlanByClientOut | null | undefined;
   isLoadingActivePlan: boolean;
@@ -38,7 +40,7 @@ export function useClientActivePlanSessionSchedule(
   );
 
   const planId = activePlanForClient?.id;
-  const { data: periodBlocks = [] } = useGetPeriodBlocksQuery(planId!, {
+  const { data: periodBlocks = EMPTY_BLOCKS } = useGetPeriodBlocksQuery(planId!, {
     skip: skip || !planId,
   });
   const { data: planTrainingSessions = [] } = useGetTrainingSessionsQuery(planId!, {

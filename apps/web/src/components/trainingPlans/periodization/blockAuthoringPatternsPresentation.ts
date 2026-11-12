@@ -15,9 +15,8 @@ export const AUTHORING_PATTERN_DAY_LIST_CLASS = "space-y-2.5 md:space-y-3";
 const AUTHORING_PATTERN_DAY_CARD_BASE = cn(
     AUTHORING_STEP_INNER_PANEL_CLASS,
     "group relative w-full text-left",
-    "cursor-pointer transition-all duration-200",
+    "transition-all duration-200",
     "hover:border-primary/35 hover:bg-surface-2/45",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 );
 
 export function authoringPatternDayCardClass(options: {
@@ -43,5 +42,11 @@ export const AUTHORING_PATTERN_DAY_CARD_TITLE_CLASS =
 export const AUTHORING_PATTERN_DAY_CARD_EMPTY_CLASS =
     "inline-flex items-center gap-1.5 text-xs leading-relaxed text-warning";
 
-export const AUTHORING_PATTERN_DAY_CARD_EDIT_ICON_WRAP_CLASS =
-    "pointer-events-none absolute right-3 top-3";
+export const AUTHORING_PATTERN_DAY_CARD_BODY_BTN_CLASS = cn(
+    "min-w-0 w-full space-y-2 pr-10 text-left",
+    "border-0 bg-transparent p-0",
+    "cursor-pointer",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+);
+
+export const AUTHORING_PATTERN_DAY_CARD_EDIT_BTN_CLASS = "absolute right-3 top-3";

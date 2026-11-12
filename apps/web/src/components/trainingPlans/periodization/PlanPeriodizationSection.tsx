@@ -68,6 +68,8 @@ function formatDateFriendly(dateStr: string): string {
   });
 }
 
+const EMPTY_BLOCKS: PlanPeriodBlock[] = [];
+
 const BLOCK_AUTHORING_FOCUS_HEADER_SELECTOR =
   '[data-testid="block-authoring-focus-header"]';
 
@@ -152,7 +154,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
 
   const { data: catalog = [] } = useGetPhysicalQualitiesQuery();
   const {
-    data: blocks = [],
+    data: blocks = EMPTY_BLOCKS,
     isLoading,
     isError,
     error,
