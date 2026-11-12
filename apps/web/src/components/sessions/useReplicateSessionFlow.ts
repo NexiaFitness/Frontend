@@ -17,7 +17,7 @@
  * @since v6.5.0
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { skipToken } from "@reduxjs/toolkit/query";
 import {
     buildSessionReplicationWeekOptions,
@@ -85,6 +85,14 @@ export function useReplicateSessionFlow(session: SessionInfo) {
         setSelectedWeeks(weeks.map((w) => w.ordinal));
         setIsOpen(true);
     }, [weeks]);
+
+    /** Tras cargar el bloque (RTK), re-seleccionar semanas si el modal abrió con weeks=[]. */
+    useEffect(() => {
+        if (!isOpen || isBlockLoading || weeks.length === 0) return;
+        setSelectedWeeks((prev) =>
+            prev.length === 0 ? weeks.map((w) => w.ordinal) : prev,
+        );
+    }, [isOpen, isBlockLoading, weeks]);
 
     const handleReplicate = useCallback(async () => {
         try {
