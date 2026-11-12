@@ -46,3 +46,13 @@ export const CLIENT_INJURIES_FILTER_CHIP_IDLE = cn(
 export const CLIENT_INJURIES_FILTER_CHIP_BASE = cn(
     "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
 );
+
+export const CLIENT_INJURIES_RESOLVE_COPY = {
+    title: "¿Marcar esta lesión como resuelta?",
+    description:
+        "Dejará de contar como activa en el plan. El registro se conserva en el historial.",
+    confirmLabel: "Marcar como resuelta",
+    historyHint: "Sigue visible en «Resueltas» y en «Todas».",
+    ariaLabel: "Marcar como resuelta",
+    success: (name: string) => `Lesión «${name}» marcada como resuelta.`,
+} as const;

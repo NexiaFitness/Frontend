@@ -10,7 +10,7 @@
  */
 
 import React, { useCallback, useMemo, useState } from "react";
-import { Pencil, CheckCircle2, Trash2 } from "lucide-react";
+import { Pencil, CheckCircle2 } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { useToast } from "@/components/ui/feedback";
 import { PageTitle } from "@/components/dashboard/shared";
@@ -20,10 +20,7 @@ import { cn } from "@/lib/utils";
 import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 import { getMutationErrorMessage } from "@nexia/shared";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
-import {
-    useUpdateInjuryMutation,
-    useDeleteInjuryMutation,
-} from "@nexia/shared/api/injuriesApi";
+import { useUpdateInjuryMutation } from "@nexia/shared/api/injuriesApi";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 import { InjuryFormModal } from "./InjuryFormModal";
 import { ClientInjuriesEmptyState } from "./ClientInjuriesEmptyState";
@@ -35,6 +32,7 @@ import {
     CLIENT_INJURIES_FILTER_EMPTY_COPY,
     CLIENT_INJURIES_FILTER_EMPTY_SHELL,
     CLIENT_INJURIES_FILTER_EMPTY_TITLE,
+    CLIENT_INJURIES_RESOLVE_COPY,
     CLIENT_INJURIES_TAB_STACK,
 } from "./clientInjuriesTabPresentation";
 
@@ -81,12 +79,10 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
     const [selectedInjury, setSelectedInjury] = useState<InjuryWithDetails | null>(null);
     const [filter, setFilter] = useState<FilterValue>("all");
     const [resolveId, setResolveId] = useState<number | null>(null);
-    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const { injuries, isLoading, activeCount, totalCount } = useClientInjuries({ clientId });
 
     const [updateInjury, { isLoading: isResolving }] = useUpdateInjuryMutation();
-    const [deleteInjury, { isLoading: isDeleting }] = useDeleteInjuryMutation();
 
     const filteredInjuries = useMemo(() => {
         if (filter === "all") return injuries;
@@ -113,25 +109,14 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
     const openEdit = (injury: InjuryWithDetails) => { setSelectedInjury(injury); setIsModalOpen(true); };
 
     const resolveInjury = injuries.find((i) => i.id === resolveId);
-    const deleteInjury_ = injuries.find((i) => i.id === deleteId);
 
     const handleResolve = async () => {
         if (!resolveId) return;
         const name = resolveInjury ? cap(label(resolveInjury, "joint") ?? "lesión") : "lesión";
         try {
             await updateInjury({ injuryId: resolveId, data: { is_active: false } }).unwrap();
-            showSuccess(`Lesión «${name}» marcada como resuelta.`);
+            showSuccess(CLIENT_INJURIES_RESOLVE_COPY.success(name));
             setResolveId(null);
-        } catch (err) { showError(getMutationErrorMessage(err)); }
-    };
-
-    const handleDelete = async () => {
-        if (!deleteId) return;
-        const name = deleteInjury_ ? cap(label(deleteInjury_, "joint") ?? "lesión") : "lesión";
-        try {
-            await deleteInjury(deleteId).unwrap();
-            showSuccess(`Lesión «${name}» eliminada permanentemente.`);
-            setDeleteId(null);
         } catch (err) { showError(getMutationErrorMessage(err)); }
     };
 
@@ -243,34 +228,24 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
 
                                                 {/* Actions */}
                                                 <div className="flex shrink-0 items-center gap-0.5">
-                                                    {isActive && (
-                                                        <>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => openEdit(injury)}
-                                                                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
-                                                                aria-label="Editar"
-                                                            >
-                                                                <Pencil className="h-3.5 w-3.5" />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setResolveId(injury.id)}
-                                                                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-success"
-                                                                aria-label="Resolver"
-                                                            >
-                                                                <CheckCircle2 className="h-3.5 w-3.5" />
-                                                            </button>
-                                                        </>
-                                                    )}
                                                     <button
                                                         type="button"
-                                                        onClick={() => setDeleteId(injury.id)}
-                                                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
-                                                        aria-label="Eliminar"
+                                                        onClick={() => openEdit(injury)}
+                                                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
+                                                        aria-label="Editar"
                                                     >
-                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                        <Pencil className="h-3.5 w-3.5" />
                                                     </button>
+                                                    {isActive ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setResolveId(injury.id)}
+                                                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-success"
+                                                            aria-label={CLIENT_INJURIES_RESOLVE_COPY.ariaLabel}
+                                                        >
+                                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    ) : null}
                                                 </div>
                                             </div>
 
@@ -302,9 +277,10 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                     onClose={() => setResolveId(null)}
                     onConfirm={handleResolve}
                     isLoading={isResolving}
-                    title="¿Resolver esta lesión?"
-                    description="La lesión dejará de aparecer como activa."
-                    confirmLabel="Marcar como resuelta"
+                    data-testid="injury-resolve-confirm"
+                    title={CLIENT_INJURIES_RESOLVE_COPY.title}
+                    description={CLIENT_INJURIES_RESOLVE_COPY.description}
+                    confirmLabel={CLIENT_INJURIES_RESOLVE_COPY.confirmLabel}
                     confirmVariant="primary"
                     bodyContent={
                         <div className="space-y-3">
@@ -326,44 +302,7 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                                 </p>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                                Puedes revertir este cambio editando el registro más adelante.
-                            </p>
-                        </div>
-                    }
-                />
-            ) : null}
-
-            {deleteId != null && deleteInjury_ ? (
-                <NexiaPremiumConfirmModal
-                    isOpen
-                    onClose={() => setDeleteId(null)}
-                    onConfirm={handleDelete}
-                    isLoading={isDeleting}
-                    title="¿Eliminar esta lesión?"
-                    description="Esta acción es permanente y no se puede deshacer."
-                    confirmLabel="Eliminar lesión"
-                    bodyContent={
-                        <div className="space-y-3">
-                            <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-1">
-                                <p className="text-sm font-semibold text-foreground">
-                                    {cap(label(deleteInjury_, "joint") ?? "N/D")}
-                                    {label(deleteInjury_, "movement") ? (
-                                        <span className="font-normal text-muted-foreground">
-                                            {" "}
-                                            · {cap(label(deleteInjury_, "movement")!)}
-                                        </span>
-                                    ) : null}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                    Dolor {deleteInjury_.pain_level}/5
-                                    {deleteInjury_.start_date
-                                        ? ` · Desde ${fmtDate(deleteInjury_.start_date)}`
-                                        : ""}
-                                </p>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                                Se eliminará permanentemente del historial del cliente. El plan de
-                                entrenamiento dejará de considerar esta lesión.
+                                {CLIENT_INJURIES_RESOLVE_COPY.historyHint}
                             </p>
                         </div>
                     }

@@ -54,4 +54,22 @@ describe("getMutationErrorMessage", () => {
             "Ha ocurrido un error. Inténtalo de nuevo.",
         );
     });
+
+    it("traduce Injury not found (B-09)", () => {
+        expect(
+            getMutationErrorMessage({
+                status: 404,
+                data: { detail: "Injury not found" },
+            }),
+        ).toBe("No se encontró la lesión.");
+    });
+
+    it("traduce el 403 del tope axial (B-09)", () => {
+        expect(
+            getMutationErrorMessage({
+                status: 403,
+                data: { detail: "Athletes cannot change the axial load cap" },
+            }),
+        ).toBe("El atleta no puede cambiar el tope de carga axial.");
+    });
 });

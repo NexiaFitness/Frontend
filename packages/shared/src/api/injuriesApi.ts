@@ -9,7 +9,7 @@
  * - GET /injuries/clients/{client_id} (historial)
  * - GET /injuries/clients/{client_id}/active (activas)
  * - PUT /injuries/{injury_id}
- * - DELETE /injuries/{injury_id}
+ * - DELETE /injuries/{injury_id} (marca como resuelta; no borra el historial)
  *
  * @author Nelson Valero
  * @since v5.7.0

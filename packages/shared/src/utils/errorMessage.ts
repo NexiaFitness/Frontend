@@ -130,6 +130,14 @@ function localizeHttpDetail(detail: string, status?: number): string {
         );
     }
 
+    if (normalized === "injury not found") {
+        return "No se encontró la lesión.";
+    }
+
+    if (normalized === "athletes cannot change the axial load cap") {
+        return "El atleta no puede cambiar el tope de carga axial.";
+    }
+
     if (
         normalized === "invalid or expired token" ||
         normalized === "invalid or expired reset token" ||

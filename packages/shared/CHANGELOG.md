@@ -1,5 +1,11 @@
 # Changelog — @nexia/shared
 
+## 6.1.2 — 2026-11-12
+
+### Fixed (B-09)
+
+- `getMutationErrorMessage` traduce «Injury not found» y el 403 del tope de carga axial. El backend ya emite esos `detail` en español; el mapa cubre respuestas antiguas en inglés.
+
 ## 6.1.1 — 2026-11-12
 
 ### Fixed (B-08)
