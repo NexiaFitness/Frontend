@@ -54,7 +54,7 @@ const variantStyles: Record<string, string> = {
     default:
         "border border-transparent bg-primary text-primary-foreground hover:bg-primary/90",
     primary:
-        "border border-transparent bg-gradient-to-r from-[hsl(190,100%,45%)] to-[hsl(210,100%,55%)] text-primary-foreground shadow-[0_0_20px_-4px_hsl(190,100%,50%,0.4)] hover:shadow-[0_0_28px_-4px_hsl(190,100%,50%,0.6)] hover:brightness-110 active:brightness-95 disabled:opacity-100 disabled:brightness-100",
+        "border border-transparent bg-gradient-to-r from-[hsl(190,100%,45%)] to-[hsl(210,100%,55%)] text-primary-foreground shadow-[0_0_20px_-4px_hsl(190,100%,50%,0.4)] hover:shadow-[0_0_28px_-4px_hsl(190,100%,50%,0.6)] hover:brightness-110 active:brightness-95 disabled:brightness-100",
     destructive: destructiveOutlineStyles,
     danger: destructiveOutlineStyles,
     outline:
@@ -105,6 +105,7 @@ export const Button = forwardRef<
                     baseStyles,
                     variantStyles[variant],
                     sizeStyles[size],
+                    isLoading && "disabled:opacity-100",
                     className
                 )}
                 disabled={isDisabled}

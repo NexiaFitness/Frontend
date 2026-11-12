@@ -118,6 +118,20 @@ describe("Button", () => {
             expect(button).toHaveClass("disabled:pointer-events-none")
         })
 
+        it("primary deshabilitado se ve atenuado (no parece activo)", () => {
+            render(<Button variant="primary" disabled>Replicar</Button>)
+            const button = screen.getByRole("button")
+            expect(button).toHaveClass("disabled:opacity-50")
+            expect(button).not.toHaveClass("disabled:opacity-100")
+        })
+
+        it("primary cargando conserva la opacidad completa", () => {
+            render(<Button variant="primary" isLoading>Guardar</Button>)
+            const button = screen.getByRole("button")
+            expect(button).toHaveClass("disabled:opacity-100")
+            expect(button).not.toHaveClass("disabled:opacity-50")
+        })
+
         it("prioritizes loading over disabled prop", () => {
             render(<Button isLoading disabled>Button</Button>)
             const button = screen.getByRole("button")
