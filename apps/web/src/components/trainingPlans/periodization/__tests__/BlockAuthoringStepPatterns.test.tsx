@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { render } from "@/test-utils/render";
 import { BlockAuthoringStepPatterns } from "../BlockAuthoringStepPatterns";
+import { authoringPatternDayAriaLabel } from "../blockAuthoringPatternsPresentation";
 
 describe("BlockAuthoringStepPatterns", () => {
     it("el lápiz es un botón Editar hermano, no anidado dentro de otro botón", async () => {
@@ -39,5 +40,14 @@ describe("BlockAuthoringStepPatterns", () => {
             screen.getByRole("heading", { name: /patrones — martes/i }),
         ).toBeInTheDocument();
         expect(card.querySelector("button button")).toBeNull();
+    });
+
+    it("el aria-label usa el singular con un patrón (B-21)", () => {
+        expect(authoringPatternDayAriaLabel("Martes", 1)).toBe(
+            "Martes: 1 patrón asignado. Pulsa para editar.",
+        );
+        expect(authoringPatternDayAriaLabel("Martes", 2)).toBe(
+            "Martes: 2 patrones asignados. Pulsa para editar.",
+        );
     });
 });

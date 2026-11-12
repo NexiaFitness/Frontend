@@ -420,6 +420,7 @@ export * from "./utils/validations";
 export * from "./utils/calculations";
 export * from "./utils/sessionProgramming";
 export { getMutationErrorMessage } from "./utils/errorMessage";
+export { formatCountNoun } from "./utils/formatCountNoun";
 export {
     classifyFocusedPlanFetchError,
     isTrainingPlanFetchNotFound,

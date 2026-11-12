@@ -14,6 +14,7 @@ import {
     AUTHORING_PATTERN_DAY_CARD_EMPTY_CLASS,
     AUTHORING_PATTERN_DAY_CARD_TITLE_CLASS,
     AUTHORING_PATTERN_DAY_LIST_CLASS,
+    authoringPatternDayAriaLabel,
     authoringPatternDayCardClass,
 } from "./blockAuthoringPatternsPresentation";
 import { BlockPatternPickerSheet } from "./BlockPatternPickerSheet";
@@ -209,11 +210,10 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
                                     }
                                     onClick={() => setPickerDay(dayOfWeek)}
                                     aria-expanded={isEditing}
-                                    aria-label={
-                                        hasPatterns
-                                            ? `${dayName}: ${patterns.length} patrones asignados. Pulsa para editar.`
-                                            : `${dayName}: sin patrones. Pulsa para asignar.`
-                                    }
+                                    aria-label={authoringPatternDayAriaLabel(
+                                        dayName,
+                                        patterns.length,
+                                    )}
                                 >
                                     <p
                                         className={

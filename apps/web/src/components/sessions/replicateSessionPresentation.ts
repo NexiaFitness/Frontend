@@ -11,7 +11,7 @@
  * @since v9.2.0
  */
 
-import type { ReplicationSkipPartition } from "@nexia/shared";
+import { formatCountNoun, type ReplicationSkipPartition } from "@nexia/shared";
 import type { SkippedConflictItem } from "@nexia/shared/types/trainingSessions";
 
 /** Estado del modal de conflictos tras la primera replicación (force=false). */
@@ -87,10 +87,6 @@ export function formatReplicationDate(dateISO: string | null): string {
     });
 }
 
-function plural(count: number, one: string, many: string): string {
-    return `${count} ${count === 1 ? one : many}`;
-}
-
 export function buildReplicateOutcomeMessage(
     createdCount: number,
     skips: Pick<
@@ -102,32 +98,32 @@ export function buildReplicateOutcomeMessage(
     const verb = mode === "replace" ? "sustituida" : "replicada";
     const verbPlural = mode === "replace" ? "sustituidas" : "replicadas";
     const parts = [
-        `${plural(createdCount, "sesión", "sesiones")} ${
+        `${formatCountNoun(createdCount, "sesión", "sesiones")} ${
             createdCount === 1 ? verb : verbPlural
         }.`,
     ];
     if (skips.protectedItems.length > 0) {
         parts.push(
-            `${plural(skips.protectedItems.length, "semana", "semanas")} con registro del atleta no se ${
+            `${formatCountNoun(skips.protectedItems.length, "semana", "semanas")} con registro del atleta no se ${
                 skips.protectedItems.length === 1 ? "ha" : "han"
             } modificado.`,
         );
     }
     if (skips.pastTargetDate.length > 0) {
         parts.push(
-            `${plural(skips.pastTargetDate.length, "semana", "semanas")} con fecha anterior a hoy no se ${
+            `${formatCountNoun(skips.pastTargetDate.length, "semana", "semanas")} con fecha anterior a hoy no se ${
                 skips.pastTargetDate.length === 1 ? "ha" : "han"
             } replicado.`,
         );
     }
     if (skips.outsideBlock.length > 0) {
         parts.push(
-            `${plural(skips.outsideBlock.length, "semana queda", "semanas quedan")} fuera del bloque.`,
+            `${formatCountNoun(skips.outsideBlock.length, "semana queda", "semanas quedan")} fuera del bloque.`,
         );
     }
     if (skips.unknown.length > 0) {
         parts.push(
-            `${plural(skips.unknown.length, "semana", "semanas")} omitida(s) por un motivo no reconocido.`,
+            `${formatCountNoun(skips.unknown.length, "semana", "semanas")} omitida(s) por un motivo no reconocido.`,
         );
     }
     return parts.join(" ");

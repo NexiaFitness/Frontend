@@ -2,9 +2,21 @@
  * blockAuthoringPatternsPresentation.ts — Tokens wizard D-PAP paso Patrones.
  */
 
+import { formatCountNoun } from "@nexia/shared";
+
 import { cn } from "@/lib/utils";
 
 import { AUTHORING_STEP_INNER_PANEL_CLASS } from "./phaseAuthoringPresentation";
+
+export function authoringPatternDayAriaLabel(
+    dayName: string,
+    patternCount: number,
+): string {
+    if (patternCount <= 0) {
+        return `${dayName}: sin patrones. Pulsa para asignar.`;
+    }
+    return `${dayName}: ${formatCountNoun(patternCount, "patrón asignado", "patrones asignados")}. Pulsa para editar.`;
+}
 
 /** Mensaje latido azul cuando faltan patrones en algún día activo. */
 export const AUTHORING_PATTERNS_INCOMPLETE_STATUS_HINT =
