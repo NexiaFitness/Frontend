@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
 import {
+    buildBlockContextLine,
     resolveSessionDayPhaseContext,
     SESSION_DAY_CONTEXT_COPY,
 } from "../sessionDayContextPresentation";
@@ -62,5 +63,21 @@ describe("resolveSessionDayPhaseContext", () => {
         expect(ctx && "body" in ctx && ctx.body).toBe(
             SESSION_DAY_CONTEXT_COPY.outsidePhaseBody,
         );
+    });
+});
+
+describe("buildBlockContextLine", () => {
+    const rec = {
+        period_block_name: "Fase 1",
+        period_block_start_date: "2026-12-02",
+        period_block_end_date: "2026-12-08",
+        block_week_ordinal: 1,
+        block_week_count: 2,
+    } as const;
+
+    it("bloque 7 días mid-week: Semana 1 de 1, no el recuento calendario 2", () => {
+        const line = buildBlockContextLine(rec as never, "2026-12-02");
+        expect(line).toContain("Semana 1 de 1");
+        expect(line).not.toContain("Semana 1 de 2");
     });
 });

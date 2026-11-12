@@ -3,6 +3,7 @@
  */
 
 import { cn } from "@/lib/utils";
+import { formatSessionBlockWeekLabel } from "@nexia/shared";
 import { PLATFORM_SECTION_LABEL } from "@/components/ui/surface/platformPremiumPresentation";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import type {
@@ -124,13 +125,27 @@ export function isCoPrimaryRecommendation(rec: SessionDayRecommendations): boole
     );
 }
 
-export function buildBlockContextLine(rec: SessionDayRecommendations): string | null {
+export function buildBlockContextLine(
+    rec: SessionDayRecommendations,
+    sessionDateISO?: string,
+): string | null {
+    const occupancyLabel =
+        sessionDateISO &&
+        rec.period_block_start_date &&
+        rec.period_block_end_date
+            ? formatSessionBlockWeekLabel({
+                  blockStartISO: rec.period_block_start_date,
+                  blockEndISO: rec.period_block_end_date,
+                  sessionDateISO,
+              })
+            : null;
     const weekLine =
-        rec.block_week_ordinal != null &&
+        occupancyLabel ??
+        (rec.block_week_ordinal != null &&
         rec.block_week_count != null &&
         rec.block_week_count > 0
             ? `Semana ${rec.block_week_ordinal} de ${rec.block_week_count}`
-            : null;
+            : null);
     const dateRange = formatBlockDateRange(
         rec.period_block_start_date,
         rec.period_block_end_date,

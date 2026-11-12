@@ -514,9 +514,12 @@ export {
 } from "./utils/athlete/athleteRunGroupRoundPersist";
 export {
     buildSessionReplicationWeekOptions,
+    formatSessionBlockWeekLabel,
     getLocalTodayISO,
+    getSessionBlockWeekOccupancy,
     partitionReplicationSkips,
     resolveReplicationSkipBucket,
+    type SessionBlockWeekOccupancy,
     type SessionReplicationWeekOption,
     type SessionReplicationWeekInput,
     type ReplicationSkipPartition,

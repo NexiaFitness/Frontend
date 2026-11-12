@@ -11,6 +11,8 @@ import { describe, expect, it } from "vitest";
 import type { SkippedConflictItem } from "../types/trainingSessions";
 import {
     buildSessionReplicationWeekOptions,
+    formatSessionBlockWeekLabel,
+    getSessionBlockWeekOccupancy,
     partitionReplicationSkips,
     resolveReplicationSkipBucket,
 } from "./sessionReplication";
@@ -67,6 +69,16 @@ describe("buildSessionReplicationWeekOptions", () => {
         expect(options.map((o) => o.targetDate)).toEqual(["2026-03-16", "2026-03-23"]);
     });
 
+    it("bloque 7 días mié→mar: el miércoles no tiene otra semana destino", () => {
+        const options = buildSessionReplicationWeekOptions({
+            blockStartISO: "2026-12-02",
+            blockEndISO: "2026-12-08",
+            sessionDateISO: "2026-12-02",
+            asOfDateISO: "2026-01-01",
+        });
+        expect(options).toEqual([]);
+    });
+
     it("rango inválido no ofrece semanas", () => {
         expect(
             buildSessionReplicationWeekOptions({
@@ -75,6 +87,53 @@ describe("buildSessionReplicationWeekOptions", () => {
                 sessionDateISO: "2026-03-10",
             }),
         ).toEqual([]);
+    });
+});
+
+describe("getSessionBlockWeekOccupancy", () => {
+    it("bloque 7 días mié→mar: Semana 1 de 1, no 1 de 2", () => {
+        expect(
+            getSessionBlockWeekOccupancy({
+                blockStartISO: "2026-12-02",
+                blockEndISO: "2026-12-08",
+                sessionDateISO: "2026-12-02",
+            }),
+        ).toEqual({
+            calendarOrdinal: 1,
+            occupancyIndex: 1,
+            occupancyCount: 1,
+        });
+        expect(
+            formatSessionBlockWeekLabel({
+                blockStartISO: "2026-12-02",
+                blockEndISO: "2026-12-08",
+                sessionDateISO: "2026-12-02",
+            }),
+        ).toBe("Semana 1 de 1");
+        expect(
+            formatSessionBlockWeekLabel({
+                blockStartISO: "2026-12-02",
+                blockEndISO: "2026-12-08",
+                sessionDateISO: "2026-12-08",
+            }),
+        ).toBe("Semana 1 de 1");
+    });
+
+    it("bloque 14 días mié→mar: el miércoles es Semana 1 de 2", () => {
+        expect(
+            formatSessionBlockWeekLabel({
+                blockStartISO: "2026-12-02",
+                blockEndISO: "2026-12-15",
+                sessionDateISO: "2026-12-02",
+            }),
+        ).toBe("Semana 1 de 2");
+        expect(
+            formatSessionBlockWeekLabel({
+                blockStartISO: "2026-12-02",
+                blockEndISO: "2026-12-15",
+                sessionDateISO: "2026-12-09",
+            }),
+        ).toBe("Semana 2 de 2");
     });
 });
 

@@ -73,6 +73,55 @@ export function buildSessionReplicationWeekOptions({
     return options;
 }
 
+export interface SessionBlockWeekOccupancy {
+    calendarOrdinal: number;
+    occupancyIndex: number;
+    occupancyCount: number;
+}
+
+/**
+ * Semanas del bloque en las que cae el mismo día de la semana que `sessionDateISO`.
+ * Misma regla que replicar (D-REP-3), sin filtrar fechas pasadas (D-REP-6).
+ * Un bloque de 7 días mid-week cubre 2 semanas calendario, pero un miércoles
+ * solo existe una vez → occupancyCount = 1.
+ */
+export function getSessionBlockWeekOccupancy({
+    blockStartISO,
+    blockEndISO,
+    sessionDateISO,
+}: Omit<SessionReplicationWeekInput, "asOfDateISO">): SessionBlockWeekOccupancy | null {
+    const totalWeeks = getBlockCalendarWeekCount(blockStartISO, blockEndISO);
+    if (totalWeeks <= 0) return null;
+    const originOrdinal = getBlockCalendarWeekOrdinal(
+        sessionDateISO,
+        blockStartISO,
+    );
+    const occupied: number[] = [];
+    for (let ordinal = 1; ordinal <= totalWeeks; ordinal += 1) {
+        const targetDate = addDaysToLocalISO(
+            sessionDateISO,
+            (ordinal - originOrdinal) * 7,
+        );
+        if (targetDate < blockStartISO || targetDate > blockEndISO) continue;
+        occupied.push(ordinal);
+    }
+    const occupancyIndex = occupied.indexOf(originOrdinal) + 1;
+    if (occupancyIndex === 0) return null;
+    return {
+        calendarOrdinal: originOrdinal,
+        occupancyIndex,
+        occupancyCount: occupied.length,
+    };
+}
+
+export function formatSessionBlockWeekLabel(
+    input: Omit<SessionReplicationWeekInput, "asOfDateISO">,
+): string | null {
+    const occupancy = getSessionBlockWeekOccupancy(input);
+    if (!occupancy) return null;
+    return `Semana ${occupancy.occupancyIndex} de ${occupancy.occupancyCount}`;
+}
+
 export interface ReplicationSkipPartition {
     /** Hueco ocupado por una sesión sustituible (se puede ofrecer «Sustituir»). */
     replaceable: SkippedConflictItem[];

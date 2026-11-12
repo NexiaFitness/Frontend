@@ -21,6 +21,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { skipToken } from "@reduxjs/toolkit/query";
 import {
     buildSessionReplicationWeekOptions,
+    getSessionBlockWeekOccupancy,
     partitionReplicationSkips,
     useReplicateTrainingSessionMutation,
     useGetPeriodBlockQuery,
@@ -79,6 +80,17 @@ export function useReplicateSessionFlow(session: SessionInfo) {
             label: `Semana ${option.ordinal}`,
             date: formatReplicationDate(option.targetDate),
         }));
+    }, [block, session.session_date]);
+
+    const occupancyCount = useMemo(() => {
+        if (!block || !session.session_date) return null;
+        return (
+            getSessionBlockWeekOccupancy({
+                blockStartISO: block.start_date,
+                blockEndISO: block.end_date,
+                sessionDateISO: session.session_date,
+            })?.occupancyCount ?? null
+        );
     }, [block, session.session_date]);
 
     const openModal = useCallback(() => {
@@ -147,6 +159,7 @@ export function useReplicateSessionFlow(session: SessionInfo) {
         setIsOpen,
         isConflictOpen,
         weeks,
+        occupancyCount,
         selectedWeeks,
         toggleWeek,
         isBlockLoading,

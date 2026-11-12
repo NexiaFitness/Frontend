@@ -6,8 +6,21 @@ import { describe, expect, it } from "vitest";
 
 import {
     buildReplicateOutcomeMessage,
+    replicateEmptyWeeksMessage,
     replicateSkipReasonLabel,
 } from "./replicateSessionPresentation";
+
+describe("replicateEmptyWeeksMessage", () => {
+    it("bloque 7 días: el día no se repite", () => {
+        expect(replicateEmptyWeeksMessage(1)).toBe(
+            "Este día no se repite en otras semanas del bloque.",
+        );
+    });
+
+    it("hay otras semanas ocupadas pero ya pasaron", () => {
+        expect(replicateEmptyWeeksMessage(2)).toContain("ya pasaron");
+    });
+});
 
 describe("replicateSessionPresentation", () => {
     it("past_target_date y protected_session (D10/D11)", () => {

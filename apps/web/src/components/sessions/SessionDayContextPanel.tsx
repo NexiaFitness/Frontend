@@ -200,7 +200,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
     const muscles = rec.target_muscle_groups ?? [];
     const qualityLabel = resolveQualityLabelsFromRecommendation(rec, catalog);
     const qualityMix = rec.quality_mix ?? [];
-    const blockLine = buildBlockContextLine(rec);
+    const blockLine = buildBlockContextLine(rec, sessionDate);
     const dateLine = formatSessionDateLong(sessionDate);
 
     if (layout === "sidebar") {

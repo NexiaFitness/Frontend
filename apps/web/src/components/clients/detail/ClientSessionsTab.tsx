@@ -642,6 +642,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                 sessionName={replicateSession?.session_name ?? ''}
                 hasBlock={replicateFlow.hasBlock}
                 isBlockLoading={replicateFlow.isBlockLoading}
+                occupancyCount={replicateFlow.occupancyCount}
             />
             <ReplicateSessionConflictModal
                 isOpen={replicateFlow.isConflictOpen}

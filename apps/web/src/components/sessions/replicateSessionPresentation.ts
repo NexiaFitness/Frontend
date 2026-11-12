@@ -35,6 +35,23 @@ export const EMPTY_REPLICATE_CONFLICT_OUTCOME: ReplicateConflictOutcome = {
     unknown: [],
 };
 
+export const REPLICATE_NO_WEEKS_DAY_UNIQUE =
+    "Este día no se repite en otras semanas del bloque.";
+export const REPLICATE_NO_WEEKS_OTHERS_PAST =
+    "Las otras semanas de este día ya pasaron; no se pueden replicar.";
+export const REPLICATE_NO_WEEKS_FALLBACK =
+    "No hay otras semanas disponibles en este bloque.";
+
+export function replicateEmptyWeeksMessage(occupancyCount: number | null): string {
+    if (occupancyCount != null && occupancyCount <= 1) {
+        return REPLICATE_NO_WEEKS_DAY_UNIQUE;
+    }
+    if (occupancyCount != null && occupancyCount > 1) {
+        return REPLICATE_NO_WEEKS_OTHERS_PAST;
+    }
+    return REPLICATE_NO_WEEKS_FALLBACK;
+}
+
 export const REPLICATE_CONFLICT_KEEP_LABEL = "Mantener las existentes";
 export const REPLICATE_CONFLICT_REPLACE_LABEL = "Sustituir por esta versión";
 export const REPLICATE_CONFLICT_PROTECTED_TITLE =

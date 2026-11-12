@@ -15,6 +15,7 @@ import {
     NEXIA_PREMIUM_MODAL_TITLE_ACCENT_CLASS,
 } from "@/components/ui/modals";
 import { cn } from "@/lib/utils";
+import { replicateEmptyWeeksMessage } from "./replicateSessionPresentation";
 
 interface WeekOption {
     ordinal: number;
@@ -33,6 +34,7 @@ interface ReplicateSessionModalProps {
     sessionName: string;
     hasBlock: boolean;
     isBlockLoading: boolean;
+    occupancyCount?: number | null;
 }
 
 export const ReplicateSessionModal: React.FC<ReplicateSessionModalProps> = ({
@@ -46,6 +48,7 @@ export const ReplicateSessionModal: React.FC<ReplicateSessionModalProps> = ({
     sessionName,
     hasBlock,
     isBlockLoading,
+    occupancyCount = null,
 }) => {
     const allSelected = weeks.length > 0 && selectedWeeks.length === weeks.length;
 
@@ -129,7 +132,7 @@ export const ReplicateSessionModal: React.FC<ReplicateSessionModalProps> = ({
 
                 {hasBlock && weeks.length === 0 && (
                     <p className="text-sm text-muted-foreground">
-                        No hay otras semanas disponibles en este bloque.
+                        {replicateEmptyWeeksMessage(occupancyCount)}
                     </p>
                 )}
 

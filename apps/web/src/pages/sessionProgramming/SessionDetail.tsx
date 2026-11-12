@@ -406,6 +406,7 @@ export const SessionDetail: React.FC = () => {
                 sessionName={session.session_name}
                 hasBlock={replicateFlow.hasBlock}
                 isBlockLoading={replicateFlow.isBlockLoading}
+                occupancyCount={replicateFlow.occupancyCount}
             />
             <ReplicateSessionConflictModal
                 isOpen={replicateFlow.isConflictOpen}
