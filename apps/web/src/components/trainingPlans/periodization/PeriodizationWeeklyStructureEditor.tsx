@@ -8,7 +8,6 @@
  */
 
 import React, { useCallback, useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
 
 import { getTrainingDatesInRange, type TrainingDateInfo, type WeekStructureKind } from "@nexia/shared";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
@@ -21,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 
 import { DayCell } from "./DayCell";
+import { WeekAccordionHeader } from "./WeekAccordionHeader";
 import {
     countConfiguredTrainableDays,
     formatBlockWeekRange,
@@ -29,16 +29,12 @@ import {
     toPickerDayId,
 } from "./periodizationWeeklyStructureUtils";
 import {
-    WEEK_KIND_BADGE_CLASS,
-    WEEK_KIND_LABEL_ES,
     WEEK_ACCORDION_COLLAPSED_CLASS,
     WEEK_ACCORDION_DAY_CELL_CLASS,
     WEEK_ACCORDION_DAYS_INSET_CLASS,
     WEEK_ACCORDION_EXPANDED_CLASS,
-    WEEK_ACCORDION_HEADER_COLLAPSED_CLASS,
     WEEK_ACCORDION_HEADER_DIVIDER_LINE,
     WEEK_ACCORDION_HEADER_DIVIDER_WRAP,
-    WEEK_ACCORDION_HEADER_EXPANDED_CLASS,
 } from "./phaseConstructorPresentation";
 
 export type WeeklyStructureEditorMode = "template" | "all";
@@ -309,74 +305,34 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
                                     )}
                                 >
                                     {isExpanded && <NexiaGlassAccentRim />}
-                                    <button
-                                        type="button"
-                                        onClick={() =>
+                                    <WeekAccordionHeader
+                                        weekOrdinal={weekGroup.weekOrdinal}
+                                        weekRange={weekRange}
+                                        configured={configured}
+                                        total={total}
+                                        isExpanded={isExpanded}
+                                        weekKind={weekKind}
+                                        showRestore={
+                                            mode === "all" &&
+                                            weekKind === "personalizada" &&
+                                            onRestoreWeek != null
+                                        }
+                                        onToggle={() =>
                                             setExpandedWeek(
                                                 isExpanded
                                                     ? null
                                                     : weekGroup.weekOrdinal,
                                             )
                                         }
-                                        className={cn(
-                                            "relative w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left",
-                                            isExpanded
-                                                ? WEEK_ACCORDION_HEADER_EXPANDED_CLASS
-                                                : WEEK_ACCORDION_HEADER_COLLAPSED_CLASS,
-                                        )}
-                                        aria-expanded={isExpanded}
-                                    >
-                                        <ChevronDown
-                                            className={cn(
-                                                "h-4 w-4 text-muted-foreground shrink-0 transition-transform",
-                                                isExpanded ? "" : "-rotate-90",
-                                            )}
-                                            aria-hidden
-                                        />
-                                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-primary text-[10px] font-semibold shrink-0">
-                                            S{weekGroup.weekOrdinal}
-                                        </span>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <p className="text-sm font-semibold text-foreground">
-                                                    Semana {weekGroup.weekOrdinal}
-                                                </p>
-                                                {weekKind && weekGroup.weekOrdinal !== 1 && (
-                                                    <span
-                                                        className={cn(
-                                                            "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border",
-                                                            WEEK_KIND_BADGE_CLASS[weekKind],
-                                                        )}
-                                                    >
-                                                        {WEEK_KIND_LABEL_ES[weekKind]}
-                                                    </span>
-                                                )}
-                                                {mode === "all" &&
-                                                    weekKind === "personalizada" &&
-                                                    onRestoreWeek && (
-                                                        <button
-                                                            type="button"
-                                                            className="text-[10px] font-medium text-primary hover:underline"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                onRestoreWeek(
-                                                                    weekGroup.weekOrdinal,
-                                                                );
-                                                            }}
-                                                        >
-                                                            Restaurar semana tipo
-                                                        </button>
-                                                    )}
-                                            </div>
-                                            <p className="text-xs text-muted-foreground">
-                                                {weekRange}
-                                                {" · "}
-                                                <span className="tabular-nums">
-                                                    {configured}/{total} días
-                                                </span>
-                                            </p>
-                                        </div>
-                                    </button>
+                                        onRestore={
+                                            onRestoreWeek
+                                                ? () =>
+                                                      onRestoreWeek(
+                                                          weekGroup.weekOrdinal,
+                                                      )
+                                                : undefined
+                                        }
+                                    />
                                     {isExpanded && (
                                         <>
                                             <div

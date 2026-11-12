@@ -100,6 +100,14 @@ export const WEEK_ACCORDION_HEADER_EXPANDED_CLASS = cn(
     "border-b border-border/80",
 );
 
+export const WEEK_ACCORDION_HEADER_ROW_CLASS = "relative flex items-stretch";
+
+export const WEEK_ACCORDION_TOGGLE_BTN_CLASS =
+    "relative min-w-0 flex-1 flex items-center gap-3 px-3 py-2.5 transition-colors text-left";
+
+export const WEEK_ACCORDION_RESTORE_BTN_CLASS =
+    "shrink-0 self-center pr-3 text-[10px] font-medium text-primary hover:underline";
+
 /** Separador cabecera semana → días (divider glow canónico, inset). */
 export const WEEK_ACCORDION_HEADER_DIVIDER_WRAP = cn(
     "relative bg-surface-2/35 px-3 py-1",
