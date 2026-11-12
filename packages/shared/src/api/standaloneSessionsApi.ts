@@ -148,11 +148,11 @@ export const standaloneSessionsApi = baseApi.injectEndpoints({
                 url: `/standalone-sessions/${sessionId}`,
                 method: "DELETE",
             }),
-            invalidatesTags: (_result, _error, { sessionId, clientId, trainerId }) => [
-                { type: "StandaloneSession", id: sessionId },
-                { type: "Client", id: `SESSIONS-${clientId}` },
-                { type: "TrainingSession", id: `LIST_${trainerId}` },
-            ],
+            invalidatesTags: (_result, _error, { clientId, trainerId }) =>
+                standaloneListInvalidationTags({
+                    client_id: clientId,
+                    trainer_id: trainerId,
+                }),
         }),
 
         /**

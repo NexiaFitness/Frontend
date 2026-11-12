@@ -78,9 +78,8 @@ export type DeleteTrainingSessionArg = {
 export function getDeleteTrainingSessionInvalidationTags(
     arg: DeleteTrainingSessionArg,
 ): Array<{ type: 'TrainingSession' | 'TrainingPlan' | 'Client'; id: string | number }> {
-    const { id, trainingPlanId, clientId, trainerId } = arg;
-    const tags: Array<{ type: 'TrainingSession' | 'TrainingPlan' | 'Client'; id: string | number }> =
-        [{ type: 'TrainingSession', id }];
+    const { trainingPlanId, clientId, trainerId } = arg;
+    const tags: Array<{ type: 'TrainingSession' | 'TrainingPlan' | 'Client'; id: string | number }> = [];
     if (trainingPlanId) {
         tags.push(
             { type: 'TrainingSession', id: `PLAN_${trainingPlanId}` },
@@ -240,15 +239,9 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
          */
         getTrainingSession: builder.query<TrainingSession, number>({
             query: (id) => `/training-sessions/${id}`,
-            providesTags: (result, _error, id) => {
-                const tags: Array<{ type: 'TrainingSession'; id: string | number }> = [
-                    { type: 'TrainingSession', id },
-                ];
-                if (result?.training_plan_id) {
-                    tags.push({ type: 'TrainingSession', id: `PLAN_${result.training_plan_id}` as const });
-                }
-                return tags;
-            },
+            providesTags: (_result, _error, id) => [
+                { type: 'TrainingSession', id },
+            ],
         }),
 
         /**

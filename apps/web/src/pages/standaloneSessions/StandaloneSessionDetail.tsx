@@ -52,7 +52,7 @@ import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
 import { StandaloneSessionLoadSummary } from "@/components/standaloneSessions/StandaloneSessionLoadSummary";
 import { StandaloneSessionClientFeedbackPanel } from "@/components/standaloneSessions/StandaloneSessionClientFeedbackPanel";
 import { cn } from "@/lib/utils";
-import { navigateDashboardBack, readSafeReturnTo } from "@/lib/sessionDetailNavigation";
+import { navigateAfterSessionDelete, navigateDashboardBack, readSafeReturnTo } from "@/lib/sessionDetailNavigation";
 
 const DEFAULT_STANDALONE_BACK = "/dashboard/sessions";
 
@@ -399,7 +399,7 @@ export const StandaloneSessionDetail: React.FC = () => {
                 isDeleting={isDeleting}
                 onClose={() => setShowDeleteModal(false)}
                 onConfirmDelete={handleConfirmDelete}
-                onDeleted={goBack}
+                onDeleted={() => navigateAfterSessionDelete(navigate, location.state, session.id, { clientId: session.client_id })}
             />
         </div>
     );

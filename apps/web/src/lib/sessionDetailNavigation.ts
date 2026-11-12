@@ -1,7 +1,8 @@
 /**
  * sessionDetailNavigation.ts — Volver al listado u origen desde el detalle de sesión
  * Contexto: SessionDetail / StandaloneSessionDetail; el “from” se envía con navigate state.
- * Notas: validar ruta interna (evita open redirect).
+ * Notas: validar ruta interna (evita open redirect). Tras DELETE, no volver a create/edit
+ * ni a la sesión borrada (B-05).
  */
 
 import type { Location, NavigateFunction } from "react-router-dom";
@@ -93,4 +94,91 @@ export function readReviewBackTarget(state: unknown): string | null {
         return null;
     }
     return returnTo;
+}
+
+function pathnameOf(path: string): string {
+    const queryIndex = path.search(/[?#]/);
+    return queryIndex === -1 ? path : path.slice(0, queryIndex);
+}
+
+function pathIsOrUnder(pathname: string, prefix: string): boolean {
+    return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+/** Pestaña Sesiones del cliente; null si no hay id. */
+export function clientSessionsTabPath(
+    clientId: number | string | null | undefined,
+): string | null {
+    if (clientId == null || clientId === "") return null;
+    return `/dashboard/clients/${clientId}?tab=sessions`;
+}
+
+/**
+ * Rutas que no sirven tras DELETE 200: el alta, la edición o la propia sesión
+ * borrada (detalle, revisión o suelta).
+ */
+export function isUnusableAfterSessionDelete(
+    path: string,
+    deletedSessionId: number,
+): boolean {
+    const pathname = pathnameOf(path);
+    if (pathIsOrUnder(pathname, "/dashboard/session-programming/create-session")) {
+        return true;
+    }
+    if (pathIsOrUnder(pathname, "/dashboard/session-programming/edit-session")) {
+        return true;
+    }
+    if (
+        pathIsOrUnder(
+            pathname,
+            `/dashboard/session-programming/sessions/${deletedSessionId}`,
+        )
+    ) {
+        return true;
+    }
+    if (
+        pathIsOrUnder(
+            pathname,
+            `/dashboard/standalone-sessions/${deletedSessionId}`,
+        )
+    ) {
+        return true;
+    }
+    return false;
+}
+
+const DEFAULT_AFTER_SESSION_DELETE = "/dashboard/sessions";
+
+/**
+ * Destino tras borrar: origen seguro, pestaña del cliente, o listado.
+ * Nunca create-session / edit-session / la sesión ya borrada (B-05).
+ */
+export function readSessionDeleteBackTarget(
+    locationState: unknown,
+    deletedSessionId: number,
+    clientId?: number | string | null,
+    fallback: string = DEFAULT_AFTER_SESSION_DELETE,
+): string {
+    const candidate = readReviewBackTarget(locationState);
+    if (candidate && !isUnusableAfterSessionDelete(candidate, deletedSessionId)) {
+        return candidate;
+    }
+    return clientSessionsTabPath(clientId) ?? fallback;
+}
+
+export function navigateAfterSessionDelete(
+    navigate: NavigateFunction,
+    locationState: unknown,
+    deletedSessionId: number,
+    options?: { clientId?: number | string | null; fallback?: string },
+): void {
+    navigate(
+        readSessionDeleteBackTarget(
+            locationState,
+            deletedSessionId,
+            options?.clientId,
+            options?.fallback ?? DEFAULT_AFTER_SESSION_DELETE,
+        ),
+        { replace: true },
+    );
 }

@@ -56,6 +56,7 @@ import { ReplicateSessionModal } from "@/components/sessions/ReplicateSessionMod
 import { ReplicateSessionConflictModal } from "@/components/sessions/ReplicateSessionConflictModal";
 import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
 import {
+    navigateAfterSessionDelete,
     navigateDashboardBack,
     readReviewBackTarget,
     readReviewCoherenceFromState,
@@ -536,13 +537,9 @@ export const SessionReviewPage: React.FC = () => {
 
     const handleDeleted = useCallback(() => {
         if (!session) return;
-        const backTarget = readReviewBackTarget(location.state);
-        const safeTarget =
-            backTarget &&
-            !backTarget.includes(`/session-programming/sessions/${session.id}`)
-                ? backTarget
-                : "/dashboard/sessions";
-        navigate(safeTarget, { replace: true });
+        navigateAfterSessionDelete(navigate, location.state, session.id, {
+            clientId: session.client_id,
+        });
     }, [session, location.state, navigate]);
 
     if (!sessionId || isNaN(sessionId)) {

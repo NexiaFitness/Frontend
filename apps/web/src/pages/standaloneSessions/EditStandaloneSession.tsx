@@ -22,7 +22,7 @@ import {
 import { useGetTrainingBlockTypesQuery } from "@nexia/shared/api/sessionProgrammingApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
-import { navigateDashboardBack, readSafeReturnTo } from "@/lib/sessionDetailNavigation";
+import { navigateAfterSessionDelete, navigateDashboardBack, readSafeReturnTo } from "@/lib/sessionDetailNavigation";
 import { SESSION_TYPES } from "@/pages/sessionProgramming/sessionFormConstants";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
@@ -445,7 +445,7 @@ export const EditStandaloneSession: React.FC = () => {
                     isDeleting={isDeleting}
                     onClose={() => setShowDeleteModal(false)}
                     onConfirmDelete={handleConfirmDelete}
-                    onDeleted={goBack}
+                    onDeleted={() => navigateAfterSessionDelete(navigate, location.state, session.id, { clientId: session.client_id })}
                 />
             </div>
     );

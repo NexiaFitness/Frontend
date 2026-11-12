@@ -67,7 +67,7 @@ import {
 } from "@/components/sessionProgramming/detail/sessionDetailPresentation";
 import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
 import {
-    navigateDashboardBack,
+    navigateAfterSessionDelete, navigateDashboardBack,
     readSafeReturnTo,
     returnToStateFromView,
 } from "@/lib/sessionDetailNavigation";
@@ -466,7 +466,7 @@ export const SessionDetail: React.FC = () => {
                 isDeleting={isDeleting}
                 onClose={() => setShowDeleteModal(false)}
                 onConfirmDelete={handleConfirmDelete}
-                onDeleted={goBack}
+                onDeleted={() => navigateAfterSessionDelete(navigate, location.state, session.id, { clientId: session.client_id })}
             />
         </div>
     );
