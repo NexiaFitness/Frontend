@@ -27,10 +27,7 @@ import {
 } from '@/components/trainingSessions/sessionCardPresentation';
 import { Button } from '@/components/ui/buttons';
 import { LoadingSpinner, Alert } from '@/components/ui/feedback';
-import {
-    NexiaPremiumConfirmModal,
-    NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS,
-} from '@/components/ui/modals';
+import { TrainingSessionDeleteConfirmModal } from '@/components/sessions/TrainingSessionDeleteConfirmModal';
 import { cn } from '@/lib/utils';
 import { returnToStateFromView } from '@/lib/sessionDetailNavigation';
 import { useReplicateSessionFlow } from '@/components/sessions/useReplicateSessionFlow';
@@ -102,20 +99,17 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
 
     const handleConfirmDelete = async () => {
         if (!sessionToDelete) return;
+        await deleteSession({
+            id: sessionToDelete.id,
+            trainingPlanId: sessionToDelete.training_plan_id || planId,
+            clientId: sessionToDelete.client_id ?? null,
+            trainerId: sessionToDelete.trainer_id ?? null,
+        }).unwrap();
+    };
 
-        try {
-            await deleteSession({
-                id: sessionToDelete.id,
-                trainingPlanId: sessionToDelete.training_plan_id || planId,
-                clientId: sessionToDelete.client_id ?? null,
-                trainerId: sessionToDelete.trainer_id ?? null,
-            }).unwrap();
-            setShowDeleteModal(false);
-            setSessionToDelete(null);
-        } catch (err) {
-            console.error('Error eliminando sesión:', err);
-            // El error se maneja en el hook
-        }
+    const handleDeleted = () => {
+        setShowDeleteModal(false);
+        setSessionToDelete(null);
     };
 
     const handleViewDetail = (session: PlanTrainingSession | { id: number }) => {
@@ -283,30 +277,16 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
                 isLoading={replicateFlow.isReplicating}
             />
 
-            <NexiaPremiumConfirmModal
+            <TrainingSessionDeleteConfirmModal
                 isOpen={showDeleteModal}
+                sessionName={sessionToDelete?.session_name}
+                isDeleting={isDeleting}
                 onClose={() => {
                     setShowDeleteModal(false);
                     setSessionToDelete(null);
                 }}
-                onConfirm={handleConfirmDelete}
-                isLoading={isDeleting}
-                loadingConfirmLabel="Eliminando…"
-                title="Eliminar sesión"
-                description={
-                    sessionToDelete ? (
-                        <>
-                            ¿Estás seguro de que deseas eliminar la sesión{" "}
-                            <span className={NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS}>
-                                «{sessionToDelete.session_name}»
-                            </span>
-                            ? Esta acción no se puede deshacer.
-                        </>
-                    ) : (
-                        "¿Estás seguro de que deseas eliminar esta sesión?"
-                    )
-                }
-                confirmLabel="Eliminar"
+                onConfirmDelete={handleConfirmDelete}
+                onDeleted={handleDeleted}
             />
         </div>
     );

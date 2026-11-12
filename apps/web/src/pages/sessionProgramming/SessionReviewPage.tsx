@@ -34,7 +34,7 @@ import {
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
-import { getMutationErrorMessage, resolveNextSessionScheduleDate } from "@nexia/shared";
+import { resolveNextSessionScheduleDate } from "@nexia/shared";
 import { useValidateSessionMutation } from "@nexia/shared/api/sessionValidationApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import {
@@ -45,10 +45,7 @@ import type { TrainingSessionStatus } from "@nexia/shared/types/trainingSessions
 
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
-import {
-    NexiaPremiumConfirmModal,
-    NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS,
-} from "@/components/ui/modals";
+import { TrainingSessionDeleteConfirmModal } from "@/components/sessions/TrainingSessionDeleteConfirmModal";
 import { CoherenceConclusionsPanel } from "@/components/sessionProgramming/CoherenceConclusionsPanel";
 import { SessionPhaseIntentMixPanel } from "@/components/sessionProgramming/SessionPhaseIntentMixPanel";
 import { stripLegacyCoherenceFromNotes } from "@/components/sessionProgramming/coherenceConclusionsPresentation";
@@ -372,7 +369,7 @@ export const SessionReviewPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch<AppDispatch>();
-    const { showSuccess, showError } = useToast();
+    const { showError } = useToast();
     const sessionId = id ? Number(id) : 0;
     const seededCoherence = useMemo(
         () => readReviewCoherenceFromState(location.state),
@@ -529,33 +526,24 @@ export const SessionReviewPage: React.FC = () => {
 
     const handleConfirmDelete = useCallback(async () => {
         if (!session) return;
-        try {
-            await deleteSession({
-                id: session.id,
-                trainingPlanId: session.training_plan_id ?? null,
-                clientId: session.client_id ?? null,
-                trainerId: session.trainer_id ?? null,
-            }).unwrap();
-            setShowDeleteModal(false);
-            showSuccess("Sesión eliminada correctamente.");
-            const backTarget = readReviewBackTarget(location.state);
-            const safeTarget =
-                backTarget &&
-                !backTarget.includes(`/session-programming/sessions/${session.id}`)
-                    ? backTarget
-                    : "/dashboard/sessions";
-            navigate(safeTarget, { replace: true });
-        } catch (err) {
-            showError(getMutationErrorMessage(err));
-        }
-    }, [
-        session,
-        deleteSession,
-        showSuccess,
-        showError,
-        location.state,
-        navigate,
-    ]);
+        await deleteSession({
+            id: session.id,
+            trainingPlanId: session.training_plan_id ?? null,
+            clientId: session.client_id ?? null,
+            trainerId: session.trainer_id ?? null,
+        }).unwrap();
+    }, [session, deleteSession]);
+
+    const handleDeleted = useCallback(() => {
+        if (!session) return;
+        const backTarget = readReviewBackTarget(location.state);
+        const safeTarget =
+            backTarget &&
+            !backTarget.includes(`/session-programming/sessions/${session.id}`)
+                ? backTarget
+                : "/dashboard/sessions";
+        navigate(safeTarget, { replace: true });
+    }, [session, location.state, navigate]);
 
     if (!sessionId || isNaN(sessionId)) {
         return (
@@ -665,27 +653,13 @@ export const SessionReviewPage: React.FC = () => {
                 </div>
             </DashboardFixedFooter>
 
-            <NexiaPremiumConfirmModal
+            <TrainingSessionDeleteConfirmModal
                 isOpen={showDeleteModal}
-                onClose={() => {
-                    if (!isDeleting) setShowDeleteModal(false);
-                }}
-                onConfirm={handleConfirmDelete}
-                isLoading={isDeleting}
-                loadingConfirmLabel="Eliminando…"
-                title="Eliminar sesión"
-                description={
-                    <>
-                        ¿Seguro que quieres eliminar la sesión{" "}
-                        <span className={NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS}>
-                            «{session.session_name}»
-                        </span>
-                        ? Esta acción no se puede deshacer.
-                    </>
-                }
-                closeOnBackdrop={!isDeleting}
-                closeOnEsc={!isDeleting}
-                confirmLabel="Eliminar"
+                sessionName={session.session_name}
+                isDeleting={isDeleting}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirmDelete={handleConfirmDelete}
+                onDeleted={handleDeleted}
             />
 
             <ReplicateSessionModal

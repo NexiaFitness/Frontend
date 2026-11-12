@@ -31,6 +31,9 @@ const EMAIL_DELIVERY_FAILED_ES =
 
 const GENERIC_SERVER_ERROR_EN = "internal server error";
 
+const SESSION_NOT_DELETABLE_ES =
+    "No se puede eliminar una sesión que ya fue ejecutada, completada o archivada";
+
 const API_DEPLOYMENT_MISMATCH_405 =
     "El servidor no admite crear o guardar bloques con esta versión de la app. " +
     "La API desplegada está desactualizada respecto al frontend: despliega la última versión " +
@@ -111,6 +114,13 @@ function localizeHttpDetail(detail: string, status?: number): string {
 
     if (normalized === "forbidden") {
         return "No tienes permiso para realizar esta acción.";
+    }
+
+    if (
+        normalized.includes("no se puede eliminar una sesion que ya") ||
+        normalized.includes("no se puede eliminar una sesión que ya")
+    ) {
+        return SESSION_NOT_DELETABLE_ES;
     }
 
     if (normalized === "not found") {

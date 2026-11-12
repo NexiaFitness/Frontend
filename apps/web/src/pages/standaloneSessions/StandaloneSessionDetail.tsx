@@ -34,7 +34,7 @@ import {
     SESSION_DETAIL_TOOLBAR,
 } from "@/components/sessionProgramming/detail/sessionDetailPresentation";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
+import { TrainingSessionDeleteConfirmModal } from "@/components/sessions/TrainingSessionDeleteConfirmModal";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import {
     useDeleteStandaloneSessionMutation,
@@ -173,18 +173,11 @@ export const StandaloneSessionDetail: React.FC = () => {
 
     const handleConfirmDelete = async () => {
         if (!session || !trainerId) return;
-        try {
-            await deleteSession({
-                sessionId: session.id,
-                clientId: session.client_id,
-                trainerId,
-            }).unwrap();
-            setShowDeleteModal(false);
-            showSuccess("Sesión eliminada.");
-            goBack();
-        } catch {
-            showError("No se pudo eliminar la sesión.");
-        }
+        await deleteSession({
+            sessionId: session.id,
+            clientId: session.client_id,
+            trainerId,
+        }).unwrap();
     };
 
     const displayExercises: SessionExerciseDisplay[] = useMemo(
@@ -399,19 +392,14 @@ export const StandaloneSessionDetail: React.FC = () => {
                 </div>
             )}
 
-            <NexiaPremiumConfirmModal
+            <TrainingSessionDeleteConfirmModal
                 isOpen={showDeleteModal}
-                onClose={() => {
-                    if (!isDeleting) setShowDeleteModal(false);
-                }}
-                onConfirm={handleConfirmDelete}
-                title="Eliminar sesión suelta"
-                description="Esta acción no se puede deshacer."
-                confirmLabel="Eliminar"
-                isLoading={isDeleting}
-                loadingConfirmLabel="Eliminando…"
-                closeOnBackdrop={!isDeleting}
-                closeOnEsc={!isDeleting}
+                sessionName={session.session_name}
+                confirmTitle="Eliminar sesión suelta"
+                isDeleting={isDeleting}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirmDelete={handleConfirmDelete}
+                onDeleted={goBack}
             />
         </div>
     );

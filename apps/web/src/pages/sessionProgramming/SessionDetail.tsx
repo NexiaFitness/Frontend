@@ -22,13 +22,10 @@ import {
 import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
 import { Button } from "@/components/ui/buttons";
-import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
+import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { ResourceQueryState } from "@/components/ui/feedback/ResourceQueryState";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
-import {
-    NexiaPremiumConfirmModal,
-    NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS,
-} from "@/components/ui/modals";
+import { TrainingSessionDeleteConfirmModal } from "@/components/sessions/TrainingSessionDeleteConfirmModal";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { PLATFORM_DASHBOARD_FOOTER_ROW } from "@/components/ui/forms/platformFormPresentation";
 import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
@@ -41,7 +38,6 @@ import { mergeSessionStructureWithExecutionSummary } from "@nexia/shared";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
-import { getMutationErrorMessage } from "@nexia/shared";
 import { cn } from "@/lib/utils";
 import {
     SessionBlockDetail,
@@ -142,7 +138,6 @@ const DEFAULT_BACK_TO_SESSIONS = "/dashboard/sessions";
 export const SessionDetail: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { showSuccess, showError } = useToast();
     const backTarget = readSafeReturnTo(location.state) ?? null;
     const goBack = useCallback(() => {
         navigateDashboardBack(navigate, location.state, DEFAULT_BACK_TO_SESSIONS);
@@ -208,20 +203,12 @@ export const SessionDetail: React.FC = () => {
 
     const handleConfirmDelete = async () => {
         if (!session) return;
-        try {
-            await deleteSession({
-                id: session.id,
-                trainingPlanId: session.training_plan_id ?? null,
-                clientId: session.client_id ?? null,
-                trainerId: session.trainer_id ?? null,
-            }).unwrap();
-            setShowDeleteModal(false);
-            showSuccess("Sesión eliminada correctamente.");
-            goBack();
-        } catch (err) {
-            console.error("Error eliminando sesión:", err);
-            showError(getMutationErrorMessage(err));
-        }
+        await deleteSession({
+            id: session.id,
+            trainingPlanId: session.training_plan_id ?? null,
+            clientId: session.client_id ?? null,
+            trainerId: session.trainer_id ?? null,
+        }).unwrap();
     };
 
     if (!sessionId || Number.isNaN(sessionId)) {
@@ -473,28 +460,13 @@ export const SessionDetail: React.FC = () => {
                 </div>
             </DashboardFixedFooter>
 
-            <NexiaPremiumConfirmModal
+            <TrainingSessionDeleteConfirmModal
                 isOpen={showDeleteModal}
-                onClose={() => {
-                    if (!isDeleting) setShowDeleteModal(false);
-                }}
-                onConfirm={handleConfirmDelete}
-                isLoading={isDeleting}
-                loadingConfirmLabel="Eliminando…"
-                data-testid="session-delete-premium-modal"
-                title="Eliminar sesión"
-                description={
-                    <>
-                        ¿Seguro que quieres eliminar la sesión{" "}
-                        <span className={NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS}>
-                            «{session.session_name}»
-                        </span>
-                        ? Esta acción no se puede deshacer.
-                    </>
-                }
-                closeOnBackdrop={!isDeleting}
-                closeOnEsc={!isDeleting}
-                confirmLabel="Eliminar"
+                sessionName={session.session_name}
+                isDeleting={isDeleting}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirmDelete={handleConfirmDelete}
+                onDeleted={goBack}
             />
         </div>
     );
