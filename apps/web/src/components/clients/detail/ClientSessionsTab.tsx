@@ -252,19 +252,34 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         scheduledError,
     ]);
 
+    const preloadCreateSessionPage = useCallback(() => {
+        void import("@/pages/sessionProgramming/CreateSession");
+    }, []);
+
+    const navigateToCreateSession = useCallback(
+        (options?: { date?: string | null }) => {
+            preloadCreateSessionPage();
+            const qs = new URLSearchParams({ clientId: String(clientId) });
+            const dateYmd = options?.date ?? null;
+            if (dateYmd) {
+                qs.set("date", dateYmd);
+            }
+            navigate(`/dashboard/session-programming/create-session?${qs.toString()}`, {
+                state: returnToStateFromView(location),
+            });
+        },
+        [clientId, location, navigate, preloadCreateSessionPage],
+    );
+
     const handleAddSession = useCallback(() => {
-        navigate(`/dashboard/session-programming/create-session?clientId=${clientId}`);
-    }, [clientId, navigate]);
+        navigateToCreateSession();
+    }, [navigateToCreateSession]);
 
     const handleCreateSessionOnPickedDay = useCallback(() => {
-        if (pickedSessionDate) {
-            navigate(
-                `/dashboard/session-programming/create-session?clientId=${clientId}&date=${pickedSessionDate}`,
-            );
-            return;
-        }
-        handleAddSession();
-    }, [clientId, handleAddSession, navigate, pickedSessionDate]);
+        navigateToCreateSession({ date: pickedSessionDate });
+    }, [navigateToCreateSession, pickedSessionDate]);
+
+    const showFooterCreateSession = Boolean(activePlanForClient) || !pickedSessionDate;
 
     const handleScheduleAppointment = () => {
         navigate(`/dashboard/scheduling/new?clientId=${clientId}`);
@@ -508,6 +523,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                             <ClientSessionPickDayPanel
                                 selectedDate={pickedSessionDate}
                                 onCreateSession={handleCreateSessionOnPickedDay}
+                                onPrepareCreateSession={preloadCreateSessionPage}
                             />
                         </div>
                     }
@@ -646,9 +662,22 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                         <Calendar className="size-3.5 shrink-0" aria-hidden />
                         Agendar cita
                     </Button>
-                    <Button type="button" variant="primary" size="sm" onClick={handleAddSession}>
-                        + Crear sesión
-                    </Button>
+                    {showFooterCreateSession ? (
+                        <Button
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            onClick={
+                                pickedSessionDate && !activePlanForClient
+                                    ? handleCreateSessionOnPickedDay
+                                    : handleAddSession
+                            }
+                            onMouseEnter={preloadCreateSessionPage}
+                            onFocus={preloadCreateSessionPage}
+                        >
+                            + Crear sesión
+                        </Button>
+                    ) : null}
                 </div>
             </DashboardFixedFooter>
         </section>

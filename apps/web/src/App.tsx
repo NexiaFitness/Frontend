@@ -748,7 +748,9 @@ function App() {
             path="session-programming/create-session"
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-                <CreateSession />
+                <Suspense fallback={<AthleteMobileSuspenseFallback />}>
+                  <CreateSession />
+                </Suspense>
               </RoleProtectedRoute>
             }
           />

@@ -100,13 +100,16 @@ export function normalizeSingleSetRow(row: ConstructorRow): ConstructorRow {
         return row;
     }
 
-    const sets = Math.max(1, row.sets ?? 3);
+    // Tamaño de setData cuando el usuario aún no escribió series (null): default 3.
+    // No escribir ese default en `sets`: si no, el input controlado vuelve a «3» al borrar
+    // y un «6» nuevo concatena → «36» (B-01).
+    const effectiveSets = Math.max(1, row.sets ?? 3);
     const restFallback = row.rest ?? 60;
     const setData = row.setData?.length
-        ? resizeSetData(row.setData, sets, restFallback)
+        ? resizeSetData(row.setData, effectiveSets, restFallback)
         : resizeSetData(
-              Array.from({ length: sets }, () => createDefaultSetData(restFallback)),
-              sets,
+              Array.from({ length: effectiveSets }, () => createDefaultSetData(restFallback)),
+              effectiveSets,
               restFallback
           );
 
@@ -117,7 +120,7 @@ export function normalizeSingleSetRow(row: ConstructorRow): ConstructorRow {
 
     return {
         ...row,
-        sets,
+        sets: row.sets,
         rest: restFallback,
         repsTipo: row.repsTipo ?? "reps",
         setData,

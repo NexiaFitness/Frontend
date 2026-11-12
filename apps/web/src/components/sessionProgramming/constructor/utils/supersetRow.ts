@@ -169,7 +169,7 @@ export function normalizeSupersetRow(row: ConstructorRow): ConstructorRow {
         return row;
     }
 
-    const sets = row.sets ?? 3;
+    const effectiveSets = Math.max(1, row.sets ?? 3);
     const slots: ConstructorExercise[] = [];
 
     for (let i = 0; i < SUPERSET_SLOT_COUNT; i++) {
@@ -178,10 +178,10 @@ export function normalizeSupersetRow(row: ConstructorRow): ConstructorRow {
             let setData: ConstructorSetData[];
             if (existing.setData?.length) {
                 const master = existing.setData[0];
-                setData = resizeExerciseSetData(existing.setData, sets, master);
+                setData = resizeExerciseSetData(existing.setData, effectiveSets, master);
             } else {
                 const master = exerciseLoadToSetData(existing);
-                setData = resizeExerciseSetData(undefined, sets, master);
+                setData = resizeExerciseSetData(undefined, effectiveSets, master);
             }
             slots.push({ ...existing, setData });
         } else {
@@ -192,7 +192,7 @@ export function normalizeSupersetRow(row: ConstructorRow): ConstructorRow {
     return {
         ...row,
         exercises: slots,
-        sets,
+        sets: row.sets,
         rest: row.rest ?? 90,
         repsTipo: row.repsTipo ?? "reps",
     };
