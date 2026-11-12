@@ -99,6 +99,29 @@ describe("clientOverviewPulseSelectors", () => {
         expect(monotony?.href).toContain("daily-coherence");
     });
 
+    it("buildStatChips shows not enough data when weekly monotony is undefined", () => {
+        const chips = buildStatChips(
+            baseInput({
+                coherence: {
+                    adherence_percentage: 100,
+                    sessions_completed: 1,
+                    sessions_total: 1,
+                    average_srpe: 6,
+                    monotony: null,
+                    strain: null,
+                    prescribed_vs_perceived: [],
+                    monotony_by_week: [],
+                    strain_by_week: [],
+                    summary: "",
+                    recommendations: [],
+                },
+            }),
+        );
+        const monotony = chips.find((c) => c.id === "monotony");
+        expect(monotony?.value).toBe("Sin datos suficientes");
+        expect(monotony?.tone).toBe("neutral");
+    });
+
     it("buildRecommendationsMode maps incomplete and complete", () => {
         expect(
             buildRecommendationsMode({

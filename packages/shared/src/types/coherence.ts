@@ -33,10 +33,10 @@ export interface SRPEPoint {
 export interface MonotonyStrainDataPoint {
     period_start: string; // ISO date string del inicio del periodo
     period_label: string; // Etiqueta amigable (día, semana "W46", mes "Nov 2025")
-    monotony: number; // Promedio diario / desviación estándar del periodo
-    strain: number; // Carga del periodo × monotonía
+    monotony: number | null; // Foster semanal (media / desviación de 7 días); null sin datos suficientes
+    strain: number | null; // Carga semanal × monotonía; null si no hay monotonía
     period_load: number; // Carga agregada del periodo (antes weekly_load)
-    cumulative_strain: number; // Suma acumulada de strain
+    cumulative_strain: number | null; // Suma acumulada de strain; null en vista semanal
 }
 
 /**
@@ -45,8 +45,8 @@ export interface MonotonyStrainDataPoint {
 export interface DailyCoherenceKPIs {
     adherence_percentage: number; // (Completed / Planned) × 100
     average_srpe: number; // Average perceived sRPE
-    monotony: number; // Current week monotony
-    strain: number; // Current week strain
+    monotony: number | null; // Última semana con carga; null sin datos suficientes
+    strain: number | null; // Strain de esa semana; null si no hay monotonía
 }
 
 /**
@@ -99,8 +99,8 @@ export interface MonotonyWeekData {
 export interface StrainWeekData {
     week: string;
     load: number;
-    strain: number;
-    cumulative_strain: number;
+    strain: number | null;
+    cumulative_strain: number | null;
 }
 
 /**
@@ -111,8 +111,8 @@ export interface CoherenceData {
     sessions_completed: number;
     sessions_total: number;
     average_srpe: number;
-    monotony: number;
-    strain: number;
+    monotony: number | null;
+    strain: number | null;
     prescribed_vs_perceived: PrescribedPerceivedData[];
     monotony_by_week: MonotonyWeekData[];
     strain_by_week: StrainWeekData[];

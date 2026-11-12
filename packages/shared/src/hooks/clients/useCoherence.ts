@@ -90,7 +90,7 @@ const formatPeriodLabel = (
 /**
  * Transforma datos del backend al formato esperado por el componente
  */
-const transformBackendData = (
+export const transformCoherenceAnalytics = (
     backendData: DailyCoherenceAnalyticsOut
 ): CoherenceData => {
     // Calcular sessions_completed y sessions_total desde adherence_data
@@ -180,31 +180,37 @@ const transformBackendData = (
 
     // Transformar monotony_strain_data a monotony_by_week
     // Frontend controla las etiquetas según period_type
-    const monotonyByWeekRaw: MonotonyWeekData[] = backendData.monotony_strain_data
-        .filter((item) => item.monotony !== null && item.monotony !== undefined && !isNaN(item.monotony))
-        .map((item, index) => {
+    const monotonyByWeekRaw: MonotonyWeekData[] = backendData.monotony_strain_data.flatMap(
+        (item, index) => {
+            if (item.monotony === null || item.monotony === undefined || isNaN(item.monotony)) {
+                return [];
+            }
             const readableLabel = formatPeriodLabel(
                 item.period_start,
                 backendData.period_type,
                 index
             );
-            const monotonyValue =
-                typeof item.monotony === "number" && item.monotony > 10 ? 10 : item.monotony;
-            return {
-                week: readableLabel,
-                monotony: monotonyValue,
-            };
-        });
+            return [
+                {
+                    week: readableLabel,
+                    monotony: item.monotony > 10 ? 10 : item.monotony,
+                },
+            ];
+        }
+    );
 
     // Completar datos faltantes para semana y año
     // Usar 0 para períodos sin datos: línea continua (mejor UX) y todos los períodos visibles en eje X
-    const monotonyByWeek = completePeriodData(
-        monotonyByWeekRaw,
-        backendData.period_type,
-        backendData.period_start,
-        backendData.period_end,
-        (label) => ({ week: label, monotony: 0 })
-    );
+    const monotonyByWeek =
+        monotonyByWeekRaw.length === 0
+            ? []
+            : completePeriodData(
+                  monotonyByWeekRaw,
+                  backendData.period_type,
+                  backendData.period_start,
+                  backendData.period_end,
+                  (label) => ({ week: label, monotony: 0 })
+              );
 
     // Transformar monotony_strain_data a strain_by_week
     // Frontend controla las etiquetas según period_type
@@ -213,13 +219,7 @@ const transformBackendData = (
             (item) =>
                 item.period_load !== null &&
                 item.period_load !== undefined &&
-                !isNaN(item.period_load) &&
-                item.strain !== null &&
-                item.strain !== undefined &&
-                !isNaN(item.strain) &&
-                item.cumulative_strain !== null &&
-                item.cumulative_strain !== undefined &&
-                !isNaN(item.cumulative_strain)
+                !isNaN(item.period_load)
         )
         .map((item, index) => {
             const readableLabel = formatPeriodLabel(
@@ -242,7 +242,7 @@ const transformBackendData = (
         backendData.period_type,
         backendData.period_start,
         backendData.period_end,
-        (label) => ({ week: label, load: 0, strain: 0, cumulative_strain: 0 })
+        (label) => ({ week: label, load: 0, strain: null, cumulative_strain: null })
     );
 
     return {
@@ -415,8 +415,8 @@ export const useCoherence = (
                 sessions_completed: 0,
                 sessions_total: 0,
                 average_srpe: 0,
-                monotony: 0,
-                strain: 0,
+                monotony: null,
+                strain: null,
                 prescribed_vs_perceived: [],
                 monotony_by_week: [],
                 strain_by_week: [],
@@ -424,7 +424,7 @@ export const useCoherence = (
                 recommendations: [],
             };
         }
-        return transformBackendData(backendData);
+        return transformCoherenceAnalytics(backendData);
     }, [backendData]);
 
     // Datos para donut chart de adherence

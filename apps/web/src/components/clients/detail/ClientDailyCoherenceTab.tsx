@@ -32,8 +32,14 @@ import type {
     MetricCardProps,
     MetricCardColor,
     MonotonyWeekData,
-    StrainWeekData,
 } from "@nexia/shared/types/coherence";
+import {
+    monotonyChartEmptyMessage,
+    monotonyMetricCard,
+    normalizeStrainChartData,
+    strainMetricCard,
+    type StrainChartPoint,
+} from "./clientDailyCoherencePresentation";
 import {
     ResponsiveContainer,
     PieChart,
@@ -450,7 +456,7 @@ const MonotonyChartComponent: React.FC<MonotonyChartProps> = ({ data, onTooltipL
 const MonotonyChart = React.memo(MonotonyChartComponent);
 
 interface StrainChartProps {
-    data: Array<StrainWeekData & { periodLabel?: string; periodLoad?: number; rawStrain?: number; rawLoad?: number; load?: number; strain?: number }>;
+    data: StrainChartPoint[];
     onTooltipLabel: (label: string | number, payload?: ReadonlyArray<Payload<number, string>>) => string;
     onTooltipFormatter: (value: number, name: string, props?: Payload<number, string>) => [string, string];
 }
@@ -720,39 +726,12 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
         }));
     }, [data.monotony_by_week]);
 
-    const enhancedStrainData = useMemo(() => {
-        if (!data.strain_by_week || data.strain_by_week.length === 0) {
-            return [];
-        }
-        return data.strain_by_week.map((item) => ({
-            ...item,
-            periodLabel: item.week, // Ya viene formateado del hook
-            periodLoad: item.load,
-            rawStrain: item.strain ?? 0,
-        }));
-    }, [data.strain_by_week]);
-
-    // Normalizar datos de strain/load a escala 0-10 (memoizado para evitar recálculos innecesarios)
-    const normalizedStrainData = useMemo(() => {
-        if (!enhancedStrainData.length) return [];
-
-        const maxValue = Math.max(
-            ...enhancedStrainData.map((d) => Math.max(d.periodLoad ?? 0, d.rawStrain ?? 0))
-        );
-
-        if (maxValue === 0) return [];
-
-        return enhancedStrainData.map((item) => {
-            const normalizedLoad = maxValue > 0 ? ((item.periodLoad ?? 0) / maxValue) * 10 : 0;
-            const normalizedStrain = maxValue > 0 ? ((item.rawStrain ?? 0) / maxValue) * 10 : 0;
-            return {
-                ...item,
-                load: normalizedLoad,
-                strain: normalizedStrain,
-                rawLoad: item.periodLoad ?? 0,
-            };
-        });
-    }, [enhancedStrainData]);
+    const normalizedStrainData = useMemo(
+        () => normalizeStrainChartData(data.strain_by_week ?? []),
+        [data.strain_by_week]
+    );
+    const monotonyCard = monotonyMetricCard(data.monotony);
+    const strainCard = strainMetricCard(data.strain);
 
     const hasMonotonyData = enhancedMonotonyData.length > 0;
     const hasStrainData = normalizedStrainData.length > 0;
@@ -780,17 +759,12 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
             if (!props?.payload) {
                 return [value.toString(), name];
             }
-            const payload = props.payload as StrainWeekData & {
-                periodLabel?: string;
-                periodLoad?: number;
-                rawStrain?: number;
-                rawLoad?: number;
-            };
+            const payload = props.payload as StrainChartPoint;
             if (name === "Carga") {
-                return [`${payload.rawLoad ?? 0}`, "Carga"];
+                return [`${payload.rawLoad}`, "Carga"];
             }
             if (name === "Strain") {
-                return [`${payload.rawStrain ?? 0}`, "Strain"];
+                return [`${payload.rawStrain ?? "—"}`, "Strain"];
             }
             return [value.toString(), name];
         },
@@ -943,15 +917,15 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                 />
                 <MetricCard
                     title="Monotonía"
-                    value={data.monotony.toFixed(1)}
-                    subtitle={data.monotony > 2.0 ? "Alta — revisar planificación" : "Normal"}
-                    color={data.monotony > 2.0 ? "orange" : "green"}
+                    value={monotonyCard.value}
+                    subtitle={monotonyCard.subtitle}
+                    color={monotonyCard.color}
                 />
                 <MetricCard
                     title="Carga"
-                    value={data.strain}
-                    subtitle="Carga acumulada"
-                    color="blue"
+                    value={strainCard.value}
+                    subtitle={strainCard.subtitle}
+                    color={strainCard.color}
                 />
             </div>
 
@@ -1009,7 +983,7 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                             className="flex w-full min-w-0 items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/10 px-4 text-center text-sm text-muted-foreground"
                             style={{ minHeight: 250 }}
                         >
-                            No hay datos de monotonía disponibles
+                            {monotonyChartEmptyMessage(periodType)}
                         </div>
                     )}
                 </div>

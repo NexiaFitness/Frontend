@@ -106,10 +106,12 @@ export function buildCoherenceDevMockResponse(arg: CoherenceQueryArg): DailyCohe
 
     const rng = mulberry32(seedFrom([String(arg.clientId), periodType, periodStart, periodEnd]));
 
+    type MockMonotonyPoint = MonotonyStrainDataPoint & { monotony: number; cumulative_strain: number };
+
     const monotonyStrainFromDays = (
         startYmd: string,
         dayOffsets: readonly number[]
-    ): MonotonyStrainDataPoint[] => {
+    ): MockMonotonyPoint[] => {
         let cumulative = 0;
         return dayOffsets.map((off, index) => {
             const ymd = addDays(startYmd, off);
@@ -128,7 +130,7 @@ export function buildCoherenceDevMockResponse(arg: CoherenceQueryArg): DailyCohe
         });
     };
 
-    let monotony_strain_data: MonotonyStrainDataPoint[];
+    let monotony_strain_data: MockMonotonyPoint[];
     let adherence_data: AdherenceDataPoint[];
     let srpe_scatter_data: SRPEPoint[];
     let summaryLabel: string;

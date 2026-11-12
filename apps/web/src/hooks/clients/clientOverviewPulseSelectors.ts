@@ -22,6 +22,10 @@ import {
     OVERVIEW_STAT_CHIP_LABELS,
     clientTabPath,
 } from "@/components/clients/detail/clientOverviewPresentation";
+import {
+    DAILY_COHERENCE_LOAD_COPY,
+    MONOTONY_HIGH_THRESHOLD,
+} from "@/components/clients/detail/clientDailyCoherencePresentation";
 import type {
     ClientOverviewPulseViewModel,
     OverviewPlanCompact,
@@ -192,6 +196,7 @@ export function buildStatChips(input: BuildOverviewViewModelInput): OverviewStat
     const upcoming = findUpcomingSession(sessions);
     const adherence = coherence?.adherence_percentage ?? null;
     const monotony = coherence?.monotony ?? null;
+    const highMonotony = monotony != null && monotony > MONOTONY_HIGH_THRESHOLD;
 
     const weightValue =
         latestWeight != null
@@ -223,15 +228,14 @@ export function buildStatChips(input: BuildOverviewViewModelInput): OverviewStat
         {
             id: "monotony",
             label: OVERVIEW_STAT_CHIP_LABELS.monotony,
-            value: monotony != null ? monotony.toFixed(1) : "—",
-            tone:
-                monotony != null && monotony > 2
-                    ? "warning"
-                    : "neutral",
-            href:
-                monotony != null && monotony > 2
-                    ? clientTabPath(clientId, "daily-coherence")
-                    : undefined,
+            value:
+                monotony != null
+                    ? monotony.toFixed(1)
+                    : coherence
+                      ? DAILY_COHERENCE_LOAD_COPY.notEnoughData
+                      : "—",
+            tone: highMonotony ? "warning" : "neutral",
+            href: highMonotony ? clientTabPath(clientId, "daily-coherence") : undefined,
         },
         {
             id: "weight",

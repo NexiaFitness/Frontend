@@ -1,5 +1,16 @@
 # Changelog — @nexia/shared
 
+## 6.1.0 — 2026-11-12
+
+### Changed (B-07)
+
+- `MonotonyStrainDataPoint.monotony`, `strain` y `cumulative_strain`, `DailyCoherenceKPIs.monotony` y `strain`, `StrainWeekData.strain` y `cumulative_strain`, y `CoherenceData.monotony` y `strain` pasan a `number | null`. El backend calcula la monotonía de Foster por semana (7 días, descanso = 0) y devuelve `null` sin datos suficientes en vez del centinela 999.
+- `useCoherence` no rellena con 0 la monotonía cuando no hay ningún valor, y conserva `strain: null` en el gráfico de carga.
+
+### Added
+
+- `transformCoherenceAnalytics`: transformación pura de la respuesta de coherencia (antes interna del hook).
+
 ## 6.0.1 — 2026-11-12
 
 ### Fixed (B-06)
