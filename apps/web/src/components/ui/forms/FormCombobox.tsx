@@ -4,6 +4,7 @@
  * Diseño: Botón con borde, flecha derecha, popover con opciones.
  * El listado se renderiza con portal + position fixed para no quedar recortado
  * por ancestros con overflow-hidden (p. ej. tarjetas del constructor de sesión).
+ * H10: `invalid` marca el error del campo (aria-invalid + borde destructive), como Input.
  *
  * @author Frontend Team
  * @since v2.2.0
@@ -34,6 +35,10 @@ export interface FormComboboxProps {
     ariaLabel?: string;
     /** id del botón trigger (E2E / label htmlFor). */
     id?: string;
+    /** El campo tiene un error: borde destructive y aria-invalid. El texto lo pinta el formulario. */
+    invalid?: boolean;
+    /** id del texto de error, para aria-describedby. */
+    describedBy?: string;
 }
 
 const sizeStyles = {
@@ -57,6 +62,8 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
     variant = "default",
     ariaLabel,
     id,
+    invalid = false,
+    describedBy,
 }) => {
     const autoId = useId();
     const instanceId = id ?? autoId;
@@ -205,6 +212,8 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                 onClick={() => setOpen(!open)}
                 disabled={disabled}
                 aria-label={ariaLabel}
+                aria-invalid={invalid || undefined}
+                aria-describedby={describedBy}
                 aria-haspopup="listbox"
                 aria-expanded={open}
                 aria-controls={open ? listboxId : undefined}
@@ -219,6 +228,7 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                     !value && "text-muted-foreground",
                     sizeStyles[size],
                     platformFormControlClass(variant),
+                    invalid && "border-destructive focus:border-destructive",
                     buttonClassName,
                 )}
             >

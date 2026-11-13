@@ -1,19 +1,19 @@
 # Changelog — @nexia/shared
 
-## 6.1.2 — 2026-11-12
+## 6.1.4 — 2026-11-12
 
 ### Fixed (B-09)
 
 - `getMutationErrorMessage` traduce «Injury not found» y el 403 del tope de carga axial. El backend ya emite esos `detail` en español; el mapa cubre respuestas antiguas en inglés.
 
-## 6.1.1 — 2026-11-12
+## 6.1.3 — 2026-11-12
 
 ### Fixed (B-08)
 
 - El titular semanal (`athleteWeeklyCopy`) ya no dice «Semana del plan cerrada» solo porque hay 1 sesión planificada: exige `completed >= planned`.
 - `updateTrainingSession` y `createSessionFeedback` invalidan `AthleteWeeklySummary` (`CURRENT`), así que adherencia y racha se refrescan al cerrar la sesión.
 
-## 6.1.0 — 2026-11-12
+## 6.1.2 — 2026-11-12
 
 ### Changed (B-07)
 
@@ -24,11 +24,26 @@
 
 - `transformCoherenceAnalytics`: transformación pura de la respuesta de coherencia (antes interna del hook).
 
-## 6.0.1 — 2026-11-12
+## 6.1.1 — 2026-11-12
 
 ### Fixed (B-06)
 
 - `releasePersistedRunStepTouch` (`utils/athlete/athleteRunProgressSteps`): el paso guiado seguía marcado como editado después de un guardado correcto, así que la última serie no llegaba a ofrecer «Finalizar sesión». Retira esas claves cuando la serie ya está persistida.
+
+## 6.1.0 — 2026-11-11
+
+### Added (H10: técnica del ejercicio editable, SPEC_H10)
+
+- `CatalogTechniqueIn` y `CatalogTechniqueOut`: descripción, pasos y consejos en español.
+- `ExerciseCatalogBundleCreateIn.technique` (opcional; `null` = no se toca) y `CatalogExerciseOut.technique`.
+- `utils/adminCatalog/catalogTechnique`: líneas (R6), límites (R5), errores por campo y `resolveTechniqueSubmit`, que solo manda la técnica al crear o si cambió (R8).
+- `AdminCatalogSectionId` gana `"tecnica"`; `validateCatalogBundleDraft` acepta los errores de técnica como segundo argumento y los ordena tras «datos».
+- `ExerciseCatalogBundleCreateIn.reviewed` (D-H10-4): la marca de revisión viaja en el guardado.
+- `catalogTechnique`: el borrador guarda pasos y consejos como listas (un campo por entrada); `resolveTechniqueSubmit` admite el modo `"adopt"` (vacía no se manda) y devuelve `fieldErrors`; `splitPastedLines` y `stripLineMarker`.
+- `utils/adminCatalog/index`: sub-índice del catálogo admin; el índice general lo reexporta (más corto, agent.md §7.1).
+- `utils/text/searchText` (import por ruta `@nexia/shared/utils/text/searchText`): `foldSearchText`, `sentenceCaseLabel` y `filterSearchOptions` (búsqueda sin acentos, con opciones no elegibles y su motivo).
+- `utils/listOps` (import por ruta `@nexia/shared/utils/listOps`): `moveItem`, `insertAfter`, `removeAt` y `replaceAt`, inmutables.
+- `validateCatalogBundleDraft` devuelve también `byField` (`CatalogCoreFieldId`): los errores de «datos» por campo.
 
 ## 6.0.0 — 2026-11-09
 

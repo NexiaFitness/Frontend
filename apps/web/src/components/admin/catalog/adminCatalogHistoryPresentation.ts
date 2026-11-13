@@ -41,7 +41,7 @@ export const ADMIN_CATALOG_HISTORY_TITLE = "text-sm font-medium text-foreground"
 export const ADMIN_CATALOG_HISTORY_LINES = "space-y-1";
 
 export const ADMIN_CATALOG_HISTORY_LINE =
-    "min-w-0 break-words text-sm leading-relaxed text-muted-foreground";
+    "min-w-0 whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground";
 
 export const ADMIN_CATALOG_HISTORY_STATUS = "flex items-center gap-3 py-8";
 
@@ -80,6 +80,10 @@ const FIELD_LABELS: Record<string, string> = {
     "review.axial_load_tiebreak": "Desempate de la carga axial",
     "review.nivel_tiebreak": "Desempate del nivel",
     catalog_review: "Revisión de la ficha",
+    // SPEC_H10 R7: la técnica se registra por partes.
+    "technique.description": "Técnica · Descripción",
+    "technique.steps": "Técnica · Ejecución",
+    "technique.tips": "Técnica · Consejos",
     muscles: "Músculos",
     movement_patterns: "Patrones",
     joint_actions: "Acciones articulares",

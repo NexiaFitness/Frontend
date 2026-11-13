@@ -7,7 +7,6 @@
 
 import { describe, expect, it } from "vitest";
 import { catalogStatusBadges } from "../catalogContractPresentation";
-import { retargetMuscleRow, type MuscleRowDraft } from "../adminCatalogFormTypes";
 
 describe("catalogStatusBadges", () => {
     it("muestra OK solo si el contrato está completo", () => {
@@ -22,32 +21,11 @@ describe("catalogStatusBadges", () => {
         expect(badges.map((b) => b.key)).toEqual(["NO_PM", "NO_EQUIPMENT", "contract-nivel"]);
     });
 
+    it("H10: NO_TECHNIQUE se lee «Sin técnica»", () => {
+        expect(catalogStatusBadges(["NO_TECHNIQUE"], [])[0]?.label).toBe("Sin técnica");
+    });
+
     it("muestra un código desconocido tal cual", () => {
         expect(catalogStatusBadges([], ["nuevo_codigo"])[0]?.label).toBe("nuevo_codigo");
-    });
-});
-
-describe("retargetMuscleRow", () => {
-    const row: MuscleRowDraft = {
-        key: "m-1",
-        muscle_id: 7,
-        role: "synergist",
-        evidence_level: "closed",
-        is_coach_decision: true,
-        evidence_note: "Decisión de Adrián",
-    };
-
-    it("conserva la trazabilidad si no cambia músculo ni rol", () => {
-        expect(retargetMuscleRow(row, { role: "synergist" }).evidence_note).toBe("Decisión de Adrián");
-    });
-
-    it.each([
-        [{ role: "prime_mover" as const }],
-        [{ muscle_id: 9 }],
-    ])("limpia la trazabilidad al cambiar %o", (patch) => {
-        const next = retargetMuscleRow(row, patch);
-        expect(next.evidence_level).toBeNull();
-        expect(next.is_coach_decision).toBe(false);
-        expect(next.evidence_note).toBeNull();
     });
 });

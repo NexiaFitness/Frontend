@@ -19,6 +19,7 @@ import type { TrainingObjective } from "../../types/exerciseContract";
 
 export type AdminCatalogSectionId =
     | "datos"
+    | "tecnica"
     | "musculos"
     | "patrones"
     | "articulaciones"
@@ -51,10 +52,21 @@ export interface CatalogSectionErrors {
     messages: string[];
 }
 
+/** Campos de «Datos» que la ficha marca uno a uno (el mensaje va bajo el campo). */
+export type CatalogCoreFieldId =
+    | "nombre"
+    | "tipo"
+    | "nivel"
+    | "laterality"
+    | "axial_load"
+    | "objetivo_entrenamiento";
+
 export interface CatalogValidationResult {
     ok: boolean;
     bySection: CatalogSectionErrors[];
     firstSectionWithError: AdminCatalogSectionId | null;
+    /** Los mismos mensajes de «datos», por campo. */
+    byField: Partial<Record<CatalogCoreFieldId, string>>;
 }
 
 const VALID_TIPOS = new Set(["monoarticular", "multiarticular", "complex"]);
@@ -79,30 +91,43 @@ function push(
 
 /**
  * Valida el draft de ficha Admin. No muta el input.
+ * `techniqueErrors`: los de `resolveTechniqueSubmit` (SPEC_H10), que dependen del modo y de
+ * la técnica guardada; aquí solo se ordenan con el resto en la sección «tecnica».
  */
-export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogValidationResult {
+export function validateCatalogBundleDraft(
+    draft: CatalogBundleDraft,
+    techniqueErrors: readonly string[] = []
+): CatalogValidationResult {
     const map = new Map<AdminCatalogSectionId, string[]>();
+    const byField: Partial<Record<CatalogCoreFieldId, string>> = {};
+    const coreError = (field: CatalogCoreFieldId, message: string) => {
+        push(map, "datos", message);
+        byField[field] = message;
+    };
     const { core, muscles, movement_patterns, joint_actions, equipment_ids } = draft;
+    for (const message of techniqueErrors) {
+        push(map, "tecnica", message);
+    }
 
     if (!core.nombre?.trim()) {
-        push(map, "datos", "El nombre es obligatorio");
+        coreError("nombre", "El nombre es obligatorio");
     }
     if (!core.tipo?.trim() || !VALID_TIPOS.has(core.tipo.trim().toLowerCase())) {
-        push(map, "datos", "Tipo inválido (monoarticular, multiarticular o complex)");
+        coreError("tipo", "Tipo inválido (monoarticular, multiarticular o complex)");
     }
     if (!core.nivel?.trim()) {
-        push(map, "datos", "El nivel es obligatorio");
+        coreError("nivel", "El nivel es obligatorio");
     }
     if (core.laterality != null && core.laterality !== "") {
         if (!VALID_LATERALITY.has(core.laterality.trim().toLowerCase())) {
-            push(map, "datos", "Lateralidad inválida");
+            coreError("laterality", "Lateralidad inválida");
         }
     }
     if (core.axial_load === null) {
-        push(map, "datos", "La carga axial es obligatoria");
+        coreError("axial_load", "La carga axial es obligatoria");
     }
     if (core.objetivo_entrenamiento === null) {
-        push(map, "datos", "El objetivo de entrenamiento es obligatorio");
+        coreError("objetivo_entrenamiento", "El objetivo de entrenamiento es obligatorio");
     }
     // Espejo de la regla del servidor (H1 R1): cardio y movilidad no exigen músculo principal
     // ni patrón; un objetivo aún vacío se valida como fuerza (el caso más exigente).
@@ -180,6 +205,7 @@ export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogVa
 
     const order: AdminCatalogSectionId[] = [
         "datos",
+        "tecnica",
         "musculos",
         "patrones",
         "articulaciones",
@@ -194,6 +220,7 @@ export function validateCatalogBundleDraft(draft: CatalogBundleDraft): CatalogVa
         ok: bySection.length === 0,
         bySection,
         firstSectionWithError: bySection[0]?.section ?? null,
+        byField,
     };
 }
 

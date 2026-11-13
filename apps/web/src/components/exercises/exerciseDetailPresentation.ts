@@ -59,7 +59,8 @@ export const EXERCISE_DETAIL_SECTION_LABELS = {
     catalogBiomechanics: "Biomecánica del catálogo",
     catalogPlanning: "Planificación y motor",
     advancedPlanning: "Planificación avanzada",
-    howTo: "Cómo se hace",
+    /** D-H10-1: Descripción · Ejecución · Consejos en admin, entrenador y atleta. */
+    execution: "Ejecución",
     tips: "Consejos",
     inEnglish: "(en inglés)",
 } as const;

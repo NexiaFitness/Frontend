@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePreviewAdminCatalogMutation } from "@nexia/shared/api/adminCatalogApi";
 import type { CatalogPreviewOut, ExerciseCatalogBundleCreateIn } from "@nexia/shared/types/adminCatalog";
-import { toBundleDraft } from "./useAdminExerciseCatalogForm";
+import { toBundleDraft } from "./adminCatalogDraft";
 import type { AdminCatalogFormDraft } from "./adminCatalogFormTypes";
 
 const PREVIEW_DELAY_MS = 400;

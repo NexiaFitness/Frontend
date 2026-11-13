@@ -3,9 +3,10 @@
  *
  * Doc: DESIGN_PREMIUM.md · 13_UX_ADMIN_CATALOGO.md
  * Sin clases sueltas en pages.
- * Más de 400 líneas (deuda previa a H4): reúne copy y tokens de listado, ficha e importación.
- * Las pantallas nuevas (H5: revisión, biblioteca) llevan su propio *Presentation.ts; la
- * división por pantalla de este archivo queda pendiente para el primer cambio grande en él.
+ * Más de 400 líneas (deuda previa a H4): reúne copy y tokens de listado, pie de la ficha e
+ * importación. Las pantallas nuevas llevan su propio *Presentation.ts (H5: revisión,
+ * biblioteca; H10: la ficha, en adminCatalogFichaPresentation), y H10 sacó de aquí lo que
+ * la ficha nueva ya no usa (589 → 478 líneas).
  *
  * @author Frontend Team
  * @since v1.0.0
@@ -15,10 +16,6 @@ import { cn } from "@/lib/utils";
 import {
     PLATFORM_DASHBOARD_FOOTER_BTN,
     PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
-    PLATFORM_FORM_BODY,
-    PLATFORM_FORM_SECTION,
-    PLATFORM_FORM_SECTION_TITLE,
-    PLATFORM_FORM_SHELL,
 } from "@/components/ui/forms/platformFormPresentation";
 import {
     PLATFORM_PAGE_HEADER,
@@ -47,92 +44,21 @@ export const ADMIN_CATALOG_GLOW =
 
 export const ADMIN_CATALOG_STACK = "relative space-y-6 lg:space-y-8";
 
-export const ADMIN_CATALOG_LAYOUT = cn(
-    "grid grid-cols-1 gap-6",
-    "lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8"
-);
 
-export const ADMIN_CATALOG_INDEX = cn(
-    "hidden lg:block",
-    "sticky top-4 self-start",
-    NEXIA_GLASS_CARD,
-    NEXIA_GLASS_CARD_DESKTOP,
-    "relative space-y-1 p-3"
-);
 
-export const ADMIN_CATALOG_INDEX_LINK = cn(
-    "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-sm",
-    "text-muted-foreground hover:bg-primary/10 hover:text-primary",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-);
 
-export const ADMIN_CATALOG_INDEX_LINK_ACTIVE = "bg-primary/15 text-primary";
-
-export const ADMIN_CATALOG_INDEX_ERROR_BADGE = cn(
-    "inline-flex min-w-[1.25rem] items-center justify-center rounded-full",
-    "bg-destructive/20 px-1.5 text-[10px] font-semibold text-destructive"
-);
-
-export const ADMIN_CATALOG_MOBILE_STEPPER = cn(
-    "flex gap-2 overflow-x-auto pb-1 lg:hidden",
-    "scrollbar-thin"
-);
-
-export const ADMIN_CATALOG_STEPPER_CHIP = cn(
-    "shrink-0 rounded-md border border-border/80 px-3 py-1.5 text-xs font-medium",
-    "text-muted-foreground"
-);
-
-export const ADMIN_CATALOG_STEPPER_CHIP_ACTIVE = cn(
-    "border-primary/40 bg-primary/15 text-primary"
-);
-
-export const ADMIN_CATALOG_STEPPER_CHIP_ERROR = cn(
-    "border-destructive/40 text-destructive"
-);
-
-export const ADMIN_CATALOG_FORM_SHELL = PLATFORM_FORM_SHELL;
-
-export const ADMIN_CATALOG_FORM_BODY = PLATFORM_FORM_BODY;
-
-export const ADMIN_CATALOG_SECTION = cn(PLATFORM_FORM_SECTION, "scroll-mt-24");
-
-export const ADMIN_CATALOG_SECTION_TITLE = PLATFORM_FORM_SECTION_TITLE;
 
 export const ADMIN_CATALOG_SECTION_HINT = "text-sm leading-relaxed text-muted-foreground";
 
-export const ADMIN_CATALOG_ROW = cn(
-    "flex flex-col gap-3 rounded-lg border border-border/70 bg-surface-2/30 p-3",
-    "sm:flex-row sm:items-end sm:gap-3"
-);
 
-export const ADMIN_CATALOG_ROW_DRAG = cn(
-    ADMIN_CATALOG_ROW,
-    "cursor-grab active:cursor-grabbing"
-);
 
-export const ADMIN_CATALOG_ROW_DRAG_HANDLE =
-    "flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-primary/10 hover:text-primary";
 
-export const ADMIN_CATALOG_FIELD_GROW = "min-w-0 flex-1";
 
-export const ADMIN_CATALOG_ADD_ROW = "pt-1";
 
-export const ADMIN_CATALOG_PICKER_PANEL = cn(
-    "mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-border/70 bg-black/40 p-2"
-);
 
-export const ADMIN_CATALOG_PICKER_OPTION = cn(
-    "flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-sm",
-    "text-foreground hover:bg-primary/10"
-);
 
-export const ADMIN_CATALOG_PICKER_GROUP_LABEL =
-    "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground";
 
-export const ADMIN_CATALOG_CHIP_LIST = "flex flex-wrap gap-2";
 
-export const ADMIN_CATALOG_META_ROW = "flex flex-wrap items-center gap-2 text-sm text-muted-foreground";
 
 export const ADMIN_CATALOG_HEADER_ACTIONS = "flex flex-wrap items-center gap-2";
 
@@ -272,6 +198,9 @@ export const ADMIN_CATALOG_SUMMARY_ITEM = "text-sm text-foreground";
 
 export const ADMIN_CATALOG_SUMMARY_ITEM_FIELDS = "text-xs text-muted-foreground";
 
+/** Un campo cambiado del import: la técnica trae un paso por línea (SPEC_H10). */
+export const ADMIN_CATALOG_SUMMARY_FIELD_CHANGE = "whitespace-pre-line";
+
 export const ADMIN_CATALOG_VIOLATION_LIST =
     "max-h-64 space-y-2 overflow-y-auto rounded-lg border border-destructive/30 bg-destructive/5 p-3";
 
@@ -310,25 +239,9 @@ export const ADMIN_CATALOG_COPY = {
     editTitle: "Editar ejercicio",
     backToList: "Volver",
     backToAdmin: "Volver",
-    markReviewed: "Marcar como revisado",
     history: "Historial",
     cancel: "Cancelar",
     save: "Guardar",
-    reviewedAndNext: "Revisado y siguiente",
-    queueDone: "Cola completada",
-    sectionDatos: "Datos",
-    sectionMusculos: "Músculos",
-    sectionPatrones: "Patrones",
-    sectionArticulaciones: "Articulaciones",
-    sectionMaterial: "Material",
-    sectionEtiquetas: "Etiquetas",
-    sectionAlternativas: "Alternativas",
-    sectionVariantes: "Variantes",
-    altHint:
-        "Sustitutos que el entrenador verá en sugerencias. Añade desde el buscador del catálogo.",
-    altEmpty: "Sin alternativas configuradas.",
-    altSaveFirstHint: "Guarda el ejercicio para poder añadir alternativas y ver variantes.",
-    altSearchPlaceholder: "Buscar ejercicio para añadir como alternativa…",
     altRemove: "Quitar",
     altRemoveTitle: "Quitar alternativa",
     altRemoveBody: "Dejará de sugerirse como sustituto. Puedes volver a añadirla después.",
@@ -336,18 +249,10 @@ export const ADMIN_CATALOG_COPY = {
     altAddError: "No se pudo añadir la alternativa",
     altRemovedToast: "Alternativa quitada",
     altRemoveError: "No se pudo quitar la alternativa",
-    variantsHint:
-        "Variantes de ejecución ligadas a este ejercicio base (equipo, agarre, etc.). Solo lectura aquí.",
     variantsEmpty: "Sin variantes activas para este ejercicio.",
     deactivateUsageLoading: "Consultando uso…",
     deactivateUsageBody: (sessions: number, templates: number) =>
         `Se usa en ${sessions} sesión(es) y ${templates} plantilla(s); seguirán funcionando, pero no se podrá elegir en nuevas.`,
-    jointsHint:
-        "Registra articulación y acción de movimiento tal como usa el motor de lesiones. Una acción incorrecta o genérica impide avisar al entrenador cuando un ejercicio coincide con la lesión activa del cliente.",
-    jointsBridgeHint:
-        "Las acciones se listan con búsqueda (todas las activas). El filtro por articulación válida llegará cuando exista la tabla joint_valid_movements.",
-    musclesPmHint: "Arrastra los músculos objetivo para definir la prioridad (1…n al guardar).",
-    exerciseIdReadonly: "ID de negocio",
     conflictTitle: "La ficha cambió en el servidor",
     conflictBody:
         "Otro cambio se guardó mientras editabas. Recarga la ficha para continuar. No se permite sobrescribir.",
@@ -359,22 +264,12 @@ export const ADMIN_CATALOG_COPY = {
     historyError: "No se pudo cargar el historial",
     reviewPending: "Pendiente de revisión",
     reviewDone: "Revisado",
-    validationAlert: "Revisa los errores marcados en las secciones",
     discardConfirm: "Hay cambios sin guardar. ¿Salir sin guardar?",
-    addMuscle: "Añadir músculo",
     addPattern: "Añadir patrón",
     addJoint: "Añadir articulación",
-    addEquipment: "Añadir material",
     addTag: "Añadir etiqueta",
-    removeRow: "Quitar",
     searchPlaceholder: "Buscar…",
-    rolePrimeMover: "Prime mover",
-    roleSynergist: "Sinergista",
-    roleStabilizer: "Estabilizador",
-    rolePrimary: "Primary",
-    roleSecondary: "Secondary",
     savedToast: "Ejercicio guardado",
-    reviewedToast: "Marcado como revisado",
     createdToast: "Ejercicio creado",
     deactivate: "Desactivar",
     reactivate: "Reactivar",
@@ -418,7 +313,6 @@ export const ADMIN_CATALOG_COPY = {
     importViolationsTitle: "Errores que bloquean la importación",
     importSkippedTitle:
         "Estas filas no se aplicarán. El resto de los ejercicios válidos sí.",
-    importOkTitle: "Archivo válido",
     importOkBody:
         "Revisa el resumen de cambios antes de confirmar. Las filas con error no se aplican; el resto sí.",
     importAnnotateAction: "Descargar el archivo con los errores marcados",
@@ -434,7 +328,6 @@ export const ADMIN_CATALOG_COPY = {
     importSummaryNoDetail: "Sin detalle de campos",
     importConfirmAction: "Aplicar cambios al catálogo",
     importConfirmError: "No se pudo confirmar la importación",
-    importConfirmedTitle: "Importación completada",
     importConfirmedBody: (summary: {
         newCount: number;
         updatedCount: number;
@@ -480,6 +373,9 @@ const CATALOG_IMPORT_FIELD_LABELS: Record<string, string> = {
     joint_actions: "Articulaciones",
     equipment_ids: "Material",
     tag_ids: "Etiquetas",
+    "technique.description": "Técnica · Descripción",
+    "technique.steps": "Técnica · Ejecución",
+    "technique.tips": "Técnica · Consejos",
 };
 
 export function catalogImportFieldLabel(field: string): string {
@@ -559,22 +455,12 @@ export const ADMIN_CATALOG_QUALITY_FLAG_LABELS: Record<string, string> = {
     INCOMPLETE_JOINT_ACTIONS: "Articulaciones",
     MULTI_JOINT_SINGLE_ACTION: "Una sola acción articular",
     VOLUME_MAPPING: "Mapeo volumen",
+    NO_TECHNIQUE: "Sin técnica",
 };
 
 export function adminCatalogQualityFlagLabel(flag: string): string {
     return ADMIN_CATALOG_QUALITY_FLAG_LABELS[flag] ?? flag;
 }
-
-export const ADMIN_CATALOG_SECTIONS = [
-    { id: "datos" as const, label: ADMIN_CATALOG_COPY.sectionDatos },
-    { id: "musculos" as const, label: ADMIN_CATALOG_COPY.sectionMusculos },
-    { id: "patrones" as const, label: ADMIN_CATALOG_COPY.sectionPatrones },
-    { id: "articulaciones" as const, label: ADMIN_CATALOG_COPY.sectionArticulaciones },
-    { id: "material" as const, label: ADMIN_CATALOG_COPY.sectionMaterial },
-    { id: "etiquetas" as const, label: ADMIN_CATALOG_COPY.sectionEtiquetas },
-    { id: "alternativas" as const, label: ADMIN_CATALOG_COPY.sectionAlternativas },
-    { id: "variantes" as const, label: ADMIN_CATALOG_COPY.sectionVariantes },
-];
 
 /** Copy dashboard admin — aviso catálogo (§6.1). */
 export const ADMIN_DASHBOARD_CATALOG_ALERT = {

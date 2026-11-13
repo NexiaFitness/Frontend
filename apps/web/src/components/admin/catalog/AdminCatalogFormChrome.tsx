@@ -1,22 +1,32 @@
 /**
- * AdminCatalogFormChrome.tsx — Cabecera, pie e historial de la ficha admin.
+ * AdminCatalogFormChrome.tsx — Cabecera, pie y modales de la ficha admin del ejercicio.
  *
- * Contexto: extraídos de AdminExerciseCatalogForm (H5) para dejar la ficha
- * por debajo de 400 líneas. El pie abre el historial y confirma activar o
- * desactivar; la regla de guardado sigue en el hook de la ficha.
- * Notas: mismo markup. Sin comportamiento nuevo.
+ * Contexto: H10 (DISENO_H10_FICHA_ADMIN §4, 05_ACTION_HIERARCHY).
+ * - Cabecera: eyebrow (o «Revisión 3 de 386» en la cola), nombre como h1 y una fila con
+ *   el ID, el interruptor «Revisado» (se aplica al guardar, D-H10-4) e Historial
+ *   (ghost-primary); a la derecha, Volver.
+ * - Pie fijo, solo botones (B.1): Desactivar/Reactivar a la izquierda y un único primary,
+ *   «Guardar» o «Guardar y siguiente» en la cola. Cancelar desaparece: hacía lo mismo que
+ *   Volver.
+ * Notas de mantenimiento: la lógica vive en los hooks de la ficha; aquí solo se compone.
  *
  * @author Frontend Team
  * @since v1.1.0
  */
 
 import React from "react";
-import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
+import { History } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
-import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
-import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
-import type { CatalogConcurrencyErrorOut, CatalogExerciseUsageOut } from "@nexia/shared/types/adminCatalog";
+import { NexiaSwitch } from "@/components/ui/forms";
+import { DashboardFixedFooter } from "@/components/dashboard/shared";
+import { PlatformHeaderBackButton } from "@/components/ui/surface/PlatformHeaderBackButton";
+import { DiscardUnsavedChangesModal, NexiaPremiumConfirmModal } from "@/components/ui/modals";
+import type {
+    CatalogConcurrencyErrorOut,
+    CatalogExerciseUsageOut,
+} from "@nexia/shared/types/adminCatalog";
 import {
     ADMIN_CATALOG_COPY,
     ADMIN_CATALOG_FOOTER_ACTIONS,
@@ -24,117 +34,144 @@ import {
     ADMIN_CATALOG_FOOTER_LEFT,
     ADMIN_CATALOG_FOOTER_ROW,
     ADMIN_CATALOG_FOOTER_SHELL,
-    ADMIN_CATALOG_HEADER_ACTIONS,
-    ADMIN_CATALOG_META_ROW,
-    ADMIN_CATALOG_PAGE_HEADER,
-    ADMIN_CATALOG_TITLE_WRAP,
 } from "./adminCatalogPresentation";
+import {
+    FICHA_COPY,
+    FICHA_EYEBROW,
+    FICHA_FOOTER_PRIMARY,
+    FICHA_HEADER,
+    FICHA_HEADING,
+    FICHA_LEAD,
+    FICHA_META,
+    FICHA_META_DIVIDER,
+    FICHA_META_LINK,
+    FICHA_META_STRONG,
+    FICHA_TITLE,
+} from "./adminCatalogFichaPresentation";
 import { AdminCatalogConflictModal } from "./AdminCatalogConflictModal";
 import { AdminCatalogHistoryModal } from "./AdminCatalogHistoryModal";
 import type { AdminCatalogFormDraft } from "./adminCatalogFormTypes";
+import type { AdminCatalogQueuePosition } from "./useAdminCatalogQueuePosition";
 
 export interface AdminCatalogFormHeaderProps {
     mode: "create" | "edit";
-    title: string;
     draft: AdminCatalogFormDraft;
+    queue: AdminCatalogQueuePosition;
     isInactive: boolean;
     isSaving: boolean;
-    onMarkReviewed: () => void;
-    onReactivate: () => void;
-    onDeactivate: () => void;
-    onCancel: () => void;
+    onReviewedChange: (reviewed: boolean) => void;
+    onOpenHistory: () => void;
+    onBack: () => void;
 }
 
 export const AdminCatalogFormHeader: React.FC<AdminCatalogFormHeaderProps> = ({
     mode,
-    title,
     draft,
+    queue,
     isInactive,
     isSaving,
-    onMarkReviewed,
-    onReactivate,
-    onDeactivate,
-    onCancel,
-}) => (
-    <div className={ADMIN_CATALOG_PAGE_HEADER}>
-        <div className={ADMIN_CATALOG_TITLE_WRAP}>
-            <PageTitle title={title} />
-            <div className={ADMIN_CATALOG_META_ROW}>
-                {draft.exercise_code ? (
-                    <span>
-                        {ADMIN_CATALOG_COPY.exerciseIdReadonly}:{" "}
-                        <strong className="text-foreground">{draft.exercise_code}</strong>
-                    </span>
-                ) : null}
-                {draft.review_status === "reviewed" ? (
-                    <Badge variant="subtle-success">
-                        {ADMIN_CATALOG_COPY.reviewDone}
-                    </Badge>
-                ) : mode === "edit" ? (
-                    <Badge variant="subtle-warning">
-                        {ADMIN_CATALOG_COPY.reviewPending}
-                    </Badge>
-                ) : null}
-                {mode === "edit" && isInactive ? (
-                    <Badge variant="subtle-secondary">
-                        {ADMIN_CATALOG_COPY.inactiveBadge}
-                    </Badge>
-                ) : null}
+    onReviewedChange,
+    onOpenHistory,
+    onBack,
+}) => {
+    const isEdit = mode === "edit";
+    return (
+        <div className={FICHA_HEADER}>
+            <div className={FICHA_HEADING}>
+                <p className={FICHA_EYEBROW}>
+                    {queue.inQueue ? FICHA_COPY.queueEyebrow(queue.position, queue.total) : FICHA_COPY.eyebrow}
+                </p>
+                <h1 className={FICHA_TITLE}>{isEdit ? draft.core.nombre || "—" : FICHA_COPY.createTitle}</h1>
+                {isEdit ? (
+                    <div className={FICHA_META}>
+                        <span>
+                            {FICHA_COPY.idLabel} <strong className={FICHA_META_STRONG}>{draft.exercise_code}</strong>
+                        </span>
+                        <span className={FICHA_META_DIVIDER} aria-hidden />
+                        <NexiaSwitch
+                            id="cat-reviewed"
+                            label={FICHA_COPY.reviewed}
+                            checked={draft.reviewed}
+                            disabled={isSaving}
+                            onChange={onReviewedChange}
+                            data-testid="admin-catalog-reviewed"
+                        />
+                        {isInactive ? <Badge variant="subtle-secondary">{FICHA_COPY.inactive}</Badge> : null}
+                        <span className={FICHA_META_DIVIDER} aria-hidden />
+                        <Button
+                            type="button"
+                            variant="ghost-primary"
+                            size="sm"
+                            className={FICHA_META_LINK}
+                            onClick={onOpenHistory}
+                        >
+                            <History aria-hidden />
+                            {FICHA_COPY.history}
+                        </Button>
+                    </div>
+                ) : (
+                    <p className={FICHA_LEAD}>{FICHA_COPY.createLead}</p>
+                )}
             </div>
+            <PlatformHeaderBackButton onClick={onBack} label={FICHA_COPY.back} />
         </div>
-        <div className={ADMIN_CATALOG_HEADER_ACTIONS}>
-            {mode === "edit" ? (
-                <Button
-                    type="button"
-                    variant="ghost-primary"
-                    size="sm"
-                    disabled={isSaving}
-                    onClick={onMarkReviewed}
-                >
-                    {ADMIN_CATALOG_COPY.markReviewed}
-                </Button>
-            ) : null}
-            {mode === "edit" && isInactive ? (
-                <Button
-                    type="button"
-                    variant="outline-primary"
-                    size="sm"
-                    disabled={isSaving}
-                    onClick={onReactivate}
-                >
-                    {ADMIN_CATALOG_COPY.reactivate}
-                </Button>
-            ) : null}
-            {mode === "edit" && !isInactive ? (
-                <Button
-                    type="button"
-                    variant="outline-destructive"
-                    size="sm"
-                    disabled={isSaving}
-                    onClick={onDeactivate}
-                >
-                    {ADMIN_CATALOG_COPY.deactivate}
-                </Button>
-            ) : null}
-            <PlatformHeaderBackButton
-                onClick={onCancel}
-                label={ADMIN_CATALOG_COPY.backToList}
-                className="md:w-auto"
-            />
-        </div>
-    </div>
-);
+    );
+};
 
 export interface AdminCatalogFormFooterProps {
+    mode: "create" | "edit";
+    inQueue: boolean;
+    isInactive: boolean;
+    isSaving: boolean;
+    onSave: () => void;
+    onDeactivate: () => void;
+    onReactivate: () => void;
+}
+
+export const AdminCatalogFormFooter: React.FC<AdminCatalogFormFooterProps> = ({
+    mode,
+    inQueue,
+    isInactive,
+    isSaving,
+    onSave,
+    onDeactivate,
+    onReactivate,
+}) => (
+    <DashboardFixedFooter className={ADMIN_CATALOG_FOOTER_SHELL}>
+        <div className={ADMIN_CATALOG_FOOTER_ROW}>
+            <div className={ADMIN_CATALOG_FOOTER_LEFT}>
+                {mode === "edit" && !isInactive ? (
+                    <Button type="button" variant="outline-destructive" size="sm" disabled={isSaving} onClick={onDeactivate}>
+                        {FICHA_COPY.deactivate}
+                    </Button>
+                ) : null}
+                {mode === "edit" && isInactive ? (
+                    <Button type="button" variant="outline-primary" size="sm" disabled={isSaving} onClick={onReactivate}>
+                        {FICHA_COPY.reactivate}
+                    </Button>
+                ) : null}
+            </div>
+            <div className={ADMIN_CATALOG_FOOTER_ACTIONS}>
+                <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    className={cn(ADMIN_CATALOG_FOOTER_BTN, FICHA_FOOTER_PRIMARY)}
+                    isLoading={isSaving}
+                    onClick={onSave}
+                >
+                    {mode === "edit" && inQueue ? FICHA_COPY.saveAndNext : FICHA_COPY.save}
+                </Button>
+            </div>
+        </div>
+    </DashboardFixedFooter>
+);
+
+export interface AdminCatalogFormModalsProps {
     currentPk: number | null;
     exerciseName: string;
-    isSaving: boolean;
     historyOpen: boolean;
-    onOpenHistory: () => void;
     onCloseHistory: () => void;
-    onCancel: () => void;
-    onSave: () => void;
-    onReviewedAndNext: () => void;
     conflict: CatalogConcurrencyErrorOut | null;
     onCloseConflict: () => void;
     onReloadConflict: () => void;
@@ -147,120 +184,57 @@ export interface AdminCatalogFormFooterProps {
     reactivateOpen: boolean;
     onCloseReactivate: () => void;
     onReactivate: () => void;
+    discardOpen: boolean;
+    onCancelDiscard: () => void;
+    onConfirmDiscard: () => void;
 }
 
-export const AdminCatalogFormFooter: React.FC<AdminCatalogFormFooterProps> = ({
-    currentPk,
-    exerciseName,
-    isSaving,
-    historyOpen,
-    onOpenHistory,
-    onCloseHistory,
-    onCancel,
-    onSave,
-    onReviewedAndNext,
-    conflict,
-    onCloseConflict,
-    onReloadConflict,
-    deactivateOpen,
-    onCloseDeactivate,
-    onDeactivate,
-    usageLoading,
-    usage,
-    isTogglingActive,
-    reactivateOpen,
-    onCloseReactivate,
-    onReactivate,
-}) => (
+export const AdminCatalogFormModals: React.FC<AdminCatalogFormModalsProps> = (props) => (
     <>
-        <DashboardFixedFooter className={ADMIN_CATALOG_FOOTER_SHELL}>
-            <div className={ADMIN_CATALOG_FOOTER_ROW}>
-                <div className={ADMIN_CATALOG_FOOTER_LEFT}>
-                    <Button
-                        type="button"
-                        variant="ghost-primary"
-                        size="sm"
-                        className={ADMIN_CATALOG_FOOTER_BTN}
-                        disabled={currentPk == null}
-                        onClick={onOpenHistory}
-                    >
-                        {ADMIN_CATALOG_COPY.history}
-                    </Button>
-                </div>
-                <div className={ADMIN_CATALOG_FOOTER_ACTIONS}>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className={ADMIN_CATALOG_FOOTER_BTN}
-                        disabled={isSaving}
-                        onClick={onCancel}
-                    >
-                        {ADMIN_CATALOG_COPY.cancel}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline-primary"
-                        size="sm"
-                        className={ADMIN_CATALOG_FOOTER_BTN}
-                        disabled={isSaving}
-                        onClick={onSave}
-                    >
-                        {ADMIN_CATALOG_COPY.save}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        className={ADMIN_CATALOG_FOOTER_BTN}
-                        disabled={isSaving}
-                        onClick={onReviewedAndNext}
-                    >
-                        {ADMIN_CATALOG_COPY.reviewedAndNext}
-                    </Button>
-                </div>
-            </div>
-        </DashboardFixedFooter>
-
         <AdminCatalogHistoryModal
-            isOpen={historyOpen}
-            onClose={onCloseHistory}
-            exercisePk={currentPk}
-            exerciseName={exerciseName}
+            isOpen={props.historyOpen}
+            onClose={props.onCloseHistory}
+            exercisePk={props.currentPk}
+            exerciseName={props.exerciseName}
         />
         <AdminCatalogConflictModal
-            isOpen={conflict != null}
-            onClose={onCloseConflict}
-            onReload={onReloadConflict}
-            conflict={conflict}
+            isOpen={props.conflict != null}
+            onClose={props.onCloseConflict}
+            onReload={props.onReloadConflict}
+            conflict={props.conflict}
         />
         <NexiaPremiumConfirmModal
-            isOpen={deactivateOpen}
-            onClose={onCloseDeactivate}
-            onConfirm={onDeactivate}
+            isOpen={props.deactivateOpen}
+            onClose={props.onCloseDeactivate}
+            onConfirm={props.onDeactivate}
             title={ADMIN_CATALOG_COPY.deactivateTitle}
             description={
-                usageLoading
+                props.usageLoading
                     ? ADMIN_CATALOG_COPY.deactivateUsageLoading
-                    : usage
-                      ? `${ADMIN_CATALOG_COPY.deactivateUsageBody(usage.sessions, usage.templates)} ${ADMIN_CATALOG_COPY.deactivateBody}`
+                    : props.usage
+                      ? `${ADMIN_CATALOG_COPY.deactivateUsageBody(props.usage.sessions, props.usage.templates)} ${ADMIN_CATALOG_COPY.deactivateBody}`
                       : ADMIN_CATALOG_COPY.deactivateBody
             }
             confirmLabel={ADMIN_CATALOG_COPY.deactivateConfirm}
             confirmVariant="destructive"
-            isLoading={isTogglingActive || usageLoading}
+            isLoading={props.isTogglingActive || props.usageLoading}
             data-testid="admin-catalog-deactivate-modal"
         />
         <NexiaPremiumConfirmModal
-            isOpen={reactivateOpen}
-            onClose={onCloseReactivate}
-            onConfirm={onReactivate}
+            isOpen={props.reactivateOpen}
+            onClose={props.onCloseReactivate}
+            onConfirm={props.onReactivate}
             title={ADMIN_CATALOG_COPY.reactivateTitle}
             description={ADMIN_CATALOG_COPY.reactivateBody}
             confirmLabel={ADMIN_CATALOG_COPY.reactivateConfirm}
             confirmVariant="primary"
-            isLoading={isTogglingActive}
+            isLoading={props.isTogglingActive}
             data-testid="admin-catalog-reactivate-modal"
+        />
+        <DiscardUnsavedChangesModal
+            isOpen={props.discardOpen}
+            onCancel={props.onCancelDiscard}
+            onConfirm={props.onConfirmDiscard}
         />
     </>
 );

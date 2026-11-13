@@ -1,5 +1,12 @@
 /**
- * AdminCatalogPreviewPanel.test.tsx — Carga, resultado, error con reintento y cardio.
+ * AdminCatalogPreviewPanel.test.tsx — «Cómo cuenta»: carga, filas por grupo, error con
+ * reintento, cardio y datos que faltan.
+ *
+ * H10: cada grupo es una fila (nombre y rol, barra, número) y la carga axial dice su
+ * nombre y su peso de la escala del motor.
+ *
+ * @author Frontend Team
+ * @since v1.0.0
  */
 
 import { screen } from "@testing-library/react";
@@ -42,6 +49,12 @@ const strengthPreview = {
     selector_blocks: [],
 };
 
+/** Texto de la fila de un grupo: nombre, rol y número. */
+function row(name: string): string {
+    const item = screen.getByText(name).closest("li");
+    return item?.textContent ?? "";
+}
+
 function Host({ draft }: { draft: AdminCatalogFormDraft }) {
     const preview = useAdminCatalogPreview(draft);
     return <AdminCatalogPreviewPanel preview={preview} />;
@@ -52,13 +65,11 @@ describe("Cómo cuenta este ejercicio", () => {
         server.use(http.post("*/admin/catalog/preview", () => HttpResponse.json(strengthPreview)));
         render(<Host draft={readyDraft()} />);
         expect(document.querySelector(".animate-pulse")).toBeTruthy();
-        expect(
-            await screen.findByText("Por serie: Cuádriceps 1 · Glúteo mayor 0,5")
-        ).toBeInTheDocument();
-        expect(screen.getByText("Peso axial: 3 · Alta")).toBeInTheDocument();
-        expect(screen.getByText(ADMIN_CATALOG_PREVIEW_COPY.axialScale)).toBeInTheDocument();
-        expect(screen.getByText("· Objetivo 1")).toBeInTheDocument();
-        expect(screen.getByText("· Sinergista 0,5")).toBeInTheDocument();
+        expect(await screen.findByText("Cuádriceps")).toBeInTheDocument();
+        expect(row("Cuádriceps")).toBe("CuádricepsObjetivo1");
+        expect(row("Glúteo mayor")).toBe("Glúteo mayorSinergista0,5");
+        expect(screen.getByText("Alta")).toBeInTheDocument();
+        expect(screen.getByText("· peso 3 de 3")).toBeInTheDocument();
     });
 
     it("al cambiar el borrador retira el cálculo anterior", async () => {
@@ -86,15 +97,14 @@ describe("Cómo cuenta este ejercicio", () => {
             })
         );
         const { rerender } = render(<Host draft={readyDraft()} />);
-        expect(
-            await screen.findByText("Por serie: Cuádriceps 1 · Glúteo mayor 0,5")
-        ).toBeInTheDocument();
+        expect(await screen.findByText("Cuádriceps")).toBeInTheDocument();
         const next = readyDraft();
         next.core.nombre = "Sentadilla frontal";
         rerender(<Host draft={next} />);
-        expect(screen.queryByText("Por serie: Cuádriceps 1 · Glúteo mayor 0,5")).not.toBeInTheDocument();
+        expect(screen.queryByText("Cuádriceps")).not.toBeInTheDocument();
         expect(screen.getByText(ADMIN_CATALOG_PREVIEW_COPY.calculating)).toBeInTheDocument();
-        expect(await screen.findByText("Por serie: Isquiotibiales 0")).toBeInTheDocument();
+        expect(await screen.findByText("Isquiotibiales")).toBeInTheDocument();
+        expect(row("Isquiotibiales")).toBe("IsquiotibialesEstabilizador0");
     });
 
     it("un ejercicio inactivo con contrato completo no dice que entra en el selector", async () => {
@@ -145,9 +155,7 @@ describe("Cómo cuenta este ejercicio", () => {
         render(<Host draft={readyDraft()} />);
         expect(await screen.findByText(ADMIN_CATALOG_PREVIEW_COPY.error)).toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: ADMIN_CATALOG_PREVIEW_COPY.retry }));
-        expect(
-            await screen.findByText("Por serie: Cuádriceps 1 · Glúteo mayor 0,5")
-        ).toBeInTheDocument();
+        expect(await screen.findByText("Cuádriceps")).toBeInTheDocument();
     });
 
     it("el cardio no lista volumen", async () => {
@@ -162,7 +170,7 @@ describe("Cómo cuenta este ejercicio", () => {
         );
         render(<Host draft={readyDraft("cardiovascular")} />);
         expect(await screen.findByText(ADMIN_CATALOG_PREVIEW_COPY.notStrength)).toBeInTheDocument();
-        expect(screen.queryByText(/Por serie:/)).not.toBeInTheDocument();
+        expect(screen.queryByText("Cuádriceps")).not.toBeInTheDocument();
     });
 
     it("sin datos obligatorios no llama y explica qué falta", () => {

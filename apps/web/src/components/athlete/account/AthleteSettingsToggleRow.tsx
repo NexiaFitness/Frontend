@@ -5,9 +5,9 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import {
-    athleteToggleThumbClass,
-    athleteToggleTrackClass,
-} from "./athleteSettingsToggleStyles";
+    nexiaSwitchThumbClass,
+    nexiaSwitchTrackClass,
+} from "@/components/ui/forms/nexiaSwitchPresentation";
 
 export interface AthleteSettingsToggleRowProps {
     id: string;
@@ -56,9 +56,9 @@ export const AthleteSettingsToggleRow: React.FC<AthleteSettingsToggleRowProps> =
                 aria-checked={checked}
                 disabled={disabled}
                 onClick={() => onChange(!checked)}
-                className={cn(athleteToggleTrackClass(checked, disabled), "shrink-0")}
+                className={cn(nexiaSwitchTrackClass(checked, disabled), "shrink-0")}
             >
-                <span className={athleteToggleThumbClass(checked)} aria-hidden />
+                <span className={nexiaSwitchThumbClass(checked)} aria-hidden />
             </button>
         </div>
     );
