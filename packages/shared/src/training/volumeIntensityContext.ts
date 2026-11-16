@@ -38,6 +38,34 @@ export interface VolumeIntensityContext {
     result: VolumeIntensityResult;
 }
 
+/**
+ * Copy de capacidad de volumen (A6).
+ *
+ * El contrato GET /training-plans/recommendations/{id} expone un único
+ * `min_sets`/`max_sets` global (VOLUME_RANGES por nivel del cliente, no por grupo).
+ * Si algún día el API trae máximos distintos por músculo, `variesByMuscleGroup`
+ * deja el rango; si no varía, solo el máximo (regla Adrián).
+ */
+export function formatClientVolumeCapacitySetsLabel(input: {
+    minSets: number | null;
+    maxSets: number;
+    variesByMuscleGroup: boolean;
+}): string {
+    const maxSets = Math.round(input.maxSets);
+    const minSets =
+        input.minSets != null && Number.isFinite(input.minSets)
+            ? Math.round(input.minSets)
+            : null;
+    if (
+        input.variesByMuscleGroup &&
+        minSets != null &&
+        minSets !== maxSets
+    ) {
+        return `${minSets}–${maxSets} series por grupo muscular a la semana`;
+    }
+    return `${maxSets} series por grupo muscular a la semana`;
+}
+
 export function sliderLevelLabelEs(level: number): string {
     const n = Math.round(level);
     if (n <= 2) return "Muy bajo";

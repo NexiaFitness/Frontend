@@ -1,5 +1,11 @@
 # Changelog — @nexia/shared
 
+## 6.1.10 — 2026-11-16
+
+### Changed (A6)
+
+- `formatClientVolumeCapacitySetsLabel`: si el rango de series es global (mismo para todos los grupos), solo el máximo. El GET de recomendaciones no trae máximos por músculo.
+
 ## 6.1.9 — 2026-11-16
 
 ### Fixed (B-35 lastre)

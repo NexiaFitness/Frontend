@@ -3,7 +3,10 @@
  */
 
 import React from "react";
-import type { VolumeIntensityContext } from "@nexia/shared";
+import {
+    formatClientVolumeCapacitySetsLabel,
+    type VolumeIntensityContext,
+} from "@nexia/shared";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -61,10 +64,11 @@ export const VolumeIntensityExplainer: React.FC<Props> = ({
 
     const cap = context.client_capacity;
     const result = context.result;
-    const volumeCapacityDetail =
-        cap.min_sets != null
-            ? `${cap.min_sets}–${cap.max_sets} series por grupo muscular / semana`
-            : `${cap.max_sets} series por grupo muscular / semana (techo)`;
+    const volumeCapacityDetail = formatClientVolumeCapacitySetsLabel({
+        minSets: cap.min_sets,
+        maxSets: cap.max_sets,
+        variesByMuscleGroup: false,
+    });
 
     return (
         <div
