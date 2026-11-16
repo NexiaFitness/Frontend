@@ -47,6 +47,7 @@ import type {
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 import {
     businessTodayYmd,
+    formatCalendarDate,
     formatCalendarWeekRange,
     formatSessionsSkippedPastMessage,
     formatWeeksSkippedToast,
@@ -719,7 +720,7 @@ export const WeeklyStructureEditor = forwardRef<
                         </span>
                     </div>
                     <p className="text-sm font-semibold text-foreground tabular-nums">
-                        {block.start_date} — {block.end_date}
+                        {formatCalendarDate(block.start_date)} — {formatCalendarDate(block.end_date)}
                     </p>
                     {weekRangeLabel && (
                         <span className="text-xs text-muted-foreground">

@@ -17,6 +17,7 @@ import { X } from "lucide-react";
 
 import {
     businessTodayYmd,
+    formatCalendarDate,
     formatWeeksSkippedToast,
     getMutationErrorMessage,
     isWeeklyStructureDirty,
@@ -330,7 +331,7 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
         showError,
     ]);
 
-    const label = `${block.start_date} — ${block.end_date}`;
+    const label = `${formatCalendarDate(block.start_date)} — ${formatCalendarDate(block.end_date)}`;
 
     const orphanWeekOrdinals = useMemo(() => {
         if (!loaded || draft.length === 0) return [];

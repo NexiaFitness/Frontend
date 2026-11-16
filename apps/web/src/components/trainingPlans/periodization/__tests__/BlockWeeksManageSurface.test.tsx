@@ -93,6 +93,32 @@ const RESTORED_STRUCTURE: WeeklyStructureOut = {
 };
 
 describe("BlockWeeksManageSurface", () => {
+    it("muestra el rango y los días con fecha legible, sin ISO (B-19)", async () => {
+        server.use(
+            http.get(
+                "*/training-plans/526/period-blocks/42/weekly-structure",
+                () => HttpResponse.json(INITIAL_STRUCTURE),
+            ),
+        );
+
+        render(
+            <TestProviders>
+                <BlockWeeksManageSurface
+                    planId={526}
+                    block={BLOCK}
+                    patternsCatalog={[]}
+                    onExit={vi.fn()}
+                />
+            </TestProviders>,
+        );
+
+        const surface = await screen.findByTestId("block-weeks-manage-surface");
+        expect(
+            await screen.findByText(/Bloque 22 sep 2026 — 28 sep 2026/),
+        ).toBeInTheDocument();
+        expect(surface.textContent).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+    });
+
     it("restaurar semana 2 y guardar envía PUT con estructura de semana tipo", async () => {
         const user = userEvent.setup();
         let putBody: Record<string, unknown> | null = null;

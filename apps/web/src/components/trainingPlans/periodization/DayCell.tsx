@@ -5,6 +5,7 @@
 import React, { useMemo, useRef } from "react";
 import { Pencil } from "lucide-react";
 
+import { formatCalendarDate } from "@nexia/shared";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 import type { WeeklyStructureDayPatternInput } from "@nexia/shared/types/weeklyStructure";
 
@@ -79,7 +80,7 @@ export const DayCell: React.FC<Props> = ({
                 <p className="text-sm font-medium text-foreground">
                     {dayName}
                     <span className="ml-2 text-xs font-normal text-muted-foreground">
-                        {dateISO}
+                        {formatCalendarDate(dateISO)}
                     </span>
                 </p>
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
