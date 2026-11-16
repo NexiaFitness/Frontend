@@ -108,6 +108,7 @@ export const ADMIN_CATALOG_HISTORY_COPY = {
         n == null ? "Tanda RepDB deshecha" : `Tanda RepDB ${n} deshecha`,
     detailSame: "Sin diferencias visibles (mismo contenido)",
     detailUnreadable: "Cambio registrado; su detalle no se puede mostrar",
+    conflictFields: (labels: string) => `Campos en servidor: ${labels}`,
 } as const;
 
 /* ---------------------------------------------------------------------------
@@ -145,6 +146,20 @@ export function catalogHistoryActor(entry: Pick<ExerciseChangeLogEntryOut, "acto
 
 export function catalogHistoryFieldLabel(fieldPath: string): string {
     return FIELD_LABELS[fieldPath] ?? ADMIN_CATALOG_HISTORY_COPY.unknownField;
+}
+
+/** 409 compact flags → Spanish labels. Skip dumps like `server_state` and unknown paths. */
+export function catalogConflictFieldLabels(
+    diff: Record<string, unknown> | null | undefined
+): string[] {
+    if (!diff) return [];
+    const labels: string[] = [];
+    for (const key of Object.keys(diff)) {
+        if (key === "server_state") continue;
+        const label = catalogHistoryFieldLabel(key);
+        if (label !== ADMIN_CATALOG_HISTORY_COPY.unknownField) labels.push(label);
+    }
+    return labels;
 }
 
 function changeLines(entry: ExerciseChangeLogEntryOut): string[] {

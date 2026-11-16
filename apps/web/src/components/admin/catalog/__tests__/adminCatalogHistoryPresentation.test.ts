@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest";
 import type { ExerciseChangeLogEntryOut } from "@nexia/shared/types/adminCatalog";
 import {
     ADMIN_CATALOG_HISTORY_COPY,
+    catalogConflictFieldLabels,
     catalogHistoryActor,
     catalogHistoryEntryView,
     catalogHistoryFieldLabel,
@@ -101,5 +102,14 @@ describe("quién y qué campo", () => {
         expect(catalogHistoryFieldLabel("core.algo_nuevo")).toBe(
             ADMIN_CATALOG_HISTORY_COPY.unknownField
         );
+    });
+
+    it("el 409 no enseña dumps internos como server_state", () => {
+        expect(catalogConflictFieldLabels({ server_state: { core: {} } })).toEqual([]);
+        expect(catalogConflictFieldLabels({ muscles: true, "core.nombre": true })).toEqual([
+            "Músculos",
+            "Nombre",
+        ]);
+        expect(catalogConflictFieldLabels({ nombre: true })).toEqual([]);
     });
 });

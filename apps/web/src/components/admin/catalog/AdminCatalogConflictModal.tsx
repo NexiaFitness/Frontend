@@ -10,6 +10,10 @@ import { Button } from "@/components/ui/buttons";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import type { CatalogConcurrencyErrorOut } from "@nexia/shared/types/adminCatalog";
 import { ADMIN_CATALOG_COPY, ADMIN_CATALOG_FOOTER_BTN } from "./adminCatalogPresentation";
+import {
+    ADMIN_CATALOG_HISTORY_COPY,
+    catalogConflictFieldLabels,
+} from "./adminCatalogHistoryPresentation";
 
 export interface AdminCatalogConflictModalProps {
     isOpen: boolean;
@@ -24,10 +28,7 @@ export const AdminCatalogConflictModal: React.FC<AdminCatalogConflictModalProps>
     onReload,
     conflict,
 }) => {
-    const summaryKeys =
-        conflict?.diff_summary && typeof conflict.diff_summary === "object"
-            ? Object.keys(conflict.diff_summary)
-            : [];
+    const summaryLabels = catalogConflictFieldLabels(conflict?.diff_summary);
 
     return (
         <NexiaPremiumModal
@@ -62,9 +63,9 @@ export const AdminCatalogConflictModal: React.FC<AdminCatalogConflictModalProps>
             <p className="text-sm leading-relaxed text-muted-foreground">
                 {ADMIN_CATALOG_COPY.conflictBody}
             </p>
-            {summaryKeys.length > 0 ? (
+            {summaryLabels.length > 0 ? (
                 <p className="mt-3 text-xs text-muted-foreground">
-                    Campos en servidor: {summaryKeys.join(", ")}
+                    {ADMIN_CATALOG_HISTORY_COPY.conflictFields(summaryLabels.join(", "))}
                 </p>
             ) : null}
         </NexiaPremiumModal>
