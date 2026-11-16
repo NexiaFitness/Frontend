@@ -3,9 +3,11 @@
  *
  * Contexto: espejo del predicado backend `session_prescription_is_locked`.
  * No copia isSessionDeletable: cancelled/skipped/modified sin actual_* ni
- * hasExecutions siguen editables. Completada / en curso / actual_* / series
- * bloquean. El listado puede no traer has_executions; el 409 del servidor cubre
- * planned + registros.
+ * registros siguen editables. Completada / en curso / actual_* / registros del
+ * atleta bloquean. hasAthleteRecords sale de execution-summary
+ * `has_athlete_records`, nunca de `has_executions` ni de las filas pending del
+ * resumen (son la prescripción pintada, no ejecución). El listado no trae el
+ * resumen; el 409 del servidor cubre planned + registros.
  *
  * @author Frontend Team
  * @since v6.6.0
@@ -18,7 +20,7 @@ export interface SessionPrescriptionLockInput {
     actual_duration?: number | null;
     actual_volume?: number | null;
     actual_intensity?: number | null;
-    hasExecutions?: boolean;
+    hasAthleteRecords?: boolean;
 }
 
 export function isSessionPrescriptionLocked(
@@ -37,7 +39,7 @@ export function isSessionPrescriptionLocked(
     if (session.actual_intensity != null) {
         return true;
     }
-    return session.hasExecutions === true;
+    return session.hasAthleteRecords === true;
 }
 
 export interface StandaloneExerciseExecutionFields {

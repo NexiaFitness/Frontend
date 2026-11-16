@@ -99,7 +99,10 @@ export interface SessionExecutionSummary {
     tonnage_kg: number;
     executions_count: number;
     rpe_adherence_pct: number | null;
+    /** Persisted SetExecution rows only; pending rows never count. */
     has_executions: boolean;
+    /** Same athlete-record rule the server uses for the B-33 409. */
+    has_athlete_records: boolean;
     exercises: SessionExecutionExercise[];
     exercise_notes?: SessionExecutionExerciseNote[];
 }

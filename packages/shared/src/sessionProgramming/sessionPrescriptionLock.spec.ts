@@ -12,6 +12,7 @@ describe("isSessionPrescriptionLocked", () => {
                 actual_duration: null,
                 actual_volume: null,
                 actual_intensity: null,
+                hasAthleteRecords: false,
             }),
         ).toBe(false);
     });
@@ -25,11 +26,11 @@ describe("isSessionPrescriptionLocked", () => {
         expect(isSessionPrescriptionLocked({ status: "cancelled" })).toBe(false);
     });
 
-    it("bloquea planned con hasExecutions", () => {
+    it("bloquea planned con registros del atleta", () => {
         expect(
             isSessionPrescriptionLocked({
                 status: "planned",
-                hasExecutions: true,
+                hasAthleteRecords: true,
             }),
         ).toBe(true);
     });

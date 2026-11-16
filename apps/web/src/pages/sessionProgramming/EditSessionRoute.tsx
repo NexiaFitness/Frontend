@@ -83,7 +83,7 @@ export const EditSessionRoute: React.FC = () => {
         actual_duration: session.actual_duration,
         actual_volume: session.actual_volume,
         actual_intensity: session.actual_intensity,
-        hasExecutions: summary?.has_executions === true,
+        hasAthleteRecords: summary?.has_athlete_records === true,
     });
 
     if (locked) {

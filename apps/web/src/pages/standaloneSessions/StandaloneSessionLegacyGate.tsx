@@ -58,7 +58,7 @@ const StandaloneEditLockGate: React.FC<{ sessionId: number }> = ({ sessionId }) 
     const locked = isSessionPrescriptionLocked({
         status: session.status,
         actual_duration: session.actual_duration,
-        hasExecutions: standaloneExercisesHaveExecutions(exercisesQuery.data),
+        hasAthleteRecords: standaloneExercisesHaveExecutions(exercisesQuery.data),
     });
 
     if (locked) {

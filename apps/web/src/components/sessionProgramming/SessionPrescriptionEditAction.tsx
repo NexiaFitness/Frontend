@@ -35,7 +35,7 @@ interface SessionPrescriptionEditActionProps {
     buttonVariant?: ButtonVariant;
     editHref?: string;
     skipExecutionSummary?: boolean;
-    hasExecutions?: boolean;
+    hasAthleteRecords?: boolean;
     className?: string;
 }
 
@@ -49,7 +49,7 @@ export const SessionPrescriptionEditAction: React.FC<
     buttonVariant = "primary",
     editHref,
     skipExecutionSummary = false,
-    hasExecutions,
+    hasAthleteRecords,
     className,
 }) => {
     const navigate = useNavigate();
@@ -64,8 +64,8 @@ export const SessionPrescriptionEditAction: React.FC<
         actual_duration: session.actual_duration,
         actual_volume: session.actual_volume,
         actual_intensity: session.actual_intensity,
-        hasExecutions:
-            hasExecutions === true || summary?.has_executions === true,
+        hasAthleteRecords:
+            hasAthleteRecords === true || summary?.has_athlete_records === true,
     });
 
     if (isFetching && !summary && !isError && !locked) {

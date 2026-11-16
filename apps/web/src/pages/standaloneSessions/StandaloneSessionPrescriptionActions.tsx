@@ -34,14 +34,14 @@ interface StandaloneSessionPrescriptionActionsProps {
 export const StandaloneSessionPrescriptionActions: React.FC<
     StandaloneSessionPrescriptionActionsProps
 > = ({ session, exercises, returnState, isCancelling, onCancel, slot }) => {
-    const hasExecutions = useMemo(
+    const hasAthleteRecords = useMemo(
         () => standaloneExercisesHaveExecutions(exercises),
         [exercises],
     );
     const locked = isSessionPrescriptionLocked({
         status: session.status,
         actual_duration: session.actual_duration,
-        hasExecutions,
+        hasAthleteRecords,
     });
 
     if (slot === "notice") {
@@ -74,7 +74,7 @@ export const StandaloneSessionPrescriptionActions: React.FC<
                 buttonVariant="outline-primary"
                 editHref={`/dashboard/standalone-sessions/${session.id}/edit`}
                 skipExecutionSummary
-                hasExecutions={hasExecutions}
+                hasAthleteRecords={hasAthleteRecords}
                 className="min-h-touch-athlete w-full md:min-h-0 md:w-auto"
             />
             {canCancel ? (

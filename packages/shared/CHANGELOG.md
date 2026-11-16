@@ -1,5 +1,12 @@
 # Changelog — @nexia/shared
 
+## 6.1.12 — 2026-11-16
+
+### Fixed (B-33 planned del constructor)
+
+- `isSessionPrescriptionLocked`: la entrada `hasExecutions` pasa a `hasAthleteRecords` y se alimenta de `execution-summary.has_athlete_records` (mismo `session_has_athlete_records` del 409). `has_executions` incluía las filas «pending» del resumen y bloqueaba Editar en toda sesión con bloques sin entrenar.
+- `SessionExecutionSummary`: nuevo `has_athlete_records`; `has_executions` vuelve a contar solo `SetExecution` persistidas (backend).
+
 ## 6.1.11 — 2026-11-16
 
 ### Changed (B6 #7)
