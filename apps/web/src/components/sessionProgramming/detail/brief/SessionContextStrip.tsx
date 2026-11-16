@@ -36,6 +36,7 @@ import {
     coherenceLevelFor,
     formatPhaseNameWithStatus,
 } from "@nexia/shared";
+import { resolveDayPlanPrimaryLabel } from "@/components/sessions/sessionDayContextPresentation";
 import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
 import type { RiskLevel } from "@nexia/shared/types/training";
@@ -291,11 +292,11 @@ export const SessionContextStrip: React.FC<SessionContextStripProps> = ({
             : null;
 
     // --- zona 2: plan del día -------------------------------------------
-    const dayPrimary = rec
-        ? rec.physical_quality?.trim() || "Cualidad libre"
-        : recommendations && !recommendations.has_active_plan
-        ? "Sin plan activo"
-        : "Sin valores planificados";
+    const dayPrimary = resolveDayPlanPrimaryLabel(
+        rec,
+        physicalQualities ?? [],
+        recommendations?.has_active_plan,
+    );
     const daySub = rec ? dayPlanSourceLabel(rec) : "El motor no devuelve plan para este día";
 
     // --- zona 3: estado --------------------------------------------------

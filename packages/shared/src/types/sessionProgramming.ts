@@ -26,7 +26,10 @@ export const SET_TYPE = {
 
 export type SetType = (typeof SET_TYPE)[keyof typeof SET_TYPE];
 
-/** Labels para UI (Constructor de Sesión, selector tipo serie) */
+/**
+ * Labels de tipo de serie — jerga de sala en inglés (B-10, decisión Nelson 2026-11-13):
+ * Single Set, Giant Set, Superset, Dropset, For Time, EMOM, AMRAP no se traducen.
+ */
 export const SET_TYPE_LABELS: Record<SetType, string> = {
     single_set: "Single Set",
     superset: "Superset",
@@ -36,6 +39,26 @@ export const SET_TYPE_LABELS: Record<SetType, string> = {
     emom: "EMOM",
     amrap: "AMRAP",
 };
+
+/** Badge de grupo: «Superset A», «EMOM B»… (la card puede pintar uppercase). */
+export function setTypeGroupBadge(setType: SetType, groupIndex: number): string {
+    const letter = String.fromCharCode(65 + (groupIndex % 26));
+    return `${SET_TYPE_LABELS[setType]} ${letter}`;
+}
+
+export function collectSetTypeGroupBadges(
+    rows: readonly { id: string; setType: string }[],
+    setType: SetType,
+): Map<string, string> {
+    const map = new Map<string, string>();
+    let index = 0;
+    for (const row of rows) {
+        if (row.setType !== setType) continue;
+        map.set(row.id, setTypeGroupBadge(setType, index));
+        index += 1;
+    }
+    return map;
+}
 
 export const EFFORT_CHARACTER = {
     RPE: "rpe",

@@ -10,7 +10,7 @@
  *   emom: 1 fila por ejercicio por ventana (superset_group_id = índice ventana 1-based).
  * - La UI necesita una vista agrupada (1 bloque -> N grupos -> N slots -> N series).
  *
- * Este módulo es lógica pura sin DOM ni dependencias de React.
+ * Lógica pura sin DOM ni React.
  *
  * @author Frontend Team
  * @since v6.5.0
@@ -19,6 +19,8 @@
 
 import {
     SET_TYPE,
+    SET_TYPE_LABELS,
+    setTypeGroupBadge,
     type EffortCharacter,
     type SessionBlock,
     type SessionBlockExercise,
@@ -230,7 +232,7 @@ function buildSingleSetGroups(
         return {
             groupId: `block-${blockId}-single-${idx}`,
             kind: "single_set",
-            badgeLabel: "SINGLE SET",
+            badgeLabel: SET_TYPE_LABELS.single_set,
             rounds: sets.length,
             timeCapMinutes: null,
             intervalSeconds: null,
@@ -244,7 +246,6 @@ interface ParallelGroupOptions {
     blockId: number;
     block: SessionBlock;
     kind: "superset" | "giant_set";
-    badgePrefix: "SUPERSET" | "GIANT SET";
 }
 
 const SUPERSET_MIN_SLOTS = 2;
@@ -311,7 +312,7 @@ function buildParallelGroups(
         return {
             groupId: `block-${options.blockId}-${options.kind}-${groupKey}`,
             kind: options.kind,
-            badgeLabel: `${options.badgePrefix} ${asLetter(idx)}`,
+            badgeLabel: setTypeGroupBadge(options.kind, idx),
             rounds: layout.rounds,
             timeCapMinutes: null,
             intervalSeconds: null,
@@ -356,7 +357,7 @@ function buildDropsetGroups(
         {
             groupId: `block-${blockId}-dropset`,
             kind: "dropset",
-            badgeLabel: "DROP SET A",
+            badgeLabel: setTypeGroupBadge(SET_TYPE.DROPSET, 0),
             rounds: Math.max(1, rounds),
             timeCapMinutes: null,
             intervalSeconds: null,
@@ -370,7 +371,6 @@ interface SequentialGroupOptions {
     blockId: number;
     block: SessionBlock;
     kind: "amrap" | "for_time";
-    badgePrefix: "AMRAP" | "FOR TIME";
 }
 
 function buildSequentialSlotView(
@@ -448,7 +448,7 @@ function buildSequentialGroups(
         {
             groupId: `block-${options.blockId}-${options.kind}`,
             kind: options.kind,
-            badgeLabel: `${options.badgePrefix} A`,
+            badgeLabel: setTypeGroupBadge(options.kind, 0),
             rounds,
             timeCapMinutes:
                 options.kind === "amrap" || options.kind === "for_time"
@@ -479,7 +479,7 @@ function buildEmomGroups(
 
     const sortedKeys = [...byWindow.keys()].sort((a, b) => a - b);
     const totalMinutes = emomMinutesTotal(block.interval_seconds, block.rounds, sortedKeys.length);
-    const badgeLabel = totalMinutes ? `EMOM A · ${totalMinutes}'` : "EMOM A";
+    const badgeLabel = totalMinutes ? `${setTypeGroupBadge(SET_TYPE.EMOM, 0)} · ${totalMinutes}'` : setTypeGroupBadge(SET_TYPE.EMOM, 0);
 
     const slots: SessionExerciseSlotView[] = [];
     sortedKeys.forEach((windowKey, idx) => {
@@ -529,13 +529,13 @@ export function groupBlockExercisesIntoGroups(
     switch (effectiveSetType) {
         case SET_TYPE.SUPERSET:
             return buildParallelGroups(
-                { blockId: block.id, block, kind: "superset", badgePrefix: "SUPERSET" },
+                { blockId: block.id, block, kind: "superset" },
                 blockExercises,
                 nameMap
             );
         case SET_TYPE.GIANT_SET:
             return buildParallelGroups(
-                { blockId: block.id, block, kind: "giant_set", badgePrefix: "GIANT SET" },
+                { blockId: block.id, block, kind: "giant_set" },
                 blockExercises,
                 nameMap
             );
@@ -543,13 +543,13 @@ export function groupBlockExercisesIntoGroups(
             return buildDropsetGroups(block.id, block, blockExercises, nameMap);
         case SET_TYPE.AMRAP:
             return buildSequentialGroups(
-                { blockId: block.id, block, kind: "amrap", badgePrefix: "AMRAP" },
+                { blockId: block.id, block, kind: "amrap" },
                 blockExercises,
                 nameMap
             );
         case SET_TYPE.FOR_TIME:
             return buildSequentialGroups(
-                { blockId: block.id, block, kind: "for_time", badgePrefix: "FOR TIME" },
+                { blockId: block.id, block, kind: "for_time" },
                 blockExercises,
                 nameMap
             );

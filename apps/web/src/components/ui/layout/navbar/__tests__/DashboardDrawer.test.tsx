@@ -22,7 +22,7 @@ const defaultProps: DashboardDrawerProps = {
         { label: "Planificación", path: "/dashboard/training-plans" },
     ],
     user: { nombre: "Coach", apellidos: "Demo" },
-    footerSubtitle: "Professional Trainer",
+    footerSubtitle: "Entrenador",
 };
 
 function renderDrawer(props: Partial<DashboardDrawerProps> = {}) {
@@ -57,7 +57,7 @@ describe("DashboardDrawer", () => {
     it("renders user name and footer subtitle", () => {
         renderDrawer({ isOpen: true });
         expect(screen.getByText(/Coach Demo/)).toBeInTheDocument();
-        expect(screen.getByText("Professional Trainer")).toBeInTheDocument();
+        expect(screen.getByText("Entrenador")).toBeInTheDocument();
     });
 
     it("calls onClose when backdrop is clicked", async () => {

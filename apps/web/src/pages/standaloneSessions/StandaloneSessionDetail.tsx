@@ -46,7 +46,11 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
-import { exerciseDisplayName } from "@nexia/shared";
+import {
+    exerciseDisplayName,
+    labelSessionType,
+    STANDALONE_SESSION_KIND_LABEL_ES,
+} from "@nexia/shared";
 import type { SessionExerciseDisplay } from "@nexia/shared/hooks/sessionProgramming";
 import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
 import { StandaloneSessionLoadSummary } from "@/components/standaloneSessions/StandaloneSessionLoadSummary";
@@ -72,13 +76,6 @@ const STATUS_STYLES: Record<string, string> = {
     cancelled: "bg-destructive/15 text-destructive",
     skipped: "bg-destructive/15 text-destructive",
     in_progress: "bg-primary/15 text-primary",
-};
-
-const TYPE_LABELS: Record<string, string> = {
-    strength: "Fuerza",
-    cardio: "Cardio",
-    technique: "Tecnica",
-    assessment: "Evaluacion",
 };
 
 const TYPE_STYLES: Record<string, string> = {
@@ -241,7 +238,7 @@ export const StandaloneSessionDetail: React.FC = () => {
     const statusLabel = STATUS_LABELS[session.status] || "Planificada";
     const statusStyle = STATUS_STYLES[session.status] || "bg-primary/15 text-primary";
     const sessionTypeKey = String(session.session_type || "").toLowerCase();
-    const typeLabel = TYPE_LABELS[sessionTypeKey] || session.session_type || "--";
+    const typeLabel = labelSessionType(session.session_type);
     const typeStyle = TYPE_STYLES[sessionTypeKey] || "bg-primary/20 text-primary";
     const clientName = client ? `${client.nombre} ${client.apellidos}` : "Cliente";
 
@@ -286,7 +283,7 @@ export const StandaloneSessionDetail: React.FC = () => {
                                     {typeLabel}
                                 </Badge>
                                 <Badge className="inline-flex items-center rounded-full border-0 bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
-                                    Sesion libre
+                                    {STANDALONE_SESSION_KIND_LABEL_ES}
                                 </Badge>
                             </div>
                         </div>

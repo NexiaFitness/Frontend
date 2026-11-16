@@ -34,7 +34,7 @@ export const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
     onClose,
     menuItems,
     user,
-    footerSubtitle = "Professional Trainer",
+    footerSubtitle = "Entrenador",
 }) => {
     const location = useLocation();
     const isActiveLink = (href: string) => {

@@ -7,7 +7,7 @@
  */
 
 import { markDistinctStepsFromMaster, groupParallelConstructorApiLines, isParallelConstructorExpandedLines } from "@nexia/shared";
-import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import { SET_TYPE, collectSetTypeGroupBadges } from "@nexia/shared/types/sessionProgramming";
 import type {
     ConstructorExercise,
     ConstructorRow,
@@ -363,13 +363,5 @@ export function removeForTimeExerciseSlot(
 /* ------------------------------------------------------------------ */
 
 export function forTimeGroupLabels(rows: ConstructorRow[]): Map<string, string> {
-    const map = new Map<string, string>();
-    let index = 0;
-    for (const row of rows) {
-        if (row.setType !== SET_TYPE.FOR_TIME) continue;
-        const letter = String.fromCharCode(65 + (index % 26));
-        map.set(row.id, `FOR TIME ${letter}`);
-        index += 1;
-    }
-    return map;
+    return collectSetTypeGroupBadges(rows, SET_TYPE.FOR_TIME);
 }

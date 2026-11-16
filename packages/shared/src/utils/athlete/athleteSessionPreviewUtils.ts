@@ -11,7 +11,7 @@ import type {
     SessionExerciseSetView,
     SessionExerciseSlotView,
 } from "../../sessionProgramming/sessionBlockView";
-import type { EffortCharacter } from "../../types/sessionProgramming";
+import { SET_TYPE_LABELS, type EffortCharacter } from "../../types/sessionProgramming";
 import { formatAthletePrescriptionTableRowLabel } from "./athleteRunLabelPresentation";
 import {
     formatPrescriptionTableLoad,
@@ -261,7 +261,7 @@ export function buildAthletePreviewGroupRows(
             return group.slots.map((slot) =>
                 rowFromSlot(group, slot, {
                     roundsLabel,
-                    kindHint: "For Time",
+                    kindHint: SET_TYPE_LABELS.for_time,
                     compound: group.slots.length > 1,
                 })
             );
@@ -373,7 +373,7 @@ export function buildAthletePreviewExerciseCards(
             return group.slots.map((slot) =>
                 exerciseCardFromSlot(group, slot, {
                     roundsLabel,
-                    kindHint: "For Time",
+                    kindHint: SET_TYPE_LABELS.for_time,
                     compound: group.slots.length > 1,
                 })
             );

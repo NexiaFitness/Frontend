@@ -14,6 +14,11 @@
 
 import React, { useState, useCallback } from "react";
 import type { FatigueAlert } from "@nexia/shared/types/training";
+import {
+    labelFatigueAlertBody,
+    labelFatigueAlertSeverity,
+    labelFatigueAlertTitle,
+} from "@nexia/shared";
 import { ResolveAlertModal } from "./ResolveAlertModal";
 
 interface FatigueAlertCardProps {
@@ -118,7 +123,7 @@ export const FatigueAlertCard: React.FC<FatigueAlertCardProps> = ({
                                 {getAlertTypeLabel(alert.alert_type)}
                             </span>
                             <span className="rounded-full bg-background/50 px-2 py-1 text-xs">
-                                {alert.severity}
+                                {labelFatigueAlertSeverity(alert.severity)}
                             </span>
                             {isResolved && (
                                 <span className="rounded-full bg-success/20 px-2 py-1 text-xs text-success">
@@ -131,11 +136,14 @@ export const FatigueAlertCard: React.FC<FatigueAlertCardProps> = ({
                                 </span>
                             )}
                         </div>
-                        <h4 className="font-bold text-base mb-1">{alert.title}</h4>
-                        <p className="text-sm mb-2">{alert.message}</p>
+                        <h4 className="font-bold text-base mb-1">
+                            {labelFatigueAlertTitle(alert.title)}
+                        </h4>
+                        <p className="text-sm mb-2">{labelFatigueAlertBody(alert.message)}</p>
                         {alert.recommendations && (
                             <div className="mt-2 p-2 bg-white/50 rounded text-sm">
-                                <strong>Recomendaciones:</strong> {alert.recommendations}
+                                <strong>Recomendaciones:</strong>{" "}
+                                {labelFatigueAlertBody(alert.recommendations)}
                             </div>
                         )}
                         {alert.resolution_notes && (

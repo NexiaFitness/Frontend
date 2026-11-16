@@ -1,5 +1,5 @@
 /**
- * SessionConstructor.tsx — Lista de bloques-card del Constructor de Sesion.
+ * SessionConstructor.tsx — Lista de bloques-card del Constructor de Sesión.
  * Contexto: orquesta constructores por setType; estado en ConstructorRow[].
  * Notas de mantenimiento: superset usa SupersetBlock dedicado; resto LegacyRowBlock en shell.
  * @spec docs/tipo-serie/06_arquitectura-constructores-por-tipo.md
@@ -10,7 +10,7 @@
 
 import React from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import { SET_TYPE, setTypeGroupBadge } from "@nexia/shared/types/sessionProgramming";
 import {
     groupConstructorRowsByBlockInstance,
     resolveBlockInstanceId,
@@ -36,6 +36,10 @@ import {
 } from "./constructor";
 import { useSessionConstructorActions } from "./hooks/useSessionConstructorActions";
 import type { ConstructorRow } from "./constructorTypes";
+import {
+    SESSION_CONSTRUCTOR_EMPTY,
+    SESSION_CONSTRUCTOR_TITLE,
+} from "./sessionConstructorPresentation";
 
 export interface SessionConstructorProps {
     rows: ConstructorRow[];
@@ -125,7 +129,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                     key={row.id}
                     row={row}
                     blockTypes={blockTypes}
-                    groupLabel={supersetLabels.get(row.id) ?? "SUPERSET A"}
+                    groupLabel={supersetLabels.get(row.id) ?? setTypeGroupBadge(SET_TYPE.SUPERSET, 0)}
                     onUpdate={handleUpdateRow}
                     onAddExercise={onAddExerciseRequest}
                     onUpdateExercise={handleUpdateExercise}
@@ -157,7 +161,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                     key={row.id}
                     row={row}
                     blockTypes={blockTypes}
-                    groupLabel={dropsetLabels.get(row.id) ?? "DROP SET A"}
+                    groupLabel={dropsetLabels.get(row.id) ?? setTypeGroupBadge(SET_TYPE.DROPSET, 0)}
                     onUpdate={handleUpdateRow}
                     onAddExercise={onAddExerciseRequest}
                     onUpdateExercise={handleUpdateExercise}
@@ -173,7 +177,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                     key={row.id}
                     row={row}
                     blockTypes={blockTypes}
-                    groupLabel={giantSetLabels.get(row.id) ?? "GIANT SET A"}
+                    groupLabel={giantSetLabels.get(row.id) ?? setTypeGroupBadge(SET_TYPE.GIANT_SET, 0)}
                     onUpdate={handleUpdateRow}
                     onAddExercise={onAddExerciseRequest}
                     onUpdateExercise={handleUpdateExercise}
@@ -189,7 +193,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                     key={row.id}
                     row={row}
                     blockTypes={blockTypes}
-                    groupLabel={forTimeLabels.get(row.id) ?? "FOR TIME A"}
+                    groupLabel={forTimeLabels.get(row.id) ?? setTypeGroupBadge(SET_TYPE.FOR_TIME, 0)}
                     onUpdate={handleUpdateRow}
                     onAddExercise={onAddExerciseRequest}
                     onUpdateExercise={handleUpdateExercise}
@@ -205,7 +209,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                     key={row.id}
                     row={row}
                     blockTypes={blockTypes}
-                    groupLabel={emomLabels.get(row.id) ?? "EMOM A"}
+                    groupLabel={emomLabels.get(row.id) ?? setTypeGroupBadge(SET_TYPE.EMOM, 0)}
                     onUpdate={handleUpdateRow}
                     onAddExercise={onAddExerciseRequest}
                     onDuplicate={handleDuplicateRow}
@@ -220,7 +224,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                     key={row.id}
                     row={row}
                     blockTypes={blockTypes}
-                    groupLabel={amrapLabels.get(row.id) ?? "AMRAP A"}
+                    groupLabel={amrapLabels.get(row.id) ?? setTypeGroupBadge(SET_TYPE.AMRAP, 0)}
                     onUpdate={handleUpdateRow}
                     onAddExercise={onAddExerciseRequest}
                     onUpdateExercise={handleUpdateExercise}
@@ -260,13 +264,13 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
 
     return (
         <SessionPanelShell
-            title="Constructor de Sesion"
+            title={SESSION_CONSTRUCTOR_TITLE}
             headerAccessory={titleAccessory}
             bodyClassName={!hasRows ? "p-0" : undefined}
         >
             {!hasRows ? (
                 <div className="p-12 text-center text-sm text-muted-foreground">
-                    Selecciona un bloque de entrenamiento para comenzar a construir tu sesion.
+                    {SESSION_CONSTRUCTOR_EMPTY}
                 </div>
             ) : (
                 <div className="space-y-6">

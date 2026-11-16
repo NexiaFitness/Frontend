@@ -3,7 +3,7 @@
  */
 
 import { cn } from "@/lib/utils";
-import { formatSessionBlockWeekLabel } from "@nexia/shared";
+import { formatSessionBlockWeekLabel, labelPhysicalQualitySlug } from "@nexia/shared";
 import { PLATFORM_SECTION_LABEL } from "@/components/ui/surface/platformPremiumPresentation";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import type {
@@ -103,7 +103,7 @@ export function resolveQualityLabel(
 ): string {
     const found = catalog.find((q) => q.slug === slug);
     if (found?.name) return found.name;
-    return slug.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    return labelPhysicalQualitySlug(slug);
 }
 
 export function resolveQualityLabelsFromRecommendation(
@@ -115,6 +115,19 @@ export function resolveQualityLabelsFromRecommendation(
             ? rec.primary_qualities
             : [rec.physical_quality];
     return slugs.map((slug) => resolveQualityLabel(slug, catalog)).join(" · ");
+}
+
+/** Titular de «Plan del día»: nombre de catálogo, nunca el slug crudo. */
+export function resolveDayPlanPrimaryLabel(
+    rec: SessionDayRecommendations | null,
+    catalog: ReadonlyArray<{ slug: string; name: string }>,
+    hasActivePlan?: boolean,
+): string {
+    if (rec) {
+        return resolveQualityLabelsFromRecommendation(rec, [...catalog]) || "Cualidad libre";
+    }
+    if (hasActivePlan === false) return "Sin plan activo";
+    return "Sin valores planificados";
 }
 
 export function isCoPrimaryRecommendation(rec: SessionDayRecommendations): boolean {

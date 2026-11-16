@@ -13,6 +13,7 @@ import {
 } from "@nexia/shared";
 import {
     SET_TYPE,
+    collectSetTypeGroupBadges,
     type SessionBlockExerciseHydrationLine,
 } from "@nexia/shared/types/sessionProgramming";
 import type {
@@ -373,13 +374,5 @@ export function applyConstructorRowUpdate(
 }
 
 export function supersetGroupLabels(rows: ConstructorRow[]): Map<string, string> {
-    const map = new Map<string, string>();
-    let index = 0;
-    for (const row of rows) {
-        if (row.setType !== SET_TYPE.SUPERSET) continue;
-        const letter = String.fromCharCode(65 + (index % 26));
-        map.set(row.id, `SUPERSET ${letter}`);
-        index += 1;
-    }
-    return map;
+    return collectSetTypeGroupBadges(rows, SET_TYPE.SUPERSET);
 }

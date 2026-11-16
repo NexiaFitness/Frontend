@@ -5,7 +5,7 @@
 import React from "react";
 import { Pencil } from "lucide-react";
 import type { SessionOut } from "@nexia/shared/types/sessions";
-import { displaySessionTitle } from "@nexia/shared";
+import { displaySessionTitle, labelSessionType } from "@nexia/shared";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/buttons";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
@@ -22,7 +22,6 @@ import {
     SESSIONS_PAGE_LIST_ITEM_TITLE,
     SESSIONS_PAGE_META_BADGE,
     SESSIONS_PAGE_TYPE_BADGE,
-    SESSIONS_PAGE_TYPE_LABEL,
     sessionsPageStatusBadgeClass,
     sessionsPageStatusLabel,
 } from "./sessionsPagePresentation";
@@ -86,7 +85,7 @@ export const TrainerSessionsListRow: React.FC<TrainerSessionsListRowProps> = ({
                         cn(SESSIONS_PAGE_META_BADGE, "border-border/60 bg-muted/30 text-muted-foreground")
                     }
                 >
-                    {SESSIONS_PAGE_TYPE_LABEL[session.session_type] ?? session.session_type}
+                    {labelSessionType(session.session_type)}
                 </span>
                 <span className={sessionsPageStatusBadgeClass(session.status)}>
                     {sessionsPageStatusLabel(session.status)}

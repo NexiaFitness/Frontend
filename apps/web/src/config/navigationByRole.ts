@@ -45,8 +45,8 @@ export interface RoleNavigation {
 }
 
 const TRAINER_NAV: RoleNavigation = {
-    headerTitle: "Trainer Dashboard",
-    footerSubtitle: "Professional Trainer",
+    headerTitle: "Dashboard",
+    footerSubtitle: "Entrenador",
     menuItems: [
         { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
         { label: "Clientes", path: "/dashboard/clients", icon: Users },
@@ -60,8 +60,8 @@ const TRAINER_NAV: RoleNavigation = {
 };
 
 const ADMIN_NAV: RoleNavigation = {
-    headerTitle: "Admin Panel",
-    footerSubtitle: "System Administrator",
+    headerTitle: "Administración",
+    footerSubtitle: "Administrador",
     menuItems: [
         { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
         { label: "Usuarios", path: "/dashboard/admin/users", icon: Users },
@@ -76,7 +76,7 @@ const ADMIN_NAV: RoleNavigation = {
 
 const ATHLETE_NAV: RoleNavigation = {
     headerTitle: "Mi Entrenamiento",
-    footerSubtitle: "Athlete",
+    footerSubtitle: "Atleta",
     menuItems: [
         { label: "Inicio", path: "/dashboard", icon: LayoutDashboard },
         { label: "Mi agenda", path: "/dashboard/agenda", icon: CalendarDays },

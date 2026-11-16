@@ -7,7 +7,7 @@
  */
 
 import { markDistinctStepsFromMaster, groupParallelConstructorApiLines, isParallelConstructorExpandedLines } from "@nexia/shared";
-import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import { SET_TYPE, collectSetTypeGroupBadges } from "@nexia/shared/types/sessionProgramming";
 import type {
     ConstructorExercise,
     ConstructorRow,
@@ -362,13 +362,5 @@ export function removeGiantSetExerciseSlot(
 /* ------------------------------------------------------------------ */
 
 export function giantSetGroupLabels(rows: ConstructorRow[]): Map<string, string> {
-    const map = new Map<string, string>();
-    let index = 0;
-    for (const row of rows) {
-        if (row.setType !== SET_TYPE.GIANT_SET) continue;
-        const letter = String.fromCharCode(65 + (index % 26));
-        map.set(row.id, `GIANT SET ${letter}`);
-        index += 1;
-    }
-    return map;
+    return collectSetTypeGroupBadges(rows, SET_TYPE.GIANT_SET);
 }

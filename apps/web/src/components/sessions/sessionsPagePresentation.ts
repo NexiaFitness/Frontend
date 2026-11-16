@@ -114,13 +114,6 @@ export const SESSIONS_PAGE_TYPE_BADGE: Record<string, string> = {
     assessment: cn(SESSIONS_PAGE_META_BADGE, "border-border/60 bg-muted/30 text-muted-foreground"),
 };
 
-export const SESSIONS_PAGE_TYPE_LABEL: Record<string, string> = {
-    strength: "Fuerza",
-    cardio: "Cardio",
-    technique: "Técnica",
-    assessment: "Evaluación",
-};
-
 export const SESSIONS_PAGE_STATUS_LABEL: Record<string, string> = {
     planned: "Planificada",
     completed: "Completada",

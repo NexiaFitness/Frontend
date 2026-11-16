@@ -5,7 +5,7 @@
  * @since v5.3.0
  */
 
-import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import { SET_TYPE, collectSetTypeGroupBadges } from "@nexia/shared/types/sessionProgramming";
 import type {
     ConstructorExercise,
     ConstructorRow,
@@ -169,15 +169,7 @@ export function removeEmomWindowLastExercise(
 }
 
 export function emomGroupLabels(rows: ConstructorRow[]): Map<string, string> {
-    const map = new Map<string, string>();
-    let index = 0;
-    for (const row of rows) {
-        if (row.setType !== SET_TYPE.EMOM) continue;
-        const letter = String.fromCharCode(65 + (index % 26));
-        map.set(row.id, `EMOM ${letter}`);
-        index += 1;
-    }
-    return map;
+    return collectSetTypeGroupBadges(rows, SET_TYPE.EMOM);
 }
 
 export type EmomApiExerciseLine = ApiExerciseLine;

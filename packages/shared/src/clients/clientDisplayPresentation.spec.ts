@@ -1,52 +1,70 @@
 import { describe, expect, it } from "vitest";
+
 import {
-    formatTemplateAssignEndDate,
-    labelClientExperience,
-    labelClientProfileFields,
-    labelSessionDuration,
+    formatClientIdentityLine,
+    labelPhysicalQualitySlug,
     labelSessionType,
     labelTrainingGoal,
+    STANDALONE_SESSION_KIND_LABEL_ES,
 } from "./clientDisplayPresentation";
 
 describe("labelTrainingGoal", () => {
-    it("translates snake_case goals", () => {
+    it("traduce hypertrophy a Hipertrofia", () => {
         expect(labelTrainingGoal("hypertrophy")).toBe("Hipertrofia");
-        expect(labelTrainingGoal("weight_loss")).toBe("Pérdida de peso");
-    });
-
-    it("returns fallback for empty", () => {
-        expect(labelTrainingGoal(null)).toBe("No definido");
     });
 });
 
-describe("labelClientExperience", () => {
-    it("keeps Spanish enum values", () => {
-        expect(labelClientExperience("Media")).toBe("Media");
+describe("labelPhysicalQualitySlug", () => {
+    it("no convierte primary en Primary", () => {
+        expect(labelPhysicalQualitySlug("primary")).toBe("Primario");
     });
-});
 
-describe("labelSessionDuration", () => {
-    it("translates duration enum", () => {
-        expect(labelSessionDuration("medium_1h_to_1h30")).toBe("1 h – 1 h 30");
+    it("traduce hypertrophy sin Title Case inglés", () => {
+        expect(labelPhysicalQualitySlug("hypertrophy")).toBe("Hipertrofia");
+    });
+
+    it("traduce fuerza_maxima con tilde, no el slug", () => {
+        expect(labelPhysicalQualitySlug("fuerza_maxima")).toBe("Fuerza máxima");
     });
 });
 
 describe("labelSessionType", () => {
-    it("translates strength", () => {
+    it("pinta Técnica y Evaluación con tilde, no el slug ni el texto sin acento", () => {
+        expect(labelSessionType("technique")).toBe("Técnica");
+        expect(labelSessionType("TECHNIQUE")).toBe("Técnica");
+        expect(labelSessionType("assessment")).toBe("Evaluación");
         expect(labelSessionType("strength")).toBe("Fuerza");
+        expect(labelSessionType("endurance")).toBe("Resistencia");
+        expect(labelSessionType("")).toBe("Sesión");
+        expect(labelSessionType(null)).toBe("Sesión");
     });
 });
 
-describe("labelClientProfileFields", () => {
-    it("humanizes missing field keys", () => {
-        expect(labelClientProfileFields(["session_duration", "experiencia"])).toBe(
-            "Duración de sesión, Nivel de experiencia",
-        );
+describe("STANDALONE_SESSION_KIND_LABEL_ES", () => {
+    it("lleva tilde en Sesión", () => {
+        expect(STANDALONE_SESSION_KIND_LABEL_ES).toBe("Sesión libre");
+        expect(STANDALONE_SESSION_KIND_LABEL_ES).not.toMatch(/Sesion\b/);
     });
 });
 
-describe("formatTemplateAssignEndDate", () => {
-    it("includes week count when provided", () => {
-        expect(formatTemplateAssignEndDate("2026-08-24", 4)).toContain("4 semanas");
+describe("formatClientIdentityLine", () => {
+    it("pone el objetivo en español, no el slug", () => {
+        expect(
+            formatClientIdentityLine({
+                nombre: "Diana",
+                apellidos: "QA",
+                objetivo_entrenamiento: "hypertrophy",
+            }),
+        ).toBe("Diana · QA · Hipertrofia");
+    });
+
+    it("omite el objetivo si viene vacío", () => {
+        expect(
+            formatClientIdentityLine({
+                nombre: "Bruno",
+                apellidos: "QA",
+                objetivo_entrenamiento: null,
+            }),
+        ).toBe("Bruno · QA");
     });
 });

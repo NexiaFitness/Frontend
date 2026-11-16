@@ -9,7 +9,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
-import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
+import { SET_TYPE_LABELS, type TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import {
     normalizeSingleSetRow,
     setDataToExerciseView,
@@ -117,7 +117,7 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
 
             {!collapsed ? (
                 <>
-                    <ConstructorGroupParamsBar badgeLabel="SINGLE SET">
+                    <ConstructorGroupParamsBar badgeLabel={SET_TYPE_LABELS.single_set}>
                         <ConstructorFieldAnchor rowId={normalized.id} field="sets">
                             <div className="flex items-center gap-2">
                                 <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Series</span>

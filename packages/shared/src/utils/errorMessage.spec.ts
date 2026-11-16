@@ -96,3 +96,26 @@ describe("getMutationErrorMessage — login y autenticación en español", () =>
     );
   });
 });
+
+describe("getMutationErrorMessage — sesión no eliminable", () => {
+  const expected =
+    "No se puede eliminar una sesión que ya fue ejecutada, completada o archivada";
+
+  it("expone el 409 con tilde y el detalle antiguo sin tilde", () => {
+    expect(
+      getMutationErrorMessage({
+        status: 409,
+        data: { detail: expected },
+      }),
+    ).toBe(expected);
+    expect(
+      getMutationErrorMessage({
+        status: 409,
+        data: {
+          detail:
+            "No se puede eliminar una sesion que ya fue ejecutada, completada o archivada",
+        },
+      }),
+    ).toBe(expected);
+  });
+});

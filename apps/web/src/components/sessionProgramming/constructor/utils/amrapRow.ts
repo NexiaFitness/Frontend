@@ -5,7 +5,7 @@
  * @since v5.3.0
  */
 
-import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import { SET_TYPE, collectSetTypeGroupBadges } from "@nexia/shared/types/sessionProgramming";
 import { hydrateAmrapPlannedReps } from "@nexia/shared";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 
@@ -95,13 +95,5 @@ export function addAmrapExerciseSlot(row: ConstructorRow): ConstructorRow {
 }
 
 export function amrapGroupLabels(rows: ConstructorRow[]): Map<string, string> {
-    const map = new Map<string, string>();
-    let index = 0;
-    for (const row of rows) {
-        if (row.setType !== SET_TYPE.AMRAP) continue;
-        const letter = String.fromCharCode(65 + (index % 26));
-        map.set(row.id, `AMRAP ${letter}`);
-        index += 1;
-    }
-    return map;
+    return collectSetTypeGroupBadges(rows, SET_TYPE.AMRAP);
 }

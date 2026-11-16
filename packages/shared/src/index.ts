@@ -439,6 +439,9 @@ export {
 } from "./utils/clientAvatar";
 export {
     getFatigueAlertContextualAction,
+    labelFatigueAlertBody,
+    labelFatigueAlertSeverity,
+    labelFatigueAlertTitle,
     type FatigueAlertContextualAction,
 } from "./utils/fatigueAlertActions";
 export { parseQualities, qualitiesToDisplayString } from "./utils/qualityUtils";

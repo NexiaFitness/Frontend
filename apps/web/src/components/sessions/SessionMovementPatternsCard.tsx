@@ -1,18 +1,6 @@
 /**
- * SessionMovementPatternsCard.tsx — Card de patrones de movimiento del dia
- *
- * Contexto:
- * - Muestra los patrones planificados para la fecha segun la estructura semanal
- *   del bloque activo (WeeklyStructureDayPattern)
- * - Consume GET /training-sessions/recommendations (mismo hook que SessionDayPlan)
- * - Se usa en CreateSession y EditSession, debajo de WeeklyClientVolumePanel
- *
- * Diseño: Card Standard (bg-card border border-border rounded-lg p-5)
- * Layout horizontal: titulo izquierda + divisor vertical + chips derecha.
- * Chips coloreados por ui_bucket via PatternBadge (inactivo con ring).
- *
- * @author Frontend Team
- * @since v6.5.0
+ * SessionMovementPatternsCard.tsx — Card de patrones de movimiento del día.
+ * Copy en sessionMovementPatternsPresentation (B-20).
  */
 
 import React from "react";
@@ -20,6 +8,11 @@ import { Zap } from "lucide-react";
 import { useGetSessionRecommendationsQuery } from "@nexia/shared/api/trainingSessionsApi";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
 import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
+import {
+    SESSION_MOVEMENT_PATTERNS_EMPTY,
+    SESSION_MOVEMENT_PATTERNS_SUBTITLE,
+    SESSION_MOVEMENT_PATTERNS_TITLE,
+} from "./sessionMovementPatternsPresentation";
 
 
 interface SessionMovementPatternsCardProps {
@@ -63,10 +56,10 @@ export const SessionMovementPatternsCard: React.FC<SessionMovementPatternsCardPr
                     <Zap className="size-5 text-primary" aria-hidden="true" />
                     <div className="flex flex-col gap-0.5">
                         <h3 className="text-sm font-semibold text-foreground">
-                            Patrones de movimiento del dia
+                            {SESSION_MOVEMENT_PATTERNS_TITLE}
                         </h3>
                         <p className="text-xs text-muted-foreground">
-                            Que se entrena hoy segun la planificacion
+                            {SESSION_MOVEMENT_PATTERNS_SUBTITLE}
                         </p>
                     </div>
                 </div>
@@ -87,7 +80,7 @@ export const SessionMovementPatternsCard: React.FC<SessionMovementPatternsCardPr
                         <div className="h-4 w-32 animate-pulse rounded bg-surface-2" />
                     ) : patterns.length === 0 ? (
                         <span className="text-xs text-muted-foreground">
-                            Sin patrones asignados
+                            {SESSION_MOVEMENT_PATTERNS_EMPTY}
                         </span>
                     ) : (
                         patterns.map((p) => (

@@ -52,6 +52,58 @@ export function labelTrainingGoal(value?: string | null): string {
     return TRAINING_GOAL_LABEL_ES[raw] ?? TRAINING_GOAL_LABEL_ES[raw.toLowerCase()] ?? raw;
 }
 
+/** Roles de patrón / músculo en ficha y contexto de sesión (B-10). */
+export const PATTERN_ROLE_LABEL_ES: Record<string, string> = {
+    primary: "Primario",
+    secondary: "Secundario",
+};
+
+/** Cualidades del catálogo (migración `physical_qualities`) si el GET no llega. */
+export const PHYSICAL_QUALITY_SLUG_LABEL_ES: Record<string, string> = {
+    fuerza_maxima: "Fuerza máxima",
+    hipertrofia: "Hipertrofia",
+    fuerza_resistencia: "Fuerza resistencia",
+    potencia: "Potencia",
+    resistencia_aerobica: "Resistencia aeróbica",
+    resistencia_anaerobica: "Resistencia anaeróbica",
+    cardio_extensivo: "Cardio extensivo",
+    cardio_intensivo: "Cardio intensivo",
+    movilidad: "Movilidad",
+    velocidad: "Velocidad",
+};
+
+/**
+ * Etiqueta ES para un slug de cualidad o rol cuando el catálogo no trae `name`.
+ * No hace Title Case: eso convertía `primary` / `hypertrophy` en inglés.
+ */
+export function labelPhysicalQualitySlug(slug?: string | null): string {
+    const raw = slug?.trim();
+    if (!raw) return "";
+    const key = raw.toLowerCase();
+    const fromQuality = PHYSICAL_QUALITY_SLUG_LABEL_ES[raw] ?? PHYSICAL_QUALITY_SLUG_LABEL_ES[key];
+    if (fromQuality) return fromQuality;
+    const fromGoal = TRAINING_GOAL_LABEL_ES[raw] ?? TRAINING_GOAL_LABEL_ES[key];
+    if (fromGoal) return fromGoal;
+    const fromRole = PATTERN_ROLE_LABEL_ES[raw] ?? PATTERN_ROLE_LABEL_ES[key];
+    if (fromRole) return fromRole;
+    return raw.replace(/_/g, " ");
+}
+
+/** Nombre + apellidos + objetivo ya etiquetado (cabecera de revisión de sesión). */
+export function formatClientIdentityLine(client: {
+    nombre?: string | null;
+    apellidos?: string | null;
+    objetivo_entrenamiento?: string | null;
+}): string {
+    const goal = client.objetivo_entrenamiento?.trim()
+        ? labelTrainingGoal(client.objetivo_entrenamiento)
+        : null;
+    return [client.nombre, client.apellidos, goal]
+        .map((part) => (typeof part === "string" ? part.trim() : part))
+        .filter(Boolean)
+        .join(" · ");
+}
+
 export function labelClientExperience(value?: string | null): string {
     const raw = value?.trim();
     if (!raw) return "No especificada";
@@ -78,11 +130,29 @@ export function labelSessionDuration(value?: string | null): string {
     return raw;
 }
 
+/**
+ * Tipos usados en listado/filtros/alta que no están en TrainingSessionType
+ * (alembic normalizó flexibility→technique; endurance sigue en formularios).
+ */
+const SESSION_EXTRA_TYPE_LABEL_ES: Record<string, string> = {
+    technique: "Técnica",
+    assessment: "Evaluación",
+    endurance: "Resistencia",
+    consultation: "Consulta",
+};
+
+/** Badge de sesión sin plan (UI entrenador). */
+export const STANDALONE_SESSION_KIND_LABEL_ES = "Sesión libre";
+
 export function labelSessionType(value?: string | null): string {
     const raw = value?.trim();
     if (!raw) return "Sesión";
-    const key = raw as keyof typeof SESSION_TYPE_LABELS;
-    return SESSION_TYPE_LABELS[key] ?? raw;
+    const key = raw.toLowerCase();
+    return (
+        SESSION_TYPE_LABELS[key as keyof typeof SESSION_TYPE_LABELS] ??
+        SESSION_EXTRA_TYPE_LABEL_ES[key] ??
+        raw
+    );
 }
 
 export function labelClientProfileField(field: string): string {

@@ -6,6 +6,8 @@ import { describe, expect, it } from "vitest";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
 import {
     buildBlockContextLine,
+    resolveDayPlanPrimaryLabel,
+    resolveQualityLabel,
     resolveSessionDayPhaseContext,
     SESSION_DAY_CONTEXT_COPY,
 } from "../sessionDayContextPresentation";
@@ -79,5 +81,31 @@ describe("buildBlockContextLine", () => {
         const line = buildBlockContextLine(rec as never, "2026-12-02");
         expect(line).toContain("Semana 1 de 1");
         expect(line).not.toContain("Semana 1 de 2");
+    });
+});
+
+describe("resolveQualityLabel", () => {
+    it("usa el nombre del catálogo si existe", () => {
+        expect(
+            resolveQualityLabel("hypertrophy", [
+                { slug: "hypertrophy", name: "Hipertrofia" },
+            ]),
+        ).toBe("Hipertrofia");
+    });
+
+    it("no hace Title Case de primary ni hypertrophy", () => {
+        expect(resolveQualityLabel("primary", [])).toBe("Primario");
+        expect(resolveQualityLabel("hypertrophy", [])).toBe("Hipertrofia");
+    });
+});
+
+describe("resolveDayPlanPrimaryLabel", () => {
+    it("pinta Fuerza máxima, no el slug", () => {
+        expect(
+            resolveDayPlanPrimaryLabel(
+                { physical_quality: "fuerza_maxima" } as never,
+                [{ slug: "fuerza_maxima", name: "Fuerza máxima" }],
+            ),
+        ).toBe("Fuerza máxima");
     });
 });

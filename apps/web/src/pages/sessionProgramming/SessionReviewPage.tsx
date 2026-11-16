@@ -34,13 +34,10 @@ import {
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
-import { displaySessionTitle, formatCalendarDate, resolveNextSessionScheduleDate } from "@nexia/shared";
+import { displaySessionTitle, formatCalendarDate, formatClientIdentityLine, labelSessionType, resolveNextSessionScheduleDate } from "@nexia/shared";
 import { useValidateSessionMutation } from "@nexia/shared/api/sessionValidationApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
-import {
-    SESSION_TYPE_LABELS,
-    TRAINING_SESSION_STATUS_LABELS,
-} from "@nexia/shared/types/trainingSessions";
+import { TRAINING_SESSION_STATUS_LABELS } from "@nexia/shared/types/trainingSessions";
 import type { TrainingSessionStatus } from "@nexia/shared/types/trainingSessions";
 
 import { Button } from "@/components/ui/buttons";
@@ -220,9 +217,7 @@ const SessionReviewHeader: React.FC<{
                         </div>
                         {client ? (
                             <p className={cn(SESSION_REVIEW_CLIENT_META, SESSION_DETAIL_CLIENT)}>
-                                {[client.nombre, client.apellidos, client.objetivo_entrenamiento]
-                                    .filter(Boolean)
-                                    .join(" · ")}
+                                {formatClientIdentityLine(client)}
                             </p>
                         ) : null}
                     </div>
@@ -291,9 +286,7 @@ const SessionPlanSummaryCard: React.FC<{
         notes: string | null;
     };
 }> = ({ session }) => {
-    const typeLabel =
-        SESSION_TYPE_LABELS[session.session_type as keyof typeof SESSION_TYPE_LABELS] ??
-        session.session_type;
+    const typeLabel = labelSessionType(session.session_type);
     const trainerNotes = stripLegacyCoherenceFromNotes(session.notes);
 
     const plannedVol = Math.min(10, Math.max(1, session.planned_volume ?? 5));

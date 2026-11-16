@@ -9,7 +9,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import type { PlanTrainingSession } from "@nexia/shared";
 import { useGetSessionCoherenceQuery } from "@nexia/shared/api/trainingSessionsApi";
-import { isSessionDeletable, SESSION_TYPE_LABELS } from "@nexia/shared";
+import { isSessionDeletable, labelSessionType } from "@nexia/shared";
 import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 import {
     buildCoherencePhaseChipViewModel,
@@ -126,11 +126,6 @@ function SessionCardPhaseChip({
     );
 }
 
-function sessionTypeLabel(sessionType: string): string {
-    const map = SESSION_TYPE_LABELS as Record<string, string>;
-    return map[sessionType] ?? sessionType;
-}
-
 function parseLocalDateLabel(sessionDate: string): string {
     const match = String(sessionDate).match(/^(\d{4})-(\d{2})-(\d{2})/);
     const d = match
@@ -166,7 +161,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         ? parseLocalDateLabel(session.session_date)
         : "Sin fecha";
 
-    const typeLabel = sessionTypeLabel(session.session_type);
+    const typeLabel = labelSessionType(session.session_type);
 
     const plannedIntensity =
         "planned_intensity" in session

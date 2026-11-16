@@ -34,7 +34,7 @@ import {
     useGetSessionExecutionSummaryQuery,
     useDeleteTrainingSessionMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
-import { displaySessionTitle, formatCalendarDate, formatCalendarDateLong, mergeSessionStructureWithExecutionSummary } from "@nexia/shared";
+import { displaySessionTitle, formatCalendarDate, formatCalendarDateLong, labelSessionType, mergeSessionStructureWithExecutionSummary } from "@nexia/shared";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
@@ -90,13 +90,6 @@ const STATUS_BADGE_VARIANT: Record<string, BadgeVariant> = {
     skipped: "subtle-destructive",
     modified: "subtle",
     in_progress: "subtle",
-};
-
-const TYPE_LABELS: Record<string, string> = {
-    strength: "Fuerza",
-    cardio: "Cardio",
-    technique: "Técnica",
-    assessment: "Evaluación",
 };
 
 const TYPE_BADGE_VARIANT: Record<string, BadgeVariant> = {
@@ -226,7 +219,7 @@ export const SessionDetail: React.FC = () => {
     const statusLabel = STATUS_LABELS[session.status] || "Planificada";
     const statusVariant: BadgeVariant = STATUS_BADGE_VARIANT[session.status] ?? "subtle";
     const sessionTypeKey = String(session.session_type || "").toLowerCase();
-    const typeLabel = TYPE_LABELS[sessionTypeKey] || session.session_type || "—";
+    const typeLabel = labelSessionType(session.session_type);
     const typeVariant: BadgeVariant = TYPE_BADGE_VARIANT[sessionTypeKey] ?? "subtle-secondary";
     const clientName = client ? `${client.nombre} ${client.apellidos}` : "Cliente";
     const sessionTitle = displaySessionTitle(session.session_name, session.session_date);
