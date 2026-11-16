@@ -87,7 +87,7 @@ export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
                     {headerLeading}
                     {qualitativeLabel ? (
                         <>
-                            {prefix}:{" "}
+                            <span className="truncate">{`${prefix}:`}</span>
                             <span className={BLOCK_LEVEL_METER_QUALITATIVE_CLASS}>
                                 {sliderLevelLabelEs(clamped)}
                             </span>
