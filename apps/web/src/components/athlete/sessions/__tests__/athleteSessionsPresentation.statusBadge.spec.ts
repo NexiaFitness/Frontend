@@ -82,4 +82,18 @@ describe("resolveAthleteSessionStatusBadge (B-34)", () => {
             )
         ).toBe("planned");
     });
+
+    it("archived today is archived, not today", () => {
+        expect(
+            resolveAthleteSessionStatusBadge(session({ id: 10, status: "archived" }))
+        ).toBe("archived");
+    });
+
+    it("archived on another day stays archived", () => {
+        expect(
+            resolveAthleteSessionStatusBadge(
+                session({ id: 11, status: "archived", session_date: "2026-11-10" })
+            )
+        ).toBe("archived");
+    });
 });

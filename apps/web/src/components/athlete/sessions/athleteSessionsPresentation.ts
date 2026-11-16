@@ -75,6 +75,10 @@ export const ATHLETE_SESSION_STATUS_BADGE = {
         ATHLETE_SESSION_META_BADGE,
         "border-warning/30 bg-warning/10 text-warning"
     ),
+    archived: cn(
+        ATHLETE_SESSION_META_BADGE,
+        "border-border/40 bg-muted/20 text-muted-foreground"
+    ),
 };
 
 export type AthleteSessionStatusBadgeVariant = keyof typeof ATHLETE_SESSION_STATUS_BADGE;
@@ -89,6 +93,7 @@ export function resolveAthleteSessionStatusBadge(
     if (session.status === "skipped") return "skipped";
     if (session.status === "cancelled") return "cancelled";
     if (session.status === "in_progress") return "in_progress";
+    if (session.status === "archived") return "archived";
     if (isSessionToday(session)) return "today";
     return "planned";
 }
