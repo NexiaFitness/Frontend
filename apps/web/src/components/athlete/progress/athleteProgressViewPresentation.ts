@@ -125,6 +125,6 @@ export function athleteProgressWeightCaption(
     return `${latestWeight} kg · ${trendLine}`;
 }
 
-/** B-35: bodyweight no usa kg como métrica de progreso. */
+/** B-35: ranking de kg omite bodyweight; el lastre (kg extra) sí se muestra. */
 export const ATHLETE_BODYWEIGHT_PROGRESS_SUBTITLE =
-    "Ejercicio de peso corporal. El progreso no se mide en kilogramos.";
+    "Peso corporal. El lastre se registra como carga extra; no entra en el ranking de kg.";

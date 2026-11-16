@@ -311,7 +311,7 @@ describe("buildTopExercises", () => {
         expect(rows[0].weightDelta).toBeNull();
     });
 
-    it("does not attach an incomparable drop as a period delta (B-35)", () => {
+    it("keeps a large external deload as the period delta (B-35, no 0.5 ratio)", () => {
         const tracking = [
             track({
                 id: 1,
@@ -333,6 +333,6 @@ describe("buildTopExercises", () => {
         const { rows } = buildTopExercises(tracking, new Map(), RANGE);
         expect(rows).toHaveLength(1);
         expect(rows[0].latestWeight).toBe(12.5);
-        expect(rows[0].weightDelta).toBeNull();
+        expect(rows[0].weightDelta).toBe(-65);
     });
 });

@@ -94,7 +94,9 @@ export const AthleteExerciseProgressPage: React.FC = () => {
     };
 
     const subtitle = isBodyweightExercise
-        ? ATHLETE_BODYWEIGHT_PROGRESS_SUBTITLE
+        ? latestWeight != null
+            ? `Lastre reciente: ${latestWeight} kg`
+            : ATHLETE_BODYWEIGHT_PROGRESS_SUBTITLE
         : resolvedEntry === "record" && personalBestWeight != null
           ? `Marca personal: ${personalBestWeight} kg${
                 latestWeight != null && latestWeight !== personalBestWeight

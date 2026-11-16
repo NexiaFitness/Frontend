@@ -20,13 +20,10 @@ describe("isBodyweightLoadType", () => {
 });
 
 describe("periodLoadDelta", () => {
-    it("keeps first vs last of the period for a comparable deload", () => {
+    it("keeps first vs last of the period, including a large deload", () => {
         expect(periodLoadDelta(80, 70)).toBe(-10);
         expect(periodLoadDelta(40, 50)).toBe(10);
-    });
-
-    it("does not treat a crash below half the first load as a delta (B-35)", () => {
-        expect(periodLoadDelta(77.5, 12.5)).toBeNull();
+        expect(periodLoadDelta(77.5, 12.5)).toBe(-65);
     });
 
     it("returns null without two positive loads", () => {

@@ -1,5 +1,11 @@
 # Changelog — @nexia/shared
 
+## 6.1.9 — 2026-11-16
+
+### Fixed (B-35 lastre)
+
+- `periodLoadDelta` es primer vs último, sin umbral 0.5. El top/PRs siguen omitiendo bodyweight; el lastre (kg extra) se muestra en V11.
+
 ## 6.1.8 — 2026-11-16
 
 ### Fixed (B-35)
