@@ -107,12 +107,16 @@ export function volumeBarWidthPct(row: WeeklyVolumePanelRowModel): number {
     return 0;
 }
 
-export function formatVolumeRatioHoy(
+export type VolumeRatioParts = {
+    primary: string;
+    hoySupport: string | null;
+};
+
+function formatVolumeRatioHoyFallback(
     row: Pick<
         WeeklyVolumePanelRowModel,
         "draftSets" | "targetToday" | "accumulated" | "rangeMax" | "targetCenter" | "dataScope"
-    >,
-    _style: VolumeRatioHoyStyle = "constructor"
+    >
 ): string {
     if (row.targetToday != null && row.targetToday > 0) {
         const base = `${formatSetVolume(row.draftSets)} / ${row.targetToday}`;
@@ -127,7 +131,55 @@ export function formatVolumeRatioHoy(
     return `${formatSetVolume(fallbackTotal)} programadas`;
 }
 
-/** Mapea fila validate-draft a input del panel: solo volumen de esta sesión. */
+/**
+ * B6 #7: acumulado semanal (guardado + esta sesión) como cifra principal y «+N hoy» de apoyo.
+ * No cambia D1/D1b ni el status de la barra (sigue siendo hoy vs objetivo diario).
+ */
+export function formatVolumeWeekPrimaryAndHoy(
+    row: Pick<
+        WeeklyVolumePanelRowModel,
+        | "draftSets"
+        | "targetToday"
+        | "accumulated"
+        | "rangeMax"
+        | "targetCenter"
+        | "dataScope"
+        | "savedWeekWithoutSession"
+    >,
+    _style: VolumeRatioHoyStyle = "constructor"
+): VolumeRatioParts {
+    if (typeof row.savedWeekWithoutSession === "number") {
+        const weekTotal = row.savedWeekWithoutSession + row.draftSets;
+        const primary =
+            row.targetCenter != null && row.targetCenter > 0
+                ? `${formatSetVolume(weekTotal)} / ${row.targetCenter} semana`
+                : `${formatSetVolume(weekTotal)} semana`;
+        return {
+            primary,
+            hoySupport: `+${formatSetVolume(row.draftSets)} hoy`,
+        };
+    }
+    return { primary: formatVolumeRatioHoyFallback(row), hoySupport: null };
+}
+
+export function formatVolumeRatioHoy(
+    row: Pick<
+        WeeklyVolumePanelRowModel,
+        | "draftSets"
+        | "targetToday"
+        | "accumulated"
+        | "rangeMax"
+        | "targetCenter"
+        | "dataScope"
+        | "savedWeekWithoutSession"
+    >,
+    style: VolumeRatioHoyStyle = "constructor"
+): string {
+    const { primary, hoySupport } = formatVolumeWeekPrimaryAndHoy(row, style);
+    return hoySupport ? `${primary} ${hoySupport}` : primary;
+}
+
+/** Mapea fila validate-draft a input del panel (hoy + acumulado semanal B6 #7). */
 export function mapSessionLoadDraftRowToPanelInput(row: {
     muscle_group_id: number;
     name_es: string;
@@ -136,6 +188,7 @@ export function mapSessionLoadDraftRowToPanelInput(row: {
     draft_indirect?: number;
     daily_target: number;
     pattern_session_days?: number;
+    accumulated_saved_without_session?: number;
 }): WeeklyVolumePanelApiRowInput {
     const draftSets = row.draft_sets ?? 0;
     return {
@@ -147,6 +200,7 @@ export function mapSessionLoadDraftRowToPanelInput(row: {
         draft_sets: draftSets,
         daily_target: row.daily_target,
         pattern_session_days: row.pattern_session_days,
+        accumulated_saved_without_session: row.accumulated_saved_without_session,
         data_scope: "session_draft",
     };
 }

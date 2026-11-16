@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import type { WeeklyVolumePanelRowModel, VolumeRatioHoyStyle } from "@nexia/shared";
 import {
     formatSetVolume,
-    formatVolumeRatioHoy,
+    formatVolumeWeekPrimaryAndHoy,
     volumeBarWidthPct,
     volumeStatusLabel,
 } from "@nexia/shared";
@@ -54,6 +54,15 @@ export const MuscleVolumeRow: React.FC<MuscleVolumeRowProps> = ({
     const context = contextLine !== undefined ? contextLine : rowContextLine(row);
     const displayName = row.nameEs || `Grupo ${row.muscleGroupId}`;
     const totalSets = row.accumulated;
+    const { primary, hoySupport } = formatVolumeWeekPrimaryAndHoy(row, ratioStyle);
+    const ratioLabel = (
+        <span className={MUSCLE_VOLUME_ROW_META_CLASS}>
+            {primary}
+            {hoySupport ? (
+                <span className="text-muted-foreground/70"> {hoySupport}</span>
+            ) : null}
+        </span>
+    );
 
     const statusBadge = (
         <span
@@ -74,9 +83,7 @@ export const MuscleVolumeRow: React.FC<MuscleVolumeRowProps> = ({
                         {displayName}
                     </span>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className={MUSCLE_VOLUME_ROW_META_CLASS}>
-                            {formatVolumeRatioHoy(row, ratioStyle)}
-                        </span>
+                        {ratioLabel}
                         {statusBadge}
                     </div>
                 </div>
@@ -91,9 +98,7 @@ export const MuscleVolumeRow: React.FC<MuscleVolumeRowProps> = ({
             <div className="flex items-center justify-between gap-2 min-w-0">
                 <span className={MUSCLE_VOLUME_ROW_TITLE_CLASS}>{displayName}</span>
                 <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
-                    <span className={MUSCLE_VOLUME_ROW_META_CLASS}>
-                        {formatVolumeRatioHoy(row, ratioStyle)}
-                    </span>
+                    {ratioLabel}
                     {statusBadge}
                 </div>
             </div>

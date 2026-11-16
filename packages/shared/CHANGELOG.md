@@ -1,5 +1,11 @@
 # Changelog — @nexia/shared
 
+## 6.1.11 — 2026-11-16
+
+### Changed (B6 #7)
+
+- Panel muscular: acumulado semanal (guardado + esta sesión) y «+N hoy» en la misma línea. `mapSessionLoadDraftRowToPanelInput` pasa `accumulated_saved_without_session`. Sin cambios D1/D1b.
+
 ## 6.1.10 — 2026-11-16
 
 ### Changed (A6)

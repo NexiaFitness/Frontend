@@ -45,7 +45,7 @@ import { TrainingSessionDeleteConfirmModal } from "@/components/sessions/Trainin
 import { CoherenceConclusionsPanel } from "@/components/sessionProgramming/CoherenceConclusionsPanel";
 import { SessionPhaseIntentMixPanel } from "@/components/sessionProgramming/SessionPhaseIntentMixPanel";
 import { stripLegacyCoherenceFromNotes } from "@/components/sessionProgramming/coherenceConclusionsPresentation";
-import { SessionValidationContent } from "@/components/sessionProgramming/SessionValidationContent";
+import { SessionReviewValidationSection } from "@/components/sessionProgramming/SessionReviewValidationSection";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { ReplicateSessionModal } from "@/components/sessions/ReplicateSessionModal";
@@ -592,11 +592,11 @@ export const SessionReviewPage: React.FC = () => {
                     qualityCatalog={physicalQualities}
                 />
 
-                <SessionValidationContent
-                    data={validationData ?? null}
-                    isLoading={isValidating}
-                    error={validationError ?? null}
-                    layout="review"
+                <SessionReviewValidationSection
+                    session={session}
+                    validationData={validationData}
+                    isValidating={isValidating}
+                    validationError={validationError}
                 />
                 </div>
             </div>

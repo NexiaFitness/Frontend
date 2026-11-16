@@ -29,6 +29,8 @@ import {
     mapBlocksToSessionStructureView,
     type SessionStructureView,
 } from "../../sessionProgramming/sessionBlockView";
+import { sessionBlockLinesToLoadDraft } from "../../sessionProgramming/sessionBlockLinesToLoadDraft";
+import type { SessionLoadDraftExerciseIn } from "../../types/sessionLoad";
 import {
     SET_TYPE,
     type SessionBlock,
@@ -50,6 +52,8 @@ export interface UseSessionStructureViewResult {
     isLoading: boolean;
     isError: boolean;
     refetch: () => void;
+    /** Líneas para POST validate-draft (B6 #7 en revisión). */
+    loadDraft: SessionLoadDraftExerciseIn[];
 }
 
 const EMPTY_VIEW: SessionStructureView = {
@@ -218,7 +222,14 @@ export function useSessionStructureView(
 
     return useMemo<UseSessionStructureViewResult>(() => {
         if (!sessionId || sessionId <= 0) {
-            return { view: EMPTY_VIEW, source: "legacy", isLoading: false, isError: false, refetch };
+            return {
+                view: EMPTY_VIEW,
+                source: "legacy",
+                isLoading: false,
+                isError: false,
+                refetch,
+                loadDraft: [],
+            };
         }
 
         if (blocks.length > 0) {
@@ -235,7 +246,18 @@ export function useSessionStructureView(
                 blockTypes,
                 exerciseNamesById,
             });
-            return { view, source: "blocks", isLoading, isError: blockExercisesError, refetch };
+            const loadDraft = sessionBlockLinesToLoadDraft(
+                blocks,
+                Object.values(blockExercisesByBlock).flat()
+            );
+            return {
+                view,
+                source: "blocks",
+                isLoading,
+                isError: blockExercisesError,
+                refetch,
+                loadDraft,
+            };
         }
 
         if (legacyExercises.length === 0) {
@@ -245,6 +267,7 @@ export function useSessionStructureView(
                 isLoading: isLoadingLegacy,
                 isError: isErrorLegacy || blocksQuery.isError,
                 refetch,
+                loadDraft: [],
             };
         }
 
@@ -263,7 +286,14 @@ export function useSessionStructureView(
         });
         // Sobrescribimos el blockTypeName por algo legible
         view.blocks[0].blockTypeName = "Ejercicios";
-        return { view, source: "legacy", isLoading, isError: isErrorLegacy, refetch };
+        return {
+            view,
+            source: "legacy",
+            isLoading,
+            isError: isErrorLegacy,
+            refetch,
+            loadDraft: sessionBlockLinesToLoadDraft([block], rows),
+        };
     }, [
         sessionId,
         blocks,

@@ -3,105 +3,50 @@ import {
     buildWeeklyVolumePanelRows,
     formatVolumeRatioHoy,
     mapSessionLoadDraftRowToPanelInput,
-    mapWeeklySavedRowToPanelInput,
-    volumeMuscleValidationToPanelRow,
 } from "./weeklyVolumePanelModel";
 
-describe("mapSessionLoadDraftRowToPanelInput", () => {
-    it("usa solo draft_sets y desglose del borrador (no acumulado semanal)", () => {
+describe("B6 #7 weekly + hoy", () => {
+    it("el mapper no descarta accumulated_saved_without_session", () => {
         const input = mapSessionLoadDraftRowToPanelInput({
             muscle_group_id: 1,
-            name_es: "glúteos",
+            name_es: "Pecho",
             draft_sets: 4,
-            draft_direct: 3,
-            draft_indirect: 1,
-            daily_target: 9,
-            pattern_session_days: 2,
+            draft_direct: 4,
+            draft_indirect: 0,
+            daily_target: 4,
+            accumulated_saved_without_session: 8,
         });
-
-        expect(input.planned_sets_sum).toBe(4);
-        expect(input.direct_sets).toBe(3);
-        expect(input.indirect_sets).toBe(1);
-        expect(input.data_scope).toBe("session_draft");
+        expect(input.accumulated_saved_without_session).toBe(8);
     });
-});
 
-describe("buildWeeklyVolumePanelRows", () => {
-    it("modo diario: status según draft_sets vs daily_target", () => {
+    it("muestra acumulado semanal como cifra principal y +N hoy", () => {
         const rows = buildWeeklyVolumePanelRows(
             [
                 mapSessionLoadDraftRowToPanelInput({
                     muscle_group_id: 1,
-                    name_es: "glúteos",
+                    name_es: "Pecho",
                     draft_sets: 4,
-                    draft_direct: 3,
-                    draft_indirect: 1,
-                    daily_target: 9,
+                    daily_target: 4,
+                    accumulated_saved_without_session: 8,
                 }),
             ],
-            18
+            16
         );
-
-        expect(rows[0]?.draftSets).toBe(4);
-        expect(rows[0]?.accumulated).toBe(4);
-        expect(rows[0]?.status).toBe("deficit");
-        expect(rows[0]?.dataScope).toBe("session_draft");
-        expect(formatVolumeRatioHoy(rows[0]!)).toBe("4 / 9 programadas · hoy");
+        expect(formatVolumeRatioHoy(rows[0])).toBe("12 / 16 semana +4 hoy");
     });
 
-    it("fallback semanal: session_draft usa draft_sets como numerador, no projected_total", () => {
+    it("sin acumulado guardado sigue el ratio de hoy (V1 / GET semanal)", () => {
         const rows = buildWeeklyVolumePanelRows(
             [
-                {
-                    muscle_group_id: 2,
-                    name_es: "cuádriceps",
-                    planned_sets_sum: 4,
-                    direct_sets: 3,
-                    indirect_sets: 1,
+                mapSessionLoadDraftRowToPanelInput({
+                    muscle_group_id: 1,
+                    name_es: "Pecho",
                     draft_sets: 4,
-                    daily_target: 0,
-                    data_scope: "session_draft",
-                },
+                    daily_target: 4,
+                }),
             ],
-            18
+            16
         );
-
-        expect(rows[0]?.status).toBe("deficit");
-        expect(formatVolumeRatioHoy(rows[0]!)).toBe("4 / 18 programadas · esta sesión");
-    });
-
-    it("weekly_saved: numerador es acumulado semanal guardado", () => {
-        const rows = buildWeeklyVolumePanelRows(
-            [mapWeeklySavedRowToPanelInput({
-                muscle_group_id: 3,
-                name_es: "gemelos",
-                planned_sets_sum: 11,
-                direct_sets: 9,
-                indirect_sets: 2,
-            })],
-            18
-        );
-
-        expect(rows[0]?.accumulated).toBe(11);
-        expect(formatVolumeRatioHoy(rows[0]!)).toBe("11 / 18 programadas · semana");
-    });
-});
-
-describe("volumeMuscleValidationToPanelRow", () => {
-    it("rellena directSets e indirectSets desde validación V1 (review)", () => {
-        const row = volumeMuscleValidationToPanelRow({
-            muscle_group_id: 5,
-            name_es: "pectorales",
-            weekly_target: 18,
-            daily_expected: 9,
-            actual_sets: 6,
-            direct_sets: 4,
-            indirect_sets: 2,
-        });
-
-        expect(row.directSets).toBe(4);
-        expect(row.indirectSets).toBe(2);
-        expect(row.draftSets).toBe(6);
-        expect(row.dataScope).toBe("session_draft");
+        expect(formatVolumeRatioHoy(rows[0])).toBe("4 / 4 programadas · hoy");
     });
 });

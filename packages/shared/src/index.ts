@@ -602,6 +602,7 @@ export * from "./hooks/sessionProgramming";
 
 // Session Programming - Vista agrupada de bloques (lógica pura)
 export * from "./sessionProgramming/sessionBlockView";
+export * from "./sessionProgramming/sessionBlockLinesToLoadDraft";
 export * from "./sessionProgramming/mergeSessionStructureWithExecutionSummary";
 export * from "./sessionProgramming/dropsetCollapse";
 export * from "./sessionProgramming/parallelRoundCollapse";

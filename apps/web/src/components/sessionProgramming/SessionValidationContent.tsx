@@ -326,9 +326,10 @@ function UncoveredMuscleVolumeColumns({
 
 const MAX_UNCOVERED_PREVIEW = 4;
 
-const VolumeSectionReview: React.FC<{ data: NonNullable<SessionValidationOut["volume"]> }> = ({
-    data,
-}) => {
+const VolumeSectionReview: React.FC<{
+    data: NonNullable<SessionValidationOut["volume"]>;
+    muscleVolumeRows?: WeeklyVolumePanelRowModel[] | null;
+}> = ({ data, muscleVolumeRows }) => {
     const [uncoveredExpanded, setUncoveredExpanded] = useState(false);
     const { coveredRows, uncoveredRows, statusSummary } = useMemo(() => {
         const coveredList = data.muscle_groups
@@ -337,14 +338,17 @@ const VolumeSectionReview: React.FC<{ data: NonNullable<SessionValidationOut["vo
         const uncoveredList = data.muscle_groups
             .filter((g) => g.actual_sets === 0 && g.daily_expected > 0)
             .sort((a, b) => b.daily_expected - a.daily_expected);
-        const coveredRows = coveredList.map(volumeMuscleValidationToPanelRow);
+        const coveredRows =
+            muscleVolumeRows && muscleVolumeRows.length > 0
+                ? muscleVolumeRows.filter((row) => row.draftSets > 0)
+                : coveredList.map(volumeMuscleValidationToPanelRow);
         const uncoveredRows = uncoveredList.map(volumeMuscleValidationToPanelRow);
         return {
             coveredRows,
             uncoveredRows,
             statusSummary: summarizeVolumeRowStatuses(coveredRows),
         };
-    }, [data.muscle_groups]);
+    }, [data.muscle_groups, muscleVolumeRows]);
 
     const totalProgrammed = coveredRows.reduce((s, r) => s + r.draftSets, 0);
     const totalExpectedCovered = coveredRows.reduce((s, r) => s + (r.targetToday ?? 0), 0);
@@ -421,9 +425,12 @@ const VolumeSectionReview: React.FC<{ data: NonNullable<SessionValidationOut["vo
 const VolumeSection: React.FC<{
     data: SessionValidationOut["volume"];
     variant?: "stack" | "review";
-}> = ({ data, variant = "stack" }) => {
+    muscleVolumeRows?: WeeklyVolumePanelRowModel[] | null;
+}> = ({ data, variant = "stack", muscleVolumeRows }) => {
     if (!data) return <p className="text-sm text-muted-foreground">Sin datos de volumen.</p>;
-    if (variant === "review") return <VolumeSectionReview data={data} />;
+    if (variant === "review") {
+        return <VolumeSectionReview data={data} muscleVolumeRows={muscleVolumeRows} />;
+    }
 
     return (
         <div className="space-y-3">
@@ -508,6 +515,8 @@ export interface SessionValidationContentProps {
     error: unknown | null;
     /** `stack`: collapsibles (drawer). `review`: grid de tarjetas en página de revisión. */
     layout?: "stack" | "review";
+    /** Filas validate-draft (B6 #7). Si vienen, sustituyen el numerador V1 de grupos cubiertos. */
+    muscleVolumeRows?: WeeklyVolumePanelRowModel[] | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -519,6 +528,7 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
     isLoading,
     error,
     layout = "stack",
+    muscleVolumeRows,
 }) => {
     const overallStatus = data?.overall_status ?? null;
 
@@ -577,7 +587,11 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                             title={VOLUME_REVIEW_SECTION_TITLE}
                             badge={<StatusBadge status={data.volume?.status ?? null} />}
                         >
-                            <VolumeSection data={data.volume} variant="review" />
+                            <VolumeSection
+                                data={data.volume}
+                                variant="review"
+                                muscleVolumeRows={muscleVolumeRows}
+                            />
                             <VolumeNotesBlock notes={data.volume_notes} />
                         </ValidationInsightCard>
                     </div>
@@ -642,7 +656,7 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                         badge={getValidationStatusLabel(data.volume?.status ?? null)}
                         defaultOpen
                     >
-                        <VolumeSection data={data.volume} />
+                        <VolumeSection data={data.volume} muscleVolumeRows={muscleVolumeRows} />
                         <VolumeNotesBlock notes={data.volume_notes} />
                     </CollapsibleFormGroup>
 

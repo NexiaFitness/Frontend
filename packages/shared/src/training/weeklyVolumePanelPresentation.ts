@@ -79,10 +79,10 @@ export const VOLUME_REVIEW_KPI_SERIES_LABEL = "Series programadas hoy";
 
 export const VOLUME_REVIEW_KPI_SERIES_HINT = "Programadas frente al objetivo del día";
 
-export const VOLUME_CONSTRUCTOR_DRAFT_TITLE = "Series de hoy vs objetivo del día";
+export const VOLUME_CONSTRUCTOR_DRAFT_TITLE = "Volumen semanal y de hoy";
 
 export const VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE =
-    "Series programadas en el borrador frente al objetivo de este día según la estructura semanal del plan";
+    "Acumulado de la semana (sesiones guardadas + esta sesión) y series de hoy por grupo muscular";
 
 export const VOLUME_WEEKLY_SAVED_SUBTITLE =
     "Acumulado semanal programado según sesiones guardadas y objetivos del plan";
