@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { isSessionPrescriptionLocked } from "./sessionPrescriptionLock";
+import {
+    isSessionPrescriptionLocked,
+    standaloneExercisesHaveExecutions,
+} from "./sessionPrescriptionLock";
 
 describe("isSessionPrescriptionLocked", () => {
     it("deja editable una sesión planned sin registros", () => {
@@ -28,6 +31,31 @@ describe("isSessionPrescriptionLocked", () => {
                 status: "planned",
                 hasExecutions: true,
             }),
+        ).toBe(true);
+    });
+
+    it("bloquea una suelta completed con el mismo helper", () => {
+        expect(
+            isSessionPrescriptionLocked({
+                status: "completed",
+                actual_duration: 40,
+            }),
+        ).toBe(true);
+    });
+});
+
+describe("standaloneExercisesHaveExecutions", () => {
+    it("es falso sin actual_*", () => {
+        expect(
+            standaloneExercisesHaveExecutions([
+                { actual_sets: null, actual_reps: null },
+            ]),
+        ).toBe(false);
+    });
+
+    it("es verdadero si hay series hechas", () => {
+        expect(
+            standaloneExercisesHaveExecutions([{ actual_sets: 3 }]),
         ).toBe(true);
     });
 });

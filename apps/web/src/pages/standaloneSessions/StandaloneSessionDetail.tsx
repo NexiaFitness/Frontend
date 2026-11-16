@@ -5,6 +5,8 @@
  * - P2: Sesiones creadas cuando no hay plan activo para la fecha
  * - Navegación desde ClientSessionsTab
  * - Fase 5: métrica planned_sets vs actual_sets por ejercicio y total de sesión
+ * - B-33: el candado vive en StandaloneSessionPrescriptionActions (toolbar + notice).
+ *   Este archivo queda ~405 por los dos slots; no se mete la regla aquí.
  *
  * @author Frontend Team
  * @since P2 — Plan integración flujo planificación UX
@@ -55,6 +57,7 @@ import type { SessionExerciseDisplay } from "@nexia/shared/hooks/sessionProgramm
 import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
 import { StandaloneSessionLoadSummary } from "@/components/standaloneSessions/StandaloneSessionLoadSummary";
 import { StandaloneSessionClientFeedbackPanel } from "@/components/standaloneSessions/StandaloneSessionClientFeedbackPanel";
+import { StandaloneSessionPrescriptionActions } from "./StandaloneSessionPrescriptionActions";
 import { cn } from "@/lib/utils";
 import { navigateAfterSessionDelete, navigateDashboardBack, readSafeReturnTo } from "@/lib/sessionDetailNavigation";
 
@@ -306,26 +309,16 @@ export const StandaloneSessionDetail: React.FC = () => {
                 </div>
                 <div className={SESSION_DETAIL_TOOLBAR}>
                     <PlatformHeaderBackButton onClick={goBack} />
-                    <Button
-                        variant="outline-primary"
-                        className="min-h-touch-athlete w-full md:min-h-0 md:w-auto"
-                        onClick={() =>
-                            navigate(`/dashboard/standalone-sessions/${session.id}/edit`, {
-                                state: location.state,
-                            })
-                        }
-                    >
-                        Editar
-                    </Button>
-                    {session.status === "planned" || session.status === "in_progress" ? (
-                        <Button
-                            variant="outline"
-                            disabled={isCancelling}
-                            onClick={handleCancelSession}
-                        >
-                            Cancelar sesión
-                        </Button>
-                    ) : null}
+                    <StandaloneSessionPrescriptionActions
+                        slot="toolbar"
+                        session={session}
+                        exercises={exercises}
+                        returnState={location.state}
+                        isCancelling={isCancelling}
+                        onCancel={() => {
+                            void handleCancelSession();
+                        }}
+                    />
                     <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>
                         Eliminar
                     </Button>
@@ -342,6 +335,17 @@ export const StandaloneSessionDetail: React.FC = () => {
                 </div>
             </div>
             </div>
+
+            <StandaloneSessionPrescriptionActions
+                slot="notice"
+                session={session}
+                exercises={exercises}
+                returnState={location.state}
+                isCancelling={isCancelling}
+                onCancel={() => {
+                    void handleCancelSession();
+                }}
+            />
 
             {session.status === "completed" && (
                 <StandaloneSessionLoadSummary

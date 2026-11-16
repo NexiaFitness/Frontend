@@ -33,6 +33,10 @@ interface SessionPrescriptionEditActionProps {
     returnState?: unknown;
     label?: string;
     buttonVariant?: ButtonVariant;
+    editHref?: string;
+    skipExecutionSummary?: boolean;
+    hasExecutions?: boolean;
+    className?: string;
 }
 
 export const SessionPrescriptionEditAction: React.FC<
@@ -43,11 +47,16 @@ export const SessionPrescriptionEditAction: React.FC<
     returnState,
     label = "Editar sesión",
     buttonVariant = "primary",
+    editHref,
+    skipExecutionSummary = false,
+    hasExecutions,
+    className,
 }) => {
     const navigate = useNavigate();
+    const href = editHref ?? `/dashboard/session-programming/edit-session/${sessionId}`;
     const { data: summary, isError, isFetching } = useGetSessionExecutionSummaryQuery(
         sessionId,
-        { skip: !sessionId },
+        { skip: skipExecutionSummary || !sessionId },
     );
 
     const locked = isSessionPrescriptionLocked({
@@ -55,7 +64,8 @@ export const SessionPrescriptionEditAction: React.FC<
         actual_duration: session.actual_duration,
         actual_volume: session.actual_volume,
         actual_intensity: session.actual_intensity,
-        hasExecutions: summary?.has_executions === true,
+        hasExecutions:
+            hasExecutions === true || summary?.has_executions === true,
     });
 
     if (isFetching && !summary && !isError && !locked) {
@@ -74,8 +84,9 @@ export const SessionPrescriptionEditAction: React.FC<
         <Button
             variant={buttonVariant}
             size="sm"
+            className={className}
             onClick={() =>
-                navigate(`/dashboard/session-programming/edit-session/${sessionId}`, {
+                navigate(href, {
                     state: returnState,
                 })
             }

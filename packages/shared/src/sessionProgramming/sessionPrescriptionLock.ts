@@ -39,3 +39,29 @@ export function isSessionPrescriptionLocked(
     }
     return session.hasExecutions === true;
 }
+
+export interface StandaloneExerciseExecutionFields {
+    actual_sets?: number | null;
+    actual_reps?: number | null;
+    actual_weight?: number | null;
+    actual_duration?: number | null;
+    actual_distance?: number | null;
+    actual_rest?: number | null;
+}
+
+export function standaloneExercisesHaveExecutions(
+    exercises: StandaloneExerciseExecutionFields[] | undefined,
+): boolean {
+    if (!exercises?.length) {
+        return false;
+    }
+    return exercises.some(
+        (line) =>
+            line.actual_sets != null ||
+            line.actual_reps != null ||
+            line.actual_weight != null ||
+            line.actual_duration != null ||
+            line.actual_distance != null ||
+            line.actual_rest != null,
+    );
+}
