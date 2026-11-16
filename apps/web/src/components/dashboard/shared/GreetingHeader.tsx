@@ -47,7 +47,7 @@ export const GreetingHeader: React.FC<GreetingHeaderProps> = ({ userName }) => {
         <header className={TRAINER_DASHBOARD_GREETING_WRAP}>
             <div className="min-w-0 space-y-1.5">
                 <h1 className={NEXIA_PORTAL_GREETING_H1}>
-                    {getGreeting()},{" "}
+                    {`${getGreeting()}, `}
                     <span className={NEXIA_PORTAL_GREETING_NAME}>{firstName}</span>
                 </h1>
                 <p className={`${NEXIA_PORTAL_GREETING_SUBTITLE} capitalize`}>{formatToday()}</p>
