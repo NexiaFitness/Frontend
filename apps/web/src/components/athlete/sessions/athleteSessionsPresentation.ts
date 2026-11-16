@@ -67,6 +67,14 @@ export const ATHLETE_SESSION_STATUS_BADGE = {
         ATHLETE_SESSION_META_BADGE,
         "border-destructive/30 bg-destructive/10 text-destructive"
     ),
+    cancelled: cn(
+        ATHLETE_SESSION_META_BADGE,
+        "border-destructive/30 bg-destructive/10 text-destructive"
+    ),
+    in_progress: cn(
+        ATHLETE_SESSION_META_BADGE,
+        "border-warning/30 bg-warning/10 text-warning"
+    ),
 };
 
 export type AthleteSessionStatusBadgeVariant = keyof typeof ATHLETE_SESSION_STATUS_BADGE;
@@ -74,11 +82,14 @@ export type AthleteSessionStatusBadgeVariant = keyof typeof ATHLETE_SESSION_STAT
 export function resolveAthleteSessionStatusBadge(
     session: TrainingSession
 ): AthleteSessionStatusBadgeVariant {
-    if (isSessionToday(session)) return "today";
+    // Misma prioridad que getSessionStatusLabel (B-13 / B-34): estado antes que «hoy».
     if (session.status === "completed") {
         return isPartiallyClosedSession(session) ? "partial" : "completed";
     }
     if (session.status === "skipped") return "skipped";
+    if (session.status === "cancelled") return "cancelled";
+    if (session.status === "in_progress") return "in_progress";
+    if (isSessionToday(session)) return "today";
     return "planned";
 }
 

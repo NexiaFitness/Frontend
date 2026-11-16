@@ -295,11 +295,16 @@ export function filterAthleteSessions(
 }
 
 export function getSessionStatusLabel(session: TrainingSession, today = new Date()): string {
-    if (isSessionToday(session, today)) return "Hoy";
+    // Estado persistido antes que el calendario (B-13 / B-34).
+    // «Hoy» no sustituye Completada, parcial, omitida, cancelada ni en curso.
     if (session.status === "completed") {
         return isPartiallyClosedSession(session) ? "Cerrada parcial" : "Completada";
     }
     if (session.status === "skipped") return "Omitida";
+    if (session.status === "cancelled") return "Cancelada";
+    if (session.status === "in_progress") return "En curso";
+    if (session.status === "archived") return "Archivada";
+    if (isSessionToday(session, today)) return "Hoy";
     if (session.session_date && session.status === "planned") {
         const sessionDay = parseSessionDateLocal(session.session_date);
         const todayStart = new Date(today);
