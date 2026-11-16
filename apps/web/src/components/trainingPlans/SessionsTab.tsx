@@ -33,7 +33,7 @@ import { returnToStateFromView } from '@/lib/sessionDetailNavigation';
 import { useReplicateSessionFlow } from '@/components/sessions/useReplicateSessionFlow';
 import { ReplicateSessionModal } from '@/components/sessions/ReplicateSessionModal';
 import { ReplicateSessionConflictModal } from '@/components/sessions/ReplicateSessionConflictModal';
-import type { PlanTrainingSession } from '@nexia/shared';
+import { isSessionPrescriptionLocked, type PlanTrainingSession } from '@nexia/shared';
 
 function sessionFilterChipClass(active: boolean): string {
     return cn(
@@ -246,7 +246,11 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
                         <div key={session.id} className={SESSION_CARD_LIST_ITEM_CLASS}>
                             <SessionCard
                                 session={session}
-                                onEdit={handleEditSession}
+                                onEdit={
+                                    isSessionPrescriptionLocked(session)
+                                        ? undefined
+                                        : handleEditSession
+                                }
                                 onDelete={handleDeleteClick}
                                 onViewDetail={handleViewDetail}
                                 onReplicate={handleReplicate}

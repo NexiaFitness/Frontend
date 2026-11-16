@@ -612,6 +612,7 @@ export * from "./sessionProgramming/loadInheritance";
 export * from "./sessionProgramming/sessionBriefMath";
 export * from "./sessionProgramming/constructorBlockInstance";
 export * from "./sessionProgramming/constructorBlockInstanceCoherence";
+export * from "./sessionProgramming/sessionPrescriptionLock";
 
 // Hooks - Injuries
 export * from "./hooks/injuries";

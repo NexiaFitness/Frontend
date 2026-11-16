@@ -14,7 +14,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
 import type { SessionOut } from "@nexia/shared/types/sessions";
 import type { SessionTemplate } from "@nexia/shared/types/sessionProgramming";
-import { formatCalendarDate } from "@nexia/shared";
+import { formatCalendarDate, isSessionPrescriptionLocked } from "@nexia/shared";
 import { LoadingSpinner, EmptyState } from "@/components/ui/feedback";
 import { FormCombobox, DatePickerButton, Input } from "@/components/ui/forms";
 import { Button } from "@/components/ui/buttons";
@@ -461,7 +461,13 @@ export const SessionsPage: React.FC = () => {
                                                     state: returnToStateFromView(location),
                                                 })
                                             }
-                                            onEdit={() => navigate(getEditUrl(s))}
+                                            onEdit={
+                                                isSessionPrescriptionLocked({
+                                                    status: s.status,
+                                                })
+                                                    ? undefined
+                                                    : () => navigate(getEditUrl(s))
+                                            }
                                         />
                                     ))}
                                 </div>

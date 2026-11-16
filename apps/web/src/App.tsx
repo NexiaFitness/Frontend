@@ -200,7 +200,7 @@ const CreateSession = lazyWithRetry(() =>
   import("./pages/sessionProgramming/CreateSession").then((m) => ({ default: m.CreateSession }))
 );
 const EditSession = lazyWithRetry(() =>
-  import("./pages/sessionProgramming/EditSession").then((m) => ({ default: m.EditSession }))
+  import("./pages/sessionProgramming/EditSessionRoute").then((m) => ({ default: m.EditSessionRoute }))
 );
 const CreateTemplate = lazyWithRetry(() =>
   import("./pages/sessionProgramming/CreateTemplate").then((m) => ({ default: m.CreateTemplate }))

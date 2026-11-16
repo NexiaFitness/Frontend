@@ -29,7 +29,7 @@ import {
 export interface TrainerSessionsListRowProps {
     session: SessionOut;
     onOpen: () => void;
-    onEdit: () => void;
+    onEdit?: () => void;
     formatDate: (dateStr: string | null) => string;
 }
 
@@ -94,18 +94,20 @@ export const TrainerSessionsListRow: React.FC<TrainerSessionsListRowProps> = ({
                     {session.exercises_count} ejerc.
                     {session.planned_duration != null ? ` · ${session.planned_duration} min` : ""}
                 </span>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className={SESSIONS_PAGE_EDIT_BTN}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit();
-                    }}
-                    aria-label="Editar sesión"
-                >
-                    <Pencil className="h-3.5 w-3.5" aria-hidden />
-                </Button>
+                {onEdit ? (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className={SESSIONS_PAGE_EDIT_BTN}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit();
+                        }}
+                        aria-label="Editar sesión"
+                    >
+                        <Pencil className="h-3.5 w-3.5" aria-hidden />
+                    </Button>
+                ) : null}
             </div>
         </article>
     );

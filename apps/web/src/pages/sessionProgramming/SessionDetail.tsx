@@ -15,7 +15,6 @@ import {
     Clock,
     Copy,
     Dumbbell,
-    Pencil,
     Timer,
     Trash2,
 } from "lucide-react";
@@ -74,6 +73,7 @@ import {
 import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
 import { ReplicateSessionModal } from "@/components/sessions/ReplicateSessionModal";
 import { ReplicateSessionConflictModal } from "@/components/sessions/ReplicateSessionConflictModal";
+import { SessionPrescriptionEditAction } from "@/components/sessionProgramming/SessionPrescriptionEditAction";
 const STATUS_LABELS: Record<string, string> = {
     planned: "Planificada",
     completed: "Completada",
@@ -402,18 +402,11 @@ export const SessionDetail: React.FC = () => {
 
             <DashboardFixedFooter>
                 <div className={PLATFORM_DASHBOARD_FOOTER_ROW}>
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() =>
-                            navigate(`/dashboard/session-programming/edit-session/${session.id}`, {
-                                state: returnToStateFromView(location),
-                            })
-                        }
-                    >
-                        <Pencil className="size-3.5 shrink-0" aria-hidden />
-                        Editar sesión
-                    </Button>
+                    <SessionPrescriptionEditAction
+                        sessionId={session.id}
+                        session={session}
+                        returnState={returnToStateFromView(location)}
+                    />
                     {session.period_block_id ? (
                         <Button
                             variant="ghost-primary"

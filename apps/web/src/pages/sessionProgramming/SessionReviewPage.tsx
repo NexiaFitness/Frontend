@@ -16,7 +16,6 @@ import type { AppDispatch } from "@nexia/shared/store";
 import { trainingSessionsApi } from "@nexia/shared/api/trainingSessionsApi";
 import {
     ChevronRight,
-    Pencil,
     CalendarPlus,
     AlertTriangle,
     CheckCircle2,
@@ -70,6 +69,7 @@ import {
     SESSION_DETAIL_TITLE_GROUP,
 } from "@/components/sessionProgramming/detail/sessionDetailPresentation";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { SessionPrescriptionEditAction } from "@/components/sessionProgramming/SessionPrescriptionEditAction";
 import { BlockLevelMeter } from "@/components/trainingPlans/periodization/BlockLevelMeter";
 import {
     SESSION_REVIEW_ALERT_BODY,
@@ -623,16 +623,12 @@ export const SessionReviewPage: React.FC = () => {
                                 Replicar
                             </Button>
                         ) : null}
-                        <Button
-                            variant="ghost-primary"
-                            size="sm"
-                            onClick={() =>
-                                navigate(`/dashboard/session-programming/edit-session/${sessionId}`)
-                            }
-                        >
-                            <Pencil className="size-3.5 shrink-0" aria-hidden />
-                            Editar
-                        </Button>
+                        <SessionPrescriptionEditAction
+                            sessionId={sessionId}
+                            session={session}
+                            label="Editar"
+                            buttonVariant="ghost-primary"
+                        />
                         <Button
                             variant="outline-destructive"
                             size="sm"

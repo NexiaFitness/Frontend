@@ -1,5 +1,11 @@
 # Changelog — @nexia/shared
 
+## 6.1.7 — 2026-11-16
+
+### Added (B-33)
+
+- `isSessionPrescriptionLocked`: la prescripción no se edita si hay ejecución del atleta (completed / in_progress / actual_* / hasExecutions). No copia `isSessionDeletable`.
+
 ## 6.1.6 — 2026-11-16
 
 ### Added (B-26)
