@@ -40,6 +40,7 @@ import {
     TRAINER_DASHBOARD_WIDGET_TITLE,
     TRAINER_DASHBOARD_WIDGET_TITLE_ROW,
 } from "@/components/dashboard/trainer/trainerDashboardPresentation";
+import { buildTodayWellbeingQueryOptions } from "@/components/dashboard/trainer/trainerHomeLiveQuery";
 
 const SESSION_STATUS_LABEL: Record<string, string> = {
     planned: "Planificada",
@@ -107,18 +108,26 @@ export const TodaySessionsWidget: React.FC = () => {
         return c ? `${c.nombre} ${c.apellidos}`.trim() : `Cliente #${session.client_id}`;
     };
 
-    const validSessions = (sessionsResponse?.items ?? []).filter((s) => s.status !== "cancelled");
-    const visibleSessions = validSessions.slice(0, 5);
-    const trainingSessionIds = visibleSessions
-        .filter((session) => session.session_kind === "training")
-        .map((session) => session.id);
+    const validSessions = React.useMemo(
+        () => (sessionsResponse?.items ?? []).filter((s) => s.status !== "cancelled"),
+        [sessionsResponse?.items],
+    );
+    const visibleSessions = React.useMemo(() => validSessions.slice(0, 5), [validSessions]);
+    const trainingSessionIds = React.useMemo(
+        () =>
+            visibleSessions
+                .filter((session) => session.session_kind === "training")
+                .map((session) => session.id),
+        [visibleSessions],
+    );
     const {
         data: wellbeingBatch,
         isLoading: wellbeingLoading,
         isError: wellbeingError,
-    } = useGetWellbeingCheckInsBySessionsQuery(trainingSessionIds, {
-        skip: trainingSessionIds.length === 0,
-    });
+    } = useGetWellbeingCheckInsBySessionsQuery(
+        trainingSessionIds,
+        buildTodayWellbeingQueryOptions(trainingSessionIds),
+    );
     const wellbeingById = React.useMemo(
         () => wellbeingBySessionId(wellbeingBatch?.items),
         [wellbeingBatch?.items]

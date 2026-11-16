@@ -24,6 +24,7 @@ import {
     TRAINER_DASHBOARD_WIDGET_STRETCH,
     TRAINER_DASHBOARD_WIDGET_TITLE,
 } from "@/components/dashboard/trainer/trainerDashboardPresentation";
+import { trainerHomeLiveQueryOptions } from "@/components/dashboard/trainer/trainerHomeLiveQuery";
 
 function formatTimeAgo(timestamp: string): string {
     const diffMs = Date.now() - new Date(timestamp).getTime();
@@ -58,7 +59,7 @@ export const RecentActivityWidget: React.FC = () => {
         { limit: 8, trainer_id: trainerProfile?.id },
         {
             skip: !isTrainerScope || !trainerProfile?.id,
-            pollingInterval: 60_000,
+            ...trainerHomeLiveQueryOptions,
         },
     );
 
