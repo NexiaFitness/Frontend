@@ -37,6 +37,27 @@ describe("clientOverviewPulseSelectors", () => {
         expect(findUpcomingSession(sessions)?.session_date).toBe(tomorrowStr);
     });
 
+    it("findUpcomingSession skips today's completed session (B-14)", () => {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+        const next = findUpcomingSession([
+            createMockTrainingSession({
+                id: 1,
+                session_date: todayStr,
+                status: "completed",
+            }),
+            createMockTrainingSession({
+                id: 2,
+                session_date: tomorrowStr,
+                status: "scheduled",
+            }),
+        ]);
+        expect(next?.id).toBe(2);
+        expect(next?.session_date).toBe(tomorrowStr);
+    });
+
     it("buildPulseRows includes empty row when no activity", () => {
         const rows = buildPulseRows(baseInput());
         expect(rows).toHaveLength(1);

@@ -375,6 +375,7 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
             invalidatesTags: (_result, _error, { sessionId, body }) => [
                 { type: 'TrainingSession', id: sessionId },
                 { type: 'Client', id: body.client_id },
+                { type: 'Client', id: `SESSIONS-${body.client_id}` },
                 { type: 'Client', id: 'FEEDBACK' },
                 { type: 'InboxNotification', id: 'LIST' },
                 { type: 'InboxNotification', id: 'COUNT' },

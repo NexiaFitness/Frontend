@@ -4,15 +4,17 @@ import {
     getUpdateTrainingSessionInvalidationTags,
 } from "./athleteWeeklySummaryTags";
 
-describe("getUpdateTrainingSessionInvalidationTags (B-08)", () => {
+describe("getUpdateTrainingSessionInvalidationTags (B-08 / B-14)", () => {
     it("invalidates the athlete weekly summary after closing a session", () => {
         const tags = getUpdateTrainingSessionInvalidationTags(5008, {
             training_plan_id: 653,
+            client_id: 391,
         });
         expect(tags).toContainEqual(ATHLETE_WEEKLY_SUMMARY_TAG);
         expect(tags).toContainEqual({ type: "TrainingSession", id: 5008 });
         expect(tags).toContainEqual({ type: "TrainingSession", id: "PLAN_653" });
         expect(tags).toContainEqual({ type: "TrainingPlan", id: 653 });
+        expect(tags).toContainEqual({ type: "Client", id: "SESSIONS-391" });
     });
 
     it("still invalidates weekly summary when the session has no plan", () => {

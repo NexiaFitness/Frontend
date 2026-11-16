@@ -91,7 +91,7 @@ export function findUpcomingSession(
         (s) =>
             s.session_date &&
             new Date(s.session_date) >= today &&
-            s.status !== "cancelled",
+            s.status !== "cancelled" && s.status !== "completed" && s.status !== "skipped",
     );
     if (!filtered.length) return null;
     return [...filtered].sort(

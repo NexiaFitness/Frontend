@@ -11,11 +11,12 @@ export const ATHLETE_WEEKLY_SUMMARY_TAG = {
 export type UpdateTrainingSessionInvalidationTag =
     | { type: "TrainingSession"; id: string | number }
     | { type: "TrainingPlan"; id: number }
+    | { type: "Client"; id: string }
     | typeof ATHLETE_WEEKLY_SUMMARY_TAG;
 
 export function getUpdateTrainingSessionInvalidationTags(
     sessionId: number,
-    result: { training_plan_id?: number | null } | undefined
+    result: { training_plan_id?: number | null; client_id?: number | null } | undefined
 ): UpdateTrainingSessionInvalidationTag[] {
     const tags: UpdateTrainingSessionInvalidationTag[] = [
         { type: "TrainingSession", id: sessionId },
@@ -26,6 +27,9 @@ export function getUpdateTrainingSessionInvalidationTags(
             { type: "TrainingSession", id: `PLAN_${result.training_plan_id}` },
             { type: "TrainingPlan", id: result.training_plan_id }
         );
+    }
+    if (result?.client_id != null) {
+        tags.push({ type: "Client", id: `SESSIONS-${result.client_id}` });
     }
     return tags;
 }
