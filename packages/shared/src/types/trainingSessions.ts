@@ -395,6 +395,18 @@ export interface PostSessionExerciseReport {
     completion_pct: number;
 }
 
+/** B-26: resultado de bloque timed (AMRAP / EMOM / For Time) — sin % series. */
+export type PostSessionTimedMode = "amrap" | "emom" | "for_time";
+
+export interface PostSessionTimedBlockReport {
+    session_block_id: number;
+    timed_mode: PostSessionTimedMode;
+    mode_label: string;
+    result_label: string;
+    objective_label: string | null;
+    exercise_names: string[];
+}
+
 /** Post-session hero counter label (GET post-session-report). */
 export type PostSessionCompletionUnitsLabel = "sets" | "blocks" | "units";
 
@@ -414,6 +426,8 @@ export interface PostSessionReport {
     planned_intensity: number | null;
     actual_intensity: number | null;
     exercises: PostSessionExerciseReport[];
+    /** Ausente en clientes viejos: tratar como []. */
+    timed_blocks?: PostSessionTimedBlockReport[];
     has_feedback: boolean;
     highlights: string[];
 }

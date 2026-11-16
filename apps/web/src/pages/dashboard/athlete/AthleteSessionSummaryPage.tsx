@@ -79,7 +79,10 @@ export const AthleteSessionSummaryPage: React.FC = () => {
                     <PostSessionAiInsightCard insight={aiInsight} isLoading={isAiLoading} />
                 )}
 
-                <PostSessionExercisesPanel exercises={report.exercises} />
+                <PostSessionExercisesPanel
+                    exercises={report.exercises}
+                    timedBlocks={report.timed_blocks}
+                />
             </div>
 
             <AthleteFixedFooter size={report.has_feedback ? "double" : "single"}>

@@ -5,6 +5,7 @@
 
 import type { PostSessionReport } from "../../types/trainingSessions";
 import { formatAthleteDateLong } from "./athleteSessionUtils";
+import { formatPostSessionCompletionUnitsLabel } from "./postSessionCompletionUnitsLabel";
 
 const SHARE_BRAND_FOOTER = "— NEXIA Fitness";
 const MAX_HIGHLIGHTS = 3;
@@ -33,7 +34,18 @@ export function buildPostSessionSharePayload(report: PostSessionReport): PostSes
     }
 
     lines.push(`✅ Cumplimiento: ${pct}%`);
-    lines.push(`📊 ${report.total_actual_sets}/${report.total_planned_sets} series`);
+    const units = formatPostSessionCompletionUnitsLabel(
+        report.completion_units_label
+    );
+    lines.push(
+        `📊 ${report.total_actual_sets}/${report.total_planned_sets} ${units}`
+    );
+    for (const timed of report.timed_blocks ?? []) {
+        const objective = timed.objective_label
+            ? ` (${timed.objective_label})`
+            : "";
+        lines.push(`⏱ ${timed.mode_label}: ${timed.result_label}${objective}`);
+    }
 
     if (report.actual_duration != null && report.actual_duration > 0) {
         lines.push(`⏱ ${formatDurationMinutes(report.actual_duration)}`);

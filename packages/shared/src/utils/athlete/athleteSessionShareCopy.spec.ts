@@ -34,6 +34,29 @@ describe("buildPostSessionSharePayload", () => {
         expect(text).toContain("18/20 series");
     });
 
+    it("uses blocks label and timed result lines (B-26)", () => {
+        const { text } = buildPostSessionSharePayload(
+            baseReport({
+                completion_units_label: "blocks",
+                total_actual_sets: 3,
+                total_planned_sets: 3,
+                timed_blocks: [
+                    {
+                        session_block_id: 10,
+                        timed_mode: "amrap",
+                        mode_label: "AMRAP",
+                        result_label: "5 rondas + 12 repeticiones",
+                        objective_label: "Objetivo: 5 rondas",
+                        exercise_names: ["Curl A"],
+                    },
+                ],
+            })
+        );
+
+        expect(text).toContain("3/3 bloques");
+        expect(text).toContain("AMRAP: 5 rondas + 12 repeticiones (Objetivo: 5 rondas)");
+    });
+
     it("includes date, duration and highlights when present", () => {
         const { text } = buildPostSessionSharePayload(baseReport());
 
@@ -49,6 +72,7 @@ describe("buildPostSessionSharePayload", () => {
                 session_date: null,
                 actual_duration: null,
                 highlights: [],
+                timed_blocks: [],
             })
         );
 

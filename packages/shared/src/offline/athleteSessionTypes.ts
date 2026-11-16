@@ -13,6 +13,12 @@ export interface AthleteFlatExercise {
     /** ID estable para UI (puede repetir blockExerciseId en multi-serie legacy). */
     stepKey: string;
     blockExerciseId: number;
+    /**
+     * SessionBlock.id de la estructura. En sesiones legacy sintéticas es negativo
+     * (`useSessionStructureView` usa -1): entonces `blockExerciseId` es un
+     * SessionExercise.id y el payload debe usar `session_exercise_id` (B-25).
+     */
+    sessionBlockId?: number | null;
     /** ID catálogo ejercicio (progress tracking / PR). */
     exerciseId: number;
     name: string;

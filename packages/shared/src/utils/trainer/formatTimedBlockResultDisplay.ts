@@ -2,14 +2,15 @@
  * formatTimedBlockResultDisplay — Etiquetas trainer para TimedBlockResult (F8b).
  */
 
+import { SET_TYPE_LABELS } from "../../types/sessionProgramming";
 import { formatAmrapResultSummary } from "../athlete/amrapResult";
 import { formatForTimeDuration } from "../athlete/forTimeResult";
 import type { ClientTimedBlockResultRow } from "../../types/trainerSetExecutions";
 
 const MODE_LABELS: Record<string, string> = {
-    amrap: "AMRAP",
-    emom: "EMOM",
-    for_time: "For Time",
+    amrap: SET_TYPE_LABELS.amrap,
+    emom: SET_TYPE_LABELS.emom,
+    for_time: SET_TYPE_LABELS.for_time,
 };
 
 export function formatTimedBlockModeLabel(timedMode: string): string {

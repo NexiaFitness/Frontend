@@ -183,27 +183,17 @@ export const AthleteProgressPage: React.FC = () => {
                         }}
                     />
 
-                    {progress.catalogError ? (
-                        <AthleteProgressSectionError
-                            title="No se pudieron cargar los nombres de ejercicio"
-                            description="Tus cargas están, pero falta el catálogo. Reinténtalo."
-                            onRetry={() => {
-                                void progress.refetchCatalog();
-                            }}
-                        />
-                    ) : (
-                        <AthleteProgressTopExercisesSection
-                            rows={progress.topExercises}
-                            deltaWindowLabel={progress.deltaWindowLabel}
-                            onSelectExercise={(row) => {
-                                const target = athleteExerciseProgressPath(row.exerciseId, {
-                                    exerciseName: row.exerciseName,
-                                    entry: "progress",
-                                });
-                                navigate(target);
-                            }}
-                        />
-                    )}
+                    <AthleteProgressTopExercisesSection
+                        rows={progress.topExercises}
+                        deltaWindowLabel={progress.deltaWindowLabel}
+                        onSelectExercise={(row) => {
+                            const target = athleteExerciseProgressPath(row.exerciseId, {
+                                exerciseName: row.exerciseName,
+                                entry: "progress",
+                            });
+                            navigate(target);
+                        }}
+                    />
 
                     {progress.weightError ? (
                         <AthleteProgressSectionError

@@ -1,148 +1,75 @@
+/**
+ * runReferenceUtils.spec.ts — B-25: payload de ejecución blocks vs legacy.
+ */
+
 import { describe, expect, it } from "vitest";
+
+import type { AthleteFlatExercise } from "../../offline/athleteSessionTypes";
 import {
     buildAthleteRunExecutionPayload,
-    resolveRunLoggerDefaults,
+    isLegacySyntheticSessionBlockId,
+    resolveAthleteRunExecutionLineIds,
 } from "./runReferenceUtils";
 
-describe("resolveRunLoggerDefaults (P-SIMPLE autofill)", () => {
-    const base = {
-        prescribedReps: 8,
-        prescribedRpe: 7 as number | null,
-        defaultWeight: 40,
+function flat(partial: Partial<AthleteFlatExercise> & Pick<AthleteFlatExercise, "blockExerciseId">): AthleteFlatExercise {
+    return {
+        stepKey: "g-r1-A-S1-1",
+        exerciseId: 29,
+        name: "Plancha lateral",
+        blockName: "Ejercicios",
+        groupKind: "single_set",
+        setLabel: "S1",
+        setIndex: 1,
+        totalSetsInSlot: 3,
+        plannedLabel: "8 reps",
+        plannedWeight: null,
+        plannedDurationSeconds: null,
+        inputMode: "weight_reps",
+        defaultWeight: 0,
+        defaultReps: 8,
+        restSeconds: 60,
+        defaultRpe: null,
+        videoUrl: null,
+        loggedSets: 0,
+        ...partial,
     };
+}
 
-    it("prefiere peso prescrito del entrenador sobre referencia", () => {
-        const result = resolveRunLoggerDefaults({
-            ...base,
-            setIndex: 1,
-            plannedWeight: 60,
-            reference: {
-                source: "last_session",
-                weight_kg: 52.5,
-                reps: 9,
-                rpe: 7,
-                rounds_completed: null,
-                total_seconds: null,
-                performed_at: null,
-                session_date_label: null,
-            },
+describe("resolveAthleteRunExecutionLineIds (B-25)", () => {
+    it("marca bloques sintéticos legacy (id negativo)", () => {
+        expect(isLegacySyntheticSessionBlockId(-1)).toBe(true);
+        expect(isLegacySyntheticSessionBlockId(42)).toBe(false);
+        expect(isLegacySyntheticSessionBlockId(null)).toBe(false);
+    });
+
+    it("en legacy envía session_exercise_id y omite block_exercise_id", () => {
+        const exercise = flat({ blockExerciseId: 824, sessionBlockId: -1 });
+        expect(resolveAthleteRunExecutionLineIds(exercise)).toEqual({
+            block_exercise_id: null,
+            session_exercise_id: 824,
         });
-        expect(result.weight).toBe(60);
-    });
-
-    it("serie 1 sin prescrito usa referencia (última vez)", () => {
-        const result = resolveRunLoggerDefaults({
-            ...base,
-            setIndex: 1,
-            plannedWeight: null,
-            reference: {
-                source: "last_session",
-                weight_kg: 52.5,
-                reps: 9,
-                rpe: 7,
-                rounds_completed: null,
-                total_seconds: null,
-                performed_at: null,
-                session_date_label: null,
-            },
+        const payload = buildAthleteRunExecutionPayload(4991, exercise, {
+            weight: 20,
+            reps: 8,
+            rpe: 7,
         });
-        expect(result.weight).toBe(52.5);
+        expect(payload.block_exercise_id).toBeNull();
+        expect(payload.session_exercise_id).toBe(824);
+        expect(payload.training_session_id).toBe(4991);
     });
 
-    it("serie 1 sin prescrito ni referencia usa defaultWeight", () => {
-        const result = resolveRunLoggerDefaults({
-            ...base,
-            setIndex: 1,
-            plannedWeight: null,
-            reference: null,
+    it("en bloques reales envía block_exercise_id", () => {
+        const exercise = flat({ blockExerciseId: 1201, sessionBlockId: 55 });
+        expect(resolveAthleteRunExecutionLineIds(exercise)).toEqual({
+            block_exercise_id: 1201,
+            session_exercise_id: null,
         });
-        expect(result.weight).toBe(40);
-    });
-
-    it("ignora referencia con peso 0 y usa defaultWeight del paso", () => {
-        const result = resolveRunLoggerDefaults({
-            ...base,
-            setIndex: 1,
-            plannedWeight: null,
-            reference: {
-                source: "previous_session_same_set",
-                weight_kg: 0,
-                reps: 5,
-                rpe: 2,
-                rounds_completed: null,
-                total_seconds: null,
-                performed_at: null,
-                session_date_label: null,
-            },
+        const payload = buildAthleteRunExecutionPayload(5008, exercise, {
+            weight: 40,
+            reps: 5,
+            rpe: null,
         });
-        expect(result.weight).toBe(40);
-    });
-
-    it("serie 2+ sin prescrito usa referencia contextual (p. ej. serie anterior hoy)", () => {
-        const result = resolveRunLoggerDefaults({
-            ...base,
-            setIndex: 3,
-            plannedWeight: null,
-            reference: {
-                source: "same_session_previous_set",
-                weight_kg: 52.5,
-                reps: 8,
-                rpe: 7,
-                rounds_completed: null,
-                total_seconds: null,
-                performed_at: null,
-                session_date_label: "Hoy · Serie 2",
-            },
-        });
-        expect(result.weight).toBe(52.5);
-        expect(result.rpe).toBe(7);
-    });
-});
-
-describe("buildAthleteRunExecutionPayload (S1 null weight)", () => {
-    it("serializa weight_kg null cuando no hay carga", () => {
-        const payload = buildAthleteRunExecutionPayload(
-            99,
-            {
-                stepKey: "k1",
-                exerciseId: 1,
-                blockExerciseId: 2,
-                setIndex: 1,
-                setLabel: "S1",
-                slotLabel: null,
-                roundIndex: null,
-                groupKind: "single_set",
-                inputMode: "weight_reps",
-                defaultReps: 10,
-                defaultRpe: null,
-                defaultWeight: 0,
-            },
-            { weight: null, reps: 10, rpe: null }
-        );
-        expect(payload.weight_kg).toBeNull();
-        expect(JSON.parse(JSON.stringify(payload)).weight_kg).toBeNull();
-    });
-
-    it("serializa weight_kg 0 cuando el atleta escribe 0 explícito (D1)", () => {
-        const payload = buildAthleteRunExecutionPayload(
-            99,
-            {
-                stepKey: "k1",
-                exerciseId: 1,
-                blockExerciseId: 2,
-                setIndex: 1,
-                setLabel: "S1",
-                slotLabel: null,
-                roundIndex: null,
-                groupKind: "single_set",
-                inputMode: "weight_reps",
-                defaultReps: 10,
-                defaultRpe: null,
-                defaultWeight: 0,
-            },
-            { weight: 0, reps: 10, rpe: null }
-        );
-        expect(payload.input_mode).toBe("weight_reps");
-        expect(payload.weight_kg).toBe(0);
+        expect(payload.block_exercise_id).toBe(1201);
+        expect(payload.session_exercise_id).toBeNull();
     });
 });

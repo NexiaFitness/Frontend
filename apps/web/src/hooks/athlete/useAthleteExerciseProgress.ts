@@ -1,11 +1,11 @@
 /**
  * useAthleteExerciseProgress.ts — Detalle progreso por ejercicio (V11 F2).
+ * El nombre sale del tracking (B-15), no del catálogo paginado.
  */
 
 import { useMemo } from "react";
 import { useGetClientExerciseProgressTrackingQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
-import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises/useExercises";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import type { AthleteExerciseProgressLocationState } from "@nexia/shared/utils/athlete/athleteProgressNavigation";
 import {
@@ -31,11 +31,6 @@ export function useAthleteExerciseProgress(
         { skip: !clientId || !exerciseId }
     );
 
-    const { data: exerciseList, isLoading: exercisesLoading } = useGetExercisesQuery(
-        { skip: 0, limit: 500 },
-        { skip: !clientId || !exerciseId }
-    );
-
     const {
         data: sessions = [],
         isLoading: sessionsLoading,
@@ -44,10 +39,12 @@ export function useAthleteExerciseProgress(
     });
 
     const exerciseName = useMemo(() => {
-        if (locationState?.exerciseName) return locationState.exerciseName;
-        const fromList = exerciseList?.exercises?.find((ex) => ex.id === exerciseId);
-        return fromList?.nombre ?? "Ejercicio";
-    }, [locationState?.exerciseName, exerciseList?.exercises, exerciseId]);
+        const fromNav = locationState?.exerciseName?.trim();
+        if (fromNav) return fromNav;
+        const fromTracking = tracking.find((row) => row.exercise_name?.trim())
+            ?.exercise_name?.trim();
+        return fromTracking || "Ejercicio";
+    }, [locationState?.exerciseName, tracking]);
 
     const chartData = useMemo(
         () =>
@@ -102,8 +99,7 @@ export function useAthleteExerciseProgress(
         latestWeight,
         personalBestWeight,
         resolveSessionForDate,
-        isLoading:
-            profileLoading || trackingLoading || exercisesLoading || sessionsLoading,
+        isLoading: profileLoading || trackingLoading || sessionsLoading,
         isError: trackingError,
     };
 }

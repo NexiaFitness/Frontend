@@ -24,6 +24,7 @@ import {
     buildAthleteRunExecutionPayloadFromSlot,
     buildAthleteRunReferenceQuery,
 } from "@nexia/shared/utils/athlete/runReferenceUtils";
+import { getMutationErrorMessage } from "@nexia/shared/utils/errorMessage";
 import {
     buildAmrapTimedResultPayload,
     buildAthleteRunTimedReferenceQuery,
@@ -214,6 +215,7 @@ export function useAthleteSessionRun({
     runStepsRef.current = runSteps;
 
     const [step, setStep] = useState(0);
+    const [saveError, setSaveError] = useState<string | null>(null);
     const [weight, setWeight] = useState<number | null>(null);
     const [reps, setReps] = useState(8);
     const [rpe, setRpe] = useState<number | null>(null);
@@ -536,6 +538,7 @@ export function useAthleteSessionRun({
         const payloadRpe = rpeRef.current;
 
         setSaving(true);
+        setSaveError(null);
         try {
             let result: "synced" | "queued" | "offline";
 
@@ -599,8 +602,10 @@ export function useAthleteSessionRun({
                 isTimedBlock: false,
                 groupKind: currentRunStep?.groupKind,
             });
-        } catch {
-            onError?.("No se pudo guardar la serie");
+        } catch (err) {
+            const message = getMutationErrorMessage(err) || "No se pudo guardar la serie";
+            setSaveError(message);
+            onError?.(message);
             throw new Error("save failed");
         } finally {
             setSaving(false);
@@ -655,6 +660,7 @@ export function useAthleteSessionRun({
         if (!isAmrap && !isEmom && !isForTime && !currentRunStep.slots?.length) return;
 
         setSaving(true);
+        setSaveError(null);
         let lastResult: "synced" | "queued" | "offline" = "synced";
 
         try {
@@ -845,8 +851,10 @@ export function useAthleteSessionRun({
                 isTimedBlock,
                 groupKind: currentRunStep.groupKind,
             });
-        } catch {
-            onError?.("No se pudo guardar la ronda");
+        } catch (err) {
+            const message = getMutationErrorMessage(err) || "No se pudo guardar la ronda";
+            setSaveError(message);
+            onError?.(message);
             throw new Error("save failed");
         } finally {
             setSaving(false);
@@ -1311,6 +1319,7 @@ export function useAthleteSessionRun({
         setReps: handleRepsChange,
         setRpe: handleRpeChange,
         saving,
+        saveError,
         completing,
         restFlow: restFlowUi,
         handleFinish,

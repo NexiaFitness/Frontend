@@ -2,6 +2,7 @@
  * athleteRunGroupContext.ts — Contexto de grupo (superset/giant/dropset) en run V05.
  */
 
+import { SET_TYPE_LABELS } from "../../types/sessionProgramming";
 import type { AthleteFlatExercise } from "../../offline/athleteSessionTypes";
 import { formatEmomIntervalLabel } from "./emomResult";
 import { formatForTimeRoundLabel } from "./forTimeResult";
@@ -39,12 +40,13 @@ const GROUP_EXPLANATION: Record<string, string> = {
 };
 
 const GROUP_SECTION_LABEL: Record<string, string> = {
-    superset: "Superset",
-    giant_set: "Circuito",
-    dropset: "Drop set",
-    amrap: "AMRAP",
-    emom: "EMOM",
-    for_time: "For Time",
+    superset: SET_TYPE_LABELS.superset,
+    giant_set: SET_TYPE_LABELS.giant_set,
+    dropset: SET_TYPE_LABELS.dropset,
+    amrap: SET_TYPE_LABELS.amrap,
+    emom: SET_TYPE_LABELS.emom,
+    for_time: SET_TYPE_LABELS.for_time,
+    single_set: SET_TYPE_LABELS.single_set,
 };
 
 export interface TimedBlockExplanationParams {
@@ -362,7 +364,7 @@ export function buildAthleteRunGroupContextFromForTimeRound(
     round: AthleteForTimeRound
 ): AthleteRunGroupContextView {
     const sectionLabel =
-        GROUP_SECTION_LABEL.for_time ?? step.badgeLabel ?? "For Time";
+        GROUP_SECTION_LABEL.for_time ?? step.badgeLabel ?? SET_TYPE_LABELS.for_time;
 
     return {
         groupKind: "for_time",

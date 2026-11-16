@@ -116,4 +116,6 @@ export interface ProgressTracking {
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
     is_active: boolean;
+    /** Nombre del ejercicio en el momento del tracking (GET progreso). */
+    exercise_name?: string | null;
 }

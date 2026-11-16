@@ -97,6 +97,19 @@ describe("getMutationErrorMessage — login y autenticación en español", () =>
   });
 });
 
+describe("getMutationErrorMessage — referencias de runner (B-25)", () => {
+  it("traduce 422 de block_exercise_id ajeno a la sesión", () => {
+    expect(
+      getMutationErrorMessage({
+        status: 422,
+        data: {
+          detail: "block_exercise_id does not belong to this training session",
+        },
+      }),
+    ).toMatch(/No se pudo guardar esta serie/i);
+  });
+});
+
 describe("getMutationErrorMessage — sesión no eliminable", () => {
   const expected =
     "No se puede eliminar una sesión que ya fue ejecutada, completada o archivada";

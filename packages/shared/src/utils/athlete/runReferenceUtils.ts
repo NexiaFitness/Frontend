@@ -76,6 +76,30 @@ export interface RunLoggerDefaults {
     rpe: number | null;
 }
 
+/** Bloque sintético de sesiones solo-SessionExercise (`legacyExercisesToBlock`). */
+export function isLegacySyntheticSessionBlockId(
+    sessionBlockId: number | null | undefined
+): boolean {
+    return sessionBlockId != null && sessionBlockId < 0;
+}
+
+/** IDs de línea para POST /executions según estructura blocks vs legacy. */
+export function resolveAthleteRunExecutionLineIds(exercise: AthleteFlatExercise): {
+    block_exercise_id: number | null;
+    session_exercise_id: number | null;
+} {
+    if (isLegacySyntheticSessionBlockId(exercise.sessionBlockId)) {
+        return {
+            block_exercise_id: null,
+            session_exercise_id: exercise.blockExerciseId,
+        };
+    }
+    return {
+        block_exercise_id: exercise.blockExerciseId,
+        session_exercise_id: null,
+    };
+}
+
 export function buildSlotFlatExercise(
     runStep: AthleteRunStep,
     slot: AthleteRunRoundSlot
@@ -83,6 +107,7 @@ export function buildSlotFlatExercise(
     return {
         stepKey: slot.stepKey,
         blockExerciseId: slot.blockExerciseId,
+        sessionBlockId: runStep.blockId,
         exerciseId: slot.exerciseId,
         name: slot.exerciseName,
         blockName: runStep.blockName,
@@ -174,11 +199,13 @@ export function buildAthleteRunExecutionPayload(
         durationSeconds: values.durationSeconds ?? values.reps,
     });
 
+    const lineIds = resolveAthleteRunExecutionLineIds(exercise);
     const payload: AthleteRunExecutionCreate = {
         training_session_id: sessionId,
         step_key: exercise.stepKey,
         exercise_id: exercise.exerciseId,
-        block_exercise_id: exercise.blockExerciseId,
+        block_exercise_id: lineIds.block_exercise_id,
+        session_exercise_id: lineIds.session_exercise_id,
         set_index: exercise.setIndex,
         set_label: exercise.setLabel,
         slot_label: exercise.slotLabel ?? undefined,

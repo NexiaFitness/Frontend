@@ -1,20 +1,19 @@
 /**
  * useAthleteProgress.ts — Datos V10 progreso atleta.
- * Contexto: orquesta listado de sesiones, tracking y catálogo; builders en shared.
+ * Contexto: orquesta listado de sesiones y tracking; builders en shared.
  * Notas: coherence de entrenador no alimenta el KPI; criticidad de carga en el retorno.
+ * Los nombres de ejercicio vienen del tracking (B-15), no del catálogo paginado.
  * @author Frontend Team
  * @since v6.1.0
  */
 
-import { useEffect, useMemo } from "react";
-import { EXERCISES_LIST_MAX_LIMIT } from "@nexia/shared/config/constants";
+import { useMemo } from "react";
 import {
     useGetClientProgressTrackingQuery,
     useGetClientTrainingPlanMonthlySummaryQuery,
     useGetClientTrainingPlanSummaryQuery,
 } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
-import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises/useExercises";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import {
@@ -33,6 +32,7 @@ import {
     computeAdherence,
     countPersonalRecords,
     countTrailingTrainingWeeks,
+    exerciseNamesFromTracking,
 } from "@nexia/shared/utils/athlete/athleteProgressUtils";
 import {
     findNextUpcomingSession,
@@ -60,14 +60,6 @@ function formatWeightTrendLabel(
         default:
             return "Lo registra tu entrenador";
     }
-}
-
-function logUnresolvedExercises(ids: number[], source: string): void {
-    if (ids.length === 0) return;
-    console.warn("[athlete-progress] unresolved exercise names", {
-        source,
-        ids: [...new Set(ids)],
-    });
 }
 
 export function useAthleteProgress(period: AthleteProgressPeriodId) {
@@ -117,16 +109,6 @@ export function useAthleteProgress(period: AthleteProgressPeriodId) {
     );
 
     const {
-        data: exerciseList,
-        isLoading: exercisesLoading,
-        isError: exercisesError,
-        refetch: refetchExercises,
-    } = useGetExercisesQuery(
-        { skip: 0, limit: EXERCISES_LIST_MAX_LIMIT },
-        { skip: !clientId }
-    );
-
-    const {
         data: planSummary,
         isError: planError,
     } = useGetClientTrainingPlanSummaryQuery(
@@ -141,13 +123,10 @@ export function useAthleteProgress(period: AthleteProgressPeriodId) {
         { skip: !clientId || !hasActivePlan }
     );
 
-    const exerciseNames = useMemo(() => {
-        const map = new Map<number, string>();
-        for (const exercise of exerciseList?.exercises ?? []) {
-            map.set(exercise.id, exercise.nombre);
-        }
-        return map;
-    }, [exerciseList?.exercises]);
+    const exerciseNames = useMemo(
+        () => exerciseNamesFromTracking(tracking),
+        [tracking]
+    );
 
     const historyStart = useMemo(() => {
         const dates = [
@@ -202,11 +181,6 @@ export function useAthleteProgress(period: AthleteProgressPeriodId) {
         () => buildRecentRecords(tracking, exerciseNames, range),
         [tracking, exerciseNames, range]
     );
-
-    useEffect(() => {
-        logUnresolvedExercises(topExercisesResult.unresolvedIds, "top");
-        logUnresolvedExercises(recentRecordsResult.unresolvedIds, "records");
-    }, [topExercisesResult.unresolvedIds, recentRecordsResult.unresolvedIds]);
 
     const personalRecordCount = useMemo(
         () => countPersonalRecords(tracking, range, exerciseNames),
@@ -320,16 +294,13 @@ export function useAthleteProgress(period: AthleteProgressPeriodId) {
         latestCompleted,
         insight,
         blockChip,
-        catalogError: exercisesError,
         weightError: Boolean(progressError),
-        refetchCatalog: refetchExercises,
         refetchWeight,
         refetchProfile,
         refetchSessions,
         refetchTracking,
         isLoading: isCriticalLoading,
         isError: isCriticalError,
-        catalogLoading: exercisesLoading,
         weightLoading: progressLoading,
     };
 }

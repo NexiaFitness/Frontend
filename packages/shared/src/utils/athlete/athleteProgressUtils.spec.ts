@@ -14,6 +14,7 @@ import {
     computeAdherence,
     countPersonalRecords,
     countTrailingTrainingWeeks,
+    exerciseNamesFromTracking,
 } from "./athleteProgressUtils";
 
 function session(partial: Partial<TrainingSession> & { id: number }): TrainingSession {
@@ -154,6 +155,30 @@ describe("personal records", () => {
         expect(countPersonalRecords(tracking, RANGE, new Map())).toBe(0);
         expect(buildRecentRecords(tracking, names, RANGE).rows).toHaveLength(5);
     });
+
+    it("keeps PRs named from tracking without a catalog map (B-15)", () => {
+        const tracking = [
+            track({
+                id: 1,
+                exercise_id: 29,
+                tracking_date: "2026-09-10",
+                max_weight: 50,
+                exercise_name: "Plancha lateral",
+            }),
+            track({
+                id: 2,
+                exercise_id: 29,
+                tracking_date: "2026-10-01",
+                max_weight: 55,
+                exercise_name: "Plancha lateral",
+            }),
+        ];
+        expect(countPersonalRecords(tracking, RANGE, new Map())).toBe(1);
+        const { rows, unresolvedIds } = buildRecentRecords(tracking, new Map(), RANGE);
+        expect(rows).toHaveLength(1);
+        expect(rows[0].exerciseName).toBe("Plancha lateral");
+        expect(unresolvedIds).toEqual([]);
+    });
 });
 
 describe("buildTopExercises", () => {
@@ -172,6 +197,23 @@ describe("buildTopExercises", () => {
         expect(rows).toHaveLength(1);
         expect(rows[0].weightDelta).toBe(10);
         expect(unresolvedIds).toContain(9);
+    });
+
+    it("uses tracking exercise_name when the catalog map is empty (B-15)", () => {
+        const tracking = [
+            track({
+                id: 1,
+                exercise_id: 29,
+                tracking_date: "2026-10-01",
+                max_weight: 20,
+                exercise_name: "Plancha lateral",
+            }),
+        ];
+        const { rows, unresolvedIds } = buildTopExercises(tracking, new Map(), RANGE);
+        expect(rows).toHaveLength(1);
+        expect(rows[0].exerciseName).toBe("Plancha lateral");
+        expect(unresolvedIds).toEqual([]);
+        expect(exerciseNamesFromTracking(tracking).get(29)).toBe("Plancha lateral");
     });
 
     it("omits exercises without a positive load", () => {

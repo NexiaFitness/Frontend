@@ -2,7 +2,7 @@
  * athleteProgressUtils.ts — Agregaciones de progreso atleta (F2 V10/V11).
  * Contexto: builders puros para el hook de Mi progreso; sin DOM.
  * Notas: primer peso no es PR; adherencia excluye futuras y skipped/cancelled.
- * L-1: ~430 líneas de un circuito tracking/sesiones; partirlo duplicaría agrupación.
+ * L-1: ~470 líneas de un circuito tracking/sesiones; partirlo duplicaría agrupación.
  * @author Frontend Team
  * @since v6.1.0
  */
@@ -55,6 +55,33 @@ export interface NamedProgressRows<T> {
 
 const EXCLUDED_ADHERENCE_STATUSES = new Set(["skipped", "cancelled"]);
 const MAX_WEEK_BARS = 12;
+
+/** Nombres desde el tracking (B-15): no dependen del catálogo paginado. */
+export function exerciseNamesFromTracking(
+    tracking: ProgressTracking[],
+): Map<number, string> {
+    const map = new Map<number, string>();
+    for (const row of tracking) {
+        const name = row.exercise_name?.trim();
+        if (!name || map.has(row.exercise_id)) continue;
+        map.set(row.exercise_id, name);
+    }
+    return map;
+}
+
+function nameForExercise(
+    exerciseId: number,
+    records: ProgressTracking[],
+    exerciseNames: Map<number, string>,
+): string | null {
+    const mapped = exerciseNames.get(exerciseId)?.trim();
+    if (mapped) return mapped;
+    for (const row of records) {
+        const name = row.exercise_name?.trim();
+        if (name) return name;
+    }
+    return null;
+}
 
 function trackingDateKey(row: ProgressTracking): string | null {
     if (!row.tracking_date) return null;
@@ -170,7 +197,7 @@ export function buildTopExercises(
     const rows: TopExerciseRow[] = [];
 
     for (const [exerciseId, records] of groupTrackingByExercise(tracking, range)) {
-        const name = exerciseNames.get(exerciseId)?.trim();
+        const name = nameForExercise(exerciseId, records, exerciseNames);
         if (!name) {
             unresolvedIds.push(exerciseId);
             continue;
@@ -230,7 +257,7 @@ function collectPersonalRecordEvents(tracking: ProgressTracking[]): RecentRecord
             if (previousMax == null) continue;
             events.push({
                 exerciseId,
-                exerciseName: "",
+                exerciseName: row.exercise_name?.trim() ?? "",
                 maxWeight: row.max_weight,
                 maxReps: row.max_reps,
                 trackingDate: row.tracking_date ?? "",
@@ -251,8 +278,9 @@ export function countPersonalRecords(
 ): number {
     return collectPersonalRecordEvents(tracking).filter((row) => {
         if (range && !isDateInAthleteRange(row.trackingDate, range)) return false;
-        if (exerciseNames && !exerciseNames.get(row.exerciseId)?.trim()) return false;
-        return true;
+        if (!exerciseNames) return true;
+        if (exerciseNames.get(row.exerciseId)?.trim()) return true;
+        return Boolean(row.exerciseName.trim());
     }).length;
 }
 
@@ -267,7 +295,8 @@ export function buildRecentRecords(
     const named: RecentRecordRow[] = [];
     for (const event of collectPersonalRecordEvents(tracking)) {
         if (range && !isDateInAthleteRange(event.trackingDate, range)) continue;
-        const name = exerciseNames.get(event.exerciseId)?.trim();
+        const name =
+            exerciseNames.get(event.exerciseId)?.trim() || event.exerciseName.trim();
         if (!name) {
             unresolvedIds.push(event.exerciseId);
             continue;
@@ -364,7 +393,9 @@ export function buildSessionLoadsForDate(
         .map((row) => ({
             exerciseId: row.exercise_id,
             exerciseName:
-                exerciseNames.get(row.exercise_id) ?? `Ejercicio #${row.exercise_id}`,
+                exerciseNames.get(row.exercise_id)?.trim() ||
+                row.exercise_name?.trim() ||
+                `Ejercicio #${row.exercise_id}`,
             maxWeight: row.max_weight,
             maxReps: row.max_reps,
             previousWeight: null,

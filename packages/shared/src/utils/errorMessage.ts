@@ -134,6 +134,19 @@ function localizeHttpDetail(detail: string, status?: number): string {
         return "No se encontró la lesión.";
     }
 
+    if (
+        normalized.includes("block_exercise_id does not belong") ||
+        normalized.includes("session_exercise_id does not belong") ||
+        normalized.includes("session_block_id does not belong") ||
+        normalized.includes("group_id does not belong") ||
+        normalized.includes("session_block_id does not match group_id")
+    ) {
+        return (
+            "No se pudo guardar esta serie: la referencia del ejercicio no pertenece " +
+            "a esta sesión. Recarga e inténtalo de nuevo."
+        );
+    }
+
     if (normalized === "athletes cannot change the axial load cap") {
         return "El atleta no puede cambiar el tope de carga axial.";
     }
