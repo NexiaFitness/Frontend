@@ -34,7 +34,7 @@ import {
     useGetSessionExecutionSummaryQuery,
     useDeleteTrainingSessionMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
-import { formatCalendarDate, formatCalendarDateLong, mergeSessionStructureWithExecutionSummary } from "@nexia/shared";
+import { displaySessionTitle, formatCalendarDate, formatCalendarDateLong, mergeSessionStructureWithExecutionSummary } from "@nexia/shared";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
@@ -229,6 +229,7 @@ export const SessionDetail: React.FC = () => {
     const typeLabel = TYPE_LABELS[sessionTypeKey] || session.session_type || "—";
     const typeVariant: BadgeVariant = TYPE_BADGE_VARIANT[sessionTypeKey] ?? "subtle-secondary";
     const clientName = client ? `${client.nombre} ${client.apellidos}` : "Cliente";
+    const sessionTitle = displaySessionTitle(session.session_name, session.session_date);
 
     const showExecutionSummary =
         session.status === "completed" ||
@@ -248,7 +249,7 @@ export const SessionDetail: React.FC = () => {
                         : "Sesiones"}
                 </button>
                 <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                <span className={SESSION_DETAIL_BREADCRUMB_CURRENT}>{session.session_name}</span>
+                <span className={SESSION_DETAIL_BREADCRUMB_CURRENT}>{sessionTitle}</span>
             </nav>
 
             <div className={SESSION_DETAIL_HEADER}>
@@ -260,7 +261,7 @@ export const SessionDetail: React.FC = () => {
                     </span>
                     <div className={SESSION_DETAIL_BODY}>
                         <div className={SESSION_DETAIL_TITLE_GROUP}>
-                            <h1 className={SESSION_DETAIL_TITLE}>{session.session_name}</h1>
+                            <h1 className={SESSION_DETAIL_TITLE}>{sessionTitle}</h1>
                             <div className={SESSION_DETAIL_BADGE_ROW}>
                                 <Badge variant={statusVariant}>{statusLabel}</Badge>
                                 <Badge variant={typeVariant}>{typeLabel}</Badge>

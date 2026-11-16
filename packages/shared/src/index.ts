@@ -418,6 +418,7 @@ export * from "./utils/sessionProgramming";
 export { getMutationErrorMessage } from "./utils/errorMessage";
 export { formatCountNoun } from "./utils/formatCountNoun";
 export {
+    displaySessionTitle,
     formatCalendarDate,
     formatCalendarDateLong,
 } from "./utils/formatCalendarDate";

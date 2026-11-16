@@ -5,6 +5,7 @@
 import React from "react";
 import { Pencil } from "lucide-react";
 import type { SessionOut } from "@nexia/shared/types/sessions";
+import { displaySessionTitle } from "@nexia/shared";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/buttons";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
@@ -58,7 +59,9 @@ export const TrainerSessionsListRow: React.FC<TrainerSessionsListRowProps> = ({
         >
             <NexiaGlassAccentRim />
             <div className={SESSIONS_PAGE_LIST_ITEM_MAIN}>
-                <p className={SESSIONS_PAGE_LIST_ITEM_TITLE}>{session.session_name}</p>
+                <p className={SESSIONS_PAGE_LIST_ITEM_TITLE}>
+                    {displaySessionTitle(session.session_name, session.session_date)}
+                </p>
                 <div className={SESSIONS_PAGE_LIST_ITEM_CLIENT_ROW}>
                     <ClientAvatar
                         clientId={session.client_id}

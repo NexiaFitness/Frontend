@@ -34,7 +34,7 @@ import {
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
-import { formatCalendarDate, resolveNextSessionScheduleDate } from "@nexia/shared";
+import { displaySessionTitle, formatCalendarDate, resolveNextSessionScheduleDate } from "@nexia/shared";
 import { useValidateSessionMutation } from "@nexia/shared/api/sessionValidationApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import {
@@ -152,6 +152,7 @@ function DurationMetric({
 const SessionReviewHeader: React.FC<{
     session: {
         session_name: string;
+        session_date: string | null;
         status: string;
         session_type: string;
         client_id: number;
@@ -167,6 +168,7 @@ const SessionReviewHeader: React.FC<{
 
     const statusLabel =
         TRAINING_SESSION_STATUS_LABELS[session.status as TrainingSessionStatus] ?? session.status;
+    const sessionTitle = displaySessionTitle(session.session_name, session.session_date);
 
     return (
         <header className={SESSION_REVIEW_HERO}>
@@ -177,7 +179,7 @@ const SessionReviewHeader: React.FC<{
                 </button>
                 <ChevronRight className="size-4 shrink-0" aria-hidden />
                 <span className={cn(SESSION_REVIEW_BREADCRUMB_CURRENT, "max-w-[200px] sm:max-w-xs")}>
-                    {session.session_name}
+                    {sessionTitle}
                 </span>
                 <ChevronRight className="size-4 shrink-0" aria-hidden />
                 <span className={SESSION_REVIEW_BREADCRUMB_CURRENT}>Revisión</span>
@@ -200,7 +202,7 @@ const SessionReviewHeader: React.FC<{
                     <div className={SESSION_DETAIL_BODY}>
                         <div className={SESSION_DETAIL_TITLE_GROUP}>
                             <h1 className={cn(SESSION_REVIEW_TITLE, SESSION_DETAIL_TITLE)}>
-                                {session.session_name}
+                                {sessionTitle}
                             </h1>
                             <div className={SESSION_DETAIL_BADGE_ROW}>
                                 <span
