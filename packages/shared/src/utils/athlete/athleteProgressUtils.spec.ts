@@ -179,6 +179,29 @@ describe("personal records", () => {
         expect(rows[0].exerciseName).toBe("Plancha lateral");
         expect(unresolvedIds).toEqual([]);
     });
+
+    it("does not count bodyweight kg jumps as PRs (B-35)", () => {
+        const tracking = [
+            track({
+                id: 1,
+                exercise_id: 29,
+                tracking_date: "2026-09-10",
+                max_weight: 12.5,
+                exercise_name: "Plancha lateral",
+                tipo_carga: "bodyweight",
+            }),
+            track({
+                id: 2,
+                exercise_id: 29,
+                tracking_date: "2026-10-01",
+                max_weight: 77.5,
+                exercise_name: "Plancha lateral",
+                tipo_carga: "bodyweight",
+            }),
+        ];
+        expect(countPersonalRecords(tracking, RANGE, new Map())).toBe(0);
+        expect(buildRecentRecords(tracking, new Map(), RANGE).rows).toHaveLength(0);
+    });
 });
 
 describe("buildTopExercises", () => {
@@ -253,5 +276,63 @@ describe("buildTopExercises", () => {
         expect(rows[0].weightDelta).toBe(10);
         expect(rows.find((row) => row.exerciseName === "Peso muerto")?.weightDelta).toBe(-10);
         expect(rows.find((row) => row.exerciseName === "Press")?.weightDelta).toBeNull();
+    });
+
+    it("omits bodyweight exercises from the kg top (B-35)", () => {
+        const tracking = [
+            track({
+                id: 1,
+                exercise_id: 29,
+                tracking_date: "2026-09-10",
+                max_weight: 77.5,
+                exercise_name: "Plancha lateral",
+                tipo_carga: "bodyweight",
+            }),
+            track({
+                id: 2,
+                exercise_id: 29,
+                tracking_date: "2026-10-01",
+                max_weight: 12.5,
+                exercise_name: "Plancha lateral",
+                tipo_carga: "bodyweight",
+            }),
+            track({
+                id: 3,
+                exercise_id: 11,
+                tracking_date: "2026-10-01",
+                max_weight: 20,
+                exercise_name: "Sentadilla trasera",
+                tipo_carga: "mixed",
+            }),
+        ];
+        const { rows } = buildTopExercises(tracking, new Map(), RANGE);
+        expect(rows).toHaveLength(1);
+        expect(rows[0].exerciseName).toBe("Sentadilla trasera");
+        expect(rows[0].weightDelta).toBeNull();
+    });
+
+    it("does not attach an incomparable drop as a period delta (B-35)", () => {
+        const tracking = [
+            track({
+                id: 1,
+                exercise_id: 1,
+                tracking_date: "2026-09-10",
+                max_weight: 77.5,
+                exercise_name: "Remo",
+                tipo_carga: "external",
+            }),
+            track({
+                id: 2,
+                exercise_id: 1,
+                tracking_date: "2026-10-01",
+                max_weight: 12.5,
+                exercise_name: "Remo",
+                tipo_carga: "external",
+            }),
+        ];
+        const { rows } = buildTopExercises(tracking, new Map(), RANGE);
+        expect(rows).toHaveLength(1);
+        expect(rows[0].latestWeight).toBe(12.5);
+        expect(rows[0].weightDelta).toBeNull();
     });
 });

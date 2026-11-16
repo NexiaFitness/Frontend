@@ -2,6 +2,7 @@
  * athleteProgressUtils.ts — Agregaciones de progreso atleta (F2 V10/V11).
  * Contexto: builders puros para el hook de Mi progreso; sin DOM.
  * Notas: primer peso no es PR; adherencia excluye futuras y skipped/cancelled.
+ * B-35: delta/bodyweight en athleteProgressLoadDelta.ts (este archivo no crece la regla).
  * L-1: ~470 líneas de un circuito tracking/sesiones; partirlo duplicaría agrupación.
  * @author Frontend Team
  * @since v6.1.0
@@ -9,6 +10,10 @@
 
 import type { ProgressTracking } from "../../types/progress";
 import type { TrainingSession } from "../../types/trainingSessions";
+import {
+    isBodyweightLoadType,
+    periodLoadDelta,
+} from "./athleteProgressLoadDelta";
 import { getMondayOfWeekLocal } from "../calendarWeekForBlock";
 import {
     type AthleteDateRange,
@@ -206,20 +211,21 @@ export function buildTopExercises(
         const sorted = [...records].sort((a, b) =>
             (a.tracking_date ?? "").localeCompare(b.tracking_date ?? "")
         );
+        const loadType =
+            records.find((r) => r.tipo_carga)?.tipo_carga ??
+            sorted.find((r) => r.tipo_carga)?.tipo_carga;
+        if (isBodyweightLoadType(loadType)) continue;
+
         const withWeight = sorted.filter((r) => (r.max_weight ?? 0) > 0);
         if (withWeight.length === 0) continue;
 
         const first = withWeight[0];
         const latest = withWeight[withWeight.length - 1];
         const latestWeight = latest.max_weight;
-        let weightDelta: number | null = null;
-        if (
-            withWeight.length >= 2 &&
-            latestWeight != null &&
-            first.max_weight != null
-        ) {
-            weightDelta = Math.round((latestWeight - first.max_weight) * 10) / 10;
-        }
+        const weightDelta =
+            withWeight.length >= 2
+                ? periodLoadDelta(first.max_weight, latestWeight)
+                : null;
 
         rows.push({
             exerciseId,
@@ -246,7 +252,10 @@ function collectPersonalRecordEvents(tracking: ProgressTracking[]): RecentRecord
 
     for (const [exerciseId, records] of byExercise) {
         const sorted = [...records]
-            .filter((r) => r.max_weight != null)
+            .filter(
+                (r) =>
+                    r.max_weight != null && !isBodyweightLoadType(r.tipo_carga)
+            )
             .sort((a, b) => (a.tracking_date ?? "").localeCompare(b.tracking_date ?? ""));
         let runningMax = 0;
         for (const row of sorted) {

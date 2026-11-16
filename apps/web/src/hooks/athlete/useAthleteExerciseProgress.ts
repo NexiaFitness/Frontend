@@ -8,6 +8,7 @@ import { useGetClientExerciseProgressTrackingQuery } from "@nexia/shared/api/cli
 import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import type { AthleteExerciseProgressLocationState } from "@nexia/shared/utils/athlete/athleteProgressNavigation";
+import { isBodyweightLoadType } from "@nexia/shared/utils/athlete/athleteProgressLoadDelta";
 import {
     buildExerciseHistoryTable,
     buildExerciseProgressChart,
@@ -46,13 +47,17 @@ export function useAthleteExerciseProgress(
         return fromTracking || "Ejercicio";
     }, [locationState?.exerciseName, tracking]);
 
-    const chartData = useMemo(
-        () =>
-            buildExerciseProgressChart(tracking).filter(
-                (point) => point.weight == null || point.weight > 0
-            ),
+    const isBodyweightExercise = useMemo(
+        () => tracking.some((row) => isBodyweightLoadType(row.tipo_carga)),
         [tracking]
     );
+
+    const chartData = useMemo(() => {
+        if (isBodyweightExercise) return [];
+        return buildExerciseProgressChart(tracking).filter(
+            (point) => point.weight == null || point.weight > 0
+        );
+    }, [isBodyweightExercise, tracking]);
 
     const highlightDate =
         highlightDateOverride ??
@@ -62,19 +67,22 @@ export function useAthleteExerciseProgress(
 
     const entry = locationState?.entry ?? "progress";
 
-    const historyRows = useMemo(
-        () => buildExerciseHistoryTable(tracking, 10, highlightDate),
-        [tracking, highlightDate]
-    );
+    const historyRows = useMemo(() => {
+        const rows = buildExerciseHistoryTable(tracking, 10, highlightDate);
+        if (!isBodyweightExercise) return rows;
+        return rows.map((row) => ({ ...row, max_weight: null }));
+    }, [highlightDate, isBodyweightExercise, tracking]);
 
     const personalBestWeight = useMemo(() => {
+        if (isBodyweightExercise) return null;
         const weights = tracking
             .map((t) => t.max_weight)
             .filter((w): w is number => w != null && w > 0);
         return weights.length > 0 ? Math.max(...weights) : null;
-    }, [tracking]);
+    }, [isBodyweightExercise, tracking]);
 
     const latestWeight = useMemo(() => {
+        if (isBodyweightExercise) return null;
         const withWeight = tracking.filter(
             (t) => t.max_weight != null && t.max_weight > 0
         );
@@ -83,7 +91,7 @@ export function useAthleteExerciseProgress(
             b.tracking_date.localeCompare(a.tracking_date)
         );
         return sorted[0].max_weight;
-    }, [tracking]);
+    }, [isBodyweightExercise, tracking]);
 
     const resolveSessionForDate = (trackingDate: string) =>
         findSessionByTrackingDate(sessions, trackingDate);
@@ -98,6 +106,7 @@ export function useAthleteExerciseProgress(
         historyRows,
         latestWeight,
         personalBestWeight,
+        isBodyweightExercise,
         resolveSessionForDate,
         isLoading: profileLoading || trackingLoading || sessionsLoading,
         isError: trackingError,

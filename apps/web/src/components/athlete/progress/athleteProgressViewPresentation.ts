@@ -124,3 +124,7 @@ export function athleteProgressWeightCaption(
     if (latestWeight == null) return trendLine;
     return `${latestWeight} kg · ${trendLine}`;
 }
+
+/** B-35: bodyweight no usa kg como métrica de progreso. */
+export const ATHLETE_BODYWEIGHT_PROGRESS_SUBTITLE =
+    "Ejercicio de peso corporal. El progreso no se mide en kilogramos.";

@@ -20,7 +20,11 @@ import { useAthleteExerciseProgress } from "@/hooks/athlete/useAthleteExercisePr
 import type { AthleteExerciseProgressLocationState } from "@nexia/shared/utils/athlete/athleteProgressNavigation";
 import { athleteCompletedSessionPath } from "@nexia/shared/utils/athlete/athleteProgressNavigation";
 import { formatAthleteDateLong } from "@nexia/shared/utils/athlete/athleteSessionUtils";
-import { ATHLETE_TROPHY_TEXT, ATHLETE_TROPHY_TEXT_MUTED } from "@/components/athlete/progress/athleteProgressViewPresentation";
+import {
+    ATHLETE_BODYWEIGHT_PROGRESS_SUBTITLE,
+    ATHLETE_TROPHY_TEXT,
+    ATHLETE_TROPHY_TEXT_MUTED,
+} from "@/components/athlete/progress/athleteProgressViewPresentation";
 import { AthleteProgressExerciseChart } from "@/components/athlete/progress/AthleteProgressExerciseChart";
 import { AthleteProgressExerciseHistory } from "@/components/athlete/progress/AthleteProgressExerciseHistory";
 
@@ -45,6 +49,7 @@ export const AthleteExerciseProgressPage: React.FC = () => {
         historyRows,
         latestWeight,
         personalBestWeight,
+        isBodyweightExercise,
         resolveSessionForDate,
         isLoading,
         isError,
@@ -88,16 +93,17 @@ export const AthleteExerciseProgressPage: React.FC = () => {
         }
     };
 
-    const subtitle =
-        resolvedEntry === "record" && personalBestWeight != null
-            ? `Marca personal: ${personalBestWeight} kg${
-                  latestWeight != null && latestWeight !== personalBestWeight
-                      ? ` · reciente ${latestWeight} kg`
-                      : ""
-              }`
-            : latestWeight != null
-              ? `Mejor carga reciente: ${latestWeight} kg`
-              : "Historial de cargas en sesión";
+    const subtitle = isBodyweightExercise
+        ? ATHLETE_BODYWEIGHT_PROGRESS_SUBTITLE
+        : resolvedEntry === "record" && personalBestWeight != null
+          ? `Marca personal: ${personalBestWeight} kg${
+                latestWeight != null && latestWeight !== personalBestWeight
+                    ? ` · reciente ${latestWeight} kg`
+                    : ""
+            }`
+          : latestWeight != null
+            ? `Mejor carga reciente: ${latestWeight} kg`
+            : "Historial de cargas en sesión";
 
     return (
         <div className={`${ATHLETE_PAGE} space-y-6`}>
@@ -136,7 +142,9 @@ export const AthleteExerciseProgressPage: React.FC = () => {
                 <NexiaPremiumDivider className="w-full" />
             </header>
 
-            <AthleteProgressExerciseChart data={chartData} />
+            {!isBodyweightExercise && (
+                <AthleteProgressExerciseChart data={chartData} />
+            )}
 
             <AthleteProgressExerciseHistory
                 rows={historyRows}

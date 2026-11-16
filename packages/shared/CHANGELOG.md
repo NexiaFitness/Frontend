@@ -1,5 +1,11 @@
 # Changelog — @nexia/shared
 
+## 6.1.8 — 2026-11-16
+
+### Fixed (B-35)
+
+- Top de Mi progreso y PRs de kg omiten `tipo_carga=bodyweight`. Un crash de carga (caída a menos de la mitad) no se pinta como delta del periodo.
+
 ## 6.1.7 — 2026-11-16
 
 ### Added (B-33)

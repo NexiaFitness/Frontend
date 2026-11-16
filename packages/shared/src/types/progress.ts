@@ -118,4 +118,6 @@ export interface ProgressTracking {
     is_active: boolean;
     /** Nombre del ejercicio en el momento del tracking (GET progreso). */
     exercise_name?: string | null;
+    /** `Exercise.tipo_carga` hidratado en GET (B-35). */
+    tipo_carga?: string | null;
 }
