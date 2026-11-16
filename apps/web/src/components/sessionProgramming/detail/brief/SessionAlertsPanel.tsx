@@ -1,20 +1,17 @@
 /**
  * SessionAlertsPanel — Avisos de sesión en detalle, dentro de SessionPanelShell.
- * Incluye CTA a la vista de revisión de alineación cuando hay bloque de periodización.
+ * La revisión completa vive en el pie de SessionDetail (no en el header del panel:
+ * ese CTA quedaba bajo Replicar).
  */
 
 import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { useGetSessionCoherenceQuery } from "@nexia/shared/api/trainingSessionsApi";
 import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 import { Alert } from "@/components/ui/feedback";
 import { SESSION_OUTSIDE_PHASE_COPY } from "@nexia/shared";
-import { Button } from "@/components/ui/buttons";
 import { SessionPanelShell } from "@/components/sessionProgramming/SessionPanelShell";
-import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 
 export interface SessionAlertsPanelProps {
     sessionId: number;
@@ -74,8 +71,6 @@ export const SessionAlertsPanel: React.FC<SessionAlertsPanelProps> = ({
     maxInjuries = 3,
     maxCoherenceWarnings = 2,
 }) => {
-    const navigate = useNavigate();
-    const location = useLocation();
     const { activeInjuries } = useClientInjuries({ clientId });
 
     const { data: fetchedCoherence } = useGetSessionCoherenceQuery(sessionId, {
@@ -101,38 +96,16 @@ export const SessionAlertsPanel: React.FC<SessionAlertsPanelProps> = ({
         warningsToShow.length > 0 ||
         showLegacyNote ||
         showOutsidePhase;
-    const canReview = periodBlockId != null;
 
-    if (!hasAlerts && !canReview) return null;
-
-    const handleReview = () => {
-        navigate(`/dashboard/session-programming/sessions/${sessionId}/review`, {
-            state: returnToStateFromView(location),
-        });
-    };
+    if (!hasAlerts) return null;
 
     return (
         <SessionPanelShell
             title="Alineación con el plan"
             subtitle="Resumen de avisos de lesiones y coherencia. Revisa patrones, volumen, carga axial y seguridad frente al bloque activo."
-            headerAccessory={
-                canReview ? (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleReview}
-                        className="shrink-0 text-primary hover:bg-primary/10 hover:text-primary"
-                    >
-                        Revisar alineación
-                        <ChevronRight className="ml-0.5 h-4 w-4" aria-hidden />
-                    </Button>
-                ) : undefined
-            }
-            bodyClassName={hasAlerts ? "space-y-4" : "hidden p-0"}
+            bodyClassName="space-y-4"
         >
-            {hasAlerts ? (
-                <div className="space-y-2" role="region" aria-label="Avisos de la sesión">
+            <div className="space-y-2" role="region" aria-label="Avisos de la sesión">
                     {showOutsidePhase ? (
                         <Alert variant="warning" title={SESSION_OUTSIDE_PHASE_COPY} />
                     ) : null}
@@ -170,8 +143,7 @@ export const SessionAlertsPanel: React.FC<SessionAlertsPanelProps> = ({
                             description={legacyInjuryNote!.trim()}
                         />
                     ) : null}
-                </div>
-            ) : null}
+            </div>
         </SessionPanelShell>
     );
 };

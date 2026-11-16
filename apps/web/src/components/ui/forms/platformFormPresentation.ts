@@ -84,9 +84,11 @@ export const PLATFORM_DASHBOARD_FOOTER_BTN_CHILD =
 
 /**
  * Footer simple (§2.3.1 A): acciones alineadas a la derecha; móvil stack táctil, sm+ fila `size="sm"`.
+ * Sin pointer-events-auto en la fila: el shell del footer es none salvo botones/enlaces,
+ * para no tapar CTAs del contenido que queden visualmente debajo.
  */
 export const PLATFORM_DASHBOARD_FOOTER_ROW = cn(
-    "pointer-events-auto flex w-full min-w-0 max-w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3",
+    "flex w-full min-w-0 max-w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3",
     PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
 );
 

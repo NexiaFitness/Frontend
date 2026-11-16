@@ -443,6 +443,21 @@ export const SessionDetail: React.FC = () => {
                         <Button
                             variant="ghost-primary"
                             size="sm"
+                            onClick={() =>
+                                navigate(
+                                    `/dashboard/session-programming/sessions/${session.id}/review`,
+                                    { state: returnToStateFromView(location) },
+                                )
+                            }
+                        >
+                            <ChevronRight className="size-3.5 shrink-0" aria-hidden />
+                            Revisión
+                        </Button>
+                    ) : null}
+                    {session.period_block_id ? (
+                        <Button
+                            variant="ghost-primary"
+                            size="sm"
                             onClick={replicateFlow.openModal}
                         >
                             <Copy className="size-3.5 shrink-0" aria-hidden />
