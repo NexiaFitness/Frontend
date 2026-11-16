@@ -4,6 +4,9 @@
  * Contexto: ficha y revisión. La regla está en @nexia/shared
  * isSessionPrescriptionLocked. El summary de ejecución se pide aquí para que
  * SessionReviewPage (ya >600) no crezca; RTK comparte la query de la ficha.
+ * Mientras el resumen no está resuelto (planned sin candado por estado), no se
+ * muestra Editar (fail-closed). Si GET execution-summary falla, fail-open como
+ * EditSessionRoute: Editar visible; el 409 del servidor cubre registros reales.
  *
  * @author Frontend Team
  * @since v6.6.0
@@ -54,21 +57,33 @@ export const SessionPrescriptionEditAction: React.FC<
 }) => {
     const navigate = useNavigate();
     const href = editHref ?? `/dashboard/session-programming/edit-session/${sessionId}`;
-    const { data: summary, isError, isFetching } = useGetSessionExecutionSummaryQuery(
+    const { data: summary, isError } = useGetSessionExecutionSummaryQuery(
         sessionId,
         { skip: skipExecutionSummary || !sessionId },
     );
 
-    const locked = isSessionPrescriptionLocked({
+    const sessionFields = {
         status: session.status,
         actual_duration: session.actual_duration,
         actual_volume: session.actual_volume,
         actual_intensity: session.actual_intensity,
+    };
+
+    const lockedWithoutSummary = isSessionPrescriptionLocked({
+        ...sessionFields,
+        hasAthleteRecords: hasAthleteRecords === true,
+    });
+
+    const needsSummaryGate =
+        !skipExecutionSummary && sessionId > 0 && !lockedWithoutSummary;
+
+    const locked = isSessionPrescriptionLocked({
+        ...sessionFields,
         hasAthleteRecords:
             hasAthleteRecords === true || summary?.has_athlete_records === true,
     });
 
-    if (isFetching && !summary && !isError && !locked) {
+    if (needsSummaryGate && summary === undefined && !isError) {
         return null;
     }
 

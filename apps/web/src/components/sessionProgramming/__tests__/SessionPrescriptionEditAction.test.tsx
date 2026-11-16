@@ -9,7 +9,7 @@
  * @since v6.6.0
  */
 
-import { screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import type {
     ClientSetExecutionRow,
@@ -115,18 +115,41 @@ describe("SessionPrescriptionEditAction", () => {
         expect(screen.queryByRole("button", { name: /Editar sesión/ })).not.toBeInTheDocument();
     });
 
-    it("no ofrece Editar mientras el resumen no ha llegado", async () => {
-        serveSummary(
-            constructorPlannedSummary({
-                executions_count: 1,
-                has_executions: true,
-                has_athlete_records: true,
+    it("no ofrece Editar mientras el resumen no ha llegado (fail-closed)", async () => {
+        let resolveResponse: () => void = () => undefined;
+        const responseReady = new Promise<void>((resolve) => {
+            resolveResponse = resolve;
+        });
+        server.use(
+            http.get(`*/training-sessions/${SESSION_ID}/execution-summary`, async () => {
+                await responseReady;
+                return HttpResponse.json(constructorPlannedSummary());
             }),
         );
         render(<SessionPrescriptionEditAction sessionId={SESSION_ID} session={plannedSession} />);
 
         expect(screen.queryByRole("button", { name: /Editar sesión/ })).not.toBeInTheDocument();
-        expect(await screen.findByText(SESSION_PRESCRIPTION_LOCKED_BODY)).toBeInTheDocument();
+
+        await act(async () => {
+            resolveResponse();
+        });
+        expect(
+            await screen.findByRole("button", { name: /Editar sesión/ }),
+        ).toBeInTheDocument();
+    });
+
+    it("si execution-summary falla, muestra Editar (fail-open como EditSessionRoute)", async () => {
+        server.use(
+            http.get(`*/training-sessions/${SESSION_ID}/execution-summary`, () =>
+                HttpResponse.json({ detail: "error" }, { status: 500 }),
+            ),
+        );
+        render(<SessionPrescriptionEditAction sessionId={SESSION_ID} session={plannedSession} />);
+
+        expect(
+            await screen.findByRole("button", { name: /Editar sesión/ }),
+        ).toBeInTheDocument();
+        expect(screen.queryByText(SESSION_PRESCRIPTION_LOCKED_BODY)).not.toBeInTheDocument();
     });
 
     it("bloquea con feedback u otro registro aunque no haya series", async () => {

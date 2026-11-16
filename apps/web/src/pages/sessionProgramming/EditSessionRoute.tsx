@@ -5,6 +5,7 @@
  * Contexto: deep link /edit-session/:id. Si la sesión está ejecutada, no se
  * monta el editor; se explica el motivo. El 409 del PUT /full sigue existiendo
  * por si el estado cambia entre la lectura y el guardado.
+ * Si execution-summary falla, se abre el editor (fail-open); el servidor 409 cubre.
  *
  * @author Frontend Team
  * @since v6.6.0
