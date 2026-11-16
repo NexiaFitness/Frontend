@@ -5,6 +5,9 @@ import { describe, expect, it } from "vitest";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import { resolveAthleteSessionStatusBadge } from "../athleteSessionsPresentation";
 
+/** Referencia fija para «hoy» en tests (no depende del reloj del runner). */
+const REF_TODAY = new Date(2026, 10, 16, 12, 0, 0);
+
 function session(
     partial: Partial<TrainingSession> & { id: number; status: string }
 ): TrainingSession {
@@ -20,7 +23,8 @@ describe("resolveAthleteSessionStatusBadge (B-13)", () => {
     it("completed at 100% today is completed, not today", () => {
         expect(
             resolveAthleteSessionStatusBadge(
-                session({ id: 1, status: "completed", completion_percentage: 100 })
+                session({ id: 1, status: "completed", completion_percentage: 100 }),
+                REF_TODAY,
             )
         ).toBe("completed");
     });
@@ -28,14 +32,18 @@ describe("resolveAthleteSessionStatusBadge (B-13)", () => {
     it("completed below threshold today is partial, not today", () => {
         expect(
             resolveAthleteSessionStatusBadge(
-                session({ id: 2, status: "completed", completion_percentage: 0 })
+                session({ id: 2, status: "completed", completion_percentage: 0 }),
+                REF_TODAY,
             )
         ).toBe("partial");
     });
 
     it("planned today stays today", () => {
         expect(
-            resolveAthleteSessionStatusBadge(session({ id: 3, status: "planned" }))
+            resolveAthleteSessionStatusBadge(
+                session({ id: 3, status: "planned" }),
+                REF_TODAY,
+            )
         ).toBe("today");
     });
 });
@@ -43,56 +51,72 @@ describe("resolveAthleteSessionStatusBadge (B-13)", () => {
 describe("resolveAthleteSessionStatusBadge (B-34)", () => {
     it("cancelled today is cancelled, not today", () => {
         expect(
-            resolveAthleteSessionStatusBadge(session({ id: 4, status: "cancelled" }))
+            resolveAthleteSessionStatusBadge(
+                session({ id: 4, status: "cancelled" }),
+                REF_TODAY,
+            )
         ).toBe("cancelled");
     });
 
     it("cancelled on another day stays cancelled", () => {
         expect(
             resolveAthleteSessionStatusBadge(
-                session({ id: 5, status: "cancelled", session_date: "2026-11-10" })
+                session({ id: 5, status: "cancelled", session_date: "2026-11-10" }),
+                REF_TODAY,
             )
         ).toBe("cancelled");
     });
 
     it("in_progress today is in_progress, not today", () => {
         expect(
-            resolveAthleteSessionStatusBadge(session({ id: 6, status: "in_progress" }))
+            resolveAthleteSessionStatusBadge(
+                session({ id: 6, status: "in_progress" }),
+                REF_TODAY,
+            )
         ).toBe("in_progress");
     });
 
     it("in_progress on another day stays in_progress", () => {
         expect(
             resolveAthleteSessionStatusBadge(
-                session({ id: 7, status: "in_progress", session_date: "2026-11-10" })
+                session({ id: 7, status: "in_progress", session_date: "2026-11-10" }),
+                REF_TODAY,
             )
         ).toBe("in_progress");
     });
 
     it("skipped today is skipped, not today", () => {
         expect(
-            resolveAthleteSessionStatusBadge(session({ id: 8, status: "skipped" }))
+            resolveAthleteSessionStatusBadge(
+                session({ id: 8, status: "skipped" }),
+                REF_TODAY,
+            )
         ).toBe("skipped");
     });
 
     it("planned not today is planned", () => {
         expect(
             resolveAthleteSessionStatusBadge(
-                session({ id: 9, status: "planned", session_date: "2026-12-01" })
+                session({ id: 9, status: "planned", session_date: "2026-12-01" }),
+                REF_TODAY,
             )
         ).toBe("planned");
     });
 
     it("archived today is archived, not today", () => {
         expect(
-            resolveAthleteSessionStatusBadge(session({ id: 10, status: "archived" }))
+            resolveAthleteSessionStatusBadge(
+                session({ id: 10, status: "archived" }),
+                REF_TODAY,
+            )
         ).toBe("archived");
     });
 
     it("archived on another day stays archived", () => {
         expect(
             resolveAthleteSessionStatusBadge(
-                session({ id: 11, status: "archived", session_date: "2026-11-10" })
+                session({ id: 11, status: "archived", session_date: "2026-11-10" }),
+                REF_TODAY,
             )
         ).toBe("archived");
     });

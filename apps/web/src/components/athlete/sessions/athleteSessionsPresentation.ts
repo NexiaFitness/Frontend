@@ -84,7 +84,8 @@ export const ATHLETE_SESSION_STATUS_BADGE = {
 export type AthleteSessionStatusBadgeVariant = keyof typeof ATHLETE_SESSION_STATUS_BADGE;
 
 export function resolveAthleteSessionStatusBadge(
-    session: TrainingSession
+    session: TrainingSession,
+    today = new Date(),
 ): AthleteSessionStatusBadgeVariant {
     // Misma prioridad que getSessionStatusLabel (B-13 / B-34): estado antes que «hoy».
     if (session.status === "completed") {
@@ -94,7 +95,7 @@ export function resolveAthleteSessionStatusBadge(
     if (session.status === "cancelled") return "cancelled";
     if (session.status === "in_progress") return "in_progress";
     if (session.status === "archived") return "archived";
-    if (isSessionToday(session)) return "today";
+    if (isSessionToday(session, today)) return "today";
     return "planned";
 }
 
