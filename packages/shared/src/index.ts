@@ -418,6 +418,10 @@ export * from "./utils/sessionProgramming";
 export { getMutationErrorMessage } from "./utils/errorMessage";
 export { formatCountNoun } from "./utils/formatCountNoun";
 export {
+    formatCalendarDate,
+    formatCalendarDateLong,
+} from "./utils/formatCalendarDate";
+export {
     classifyFocusedPlanFetchError,
     isTrainingPlanFetchNotFound,
     resolveClientPlanningView,

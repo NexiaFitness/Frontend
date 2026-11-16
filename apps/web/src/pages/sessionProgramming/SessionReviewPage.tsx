@@ -34,7 +34,7 @@ import {
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
-import { resolveNextSessionScheduleDate } from "@nexia/shared";
+import { formatCalendarDate, resolveNextSessionScheduleDate } from "@nexia/shared";
 import { useValidateSessionMutation } from "@nexia/shared/api/sessionValidationApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import {
@@ -313,7 +313,7 @@ const SessionPlanSummaryCard: React.FC<{
                 <div className="flex flex-wrap gap-2">
                     <span className={SESSION_REVIEW_META_CHIP}>
                         <span className="mr-1.5 text-muted-foreground">Fecha</span>
-                        {session.session_date ?? "—"}
+                        {formatCalendarDate(session.session_date)}
                         {session.session_time ? ` · ${session.session_time.slice(0, 5)}` : ""}
                     </span>
                     <span className={SESSION_REVIEW_TYPE_CHIP}>{typeLabel}</span>

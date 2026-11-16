@@ -34,7 +34,7 @@ import {
     useGetSessionExecutionSummaryQuery,
     useDeleteTrainingSessionMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
-import { mergeSessionStructureWithExecutionSummary } from "@nexia/shared";
+import { formatCalendarDate, formatCalendarDateLong, mergeSessionStructureWithExecutionSummary } from "@nexia/shared";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
@@ -112,25 +112,6 @@ function getInitials(fullName: string): string {
     const first = parts[0]?.[0] ?? "";
     const last = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : "";
     return `${first}${last}`.toUpperCase();
-}
-
-function formatLongDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return "Sin fecha";
-    return new Date(`${dateStr}T12:00:00`).toLocaleDateString("es-ES", {
-        weekday: "long",
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    }).replace(",", "");
-}
-
-function formatShortDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return "—";
-    return new Date(`${dateStr}T12:00:00`).toLocaleDateString("es-ES", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    });
 }
 
 const DEFAULT_BACK_TO_SESSIONS = "/dashboard/sessions";
@@ -295,7 +276,7 @@ export const SessionDetail: React.FC = () => {
                         <div className={SESSION_DETAIL_META}>
                             <span className={SESSION_DETAIL_META_ITEM}>
                                 <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                                {formatLongDate(session.session_date)}
+                                {formatCalendarDateLong(session.session_date)}
                             </span>
                             <span className={SESSION_DETAIL_META_ITEM}>
                                 <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -417,7 +398,7 @@ export const SessionDetail: React.FC = () => {
                             </p>
                             <p>
                                 <span className="text-muted-foreground">Fecha: </span>
-                                {formatShortDate(session.updated_at?.slice(0, 10))}
+                                {formatCalendarDate(session.updated_at?.slice(0, 10))}
                             </p>
                         </div>
                         <p className="text-muted-foreground">{session.notes}</p>

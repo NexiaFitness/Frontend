@@ -14,6 +14,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
 import type { SessionOut } from "@nexia/shared/types/sessions";
 import type { SessionTemplate } from "@nexia/shared/types/sessionProgramming";
+import { formatCalendarDate } from "@nexia/shared";
 import { LoadingSpinner, EmptyState } from "@/components/ui/feedback";
 import { FormCombobox, DatePickerButton, Input } from "@/components/ui/forms";
 import { Button } from "@/components/ui/buttons";
@@ -113,12 +114,6 @@ function resolveSessionsEmptyState(
             : undefined,
         showCreateAction: false,
     };
-}
-
-function formatSessionDate(dateStr: string | null): string {
-    if (!dateStr) return "—";
-    const d = new Date(dateStr + "T12:00:00");
-    return d.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function getDetailUrl(s: SessionOut): string {
@@ -460,7 +455,7 @@ export const SessionsPage: React.FC = () => {
                                         <TrainerSessionsListRow
                                             key={`${s.session_kind}-${s.id}`}
                                             session={s}
-                                            formatDate={formatSessionDate}
+                                            formatDate={formatCalendarDate}
                                             onOpen={() =>
                                                 navigate(getDetailUrl(s), {
                                                     state: returnToStateFromView(location),
