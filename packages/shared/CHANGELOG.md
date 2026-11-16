@@ -1,5 +1,53 @@
 # Changelog — @nexia/shared
 
+## 6.1.6 — 2026-11-16
+
+### Added (B-26)
+
+- `PostSessionTimedBlockReport` / `timed_blocks` en `PostSessionReport` (resultado AMRAP/EMOM/For Time + objetivo, sin % series).
+- Share post-sesión: unidades del hero (`blocks`/`sets`) y líneas timed.
+
+### Fixed (B-13, B-34)
+
+- `getSessionStatusLabel` prioriza cierre y `cancelled` / `in_progress` / `archived` frente a «Hoy».
+
+### Fixed (B-25)
+
+- `resolveAthleteRunExecutionLineIds` usa `session_exercise_id` en sesiones legacy (bloque sintético negativo).
+
+## 6.1.5 — 2026-11-13
+
+### Fixed (B-10)
+
+- `SET_TYPE_LABELS` sigue en jerga de sala (Single Set, Giant Set, Superset, Dropset, For Time, EMOM, AMRAP). No se traducen.
+- `formatClientIdentityLine` y `labelPhysicalQualitySlug` evitan pintar `hypertrophy` / `Primary` en UI.
+- `labelFatigueAlertTitle` / `labelFatigueAlertBody` / `labelFatigueAlertSeverity` traducen alertas antiguas en inglés.
+
+### Fixed (B-14)
+
+- `getUpdateTrainingSessionInvalidationTags` y el POST de feedback invalidan `Client/SESSIONS-{id}` para que el resumen del entrenador no se quede con la sesión de hoy ya cerrada.
+
+### Fixed (B-15)
+
+- El progreso del atleta usa `exercise_name` del tracking. Deja de resolver nombres con la primera página del catálogo y de avisar en consola por IDs que sí se ven en UI.
+
+### Fixed (B-19)
+
+- `formatCalendarDate` / `formatCalendarDateLong` pintan YYYY-MM-DD como «11 nov 2026» (día local, es-ES estable). Revisión, listado y detalle de sesión dejan de mezclar ISO crudo con `toLocaleDateString` locales.
+
+### Fixed (B-20)
+
+- `labelSessionType` es la fuente única de etiquetas de tipo (incl. `technique`→«Técnica», `assessment`→«Evaluación», case-insensitive).
+- `STANDALONE_SESSION_KIND_LABEL_ES` = «Sesión libre». Constructor: copy en `sessionConstructorPresentation` con tilde.
+- El 409 de borrado en backend ya emitía «sesión»; el FE sigue aceptando el detalle antiguo sin tilde.
+- `utils/text/spanishUiAccentGuard`: detecta stems sin tilde en copy de UI (tests).
+- Barrido: patrones del día («día», «según», «planificación»); BE «este músculo» en carga semanal.
+
+### Fixed (QA B-19)
+
+- `labelPhysicalQualitySlug` traduce `fuerza_maxima` → «Fuerza máxima». Plan del día usa el catálogo, no el slug.
+- `displaySessionTitle` reescribe títulos de seed ISO / «Dec» y deja intactos los nombres del constructor.
+
 ## 6.1.4 — 2026-11-12
 
 ### Fixed (B-09)
