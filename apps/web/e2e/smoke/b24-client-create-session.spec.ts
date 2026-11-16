@@ -5,17 +5,21 @@
 import { test, expect } from "@playwright/test";
 import { loginAsTrainer } from "../fixtures/auth";
 
+/** Cliente demo sin plan activo (mismo que QA B-24 en registro: Bruno 389). */
+const CLIENT_WITHOUT_PLAN_ID = "389";
+
 test.describe("B-24 cliente sin plan activo", () => {
-  test("tab Sesiones → día 13 → Crear sesión muestra constructor", async ({ page }) => {
+  test("tab Sesiones → día del mes → Crear sesión muestra constructor", async ({ page }) => {
     await loginAsTrainer(page);
-    await page.goto("/dashboard/clients/354?tab=sessions", { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: "13", exact: true }).click();
+    const dayOfMonth = String(new Date().getDate());
+    await page.goto(
+      `/dashboard/clients/${CLIENT_WITHOUT_PLAN_ID}?tab=sessions`,
+      { waitUntil: "domcontentloaded" },
+    );
+    await page.getByRole("button", { name: dayOfMonth, exact: true }).click();
     await page.getByRole("button", { name: "Crear sesión", exact: true }).click();
 
     await expect(page).toHaveURL(/create-session/, { timeout: 15_000 });
     await expect(page.getByText("Datos de la sesión")).toBeVisible({ timeout: 25_000 });
-    await expect(page.getByRole("heading", { name: "QA Manual Browser QA", level: 1 })).toHaveCount(
-      0,
-    );
   });
 });

@@ -83,6 +83,9 @@ out
 .nuxt
 dist
 
+# Vite PWA dev output (regenerated locally; no commitear)
+apps/web/dev-dist/
+
 # Gatsby files
 .cache/
 # public # (si usas Gatsby, descomenta esto)

@@ -1,0 +1,36 @@
+title = "NEXIA secret scan"
+
+[extend]
+useDefault = true
+
+# A literal next to a password variable. The default rules miss these.
+[[rules]]
+id = "nexia-getenv-password-default"
+description = "A password default is written next to getenv"
+regex = '''(?i)getenv\(\s*['\"][A-Z0-9_]*(?:PASSWORD|SECRET_KEY|API_SECRET)['\"]\s*,\s*['\"][^'\"]{6,}['\"]'''
+keywords = ["getenv"]
+
+[[rules]]
+id = "nexia-labeled-password"
+description = "A labeled password literal in a document or fixture"
+regex = '''(?i)password\s*[:=]\s*['`\"][^'`\"\s]{6,}['`\"]'''
+keywords = ["password"]
+
+[allowlist]
+description = "Placeholders and the CI test key, not real credentials"
+regexTarget = "secret"
+paths = [
+    '''(?:^|/)tests/''',
+    '''(?:^|/)e2e/''',
+    '''__tests__/''',
+    '''test-utils/''',
+    '''(?:^|/)fixtures/''',
+]
+regexes = [
+    '''TU_TOKEN_AQUI''',
+    '''YOUR_TOKEN''',
+    '''(?i)^changeme$''',
+    '''(?i)change[-_ ]?me''',
+    '''ci-test-secret-key-not-for-production''',
+    '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.\.\.''',
+]
