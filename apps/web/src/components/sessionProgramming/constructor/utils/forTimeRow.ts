@@ -158,12 +158,24 @@ export function propagateForTimeSetDataInheritance(
 /*  Normalización                                                     */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Alta o cambio de tipo: el 3 entra una vez en el campo.
+ * Una edición no debe llamar esto: reponer el 3 al borrar concatena «36» (B-01).
+ */
+export function seedForTimeDefaults(row: ConstructorRow): ConstructorRow {
+    return normalizeForTimeRow({
+        ...row,
+        rounds: row.rounds ?? DEFAULT_FOR_TIME_ROUNDS,
+    });
+}
+
 export function normalizeForTimeRow(row: ConstructorRow): ConstructorRow {
     if (row.setType !== SET_TYPE.FOR_TIME) {
         return row;
     }
 
-    const rounds = row.rounds ?? DEFAULT_FOR_TIME_ROUNDS;
+    // Tamaño de las rondas mientras el campo está vacío. No se escribe en `rounds`.
+    const rounds = Math.max(1, row.rounds ?? DEFAULT_FOR_TIME_ROUNDS);
     const exercises: ConstructorExercise[] = [];
 
     const targetLength =
@@ -191,7 +203,7 @@ export function normalizeForTimeRow(row: ConstructorRow): ConstructorRow {
     return {
         ...row,
         exercises,
-        rounds,
+        rounds: row.rounds,
         timeCap: row.timeCap ?? null,
         repsTipo: row.repsTipo ?? "reps",
     };

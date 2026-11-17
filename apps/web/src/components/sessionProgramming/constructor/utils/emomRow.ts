@@ -64,6 +64,18 @@ export function computeEmomTotalMinutes(row: ConstructorRow): number {
     return Math.round(windowCount * intervalMin * rounds);
 }
 
+/**
+ * Alta o cambio de tipo: 3 rondas y 60 s entran una vez.
+ * Una edición no debe llamar esto: reponer el defecto al borrar concatena (B-01).
+ */
+export function seedEmomDefaults(row: ConstructorRow): ConstructorRow {
+    return normalizeEmomRow({
+        ...row,
+        rounds: row.rounds ?? DEFAULT_EMOM_ROUNDS,
+        intervalSeconds: row.intervalSeconds ?? DEFAULT_EMOM_INTERVAL_SECONDS,
+    });
+}
+
 export function normalizeEmomRow(row: ConstructorRow): ConstructorRow {
     if (row.setType !== SET_TYPE.EMOM) {
         return row;
@@ -104,8 +116,8 @@ export function normalizeEmomRow(row: ConstructorRow): ConstructorRow {
         ...row,
         emomWindows: windows,
         exercises: [],
-        rounds: row.rounds ?? DEFAULT_EMOM_ROUNDS,
-        intervalSeconds: row.intervalSeconds ?? DEFAULT_EMOM_INTERVAL_SECONDS,
+        rounds: row.rounds,
+        intervalSeconds: row.intervalSeconds,
         timeCap: null,
         repsTipo: row.repsTipo ?? "reps",
     };

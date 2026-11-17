@@ -14,8 +14,8 @@ import { applyConstructorRowUpdate, normalizeSupersetRow } from "../constructor/
 import { normalizeSingleSetRow } from "../constructor/utils/singleSetRow";
 import { normalizeDropsetRow } from "../constructor/utils/dropsetRow";
 import { normalizeGiantSetRow } from "../constructor/utils/giantSetRow";
-import { normalizeForTimeRow } from "../constructor/utils/forTimeRow";
-import { normalizeEmomRow } from "../constructor/utils/emomRow";
+import { normalizeForTimeRow, seedForTimeDefaults } from "../constructor/utils/forTimeRow";
+import { normalizeEmomRow, seedEmomDefaults } from "../constructor/utils/emomRow";
 import { normalizeAmrapRow } from "../constructor/utils/amrapRow";
 import {
     resolveBlockInstanceId,
@@ -40,10 +40,10 @@ export function normalizeConstructorRowForSetType(row: ConstructorRow): Construc
         return normalizeGiantSetRow(row);
     }
     if (row.setType === SET_TYPE.FOR_TIME) {
-        return normalizeForTimeRow(row);
+        return seedForTimeDefaults(row);
     }
     if (row.setType === SET_TYPE.EMOM) {
-        return normalizeEmomRow(row);
+        return seedEmomDefaults(row);
     }
     if (row.setType === SET_TYPE.AMRAP) {
         return normalizeAmrapRow(row);
@@ -152,9 +152,9 @@ export function useSessionConstructorActions(
             } else if (setType === SET_TYPE.GIANT_SET) {
                 newRow = normalizeGiantSetRow(draft);
             } else if (setType === SET_TYPE.FOR_TIME) {
-                newRow = normalizeForTimeRow(draft);
+                newRow = seedForTimeDefaults(draft);
             } else if (setType === SET_TYPE.EMOM) {
-                newRow = normalizeEmomRow(draft);
+                newRow = seedEmomDefaults(draft);
             } else if (setType === SET_TYPE.AMRAP) {
                 newRow = normalizeAmrapRow(draft);
             }
