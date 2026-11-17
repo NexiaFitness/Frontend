@@ -194,7 +194,8 @@ export function normalizeSupersetRow(row: ConstructorRow): ConstructorRow {
         ...row,
         exercises: slots,
         sets: row.sets,
-        rest: row.rest ?? 90,
+        // No reponer 90 al borrar: el siguiente dígito concatenaría (B-01).
+        rest: row.rest,
         repsTipo: row.repsTipo ?? "reps",
     };
 }

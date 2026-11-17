@@ -78,7 +78,6 @@ export function normalizeDropsetRow(row: ConstructorRow): ConstructorRow {
     }
 
     const maxSteps = 1 + MAX_DROPS_AFTER_MAIN;
-    const restFallback = row.rest ?? 120;
 
     let setData =
         row.setData?.length && row.setData.length > 0
@@ -94,7 +93,8 @@ export function normalizeDropsetRow(row: ConstructorRow): ConstructorRow {
     return {
         ...row,
         sets: row.sets,
-        rest: restFallback,
+        // No reponer 120 al borrar: el siguiente dígito concatenaría (B-01).
+        rest: row.rest,
         repsTipo: row.repsTipo ?? "reps",
         setData,
         exercises,

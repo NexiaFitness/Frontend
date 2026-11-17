@@ -75,6 +75,17 @@ describe("B-01: el defecto no vuelve al campo al borrar", () => {
         expect(six.rounds).toBe(6);
     });
 
+    it.each([
+        SET_TYPE.SUPERSET,
+        SET_TYPE.GIANT_SET,
+        SET_TYPE.DROPSET,
+    ])("%s conserva rest null y un 6", (setType) => {
+        const cleared = applyConstructorRowUpdate(row(setType, { rest: null }), { rest: null });
+        const confirmed = applyConstructorRowUpdate(row(setType, { rest: 6 }), { rest: 6 });
+        expect(cleared.rest).toBeNull();
+        expect(confirmed.rest).toBe(6);
+    });
+
     it("el alta siembra el 3 y los 60 s una sola vez", () => {
         expect(seedForTimeDefaults(row(SET_TYPE.FOR_TIME)).rounds).toBe(3);
         const emom = seedEmomDefaults(row(SET_TYPE.EMOM));
