@@ -153,9 +153,10 @@ function validateAmrap(issues: ConstructorValidationIssue[], row: ConstructorRow
 }
 
 function validateEmom(issues: ConstructorValidationIssue[], row: ConstructorRow): void {
-    if (!isPositiveInt(row.intervalSeconds) || (row.intervalSeconds ?? 0) < 60) {
+    const intervalSeconds = row.intervalSeconds ?? 0;
+    if (!isPositiveInt(row.intervalSeconds) || intervalSeconds < 60) {
         pushIssue(issues, row, "intervalSeconds", "Indica el intervalo EMOM (mínimo 1 min).");
-    } else if (row.intervalSeconds > 180) {
+    } else if (intervalSeconds > 180) {
         pushIssue(issues, row, "intervalSeconds", "La ventana EMOM es de 1 a 3 minutos.");
     }
     if (!isPositiveInt(row.rounds)) {
