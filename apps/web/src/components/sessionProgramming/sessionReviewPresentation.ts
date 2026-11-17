@@ -5,10 +5,6 @@
  */
 
 import { cn } from "@/lib/utils";
-import {
-    PLATFORM_DASHBOARD_FOOTER_BTN,
-    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
-} from "@/components/ui/forms/platformFormPresentation";
 import { PLATFORM_PAGE_WITH_FIXED_FOOTER } from "@/components/ui/surface/platformPremiumPresentation";
 import {
     NEXIA_GLASS_CARD,
@@ -175,15 +171,20 @@ export function sessionReviewConclusionItemClass(tone: "neutral" | "info" | "cau
     }
 }
 
+/** Misma altura h-9 que el pie del constructor: una fila que parte, no una columna de botones a ancho completo. */
+const SESSION_REVIEW_FOOTER_CONTROL =
+    "[&_button]:h-9 [&_button]:min-h-9 [&_button]:w-auto";
+
 export const SESSION_REVIEW_FOOTER_ROW = cn(
-    "flex w-full min-w-0 flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between",
+    "flex w-full min-w-0 flex-row flex-wrap items-center justify-between gap-2 md:flex-nowrap md:gap-3",
+    SESSION_REVIEW_FOOTER_CONTROL,
 );
 
 export const SESSION_REVIEW_FOOTER_MGMT = cn(
-    "flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end md:w-auto",
-    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
+    "flex min-w-0 flex-row flex-wrap items-center justify-end gap-2",
+    SESSION_REVIEW_FOOTER_CONTROL,
 );
 
-export const SESSION_REVIEW_FOOTER_VIEW_ACTION = PLATFORM_DASHBOARD_FOOTER_BTN;
+export const SESSION_REVIEW_FOOTER_VIEW_ACTION = "h-9 min-h-9 w-auto shrink-0";
 
 export const SESSION_REVIEW_FOOTER_SHELL = SESSION_PROGRAMMING_FOOTER_SHELL;

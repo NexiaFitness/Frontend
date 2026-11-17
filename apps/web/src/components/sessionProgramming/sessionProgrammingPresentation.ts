@@ -8,10 +8,6 @@
 
 import { cn } from "@/lib/utils";
 import {
-    PLATFORM_DASHBOARD_FOOTER_BTN,
-    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
-} from "@/components/ui/forms/platformFormPresentation";
-import {
     ATHLETE_SECTION_LABEL,
     NEXIA_PORTAL_CARD_DESCRIPTION,
     NEXIA_PORTAL_CARD_TITLE,
@@ -216,26 +212,39 @@ export const SESSION_PROGRAMMING_EMPTY_FOOTER = cn(
     "text-[11px]",
 );
 
+/**
+ * Pie partido del constructor (alta y edición).
+ * Altura: `h-9`, la del botón `size="sm"` de la plataforma. No usa
+ * `PLATFORM_DASHBOARD_FOOTER_BTN` (`w-full min-h-touch`): con tres acciones
+ * eso apilaba ~185 px por debajo de 640 y tapaba el constructor.
+ * Por debajo de `sm` la plantilla va en su línea y Cancelar + commit en otra.
+ * Desde `sm` cabe una fila; desde `md` no parte (`05_ACTION_HIERARCHY` §2.3.1 B).
+ */
+const SESSION_PROGRAMMING_FOOTER_CONTROL = "h-9 min-h-9 w-auto max-w-full";
+
 /** Footer fijo — responsive mobile / tablet / desktop. */
 export const SESSION_PROGRAMMING_FOOTER_SHELL = cn(
     "border-border/80 bg-background/90 backdrop-blur-md",
 );
 
 export const SESSION_PROGRAMMING_FOOTER_ROW = cn(
-    "flex w-full min-w-0 max-w-full flex-col gap-3 md:flex-row md:flex-nowrap md:items-center md:justify-between",
+    "flex w-full min-w-0 max-w-full flex-row flex-wrap items-center justify-between gap-2 md:flex-nowrap md:gap-3",
 );
 
 export const SESSION_PROGRAMMING_FOOTER_ACTIONS = cn(
-    "flex w-full min-w-0 flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end sm:gap-3 md:w-auto md:shrink-0",
-    PLATFORM_DASHBOARD_FOOTER_BTN_CHILD,
+    "flex min-w-0 w-full flex-row flex-nowrap items-center justify-end gap-2 sm:w-auto md:shrink-0",
+    "[&_button]:h-9 [&_button]:min-h-9 [&_button]:w-auto [&_button]:min-w-[5.5rem] [&_button]:flex-1 sm:[&_button]:min-w-0 sm:[&_button]:flex-none",
 );
 
-export const SESSION_PROGRAMMING_FOOTER_PRIMARY = PLATFORM_DASHBOARD_FOOTER_BTN;
+export const SESSION_PROGRAMMING_FOOTER_PRIMARY = SESSION_PROGRAMMING_FOOTER_CONTROL;
 
 /** Secundaria premium (marco cyan): `Button variant="outline-primary"` — plantilla, revisar alineación. §05_ACTION_HIERARCHY §2.3.1 B */
-export const SESSION_PROGRAMMING_FOOTER_SECONDARY = PLATFORM_DASHBOARD_FOOTER_BTN;
+export const SESSION_PROGRAMMING_FOOTER_SECONDARY = cn(
+    SESSION_PROGRAMMING_FOOTER_CONTROL,
+    "basis-full sm:basis-auto",
+);
 
-export const SESSION_PROGRAMMING_FOOTER_CANCEL = PLATFORM_DASHBOARD_FOOTER_BTN;
+export const SESSION_PROGRAMMING_FOOTER_CANCEL = SESSION_PROGRAMMING_FOOTER_CONTROL;
 
 /** Hero «Hoy toca» — cabecera métricas (compacta, tablet-first). */
 export const SESSION_PROGRAMMING_DAY_HERO_HEADER = cn(
