@@ -1,6 +1,9 @@
 /**
- * Modelo puro: filas del panel de volumen semanal vs objetivo nominal (±10 % banda).
- * Sin React. Umbrales alineados con SPEC tracking carga semanal (Fase A / Fase B).
+ * Modelo puro: filas del panel de volumen.
+ * En el constructor (session_draft) la cifra, la barra y el estado son series
+ * directas de hoy / objetivo de hoy. La semana solo entra como aviso.
+ * Archivo por encima de 400 líneas: el aviso y el reparto directo/apoyo viven
+ * aquí para no abrir otro módulo de la misma regla.
  */
 
 import { formatSetVolume } from "./volumeDisplay";
@@ -31,7 +34,39 @@ export interface WeeklyVolumePanelApiRowInput {
     daily_target?: number | null;
     accumulated_saved_without_session?: number;
     pattern_session_days?: number | null;
+    structure_weekdays?: number[];
     data_scope: WeeklyVolumePanelDataScope;
+}
+
+export interface VolumeWeekAlert {
+    kind: "complete" | "last_day_short";
+    /** Series efectivas que faltan para el objetivo semanal. Null si la semana ya está cubierta. */
+    remaining: number | null;
+}
+
+/**
+ * Aviso de semana. La fila sigue midiendo el directo de hoy; aquí el efectivo
+ * (directo + indirecto, guardado + hoy) decide el aviso.
+ * Sin weekdays no hay aviso de último día: el campo es aditivo.
+ */
+export function resolveWeekAlert(
+    effectiveSets: number,
+    weeklyTarget: number | null,
+    sessionWeekday: number | null,
+    structureWeekdays: number[] | null | undefined,
+): VolumeWeekAlert | null {
+    if (weeklyTarget == null || weeklyTarget <= 0) return null;
+    if (effectiveSets >= weeklyTarget) {
+        return { kind: "complete", remaining: null };
+    }
+    if (sessionWeekday == null || !structureWeekdays || structureWeekdays.length === 0) {
+        return null;
+    }
+    const hasLaterDay = structureWeekdays.some((day) => day > sessionWeekday);
+    if (!hasLaterDay) {
+        return { kind: "last_day_short", remaining: weeklyTarget - effectiveSets };
+    }
+    return null;
 }
 
 export function resolveDailyVolumeBand(targetToday: number): {
@@ -98,6 +133,14 @@ export function volumeBarWidthPct(row: WeeklyVolumePanelRowModel): number {
         const cap = Math.max(row.draftSets, 10);
         return Math.min(100, (row.draftSets / cap) * 100);
     }
+    if (
+        row.dataScope === "session_draft" &&
+        row.targetToday != null &&
+        row.targetToday > 0
+    ) {
+        const direct = row.directSets ?? row.draftSets;
+        return Math.min(100, (direct / row.targetToday) * 100);
+    }
     if (row.targetToday != null && row.targetToday > 0) {
         return Math.min(100, (row.draftSets / row.targetToday) * 100);
     }
@@ -132,8 +175,8 @@ function formatVolumeRatioHoyFallback(
 }
 
 /**
- * B6 #7: acumulado semanal (guardado + esta sesión) como cifra principal y «+N hoy» de apoyo.
- * No cambia D1/D1b ni el status de la barra (sigue siendo hoy vs objetivo diario).
+ * Constructor: series directas de hoy / objetivo de hoy.
+ * Consulta semanal (sin borrador): el acumulado, porque esa pantalla es la semana.
  */
 export function formatVolumeWeekPrimaryAndHoy(
     row: Pick<
@@ -145,9 +188,17 @@ export function formatVolumeWeekPrimaryAndHoy(
         | "targetCenter"
         | "dataScope"
         | "savedWeekWithoutSession"
+        | "directSets"
     >,
     _style: VolumeRatioHoyStyle = "constructor"
 ): VolumeRatioParts {
+    if (row.dataScope === "session_draft" && row.targetToday != null && row.targetToday > 0) {
+        const direct = row.directSets ?? row.draftSets;
+        return {
+            primary: `${formatSetVolume(direct)}/${row.targetToday}`,
+            hoySupport: null,
+        };
+    }
     if (typeof row.savedWeekWithoutSession === "number") {
         const weekTotal = row.savedWeekWithoutSession + row.draftSets;
         const primary =
@@ -189,6 +240,7 @@ export function mapSessionLoadDraftRowToPanelInput(row: {
     daily_target: number;
     pattern_session_days?: number;
     accumulated_saved_without_session?: number;
+    structure_weekdays?: number[];
 }): WeeklyVolumePanelApiRowInput {
     const draftSets = row.draft_sets ?? 0;
     return {
@@ -201,6 +253,7 @@ export function mapSessionLoadDraftRowToPanelInput(row: {
         daily_target: row.daily_target,
         pattern_session_days: row.pattern_session_days,
         accumulated_saved_without_session: row.accumulated_saved_without_session,
+        structure_weekdays: row.structure_weekdays ?? [],
         data_scope: "session_draft",
     };
 }
@@ -254,6 +307,8 @@ export function volumeMuscleValidationToPanelRow(mg: {
         targetCenter: mg.weekly_target > 0 ? mg.weekly_target : null,
         status,
         patternSessionDays: null,
+        structureWeekdays: [],
+        weekAlert: null,
         dataScope: "session_draft",
     };
 }
@@ -281,12 +336,17 @@ export interface WeeklyVolumePanelRowModel {
      * Sesiones semanales con este patrón para el grupo (validate-draft); null si no aplica o no llegó del API.
      */
     patternSessionDays: number | null;
+    /** Días 1-7 de esta semana en los que la estructura toca el músculo. Vacío si el API no lo manda. */
+    structureWeekdays: number[];
+    /** Solo session_draft. La barra no cambia de color por este aviso. */
+    weekAlert: VolumeWeekAlert | null;
     dataScope: WeeklyVolumePanelDataScope;
 }
 
 export function buildWeeklyVolumePanelRows(
     apiRows: WeeklyVolumePanelApiRowInput[],
-    targetCenter: number | null
+    targetCenter: number | null,
+    sessionWeekday: number | null = null,
 ): WeeklyVolumePanelRowModel[] {
     return apiRows.map((r) => {
         const nameEs = r.name_es ?? "";
@@ -301,13 +361,27 @@ export function buildWeeklyVolumePanelRows(
             typeof r.pattern_session_days === "number" && r.pattern_session_days > 0
                 ? r.pattern_session_days
                 : null;
+        const structureWeekdays = r.structure_weekdays ?? [];
         const displayTotal =
             dataScope === "session_draft" ? draftSets : r.planned_sets_sum;
+        const scoredSets =
+            dataScope === "session_draft" ? (r.direct_sets ?? draftSets) : draftSets;
+        const effectiveSets =
+            (savedWeek ?? 0) + (dataScope === "session_draft" ? draftSets : 0);
+        const weekAlert =
+            dataScope === "session_draft"
+                ? resolveWeekAlert(
+                      effectiveSets,
+                      targetCenter,
+                      sessionWeekday,
+                      structureWeekdays,
+                  )
+                : null;
 
         // MODO DIARIO: si tenemos targetToday valido
         if (targetToday != null && targetToday > 0) {
             const { rangeMin, rangeMax } = resolveDailyVolumeBand(targetToday);
-            const status = resolveDailyVolumeStatus(draftSets, targetToday);
+            const status = resolveDailyVolumeStatus(scoredSets, targetToday);
 
             return {
                 muscleGroupId: r.muscle_group_id,
@@ -323,6 +397,8 @@ export function buildWeeklyVolumePanelRows(
                 targetCenter,
                 status,
                 patternSessionDays,
+                structureWeekdays,
+                weekAlert,
                 dataScope,
             };
         }
@@ -345,6 +421,8 @@ export function buildWeeklyVolumePanelRows(
                 targetCenter: null,
                 status: "no_target",
                 patternSessionDays,
+                structureWeekdays,
+                weekAlert,
                 dataScope,
             };
         }
@@ -368,6 +446,8 @@ export function buildWeeklyVolumePanelRows(
             targetCenter,
             status,
             patternSessionDays,
+            structureWeekdays,
+            weekAlert,
             dataScope,
         };
     });

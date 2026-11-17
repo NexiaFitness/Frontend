@@ -44,6 +44,8 @@ export function SessionReviewValidationSection({
             error={validationError ?? null}
             layout="review"
             muscleVolumeRows={weekly.rows}
+            missingDayPatterns={weekly.missingDayPatterns}
+            dayLabel={weekly.dayLabel}
         />
     );
 }

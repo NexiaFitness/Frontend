@@ -79,7 +79,34 @@ export const VOLUME_REVIEW_KPI_SERIES_LABEL = "Series programadas hoy";
 
 export const VOLUME_REVIEW_KPI_SERIES_HINT = "Programadas frente al objetivo del día";
 
-export const VOLUME_CONSTRUCTOR_DRAFT_TITLE = "Volumen semanal y de hoy";
+export const VOLUME_CONSTRUCTOR_DRAFT_TITLE = "Hoy";
+
+export const VOLUME_DAY_MISSING_LABEL = "Falta";
+
+export const VOLUME_DAY_SUPPORT_LABEL = "Apoyo";
+
+export const VOLUME_WEEK_ALERT_COMPLETE = "Semana completa";
+
+export const VOLUME_DAY_METHOD_NOTE =
+    "Cuentan las series de trabajo; el apoyo, la mitad. El calentamiento no cuenta.";
+
+const DAY_LABELS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"] as const;
+
+/** «mar 17» desde YYYY-MM-DD. Vacío si la fecha no tiene tres números. */
+export function formatConstructorDayLabel(ymd: string | null | undefined): string {
+    if (!ymd) return "";
+    const parts = ymd.split("-").map((x) => Number.parseInt(x, 10));
+    if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return "";
+    const [year, month, day] = parts;
+    const utc = new Date(Date.UTC(year, month - 1, day));
+    const sundayZero = utc.getUTCDay();
+    const index = sundayZero === 0 ? 6 : sundayZero - 1;
+    return `${DAY_LABELS[index]} ${day}`;
+}
+
+export function formatWeekAlertLastDay(remainingLabel: string): string {
+    return `Último día · quedan ${remainingLabel}`;
+}
 
 export const VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE =
     "Acumulado de la semana (sesiones guardadas + esta sesión) y series de hoy por grupo muscular";

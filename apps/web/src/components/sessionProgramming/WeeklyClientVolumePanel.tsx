@@ -9,6 +9,7 @@ import { ChevronDown, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/feedback";
 import type {
+    MissingDayPatternOut,
     VolumeNotesOut,
     WeeklyClientVolumePanelIntent,
     WeeklyLoadCoverageStatus,
@@ -17,9 +18,9 @@ import type {
 } from "@nexia/shared";
 import { formatSetVolume } from "@nexia/shared/training/volumeDisplay";
 import {
-    VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE,
     VOLUME_CONSTRUCTOR_DRAFT_TITLE,
     VOLUME_COUNTING_METHOD_NOTE,
+    VOLUME_DAY_METHOD_NOTE,
     VOLUME_COVERAGE_EMPTY_WEEK,
     VOLUME_COVERAGE_NO_EVALUABLE,
     VOLUME_COVERAGE_PARTIAL_WEEK,
@@ -30,7 +31,8 @@ import {
     formatPriorWeekDelta,
     priorWeekTotalByMuscle,
 } from "@nexia/shared/training/weeklyVolumePanelModel";
-import { MuscleVolumeRow } from "./MuscleVolumeRow";
+import { ConstructorDayBody, MuscleVolumeRow } from "./MuscleVolumeRow";
+import { NexiaSemanticIcon } from "@/components/ui/feedback/NexiaSemanticIcon";
 import { VolumeNotesBlock } from "./VolumeNotesBlock";
 import {
     SESSION_PROGRAMMING_PANEL,
@@ -58,6 +60,9 @@ export interface WeeklyClientVolumePanelProps {
     priorWeekRows?: Array<{ muscle_group_id: number; planned_sets_sum: number }>;
     priorWeekLabel?: string;
     showWeeklyConsultExtras?: boolean;
+    /** «mar 17». Vacío fuera del borrador. */
+    dayLabel?: string;
+    missingDayPatterns?: MissingDayPatternOut[];
 }
 
 function coverageMessage(
@@ -103,8 +108,11 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
     priorWeekRows = [],
     priorWeekLabel = "",
     showWeeklyConsultExtras = false,
+    dayLabel = "",
+    missingDayPatterns = [],
 }) => {
     const [open, setOpen] = useState(true);
+    const [methodOpen, setMethodOpen] = useState(false);
     const [sessionsOpen, setSessionsOpen] = useState(false);
 
     const noBlockMode = useMemo(() => {
@@ -116,21 +124,20 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
 
     const panelTitle = useMemo(() => {
         if (intent === "create_session" || usesDraftProjection) {
-            return noBlockMode
-                ? "Volumen semanal de referencia"
+            if (noBlockMode) return "Volumen semanal de referencia";
+            return dayLabel
+                ? `${VOLUME_CONSTRUCTOR_DRAFT_TITLE} · ${dayLabel}`
                 : VOLUME_CONSTRUCTOR_DRAFT_TITLE;
         }
         return "Volumen semanal del cliente";
-    }, [intent, usesDraftProjection, noBlockMode]);
+    }, [intent, usesDraftProjection, noBlockMode, dayLabel]);
 
     const panelSubtitle = useMemo(() => {
-        if (intent === "create_session") {
-            return usesDraftProjection
-                ? VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE
-                : "Sin ejercicios en el constructor — el panel se actualiza al añadir ejercicios";
-        }
         if (usesDraftProjection) {
-            return VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE;
+            return "";
+        }
+        if (intent === "create_session") {
+            return "Sin ejercicios en el constructor — el panel se actualiza al añadir ejercicios";
         }
         return VOLUME_WEEKLY_SAVED_SUBTITLE;
     }, [intent, usesDraftProjection]);
@@ -162,29 +169,49 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
         return null;
     }
 
+    const showDaySurface = usesDraftProjection && !noBlockMode;
+
     return (
-        <section className={SESSION_PROGRAMMING_PANEL} aria-label="Volumen semanal del cliente">
-            <button
-                type="button"
-                className={SESSION_PROGRAMMING_PANEL_TOGGLE}
-                onClick={() => setOpen((v) => !v)}
-                aria-expanded={open}
-            >
-                <div className="min-w-0 space-y-0.5">
-                    <h3 className={cn(SESSION_PROGRAMMING_PANEL_TITLE, "truncate")}>{panelTitle}</h3>
-                    <p className={cn(SESSION_PROGRAMMING_PANEL_SUBTITLE, "truncate")}>
-                        {panelSubtitle}
-                        {weekLabel ? ` · Semana del ${weekLabel}` : ""}
-                    </p>
-                </div>
-                <ChevronDown
-                    className={cn(
-                        "h-5 w-5 shrink-0 text-muted-foreground transition-transform",
-                        open ? "rotate-180" : "rotate-0"
-                    )}
-                    aria-hidden
-                />
-            </button>
+        <section className={SESSION_PROGRAMMING_PANEL} aria-label={showDaySurface ? "Volumen de hoy" : "Volumen semanal del cliente"}>
+            <div className="flex items-stretch">
+                <button
+                    type="button"
+                    className={cn(SESSION_PROGRAMMING_PANEL_TOGGLE, "min-w-0 flex-1")}
+                    onClick={() => setOpen((v) => !v)}
+                    aria-expanded={open}
+                >
+                    <div className="min-w-0 space-y-0.5">
+                        <h3 className={cn(SESSION_PROGRAMMING_PANEL_TITLE, "truncate")}>{panelTitle}</h3>
+                        {panelSubtitle ? (
+                            <p className={cn(SESSION_PROGRAMMING_PANEL_SUBTITLE, "truncate")}>
+                                {panelSubtitle}
+                                {weekLabel ? ` · Semana del ${weekLabel}` : ""}
+                            </p>
+                        ) : null}
+                    </div>
+                    <ChevronDown
+                        className={cn(
+                            "h-5 w-5 shrink-0 text-muted-foreground transition-transform",
+                            open ? "rotate-180" : "rotate-0"
+                        )}
+                        aria-hidden
+                    />
+                </button>
+                {showDaySurface ? (
+                    <button
+                        type="button"
+                        className="inline-flex min-h-touch min-w-touch shrink-0 items-center justify-center text-muted-foreground"
+                        aria-expanded={methodOpen}
+                        aria-label="Cómo se cuentan las series"
+                        onClick={() => setMethodOpen((v) => !v)}
+                    >
+                        <NexiaSemanticIcon tone="info" size="sm" />
+                    </button>
+                ) : null}
+            </div>
+            {showDaySurface && methodOpen ? (
+                <p className="px-4 pb-2 text-xs text-muted-foreground sm:px-5">{VOLUME_DAY_METHOD_NOTE}</p>
+            ) : null}
 
             {open ? (
                 <div className={cn(SESSION_PROGRAMMING_PANEL_BODY, "space-y-3 !pt-2")}>
@@ -219,7 +246,9 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                                 </div>
                             ) : null}
 
-                            {rows.length === 0 && !volumeNotes?.unmapped_exercises.length ? (
+                            {showDaySurface ? (
+                                <ConstructorDayBody rows={rows} missingPatterns={missingDayPatterns} />
+                            ) : rows.length === 0 && !volumeNotes?.unmapped_exercises.length ? (
                                 <p className="py-4 text-sm text-muted-foreground leading-relaxed">{emptyMessage}</p>
                             ) : (
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -303,10 +332,12 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                                 </p>
                             ) : null}
 
+                            {showDaySurface ? null : (
                             <div className="flex items-start gap-2 rounded-md border border-border/50 bg-background/60 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
                                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                                 <p>{VOLUME_COUNTING_METHOD_NOTE}</p>
                             </div>
+                            )}
                         </>
                     )}
                 </div>

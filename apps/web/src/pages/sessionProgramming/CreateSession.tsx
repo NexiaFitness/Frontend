@@ -1206,6 +1206,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                         weeklyTarget={weeklyVolumePanel.weeklyTarget}
                                         volumeNotes={weeklyVolumePanel.volumeNotes}
+                                        dayLabel={weeklyVolumePanel.dayLabel}
+                                        missingDayPatterns={weeklyVolumePanel.missingDayPatterns}
                                     />
                                 </>
                             ) : null}

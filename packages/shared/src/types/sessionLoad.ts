@@ -113,6 +113,14 @@ export interface SessionLoadDraftRowOut {
     daily_target: number;
     /** Sesiones de la semana que tocan este músculo según patrón del bloque; 0 si no se resolvió. */
     pattern_session_days?: number;
+    /** Días 1-7 de esta semana del bloque. Ausente en respuestas antiguas. */
+    structure_weekdays?: number[];
+}
+
+export interface MissingDayPatternOut {
+    movement_pattern_id: number;
+    name_es: string;
+    ui_bucket: string;
 }
 
 /** Fase C: hint textual dinámico por grupo muscular. */
@@ -130,6 +138,10 @@ export interface SessionLoadDraftValidateOut {
     weekly_target: number;
     rows: SessionLoadDraftRowOut[];
     hints: SessionLoadHintOut[];
+    /** 1=lunes … 7=domingo. Ausente si el backend no lo manda. */
+    session_weekday?: number | null;
+    /** Patrones del día sin ejercicio en el borrador. Ausente = no pintar badges. */
+    missing_day_patterns?: MissingDayPatternOut[];
     /** Fase 4 — Intelligent Training Engine: axial load score for the draft */
     axial_score?: import("./engineSafety").AxialScoreResponse;
     /** Fase 4 — safety flags per exercise in the draft */

@@ -37,11 +37,12 @@ import {
     type WeeklyVolumePanelRowModel,
 } from "@nexia/shared";
 import {
+    VOLUME_CONSTRUCTOR_DRAFT_TITLE,
     VOLUME_MUSCLE_PROGRAMMED_NOTE,
     VOLUME_REVIEW_GROUPS_HEADING,
     VOLUME_REVIEW_SECTION_TITLE,
 } from "@nexia/shared/training/weeklyVolumePanelPresentation";
-import { MuscleVolumeRow } from "./MuscleVolumeRow";
+import { ConstructorDayBody, MuscleVolumeRow } from "./MuscleVolumeRow";
 import {
     SessionValidationNotApplicable,
     SessionValidationSafetyBlock,
@@ -329,7 +330,8 @@ const MAX_UNCOVERED_PREVIEW = 4;
 const VolumeSectionReview: React.FC<{
     data: NonNullable<SessionValidationOut["volume"]>;
     muscleVolumeRows?: WeeklyVolumePanelRowModel[] | null;
-}> = ({ data, muscleVolumeRows }) => {
+    missingDayPatterns?: import("@nexia/shared").MissingDayPatternOut[];
+}> = ({ data, muscleVolumeRows, missingDayPatterns = [] }) => {
     const [uncoveredExpanded, setUncoveredExpanded] = useState(false);
     const { coveredRows, uncoveredRows, statusSummary } = useMemo(() => {
         const coveredList = data.muscle_groups
@@ -349,6 +351,12 @@ const VolumeSectionReview: React.FC<{
             statusSummary: summarizeVolumeRowStatuses(coveredRows),
         };
     }, [data.muscle_groups, muscleVolumeRows]);
+
+    if (muscleVolumeRows) {
+        return (
+            <ConstructorDayBody rows={muscleVolumeRows} missingPatterns={missingDayPatterns} />
+        );
+    }
 
     const totalProgrammed = coveredRows.reduce((s, r) => s + r.draftSets, 0);
     const totalExpectedCovered = coveredRows.reduce((s, r) => s + (r.targetToday ?? 0), 0);
@@ -426,10 +434,17 @@ const VolumeSection: React.FC<{
     data: SessionValidationOut["volume"];
     variant?: "stack" | "review";
     muscleVolumeRows?: WeeklyVolumePanelRowModel[] | null;
-}> = ({ data, variant = "stack", muscleVolumeRows }) => {
+    missingDayPatterns?: import("@nexia/shared").MissingDayPatternOut[];
+}> = ({ data, variant = "stack", muscleVolumeRows, missingDayPatterns }) => {
     if (!data) return <p className="text-sm text-muted-foreground">Sin datos de volumen.</p>;
     if (variant === "review") {
-        return <VolumeSectionReview data={data} muscleVolumeRows={muscleVolumeRows} />;
+        return (
+            <VolumeSectionReview
+                data={data}
+                muscleVolumeRows={muscleVolumeRows}
+                missingDayPatterns={missingDayPatterns}
+            />
+        );
     }
 
     return (
@@ -517,6 +532,9 @@ export interface SessionValidationContentProps {
     layout?: "stack" | "review";
     /** Filas validate-draft (B6 #7). Si vienen, sustituyen el numerador V1 de grupos cubiertos. */
     muscleVolumeRows?: WeeklyVolumePanelRowModel[] | null;
+    missingDayPatterns?: import("@nexia/shared").MissingDayPatternOut[];
+    /** Etiqueta corta del día («mar 17») cuando la tarjeta muestra la superficie de hoy. */
+    dayLabel?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -529,6 +547,8 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
     error,
     layout = "stack",
     muscleVolumeRows,
+    missingDayPatterns,
+    dayLabel,
 }) => {
     const overallStatus = data?.overall_status ?? null;
 
@@ -584,13 +604,24 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
 
                         <ValidationInsightCard
                             className={SESSION_VALIDATION_VOLUME_FULL}
-                            title={VOLUME_REVIEW_SECTION_TITLE}
-                            badge={<StatusBadge status={data.volume?.status ?? null} />}
+                            title={
+                                muscleVolumeRows
+                                    ? dayLabel
+                                        ? `${VOLUME_CONSTRUCTOR_DRAFT_TITLE} · ${dayLabel}`
+                                        : VOLUME_CONSTRUCTOR_DRAFT_TITLE
+                                    : VOLUME_REVIEW_SECTION_TITLE
+                            }
+                            badge={
+                                muscleVolumeRows ? undefined : (
+                                    <StatusBadge status={data.volume?.status ?? null} />
+                                )
+                            }
                         >
                             <VolumeSection
                                 data={data.volume}
                                 variant="review"
                                 muscleVolumeRows={muscleVolumeRows}
+                                missingDayPatterns={missingDayPatterns}
                             />
                             <VolumeNotesBlock notes={data.volume_notes} />
                         </ValidationInsightCard>

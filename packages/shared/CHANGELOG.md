@@ -1,5 +1,12 @@
 # Changelog — @nexia/shared
 
+## 6.1.13 — 2026-11-17
+
+### Changed (volumen del constructor)
+
+- La cifra del borrador es series directas de hoy / objetivo de hoy. La semana solo sale como aviso (`resolveWeekAlert`): semana ya cubierta, o último día de esta semana y aún falta efectivo.
+- `SessionLoadDraftValidateOut` admite `session_weekday`, `missing_day_patterns` y `structure_weekdays`. Si no llegan, no hay aviso de último día ni badges.
+
 ## 6.1.12 — 2026-11-16
 
 ### Fixed (B-33 planned del constructor)

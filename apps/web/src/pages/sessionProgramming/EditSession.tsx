@@ -964,6 +964,8 @@ export const EditSession: React.FC = () => {
                                     usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                     weeklyTarget={weeklyVolumePanel.weeklyTarget}
                                     volumeNotes={weeklyVolumePanel.volumeNotes}
+                                    dayLabel={weeklyVolumePanel.dayLabel}
+                                    missingDayPatterns={weeklyVolumePanel.missingDayPatterns}
                                     coverageStatus={weeklyVolumePanel.coverageStatus}
                                     sessionsInWeek={weeklyVolumePanel.sessionsInWeek}
                                     expectedTrainingDays={weeklyVolumePanel.expectedTrainingDays}

@@ -5,15 +5,20 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import type { WeeklyVolumePanelRowModel, VolumeRatioHoyStyle } from "@nexia/shared";
+import type { MissingDayPatternOut, WeeklyVolumePanelRowModel, VolumeRatioHoyStyle, VolumeWeekAlert } from "@nexia/shared";
 import {
     formatSetVolume,
     formatVolumeWeekPrimaryAndHoy,
+    formatWeekAlertLastDay,
     volumeBarWidthPct,
     volumeStatusLabel,
+    VOLUME_DAY_MISSING_LABEL,
+    VOLUME_DAY_SUPPORT_LABEL,
+    VOLUME_WEEK_ALERT_COMPLETE,
 } from "@nexia/shared";
 import { NexiaProgressBar } from "@/components/ui/progress";
 import { nexiaProgressToneFromMuscleVolumeStatus } from "@/components/ui/progress/nexiaProgressPresentation";
+import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
 import {
     MUSCLE_VOLUME_ROW_BREAKDOWN_CLASS,
     MUSCLE_VOLUME_ROW_CONTEXT_CLASS,
@@ -133,3 +138,83 @@ export const MuscleVolumeRow: React.FC<MuscleVolumeRowProps> = ({
         </div>
     );
 };
+
+function weekAlertLabel(alert: VolumeWeekAlert | null): string | null {
+    if (!alert) return null;
+    if (alert.kind === "complete") return VOLUME_WEEK_ALERT_COMPLETE;
+    return formatWeekAlertLastDay(formatSetVolume(alert.remaining ?? 0));
+}
+
+/**
+ * Superficie del día en constructor y revisión. Una barra por músculo con
+ * series directas. El apoyo y los patrones que faltan no son filas.
+ */
+export function ConstructorDayBody({
+    rows,
+    missingPatterns,
+}: {
+    rows: WeeklyVolumePanelRowModel[];
+    missingPatterns: MissingDayPatternOut[];
+}) {
+    const direct = rows.filter((row) => (row.directSets ?? 0) > 0);
+    const support = rows.filter(
+        (row) => (row.directSets ?? 0) <= 0 && (row.indirectSets ?? 0) > 0,
+    );
+    const supportLine = support
+        .map((row) => {
+            const sets = `${row.nameEs} ${formatSetVolume(row.indirectSets ?? 0)}`;
+            const alert = weekAlertLabel(row.weekAlert);
+            return alert ? `${sets} · ${alert}` : sets;
+        })
+        .join(" · ");
+
+    return (
+        <div className="space-y-3">
+            {direct.length > 0 ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {direct.map((row) => {
+                        const name = row.nameEs || `Grupo ${row.muscleGroupId}`;
+                        const fraction = formatVolumeWeekPrimaryAndHoy(row).primary;
+                        const alert = weekAlertLabel(row.weekAlert);
+                        return (
+                            <div key={row.muscleGroupId} className="min-w-0 space-y-1.5">
+                                <div className="flex items-baseline justify-between gap-3">
+                                    <span className={MUSCLE_VOLUME_ROW_TITLE_CLASS}>{name}</span>
+                                    <span className={cn(MUSCLE_VOLUME_ROW_TITLE_CLASS, "shrink-0 tabular-nums")}>
+                                        {fraction}
+                                    </span>
+                                </div>
+                                <NexiaProgressBar
+                                    value={volumeBarWidthPct(row)}
+                                    tone={nexiaProgressToneFromMuscleVolumeStatus(row.status)}
+                                    aria-label={`${name}: ${volumeStatusLabel(row.status)}`}
+                                />
+                                {alert ? (
+                                    <p className="text-xs text-warning">{alert}</p>
+                                ) : null}
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : null}
+            {supportLine ? (
+                <p className="text-xs text-muted-foreground">
+                    {VOLUME_DAY_SUPPORT_LABEL} · {supportLine}
+                </p>
+            ) : null}
+            {missingPatterns.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{VOLUME_DAY_MISSING_LABEL}</span>
+                    {missingPatterns.map((pattern) => (
+                        <PatternBadge
+                            key={pattern.movement_pattern_id}
+                            name={pattern.name_es}
+                            uiBucket={pattern.ui_bucket}
+                            size="sm"
+                        />
+                    ))}
+                </div>
+            ) : null}
+        </div>
+    );
+}

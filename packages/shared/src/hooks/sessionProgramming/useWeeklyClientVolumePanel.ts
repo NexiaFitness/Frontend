@@ -17,6 +17,7 @@ import {
 } from "../../training/weeklyVolumePanelModel";
 import type { SessionLoadDraftExerciseIn, SessionLoadDraftValidateOut, WeeklyLoadCoverageStatus, WeeklySessionPlannedLoadSliceOut } from "../../types/sessionLoad";
 import { addDaysToYmd, formatWeekRangeLabelEs, mondayOfIsoWeekContaining, sundayOfWeekFromMondayYmd } from "../../utils/isoWeekRange";
+import { formatConstructorDayLabel } from "../../training/weeklyVolumePanelPresentation";
 
 function serializeDraftExercises(draft: SessionLoadDraftExerciseIn[] | undefined): string {
     return JSON.stringify(draft ?? []);
@@ -57,8 +58,9 @@ export interface UseWeeklyClientVolumePanelParams {
     draftExercises?: SessionLoadDraftExerciseIn[];
     draftDebounceMs?: number;
     /**
-     * create_session: solo volumen del borrador actual; sin GET semanal cuando no hay ejercicios.
-     * edit_session: GET semanal sin borrador; con borrador, numerador de esta sesión.
+     * create_session y edit_session con fecha: superficie de hoy (validate-draft),
+     * también con el constructor vacío, para los patrones que faltan.
+     * Sin fecha de sesión se mantiene el GET semanal de consulta.
      */
     intent?: WeeklyClientVolumePanelIntent;
 }
@@ -87,6 +89,11 @@ export interface UseWeeklyClientVolumePanelResult {
     priorWeekRows: import("../../types/sessionLoad").WeeklyMusclePlannedLoadRowOut[];
     priorWeekLabel: string;
     showWeeklyConsultExtras: boolean;
+    /** 1=lunes … 7=domingo. Null si el borrador aún no respondió. */
+    sessionWeekday: number | null;
+    missingDayPatterns: import("../../types/sessionLoad").MissingDayPatternOut[];
+    /** «mar 17». Vacío si la fecha no parsea. */
+    dayLabel: string;
 }
 
 export function useWeeklyClientVolumePanel(
@@ -172,14 +179,7 @@ export function useWeeklyClientVolumePanel(
     const [draftProjection, setDraftProjection] = useState<SessionLoadDraftValidateOut | null>(null);
     const [draftError, setDraftError] = useState(false);
     const reqId = useRef(0);
-
-    useEffect(() => {
-        if (!hasLiveDraft) {
-            reqId.current += 1;
-            setDraftProjection(null);
-            setDraftError(false);
-        }
-    }, [hasLiveDraft]);
+    const daySurface = Boolean(params.sessionDateYmd) && Boolean(clientId) && Boolean(weekStart);
 
     useEffect(() => {
         if (!clientId || !weekStart) {
@@ -188,7 +188,7 @@ export function useWeeklyClientVolumePanel(
             setDraftError(false);
             return;
         }
-        if (!hasDebouncedDraft) {
+        if (!hasDebouncedDraft && !params.sessionDateYmd) {
             reqId.current += 1;
             setDraftProjection(null);
             setDraftError(false);
@@ -232,16 +232,11 @@ export function useWeeklyClientVolumePanel(
         params.sessionDateYmd,
     ]);
 
-    const usesDraftProjection =
-        intent === "create_session" ? hasLiveDraft : hasLiveDraft && hasDebouncedDraft;
+    const usesDraftProjection = daySurface;
 
     const apiRowsForPanel = useMemo((): WeeklyVolumePanelApiRowInput[] => {
-        if (intent === "create_session" && !hasLiveDraft) {
-            return [];
-        }
-
-        if (hasLiveDraft) {
-            if (debouncePending || !draftProjection) {
+        if (daySurface) {
+            if (!draftProjection || (hasLiveDraft && debouncePending)) {
                 return [];
             }
             return draftProjection.rows.map((r) => mapSessionLoadDraftRowToPanelInput(r));
@@ -253,6 +248,7 @@ export function useWeeklyClientVolumePanel(
 
         return [];
     }, [
+        daySurface,
         intent,
         hasLiveDraft,
         debouncePending,
@@ -261,18 +257,22 @@ export function useWeeklyClientVolumePanel(
     ]);
 
     const effectiveTargetCenter = useMemo(() => {
-        if (hasLiveDraft && draftProjection?.weekly_target) {
+        if (draftProjection?.weekly_target && (hasLiveDraft || daySurface)) {
             return draftProjection.weekly_target;
         }
         return targetCenter;
-    }, [hasLiveDraft, draftProjection?.weekly_target, targetCenter]);
+    }, [hasLiveDraft, daySurface, draftProjection?.weekly_target, targetCenter]);
 
     const rows = useMemo(() => {
-        return buildWeeklyVolumePanelRows(apiRowsForPanel, effectiveTargetCenter);
-    }, [apiRowsForPanel, effectiveTargetCenter]);
+        return buildWeeklyVolumePanelRows(
+            apiRowsForPanel,
+            effectiveTargetCenter,
+            daySurface ? draftProjection?.session_weekday ?? null : null,
+        );
+    }, [apiRowsForPanel, effectiveTargetCenter, daySurface, draftProjection?.session_weekday]);
 
     const weekEnd =
-        (hasLiveDraft && draftProjection?.week_end) ||
+        ((hasLiveDraft || daySurface) && draftProjection?.week_end) ||
         q.data?.week_end ||
         sundayOfWeekFromMondayYmd(weekStart ?? "") ||
         null;
@@ -283,14 +283,14 @@ export function useWeeklyClientVolumePanel(
     );
 
     const isLoading =
-        (intent === "edit_session" && !hasLiveDraft && q.isLoading) ||
-        (hasLiveDraft &&
+        (intent === "edit_session" && !daySurface && !hasLiveDraft && q.isLoading) ||
+        (daySurface &&
             (debouncePending || (!draftProjection && !draftError && isValidatingDraft)));
 
-    const showDraftSafety = hasLiveDraft && draftProjection != null && !debouncePending;
+    const showDraftSafety = daySurface && draftProjection != null && !debouncePending;
 
     const showWeeklyConsultExtras =
-        intent === "edit_session" && !hasLiveDraft && !debouncePending;
+        intent === "edit_session" && !daySurface && !hasLiveDraft && !debouncePending;
 
     const priorWeekLabel = useMemo(() => {
         if (!priorWeekStart) return "";
@@ -304,8 +304,8 @@ export function useWeeklyClientVolumePanel(
         weekLabel,
         rows,
         isLoading,
-        isFetching: q.isFetching || priorQ.isFetching || (hasLiveDraft && isValidatingDraft),
-        isError: hasLiveDraft ? draftError : q.isError,
+        isFetching: q.isFetching || priorQ.isFetching || (daySurface && isValidatingDraft),
+        isError: daySurface ? draftError : q.isError,
         hasClient: !!clientId && clientId > 0,
         intent,
         usesDraftProjection,
@@ -326,5 +326,8 @@ export function useWeeklyClientVolumePanel(
         priorWeekRows: showWeeklyConsultExtras ? priorQ.data?.rows ?? [] : [],
         priorWeekLabel,
         showWeeklyConsultExtras,
+        sessionWeekday: daySurface ? draftProjection?.session_weekday ?? null : null,
+        missingDayPatterns: daySurface ? draftProjection?.missing_day_patterns ?? [] : [],
+        dayLabel: formatConstructorDayLabel(params.sessionDateYmd),
     };
 }
