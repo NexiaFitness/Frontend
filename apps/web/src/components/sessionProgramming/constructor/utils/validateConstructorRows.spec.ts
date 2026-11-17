@@ -165,4 +165,33 @@ describe("validateConstructorRows", () => {
         });
         expect(validateConstructorRows([r]).valid).toBe(true);
     });
+
+    it("emom con ventana de 6 min no guarda y señala el campo", () => {
+        const r = baseRow({
+            setType: SET_TYPE.EMOM,
+            intervalSeconds: 360,
+            rounds: 3,
+            exercises: [press],
+        });
+        const result = validateConstructorRows([r]);
+        expect(result.valid).toBe(false);
+        expect(result.issues).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    field: "intervalSeconds",
+                    message: "La ventana EMOM es de 1 a 3 minutos.",
+                }),
+            ])
+        );
+    });
+
+    it("emom con ventana de 3 min guarda", () => {
+        const r = baseRow({
+            setType: SET_TYPE.EMOM,
+            intervalSeconds: 180,
+            rounds: 3,
+            exercises: [press],
+        });
+        expect(validateConstructorRows([r]).valid).toBe(true);
+    });
 });

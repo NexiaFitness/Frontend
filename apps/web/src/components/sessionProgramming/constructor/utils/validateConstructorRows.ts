@@ -155,6 +155,8 @@ function validateAmrap(issues: ConstructorValidationIssue[], row: ConstructorRow
 function validateEmom(issues: ConstructorValidationIssue[], row: ConstructorRow): void {
     if (!isPositiveInt(row.intervalSeconds) || (row.intervalSeconds ?? 0) < 60) {
         pushIssue(issues, row, "intervalSeconds", "Indica el intervalo EMOM (mínimo 1 min).");
+    } else if (row.intervalSeconds > 180) {
+        pushIssue(issues, row, "intervalSeconds", "La ventana EMOM es de 1 a 3 minutos.");
     }
     if (!isPositiveInt(row.rounds)) {
         pushIssue(issues, row, "rounds", "Indica el número de rondas EMOM (mínimo 1).");
