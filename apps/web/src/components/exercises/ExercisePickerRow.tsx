@@ -5,6 +5,7 @@
  * añade. Aviso articular: detalle, alternativas y «Añadir con precaución». Tope o cualquier
  * blocking: detalle y alternativas, sin botón de añadir. No verificable: «Añadir sin
  * verificar». Si el lote no ha vuelto, el icono es neutro y no se pinta como sin hallazgo.
+ * Sin cliente (estado null) no hay comprobación: un clic añade.
  * Notas de mantenimiento: estado con `exerciseSafetyUiState` (shared); copy y clases en
  * exercisePickerPresentation.ts.
  *
@@ -45,7 +46,8 @@ import {
 
 export interface ExercisePickerRowProps {
     exercise: ExercisePickerOut;
-    state: ExerciseSafetyUiState;
+    /** null: sin cliente (plantilla) no hay seguridad que comprobar. */
+    state: ExerciseSafetyUiState | null;
     safety: ExerciseSafetyResponse | undefined;
     isExpanded: boolean;
     onToggle: () => void;

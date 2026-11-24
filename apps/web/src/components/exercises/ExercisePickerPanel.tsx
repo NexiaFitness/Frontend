@@ -17,6 +17,8 @@
  *   páginas, useGetExercisePickerLibraryQuery), que oculta los ejercicios inactivos.
  *   Nunca usar aquí el lookup por ids (useExerciseNamesByIds): resuelve inactivos y solo
  *   sirve para pintar contenido ya guardado.
+ * - Sin clientId (plantillas) no hay lote de seguridad: la fila no lleva estado y se añade
+ *   con un clic. Con cliente, nada se añade hasta que el lote trae veredicto.
  * - Reutilizable: CreateSession, EditSession, plantillas y sesiones sueltas.
  *
  * @author Frontend Team
@@ -244,6 +246,7 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
                     search={search}
                     setSearch={setSearch}
                     filteredAndGrouped={filteredAndGrouped}
+                    safetyApplies={clientId != null}
                     safetyResults={safetyResults}
                     safetyCheckFailed={safetyCheckFailed}
                     safetyPending={safetyPending}
@@ -278,6 +281,7 @@ interface ListViewProps {
     search: string;
     setSearch: (s: string) => void;
     filteredAndGrouped: [string, ExercisePickerOut[]][];
+    safetyApplies: boolean;
     safetyResults: Map<number, ExerciseSafetyResponse>;
     safetyCheckFailed: boolean;
     safetyPending: boolean;
@@ -297,6 +301,7 @@ const ListView: React.FC<ListViewProps> = ({
     search,
     setSearch,
     filteredAndGrouped,
+    safetyApplies,
     safetyResults,
     safetyCheckFailed,
     safetyPending,
@@ -388,10 +393,14 @@ const ListView: React.FC<ListViewProps> = ({
                                             key={ex.id}
                                             exercise={ex}
                                             safety={safety}
-                                            state={exerciseSafetyUiState(safety, {
-                                                checkFailed: safetyCheckFailed,
-                                                checkPending: safetyPending && safety == null,
-                                            })}
+                                            state={
+                                                safetyApplies
+                                                    ? exerciseSafetyUiState(safety, {
+                                                          checkFailed: safetyCheckFailed,
+                                                          checkPending: safetyPending && safety == null,
+                                                      })
+                                                    : null
+                                            }
                                             isExpanded={isExpanded}
                                             onToggle={() => setExpandedExerciseId(isExpanded ? null : ex.id)}
                                             onSelect={onSelect}

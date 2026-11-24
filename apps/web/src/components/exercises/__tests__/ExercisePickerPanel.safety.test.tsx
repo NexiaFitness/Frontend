@@ -365,6 +365,20 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
         await waitFor(() => expect(checkBatch).toHaveBeenCalledTimes(2));
     });
 
+    it("sin cliente (plantilla) no hay lote: un clic añade y no se marca sin comprobar", async () => {
+        const user = userEvent.setup();
+        const onSelect = vi.fn();
+        const checkBatch = vi.fn();
+        useCheckExerciseSafetyBatchMutation.mockReturnValue([checkBatch, { isLoading: false }]);
+        render(<ExercisePickerPanel isOpen onClose={vi.fn()} onSelect={onSelect} />);
+
+        expect(useGetExercisePickerLibraryQuery).toHaveBeenCalledWith({ contract: "complete" });
+        expect(screen.queryAllByLabelText("Seguridad sin comprobar")).toHaveLength(0);
+        await user.click(screen.getByRole("button", { name: /Curl seguro/i }));
+        expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 102 }));
+        expect(checkBatch).not.toHaveBeenCalled();
+    });
+
     it("mientras el lote no ha vuelto, ninguna fila se pinta como segura", () => {
         useCheckExerciseSafetyBatchMutation.mockReturnValue([
             vi.fn(() => ({ unwrap: () => new Promise(() => undefined) })),
