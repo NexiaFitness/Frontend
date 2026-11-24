@@ -2,10 +2,11 @@
  * ExercisePickerPanel.safety.test.tsx — Batch safety + flujo alternativas.
  * H4: fila «no verificable» (sin acciones articulares) y fallo del lote (nunca «seguro»).
  * PERF-7: la lista sale del listado completo `view=picker` (sin tope), nunca del lookup
- * por ids (que resuelve ejercicios desactivados); si falla la carga se avisa.
+ * por ids (que resuelve ejercicios desactivados); si falla la carga se avisa. FE-2: la
+ * lista está virtualizada y solo monta las filas visibles.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "@/test-utils/render";
@@ -62,6 +63,26 @@ const EX_SAFE = pickerRow(102, "Curl seguro");
 const EX_ALT = minimalExercise(201, "Press alternativa segura");
 
 describe("ExercisePickerPanel — safety batch y alternativas", () => {
+    // jsdom no tiene layout y la lista virtualizada no pinta sin alto: el panel mide 600×300
+    // y cada fila 46 px.
+    const layout = { clientHeight: 600, clientWidth: 300, offsetHeight: 46 } as const;
+    const original = Object.fromEntries(
+        Object.keys(layout).map((prop) => [
+            prop,
+            Object.getOwnPropertyDescriptor(HTMLElement.prototype, prop),
+        ])
+    );
+    beforeAll(() => {
+        for (const [prop, value] of Object.entries(layout)) {
+            Object.defineProperty(HTMLElement.prototype, prop, { configurable: true, get: () => value });
+        }
+    });
+    afterAll(() => {
+        for (const [prop, descriptor] of Object.entries(original)) {
+            if (descriptor) Object.defineProperty(HTMLElement.prototype, prop, descriptor);
+        }
+    });
+
     beforeEach(() => {
         vi.clearAllMocks();
 
@@ -156,6 +177,25 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
         expect(useGetExercisesByIdsQuery).not.toHaveBeenCalled();
         expect(useExerciseNamesByIds).not.toHaveBeenCalled();
         expect(useGetExercisesQuery).not.toHaveBeenCalled();
+    });
+
+    it("PERF-7 FE-2: con un catálogo grande solo monta las filas visibles", async () => {
+        const many = Array.from({ length: 600 }, (_, i) => ({
+            id: 1000 + i,
+            nombre: `Ejercicio ${String(i).padStart(3, "0")}`,
+            nombre_ingles: null,
+        }));
+        useGetExercisePickerLibraryQuery.mockReturnValue({
+            data: { exercises: many, equipment_filter_applied: "none" },
+            isLoading: false,
+            isError: false,
+            refetch: vi.fn(),
+        });
+        render(<ExercisePickerPanel isOpen onClose={vi.fn()} onSelect={vi.fn()} />);
+
+        expect(screen.getByRole("button", { name: "Ejercicio 000" })).toBeInTheDocument();
+        const mountedRows = screen.getAllByRole("button", { name: /^Ejercicio \d{3}$/ });
+        expect(mountedRows.length).toBeLessThan(50);
     });
 
     it("PERF-7: si falla la carga del catálogo se avisa y se puede reintentar", async () => {

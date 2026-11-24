@@ -3,6 +3,9 @@
  *
  * Contexto: extraída de ExercisePickerPanel (PERF-7). El panel conserva el catálogo, el
  * lote de seguridad y el filtrado; esta lista solo pinta lo que recibe.
+ * - Virtualizada (FE-2, @tanstack/react-virtual): con el catálogo completo montaba ~3.200
+ *   nodos. Letras y filas van en una lista plana; la altura real se mide porque una fila
+ *   con aviso se expande.
  * Notas de mantenimiento: fila en ExercisePickerRow; copy y clases en
  * exercisePickerPresentation.ts.
  *
@@ -10,7 +13,8 @@
  * @since PERF-7
  */
 
-import React from "react";
+import React, { useEffect, useMemo, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { Search, RotateCcw } from "lucide-react";
 import type { ExercisePickerOut } from "@nexia/shared/hooks/exercises";
 import type { ExerciseSafetyResponse } from "@nexia/shared/types/engineSafety";
@@ -18,12 +22,38 @@ import { exerciseSafetyUiState } from "@nexia/shared/utils/exerciseSafetyState";
 import { LoadingSpinner, Alert, NexiaSemanticIcon } from "@/components/ui/feedback";
 import { Input } from "@/components/ui/forms";
 import { Button } from "@/components/ui/buttons";
+import { cn } from "@/lib/utils";
 import { ExercisePickerRow } from "./ExercisePickerRow";
 import {
     EXERCISE_PICKER_BATCH_ALERT,
     EXERCISE_PICKER_COPY,
+    EXERCISE_PICKER_ESTIMATED_LETTER_PX,
+    EXERCISE_PICKER_ESTIMATED_ROW_PX,
     EXERCISE_PICKER_INJURY_BANNER,
+    EXERCISE_PICKER_LETTER,
+    EXERCISE_PICKER_LETTER_GAP,
+    EXERCISE_PICKER_LIST_CANVAS,
+    EXERCISE_PICKER_LIST_ITEM,
+    EXERCISE_PICKER_LIST_SCROLL,
+    EXERCISE_PICKER_OVERSCAN,
+    EXERCISE_PICKER_ROW_SLOT,
 } from "./exercisePickerPresentation";
+
+type PickerListItem =
+    | { kind: "letter"; key: string; letter: string }
+    | { kind: "exercise"; key: string; exercise: ExercisePickerOut };
+
+/** Letras y filas en una sola lista plana para el virtualizador. */
+function flattenGroups(groups: [string, ExercisePickerOut[]][]): PickerListItem[] {
+    return groups.flatMap(([letter, exercises]) => [
+        { kind: "letter" as const, key: `letter-${letter}`, letter },
+        ...exercises.map((exercise) => ({
+            kind: "exercise" as const,
+            key: `exercise-${exercise.id}`,
+            exercise,
+        })),
+    ]);
+}
 
 export interface ExercisePickerListProps {
     isLoading: boolean;
@@ -64,6 +94,25 @@ export const ExercisePickerList: React.FC<ExercisePickerListProps> = ({
     onSelect,
     onShowAlternatives,
 }) => {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const items = useMemo(() => flattenGroups(filteredAndGrouped), [filteredAndGrouped]);
+    const virtualizer = useVirtualizer({
+        count: items.length,
+        getScrollElement: () => scrollRef.current,
+        getItemKey: (index) => items[index].key,
+        estimateSize: (index) =>
+            items[index].kind === "letter"
+                ? EXERCISE_PICKER_ESTIMATED_LETTER_PX
+                : EXERCISE_PICKER_ESTIMATED_ROW_PX,
+        overscan: EXERCISE_PICKER_OVERSCAN,
+    });
+
+    // Cada búsqueda empieza arriba. Por el virtualizador, no por scrollTop: si no, al medir
+    // las filas nuevas corrige el scroll con el offset viejo y la lista queda a media altura.
+    useEffect(() => {
+        virtualizer.scrollToOffset(0);
+    }, [search, virtualizer]);
+
     return (
         <>
             {/* Aviso lesiones */}
@@ -111,7 +160,7 @@ export const ExercisePickerList: React.FC<ExercisePickerListProps> = ({
             </div>
 
             {/* Lista */}
-            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-0 scrollbar-primary">
+            <div ref={scrollRef} className={EXERCISE_PICKER_LIST_SCROLL}>
                 {isLoading ? (
                     <div className="flex justify-center py-12">
                         <LoadingSpinner size="md" />
@@ -132,18 +181,28 @@ export const ExercisePickerList: React.FC<ExercisePickerListProps> = ({
                         No se encontraron ejercicios.
                     </p>
                 ) : (
-                    filteredAndGrouped.map(([letter, groupExercises]) => (
-                        <div key={letter}>
-                            <span className="block text-[11px] font-bold text-primary/70 mb-1">
-                                {letter}
-                            </span>
-                            <div className="space-y-0.5">
-                                {groupExercises.map((ex) => {
-                                    const safety = safetyResults.get(ex.id);
-                                    const isExpanded = expandedExerciseId === ex.id;
-                                    return (
+                    <div className={EXERCISE_PICKER_LIST_CANVAS} style={{ height: virtualizer.getTotalSize() }}>
+                        {virtualizer.getVirtualItems().map((virtualItem) => {
+                            const item = items[virtualItem.index];
+                            let content: React.ReactNode;
+                            if (item.kind === "letter") {
+                                content = (
+                                    <span
+                                        className={cn(
+                                            EXERCISE_PICKER_LETTER,
+                                            virtualItem.index > 0 && EXERCISE_PICKER_LETTER_GAP
+                                        )}
+                                    >
+                                        {item.letter}
+                                    </span>
+                                );
+                            } else {
+                                const ex = item.exercise;
+                                const safety = safetyResults.get(ex.id);
+                                const isExpanded = expandedExerciseId === ex.id;
+                                content = (
+                                    <div className={EXERCISE_PICKER_ROW_SLOT}>
                                         <ExercisePickerRow
-                                            key={ex.id}
                                             exercise={ex}
                                             safety={safety}
                                             state={
@@ -159,11 +218,22 @@ export const ExercisePickerList: React.FC<ExercisePickerListProps> = ({
                                             onSelect={onSelect}
                                             onShowAlternatives={onShowAlternatives}
                                         />
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ))
+                                    </div>
+                                );
+                            }
+                            return (
+                                <div
+                                    key={virtualItem.key}
+                                    data-index={virtualItem.index}
+                                    ref={virtualizer.measureElement}
+                                    className={EXERCISE_PICKER_LIST_ITEM}
+                                    style={{ transform: `translateY(${virtualItem.start}px)` }}
+                                >
+                                    {content}
+                                </div>
+                            );
+                        })}
+                    </div>
                 )}
             </div>
         </>

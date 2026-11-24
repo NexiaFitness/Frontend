@@ -43,6 +43,18 @@ export const EXERCISE_PICKER_INJURY_BANNER =
 export const EXERCISE_PICKER_ROW =
     "flex min-h-touch w-full items-center gap-2 rounded-md px-2 text-left transition-colors hover:bg-surface-2";
 
+/** Lista virtualizada (PERF-7 FE-2): solo se montan las filas visibles. */
+export const EXERCISE_PICKER_LIST_SCROLL = "flex-1 overflow-y-auto px-3 py-3 min-h-0 scrollbar-primary";
+export const EXERCISE_PICKER_LIST_CANVAS = "relative w-full";
+export const EXERCISE_PICKER_LIST_ITEM = "absolute left-0 top-0 w-full";
+export const EXERCISE_PICKER_LETTER = "block pb-1 text-[11px] font-bold text-primary/70";
+export const EXERCISE_PICKER_LETTER_GAP = "pt-3";
+export const EXERCISE_PICKER_ROW_SLOT = "pb-0.5";
+/** Estimaciones iniciales; la altura real se mide (las filas con aviso se expanden). */
+export const EXERCISE_PICKER_ESTIMATED_LETTER_PX = 32;
+export const EXERCISE_PICKER_ESTIMATED_ROW_PX = 46;
+export const EXERCISE_PICKER_OVERSCAN = 8;
+
 export const EXERCISE_PICKER_ROW_FLAGGED = "cursor-pointer opacity-90";
 
 export const EXERCISE_PICKER_ROW_NAME = "flex-1 truncate text-xs";
