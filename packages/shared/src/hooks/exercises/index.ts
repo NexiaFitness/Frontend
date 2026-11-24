@@ -22,7 +22,17 @@ export {
 } from '../../api/exercisesApi';
 
 // Exercises module hooks (GET and DELETE /exercises/; POST/PUT retired in H8-B)
-export { useGetExerciseLibraryQuery } from './exerciseLibraryApi';
+// Catálogo sin tope (PERF-7): todas las páginas y nombres por ids
+export {
+    useGetExerciseLibraryQuery,
+    useGetExercisePickerLibraryQuery,
+    useGetExercisesByIdsQuery,
+} from './exerciseLibraryApi';
+export {
+    useExerciseNamesByIds,
+    type UseExerciseNamesByIdsResult,
+} from './useExerciseNamesByIds';
+export * from '../../types/exerciseCatalogRead';
 
 export {
     useGetExercisesQuery,

@@ -1,70 +1,118 @@
 /**
- * exerciseLibraryApi.ts — Lecturas del catálogo completo de ejercicios.
+ * exerciseLibraryApi.ts — Lecturas del catálogo sin tope: todas las páginas y nombres por ids.
  *
  * Contexto: separado de useExercises.ts (regla de tamaño, agent.md §7.1), que contiene
- * GET /exercises/ por página. Aquí vive la carga de todas las páginas.
- * Notas de mantenimiento: el backend rechaza limit>1000 (422); se pagina con
- * EXERCISES_LIST_MAX_LIMIT.
+ * GET /exercises/ por página. PERF-7 §0.3: el catálogo no tiene tope.
+ * - getExerciseLibrary / getExercisePickerLibrary: GET /exercises/ (`view=full` /
+ *   `view=picker`) página a página hasta has_more=false, con los filtros del listado.
+ *   El listado oculta los ejercicios inactivos: es la única fuente de las listas para
+ *   elegir ejercicios (selector de sesión).
+ * - getExercisesByIds: GET /exercises/lookup troceado de EXERCISE_LOOKUP_MAX_IDS en
+ *   EXERCISE_LOOKUP_MAX_IDS. Devuelve también los inactivos: solo sirve para pintar el
+ *   nombre de contenido ya guardado, nunca para ofrecer ejercicios.
+ * Notas de mantenimiento: la paginación, la deduplicación y el troceo viven en
+ * utils/exerciseCatalogQuery.ts (probados sin red).
  *
  * @author Frontend Team
  * @since v6.2.0
  */
 
-import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import type { FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { baseApi } from "../../api/baseApi";
-import { EXERCISES_LIST_MAX_LIMIT } from "../../config/constants";
-import { exerciseListTags } from "../../utils/exerciseCatalogQuery";
-import type { Exercise, ExerciseListResponse } from "./useExercises";
+import { EXERCISE_LOOKUP_MAX_IDS, EXERCISES_LIST_MAX_LIMIT } from "../../config/constants";
+import type {
+    ExerciseCatalogAll,
+    ExerciseCatalogPage,
+    ExerciseListQueryFilters,
+    ExerciseLookupResponse,
+    ExercisePickerOut,
+} from "../../types/exerciseCatalogRead";
+import {
+    appendExerciseListFilters,
+    collectAllCatalogPages,
+    collectLookupChunks,
+    exerciseListTags,
+    exerciseLookupQuery,
+    normalizeExerciseIds,
+} from "../../utils/exerciseCatalogQuery";
+import type { Exercise } from "./useExercises";
+
+type FetchWithBaseQuery = (
+    arg: FetchArgs
+) => PromiseLike<{ data?: unknown; error?: unknown }> | { data?: unknown; error?: unknown };
+
+function libraryPageUrl(
+    view: "full" | "picker",
+    filters: ExerciseListQueryFilters,
+    skip: number,
+    limit: number
+): string {
+    const params = new URLSearchParams();
+    params.append("skip", String(skip));
+    params.append("limit", String(limit));
+    params.append("view", view);
+    appendExerciseListFilters(params, filters);
+    return `/exercises/?${params.toString()}`;
+}
+
+function fetchAllLibraryPages<T extends { id: number }>(
+    fetchWithBQ: FetchWithBaseQuery,
+    view: "full" | "picker",
+    filters: ExerciseListQueryFilters
+) {
+    return collectAllCatalogPages<T, FetchBaseQueryError>(async (skip, limit) => {
+        const res = await fetchWithBQ({
+            url: libraryPageUrl(view, filters, skip, limit),
+            method: "GET",
+        });
+        if (res.error) return { error: res.error as FetchBaseQueryError };
+        return { data: res.data as ExerciseCatalogPage<T> };
+    }, EXERCISES_LIST_MAX_LIMIT);
+}
 
 const exerciseLibraryApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        /**
-         * Biblioteca completa: pagina con limit=EXERCISES_LIST_MAX_LIMIT hasta has_more=false.
-         * El backend rechaza limit>1000 (422); este endpoint evita una sola petición inválida.
-         */
-        getExerciseLibrary: builder.query<ExerciseListResponse, void>({
-            async queryFn(_arg, _api, _extraOptions, fetchWithBQ) {
-                const pageSize = EXERCISES_LIST_MAX_LIMIT;
-                const merged: Exercise[] = [];
-                let skip = 0;
-                let reportedTotal = 0;
-
-                for (;;) {
-                    const res = await fetchWithBQ({
-                        url: `/exercises/?skip=${skip}&limit=${pageSize}`,
-                        method: "GET",
-                    });
-                    if (res.error) {
-                        return { error: res.error as FetchBaseQueryError };
+        /** Catálogo completo con ficha (`view=full`). */
+        getExerciseLibrary: builder.query<
+            ExerciseCatalogAll<Exercise>,
+            ExerciseListQueryFilters | void
+        >({
+            queryFn: (filters, _api, _extraOptions, fetchWithBQ) =>
+                fetchAllLibraryPages<Exercise>(fetchWithBQ, "full", filters ?? {}),
+            providesTags: (result) => exerciseListTags(result?.exercises),
+        }),
+        /** Catálogo completo para el selector de sesión (`view=picker`: id y nombres). */
+        getExercisePickerLibrary: builder.query<
+            ExerciseCatalogAll<ExercisePickerOut>,
+            ExerciseListQueryFilters
+        >({
+            queryFn: (filters, _api, _extraOptions, fetchWithBQ) =>
+                fetchAllLibraryPages<ExercisePickerOut>(fetchWithBQ, "picker", filters),
+            providesTags: (result) => exerciseListTags(result?.exercises),
+        }),
+        /** Ejercicios referenciados por id, activos o no. Usar vía useExerciseNamesByIds. */
+        getExercisesByIds: builder.query<ExerciseLookupResponse, readonly number[]>({
+            queryFn: (ids, _api, _extraOptions, fetchWithBQ) =>
+                collectLookupChunks<FetchBaseQueryError>(
+                    normalizeExerciseIds(ids),
+                    EXERCISE_LOOKUP_MAX_IDS,
+                    async (chunk) => {
+                        const res = await fetchWithBQ({
+                            url: `/exercises/lookup?${exerciseLookupQuery(chunk)}`,
+                            method: "GET",
+                        });
+                        if (res.error) return { error: res.error as FetchBaseQueryError };
+                        return { data: res.data as ExerciseLookupResponse };
                     }
-                    const page = res.data as ExerciseListResponse;
-                    if (skip === 0) {
-                        reportedTotal = page.total;
-                    }
-                    merged.push(...page.exercises);
-                    if (!page.has_more || page.exercises.length === 0) {
-                        break;
-                    }
-                    skip += pageSize;
-                    if (skip > reportedTotal + pageSize) {
-                        break;
-                    }
-                }
-
-                return {
-                    data: {
-                        exercises: merged,
-                        total: reportedTotal,
-                        skip: 0,
-                        limit: merged.length,
-                        has_more: false,
-                    },
-                };
-            },
+                ),
             providesTags: (result) => exerciseListTags(result?.exercises),
         }),
     }),
     overrideExisting: false,
 });
 
-export const { useGetExerciseLibraryQuery } = exerciseLibraryApi;
+export const {
+    useGetExerciseLibraryQuery,
+    useGetExercisePickerLibraryQuery,
+    useGetExercisesByIdsQuery,
+} = exerciseLibraryApi;
