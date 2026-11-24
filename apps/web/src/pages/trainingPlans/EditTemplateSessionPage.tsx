@@ -14,7 +14,7 @@ import {
     useUpdateTemplateProgramSessionMutation,
 } from "@nexia/shared/api/templateProgramApi";
 import { useGetTrainingBlockTypesQuery } from "@nexia/shared/api/sessionProgrammingApi";
-import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
+import { useExerciseNamesByIds } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName, getMutationErrorMessage } from "@nexia/shared";
 import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
 import { usePreserveDashboardScrollOnConstructorPicker } from "@/hooks/usePreserveDashboardScrollOnConstructorPicker";
@@ -33,6 +33,7 @@ import {
     applyExercisePickerSelection,
     formatConstructorValidationToast,
 } from "@/components/sessionProgramming/constructor";
+import { applyConstructorExerciseNames } from "@/components/sessionProgramming/constructor/utils/applyConstructorExerciseNames";
 import type { ExercisePickerOut } from "@nexia/shared/hooks/exercises";
 import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
 import { cn } from "@/lib/utils";
@@ -74,7 +75,14 @@ export const EditTemplateSessionPage: React.FC = () => {
     );
 
     const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });
-    const { data: exercisesData } = useGetExercisesQuery({ skip: 0, limit: 1000 });
+    const savedExerciseIds = useMemo(
+        () =>
+            (session?.blocks ?? []).flatMap((block) =>
+                block.exercises.map((exercise) => exercise.exercise_id),
+            ),
+        [session?.blocks],
+    );
+    const { namesById: exerciseNameById } = useExerciseNamesByIds(savedExerciseIds);
 
     const [updateSession, { isLoading: isUpdatingMeta }] = useUpdateTemplateProgramSessionMutation();
     const [replaceBlocks, { isLoading: isReplacingBlocks }] =
@@ -130,26 +138,8 @@ export const EditTemplateSessionPage: React.FC = () => {
     }, [session]);
 
     useEffect(() => {
-        if (!exercisesData?.exercises?.length) return;
-        const nameMap: Record<number, string> = {};
-        for (const ex of exercisesData.exercises) {
-            nameMap[ex.id] = ex.nombre;
-        }
-        setConstructorRows((prev) => {
-            if (prev.length === 0) return prev;
-            let changed = false;
-            const next = prev.map((row) => ({
-                ...row,
-                exercises: row.exercises.map((exercise) => {
-                    const resolved = nameMap[exercise.exerciseId];
-                    if (!resolved || exercise.exerciseName === resolved) return exercise;
-                    changed = true;
-                    return { ...exercise, exerciseName: resolved };
-                }),
-            }));
-            return changed ? next : prev;
-        });
-    }, [exercisesData]);
+        setConstructorRows((prev) => applyConstructorExerciseNames(prev, exerciseNameById));
+    }, [exerciseNameById, session]);
 
     const handleBack = useCallback(() => {
         navigate(`/dashboard/training-plans/templates/${templateId}/edit`);

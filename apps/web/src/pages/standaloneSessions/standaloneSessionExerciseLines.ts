@@ -50,7 +50,7 @@ export function buildStandaloneExerciseLinesFromConstructor(
 export function hydrateConstructorRowsFromStandaloneExercises(args: {
     exercises: StandaloneSessionExerciseOut[];
     defaultBlockTypeId: number;
-    exerciseNameById: Map<number, string>;
+    exerciseNameById: ReadonlyMap<number, string>;
 }): ConstructorRow[] {
     const sorted = [...args.exercises].sort(
         (a, b) => a.order_in_session - b.order_in_session,

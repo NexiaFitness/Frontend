@@ -13,6 +13,13 @@
 
 - `useGetExerciseLibraryQuery` acepta los filtros del listado y devuelve `ExerciseCatalogAll<Exercise>` (`exercises`, `equipment_filter_applied`); antes no tenía filtros y fabricaba `total/skip/limit/has_more`. Sin consumidores en el monorepo.
 - `ExerciseFilters` pasa a `Omit<ExerciseListQueryFilters, "contract">` (mismos campos). `getExercises` arma la query con `appendExerciseListFilters` (misma salida).
+- `useSessionStructureView` y `useSessionExercisesDisplay` piden solo los nombres de los ids guardados (`useExerciseNamesByIds`) en vez de descargar el catálogo. Un ejercicio desactivado conserva su nombre.
+- `sessionStructureLoading`: `isBlockStructureLoading` / `isLegacyStructureLoading` reciben `isLoadingExerciseNames`. Nuevos `blockExerciseIds` y `legacyExerciseIdsWithoutName`.
+- `athleteProgressUtils`: los mapas de nombres son `ReadonlyMap<number, string>`.
+
+### Removed
+
+- `needsExerciseCatalog` (sin consumidores): la carga de nombres depende de los ids, no del número de bloques.
 
 ## 6.1.13 — 2026-11-17
 

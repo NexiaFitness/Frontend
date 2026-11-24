@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ConstructorRow } from "../../constructorTypes";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 
-import { applyConstructorExerciseCatalogNames } from "./applyConstructorExerciseCatalogNames";
+import { applyConstructorExerciseNames } from "./applyConstructorExerciseNames";
 
 function rowWithExercise(exerciseId: number, exerciseName: string): ConstructorRow {
     return {
@@ -35,17 +35,17 @@ function rowWithExercise(exerciseId: number, exerciseName: string): ConstructorR
     };
 }
 
-describe("applyConstructorExerciseCatalogNames", () => {
+describe("applyConstructorExerciseNames", () => {
     it("sustituye nombres provisionales por el catálogo", () => {
         const map = new Map<number, string>([[14, "Press banca"]]);
         const rows = [rowWithExercise(14, "Ejercicio #14")];
-        const next = applyConstructorExerciseCatalogNames(rows, map);
+        const next = applyConstructorExerciseNames(rows, map);
         expect(next[0].exercises[0].exerciseName).toBe("Press banca");
     });
 
     it("no muta si el catálogo está vacío", () => {
         const rows = [rowWithExercise(14, "Ejercicio #14")];
-        const next = applyConstructorExerciseCatalogNames(rows, new Map());
+        const next = applyConstructorExerciseNames(rows, new Map());
         expect(next).toBe(rows);
     });
 
@@ -83,7 +83,7 @@ describe("applyConstructorExerciseCatalogNames", () => {
                 ],
             },
         ];
-        const next = applyConstructorExerciseCatalogNames(rows, map);
+        const next = applyConstructorExerciseNames(rows, map);
         expect(next[0].emomWindows?.[0].exercises[0].exerciseName).toBe("Press banca");
         expect(next[0].emomWindows?.[1].exercises[0].exerciseName).toBe("Press militar");
     });

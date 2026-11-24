@@ -8,7 +8,7 @@ import {
     useClientSetHistory,
     type SetHistoryDateRangeWeeks,
 } from "@nexia/shared/hooks/clients/useClientSetHistory";
-import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
+import { useExerciseNamesByIds } from "@nexia/shared/hooks/exercises";
 import type { ClientSetExecutionRow, ClientTimedBlockResultRow } from "@nexia/shared/types/trainerSetExecutions";
 import {
     formatSetExecutionLabel,
@@ -22,6 +22,7 @@ import {
 import { ClientExerciseLoadPanel } from "./ClientExerciseLoadPanel";
 import {
     SET_HISTORY_EMPTY_DESCRIPTION,
+    SET_HISTORY_EMPTY_TITLE,
     SET_HISTORY_SUBTITLE,
 } from "./clientSetHistoryPresentation";
 import { FormCombobox } from "@/components/ui/forms";
@@ -168,43 +169,54 @@ export const ClientSetHistoryPanel: React.FC<ClientSetHistoryPanelProps> = ({
             dateRangeWeeks,
         });
 
-    const needsCatalogFallback = exerciseOptions.length === 0;
-    const { data: catalogExercises } = useGetExercisesQuery(
-        { skip: 0, limit: 100 },
-        { skip: !needsCatalogFallback },
+    const selectedIdWithoutHistory =
+        resolvedExerciseId != null &&
+        !exerciseOptions.some((opt) => opt.id === resolvedExerciseId)
+            ? resolvedExerciseId
+            : null;
+    const { namesById: selectedExerciseNames } = useExerciseNamesByIds(
+        selectedIdWithoutHistory != null ? [selectedIdWithoutHistory] : [],
     );
 
     const filterExerciseOptions = useMemo(() => {
-        if (exerciseOptions.length > 0) {
+        const selectedName =
+            selectedIdWithoutHistory != null
+                ? selectedExerciseNames.get(selectedIdWithoutHistory)
+                : undefined;
+        if (selectedIdWithoutHistory == null || !selectedName) {
             return exerciseOptions;
         }
-        return (catalogExercises?.exercises ?? [])
-            .map((exercise) => ({ id: exercise.id, name: exercise.nombre }))
-            .sort((a, b) => a.name.localeCompare(b.name, "es"));
-    }, [catalogExercises?.exercises, exerciseOptions]);
+        return [...exerciseOptions, { id: selectedIdWithoutHistory, name: selectedName }].sort(
+            (a, b) => a.name.localeCompare(b.name, "es"),
+        );
+    }, [exerciseOptions, selectedIdWithoutHistory, selectedExerciseNames]);
+
+    const showExerciseFilter = filterExerciseOptions.length > 0 || resolvedExerciseId != null;
 
     const filterControls = useMemo(
         () => (
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-                <div className="flex min-w-[12rem] flex-1 flex-col gap-1">
-                    <span className="text-xs text-muted-foreground">Ejercicio</span>
-                    <FormCombobox
-                        value={exerciseId === "" ? "" : String(exerciseId)}
-                        onChange={(value) =>
-                            setExerciseId(value === "" ? "" : Number(value))
-                        }
-                        options={[
-                            { value: "", label: "Todos los ejercicios" },
-                            ...filterExerciseOptions.map((opt) => ({
-                                value: String(opt.id),
-                                label: opt.name,
-                            })),
-                        ]}
-                        placeholder="Todos los ejercicios"
-                        ariaLabel="Filtrar por ejercicio"
-                        size="sm"
-                    />
-                </div>
+                {showExerciseFilter && (
+                    <div className="flex min-w-[12rem] flex-1 flex-col gap-1">
+                        <span className="text-xs text-muted-foreground">Ejercicio</span>
+                        <FormCombobox
+                            value={exerciseId === "" ? "" : String(exerciseId)}
+                            onChange={(value) =>
+                                setExerciseId(value === "" ? "" : Number(value))
+                            }
+                            options={[
+                                { value: "", label: "Todos los ejercicios" },
+                                ...filterExerciseOptions.map((opt) => ({
+                                    value: String(opt.id),
+                                    label: opt.name,
+                                })),
+                            ]}
+                            placeholder="Todos los ejercicios"
+                            ariaLabel="Filtrar por ejercicio"
+                            size="sm"
+                        />
+                    </div>
+                )}
                 <div className="flex min-w-[12rem] flex-1 flex-col gap-1">
                     <span className="text-xs text-muted-foreground">Periodo</span>
                     <FormCombobox
@@ -224,7 +236,7 @@ export const ClientSetHistoryPanel: React.FC<ClientSetHistoryPanelProps> = ({
                 </div>
             </div>
         ),
-        [exerciseId, filterExerciseOptions, dateRangeWeeks],
+        [exerciseId, filterExerciseOptions, dateRangeWeeks, showExerciseFilter],
     );
 
     if (isLoading) {
@@ -288,7 +300,7 @@ export const ClientSetHistoryPanel: React.FC<ClientSetHistoryPanelProps> = ({
 
             {isEmpty ? (
                 <EmptyState
-                    title="Sin registros por serie aún"
+                    title={SET_HISTORY_EMPTY_TITLE}
                     description={SET_HISTORY_EMPTY_DESCRIPTION}
                 />
             ) : (

@@ -3,7 +3,7 @@
  *
  * Contexto:
  * - Combina las queries de session_blocks + session_block_exercises + training_block_types
- *   + catálogo de ejercicios, y aplica el reducer puro `mapBlocksToSessionStructureView`.
+ *   + nombres de los ejercicios por ids (useExerciseNamesByIds), y aplica el reducer puro `mapBlocksToSessionStructureView`.
  * - Para sesiones legacy (sin bloques) construye un único bloque sintético "Ejercicios"
  *   con un grupo single_set por cada SessionExercise.
  *
@@ -24,7 +24,7 @@ import {
     sessionProgrammingApi,
 } from "../../api/sessionProgrammingApi";
 import { useGetSessionExercisesQuery } from "../../api/trainingSessionsApi";
-import { useGetExercisesQuery } from "../exercises";
+import { useExerciseNamesByIds } from "../exercises";
 import {
     mapBlocksToSessionStructureView,
     type SessionStructureView,
@@ -39,9 +39,10 @@ import {
 import type { SessionExercise } from "../../types/trainingSessions";
 import type { AppDispatch } from "../../store";
 import {
+    blockExerciseIds,
     isBlockStructureLoading,
     isLegacyStructureLoading,
-    needsExerciseCatalog,
+    legacyExerciseIdsWithoutName,
 } from "./sessionStructureLoading";
 
 export type SessionStructureSource = "blocks" | "legacy";
@@ -151,16 +152,11 @@ export function useSessionStructureView(
     const isLoadingLegacy = legacyQuery.isFetching && legacyQuery.currentData === undefined;
     const isErrorLegacy = legacyQuery.isError;
 
-    const needsCatalog = needsExerciseCatalog(blocks.length, legacyExercises);
-
     const { data: blockTypes = [], isLoading: isLoadingBlockTypes } =
         useGetTrainingBlockTypesQuery(
             { skip: 0, limit: 100 },
             { skip: blocks.length === 0 }
         );
-
-    const { data: exercisesData, isLoading: isLoadingExerciseCatalog } =
-        useGetExercisesQuery({ skip: 0, limit: 500 }, { skip: !needsCatalog });
 
     useEffect(() => {
         if (blocks.length === 0) return;
@@ -203,22 +199,23 @@ export function useSessionStructureView(
         setReloadNonce((n) => n + 1);
     }, [legacyActive, refetchBlocks, refetchLegacy, sessionId]);
 
+    const idsToName =
+        blocks.length > 0
+            ? blockExerciseIds(
+                  blocks.map((b) => b.id),
+                  blockExercisesByBlock
+              )
+            : legacyExerciseIdsWithoutName(legacyExercises);
+    const { namesById, isLoading: isLoadingExerciseNames } = useExerciseNamesByIds(idsToName);
+
     const exerciseNamesById = useMemo<Record<number, string>>(() => {
-        const map: Record<number, string> = {};
-        if (exercisesData?.exercises) {
-            for (const ex of exercisesData.exercises) {
-                map[ex.id] = ex.nombre;
-            }
-        }
-        if (legacyExercises.length > 0) {
-            for (const ex of legacyExercises) {
-                if (ex.exercise?.nombre) {
-                    map[ex.exercise_id] = ex.exercise.nombre;
-                }
-            }
+        const map: Record<number, string> = Object.fromEntries(namesById);
+        for (const ex of legacyExercises) {
+            const legacyName = ex.exercise?.nombre?.trim();
+            if (legacyName) map[ex.exercise_id] = legacyName;
         }
         return map;
-    }, [exercisesData, legacyExercises]);
+    }, [namesById, legacyExercises]);
 
     return useMemo<UseSessionStructureViewResult>(() => {
         if (!sessionId || sessionId <= 0) {
@@ -238,7 +235,7 @@ export function useSessionStructureView(
                 blockIds: blocks.map((b) => b.id),
                 blockExercisesByBlock,
                 isLoadingBlockTypes,
-                isLoadingExerciseCatalog,
+                isLoadingExerciseNames,
             });
             const view = mapBlocksToSessionStructureView({
                 blocks,
@@ -274,7 +271,7 @@ export function useSessionStructureView(
         const isLoading = isLegacyStructureLoading({
             isLoadingLegacy,
             legacyExercises,
-            isLoadingExerciseCatalog,
+            isLoadingExerciseNames,
         });
 
         const { block, rows } = legacyExercisesToBlock(legacyExercises);
@@ -303,7 +300,7 @@ export function useSessionStructureView(
         legacyExercises,
         isLoadingBlocks,
         isLoadingBlockTypes,
-        isLoadingExerciseCatalog,
+        isLoadingExerciseNames,
         isLoadingLegacy,
         isErrorLegacy,
         blockExercisesError,

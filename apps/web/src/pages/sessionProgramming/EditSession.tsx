@@ -46,8 +46,8 @@ import {
     useGetTrainingBlockTypesQuery,
 } from "@nexia/shared/api/sessionProgrammingApi";
 import { sessionProgrammingApi } from "@nexia/shared/api/sessionProgrammingApi";
-import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
-import { applyConstructorExerciseCatalogNames } from "@/components/sessionProgramming/constructor/utils/applyConstructorExerciseCatalogNames";
+import { useExerciseNamesByIds } from "@nexia/shared/hooks/exercises";
+import { applyConstructorExerciseNames } from "@/components/sessionProgramming/constructor/utils/applyConstructorExerciseNames";
 import {
     exerciseDisplayName,
     normalizeSessionName,
@@ -393,7 +393,6 @@ export const EditSession: React.FC = () => {
 
     const dispatch = useDispatch<AppDispatch>();
     const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });
-    const { data: exercisesData } = useGetExercisesQuery({ skip: 0, limit: 1000 });
     const { data: blocks = [], isLoading: isLoadingSessionBlocks } = useGetSessionBlocksQuery(
         sessionId,
         {
@@ -401,13 +400,9 @@ export const EditSession: React.FC = () => {
         },
     );
 
-    const exerciseNameById = useMemo(() => {
-        const map = new Map<number, string>();
-        for (const ex of exercisesData?.exercises ?? []) {
-            map.set(ex.id, exerciseDisplayName(ex));
-        }
-        return map;
-    }, [exercisesData?.exercises]);
+    /** Ids guardados en la sesión; lo que se añade con el selector ya trae su nombre. */
+    const [savedExerciseIds, setSavedExerciseIds] = useState<number[]>([]);
+    const { namesById: exerciseNameById } = useExerciseNamesByIds(savedExerciseIds);
 
     const exerciseNameByIdRef = useRef(exerciseNameById);
     exerciseNameByIdRef.current = exerciseNameById;
@@ -415,6 +410,7 @@ export const EditSession: React.FC = () => {
     /** Al cambiar de sesión, vaciar constructor hasta que lleguen los bloques (evita mezclar sesiones). */
     useEffect(() => {
         setConstructorRows([]);
+        setSavedExerciseIds([]);
     }, [sessionId]);
 
     /**
@@ -473,8 +469,11 @@ export const EditSession: React.FC = () => {
 
             const rows = hydrateSessionBlocksToConstructorRows(sortedBlocks, hydrationByBlock);
 
+            setSavedExerciseIds(
+                Object.values(exercisesByBlock).flatMap((exs) => exs.map((ex) => ex.exercise_id)),
+            );
             setConstructorRows(
-                applyConstructorExerciseCatalogNames(rows, exerciseNameByIdRef.current),
+                applyConstructorExerciseNames(rows, exerciseNameByIdRef.current),
             );
         };
 
@@ -484,12 +483,12 @@ export const EditSession: React.FC = () => {
         };
     }, [sessionId, blocks, isLoadingSessionBlocks, dispatch]);
 
-    /** Catálogo en caché o tardío: resolver nombres sin re-hidratar bloques. */
+    /** Nombres en caché o tardíos: resolverlos sin re-hidratar bloques. */
     useEffect(() => {
         if (exerciseNameById.size === 0) return;
 
         setConstructorRows((prev) =>
-            applyConstructorExerciseCatalogNames(prev, exerciseNameById),
+            applyConstructorExerciseNames(prev, exerciseNameById),
         );
     }, [exerciseNameById]);
 
