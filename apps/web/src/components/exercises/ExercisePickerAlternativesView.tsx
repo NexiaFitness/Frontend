@@ -24,12 +24,14 @@ import { getAlternativesEmptyCopy } from "./exercisePickerPresentation";
 
 export interface ExercisePickerAlternativesViewProps {
     exerciseId: number | null;
+    exerciseName?: string;
     clientId?: number | null;
     onSelectAlternative: (exercise: Exercise) => void;
 }
 
 export const ExercisePickerAlternativesView: React.FC<ExercisePickerAlternativesViewProps> = ({
     exerciseId,
+    exerciseName,
     clientId,
     onSelectAlternative,
 }) => {
@@ -76,6 +78,9 @@ export const ExercisePickerAlternativesView: React.FC<ExercisePickerAlternatives
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Ejercicio original
                 </p>
+                {exerciseName ? (
+                    <p className="text-xs font-medium text-foreground truncate">{exerciseName}</p>
+                ) : null}
                 <div className="flex items-center gap-2">
                     {data.is_original_safe ? (
                         <CheckCircle2 className="h-3.5 w-3.5 text-success" />

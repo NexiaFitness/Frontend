@@ -169,6 +169,13 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
         (isLoadingBatch || safetyResults.size === 0) &&
         exercises.length > 0;
 
+    const selectedExerciseForAlternatives = exercises.find(
+        (e) => e.id === selectedExerciseIdForAlternatives
+    );
+    const selectedExerciseNameForAlternatives = selectedExerciseForAlternatives
+        ? exerciseDisplayName(selectedExerciseForAlternatives)
+        : undefined;
+
     const handleShowAlternatives = (exerciseId: number) => {
         setSelectedExerciseIdForAlternatives(exerciseId);
         setView("alternatives");
@@ -249,6 +256,7 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
             ) : (
                 <ExercisePickerAlternativesView
                     exerciseId={selectedExerciseIdForAlternatives}
+                    exerciseName={selectedExerciseNameForAlternatives}
                     clientId={clientId}
                     onSelectAlternative={handleSelectAlternative}
                 />

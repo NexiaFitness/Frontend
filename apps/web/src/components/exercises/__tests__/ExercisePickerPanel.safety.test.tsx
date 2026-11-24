@@ -227,6 +227,8 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
         await user.click(screen.getByRole("button", { name: /ver alternativas/i }));
 
         expect(await screen.findByRole("heading", { name: /alternativas sin hallazgo/i })).toBeInTheDocument();
+        expect(screen.getByText("Press contraindicado")).toBeInTheDocument();
+        expect(screen.getByText("Con hallazgo")).toBeInTheDocument();
 
         await user.click(screen.getByRole("button", { name: /Press alternativa segura/i }));
         expect(onSelect).toHaveBeenCalledTimes(1);
