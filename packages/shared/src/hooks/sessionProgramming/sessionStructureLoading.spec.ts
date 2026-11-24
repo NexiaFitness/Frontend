@@ -13,7 +13,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { SessionBlockExercise } from "../../types/sessionProgramming";
-import { areBlockExercisesLoaded, isBlockStructureLoading } from "./sessionStructureLoading";
+import type { SessionExercise } from "../../types/trainingSessions";
+import {
+    areBlockExercisesLoaded,
+    blockExerciseIds,
+    isBlockStructureLoading,
+    legacyExerciseIdsWithoutName,
+} from "./sessionStructureLoading";
 
 const rows = (blockId: number): SessionBlockExercise[] =>
     [{ id: blockId * 10, session_block_id: blockId } as SessionBlockExercise];
@@ -40,8 +46,42 @@ describe("isBlockStructureLoading (DBG-G-02)", () => {
                 blockIds: [1],
                 blockExercisesByBlock: previousSessionMap,
                 isLoadingBlockTypes: false,
-                isLoadingExerciseCatalog: false,
+                isLoadingExerciseNames: false,
             })
         ).toBe(true);
+    });
+
+    it("sigue cargando mientras llegan los nombres de los ejercicios", () => {
+        expect(
+            isBlockStructureLoading({
+                isLoadingBlocks: false,
+                blockIds: [7],
+                blockExercisesByBlock: previousSessionMap,
+                isLoadingBlockTypes: false,
+                isLoadingExerciseNames: true,
+            })
+        ).toBe(true);
+    });
+});
+
+describe("ids que se piden a /exercises/lookup (PERF-7)", () => {
+    const withExercise = (blockId: number, exerciseIds: number[]): SessionBlockExercise[] =>
+        exerciseIds.map(
+            (exerciseId, i) =>
+                ({ id: blockId * 10 + i, session_block_id: blockId, exercise_id: exerciseId }) as SessionBlockExercise
+        );
+
+    it("solo pide los ejercicios de los bloques actuales", () => {
+        const map = { 1: withExercise(1, [5, 6]), 2: withExercise(2, [9]), 7: withExercise(7, [99]) };
+        expect(blockExerciseIds([1, 2], map)).toEqual([5, 6, 9]);
+    });
+
+    it("en legacy solo pide los ejercicios que no traen nombre", () => {
+        const legacy: SessionExercise[] = [
+            { exercise_id: 1, exercise: { nombre: "Sentadilla" } } as SessionExercise,
+            { exercise_id: 2, exercise: { nombre: "  " } } as SessionExercise,
+            { exercise_id: 3 } as SessionExercise,
+        ];
+        expect(legacyExerciseIdsWithoutName(legacy)).toEqual([2, 3]);
     });
 });

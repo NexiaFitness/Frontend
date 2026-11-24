@@ -47,9 +47,8 @@ import {
 } from "@nexia/shared/api/standaloneSessionsApi";
 import { Badge } from "@/components/ui/Badge";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
-import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
+import { useExerciseNamesByIds } from "@nexia/shared/hooks/exercises";
 import {
-    exerciseDisplayName,
     labelSessionType,
     STANDALONE_SESSION_KIND_LABEL_ES,
 } from "@nexia/shared";
@@ -143,14 +142,12 @@ export const StandaloneSessionDetail: React.FC = () => {
         skip: !session?.client_id,
     });
 
-    const { data: exercisesCatalog } = useGetExercisesQuery({ skip: 0, limit: 1000 });
-    const exerciseNameById = useMemo(() => {
-        const map = new Map<number, string>();
-        for (const ex of exercisesCatalog?.exercises ?? []) {
-            map.set(ex.id, exerciseDisplayName(ex));
-        }
-        return map;
-    }, [exercisesCatalog?.exercises]);
+    const savedExerciseIds = useMemo(
+        () => exercises.map((exercise) => exercise.exercise_id),
+        [exercises],
+    );
+    const { namesById: exerciseNameById, isLoading: isLoadingExerciseNames } =
+        useExerciseNamesByIds(savedExerciseIds);
 
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined);
     const trainerId = trainerProfile?.id ?? 0;
@@ -361,7 +358,7 @@ export const StandaloneSessionDetail: React.FC = () => {
                         {displayExercises.length}
                     </span>
                 </div>
-                {isLoadingExercises ? (
+                {isLoadingExercises || isLoadingExerciseNames ? (
                     <div className="flex items-center justify-center py-8">
                         <LoadingSpinner size="md" />
                     </div>

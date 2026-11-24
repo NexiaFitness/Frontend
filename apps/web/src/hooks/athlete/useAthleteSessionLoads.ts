@@ -5,7 +5,7 @@
 import { useMemo } from "react";
 import { useGetClientProgressTrackingQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
-import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises/useExercises";
+import { useExerciseNamesByIds } from "@nexia/shared/hooks/exercises";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import {
     buildSessionLoadsWithComparison,
@@ -24,18 +24,9 @@ export function useAthleteSessionLoads(sessionDate: string | null | undefined) {
     const { data: sessions = [], isLoading: sessionsLoading } =
         useGetTrainingSessionsByClientQuery(clientId ?? 0, { skip: !clientId });
 
-    const { data: exerciseList, isLoading: exercisesLoading } = useGetExercisesQuery(
-        { skip: 0, limit: 500 },
-        { skip: !clientId }
-    );
-
-    const exerciseNames = useMemo(() => {
-        const map = new Map<number, string>();
-        for (const ex of exerciseList?.exercises ?? []) {
-            map.set(ex.id, ex.nombre);
-        }
-        return map;
-    }, [exerciseList?.exercises]);
+    const trackedExerciseIds = useMemo(() => tracking.map((row) => row.exercise_id), [tracking]);
+    const { namesById: exerciseNames, isLoading: exerciseNamesLoading } =
+        useExerciseNamesByIds(trackedExerciseIds);
 
     const loads = useMemo(() => {
         if (!sessionDate) return [];
@@ -55,6 +46,6 @@ export function useAthleteSessionLoads(sessionDate: string | null | undefined) {
     return {
         loads,
         previousSession,
-        isLoading: profileLoading || trackingLoading || sessionsLoading || exercisesLoading,
+        isLoading: profileLoading || trackingLoading || sessionsLoading || exerciseNamesLoading,
     };
 }

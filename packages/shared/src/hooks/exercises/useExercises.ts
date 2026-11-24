@@ -24,13 +24,16 @@
 
 import type {
     ExerciseContractFields,
-    ExerciseContractFilter,
     MuscleEvidenceFields,
 } from "../../types/exerciseContract";
+import type { ExerciseListQueryFilters } from "../../types/exerciseCatalogRead";
 import { useState, useMemo, useCallback } from "react";
-import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { baseApi } from "../../api/baseApi";
 import { EXERCISES_LIST_MAX_LIMIT } from "../../config/constants";
+import {
+    appendExerciseListFilters,
+    exerciseListTags,
+} from "../../utils/exerciseCatalogQuery";
 import type {
     ExerciseSafetyResponse,
     ExerciseSafetyCheckRequest,
@@ -128,27 +131,10 @@ export interface Exercise extends ExerciseContractFields {
 }
 
 /**
- * ExerciseFilters - Filtros para búsqueda de ejercicios
- * Backend query params: skip, limit, tipo?, nivel?, equipo?, patron_movimiento?, tipo_carga?, search?
+ * ExerciseFilters - Filtros de la biblioteca de ejercicios (sin `contract`).
+ * Backend query params: ver ExerciseListQueryFilters.
  */
-export interface ExerciseFilters {
-    tipo?: string;
-    nivel?: string;
-    equipo?: string;
-    patron_movimiento?: string;
-    tipo_carga?: string;
-    search?: string;
-    /** Filtro por IDs de grupo muscular (usa mapping tables, mas preciso que search) */
-    muscle_group_ids?: number[];
-    /** Filtro por IDs de equipamiento (usa mapping tables) */
-    equipment_ids?: number[];
-    /** Filtro por IDs de patrón de movimiento (Exercise Catalog) */
-    movement_pattern_ids?: number[];
-    /** Rol del patrón al filtrar: primary (default UI), secondary, any */
-    movement_pattern_role?: "primary" | "secondary" | "any";
-    /** Filtra ejercicios compatibles con el equipamiento del cliente */
-    client_id?: number;
-}
+export type ExerciseFilters = Omit<ExerciseListQueryFilters, "contract">;
 
 /**
  * ExerciseListResponse - Respuesta de GET /exercises/
@@ -200,22 +186,9 @@ export interface UseExercisesResult {
 /**
  * Query params para GET /exercises/
  */
-interface GetExercisesParams {
+interface GetExercisesParams extends ExerciseListQueryFilters {
     skip?: number;
     limit?: number;
-    tipo?: string;
-    nivel?: string;
-    equipo?: string;
-    patron_movimiento?: string;
-    tipo_carga?: string;
-    search?: string;
-    muscle_group_ids?: number[];
-    equipment_ids?: number[];
-    movement_pattern_ids?: number[];
-    movement_pattern_role?: "primary" | "secondary" | "any";
-    client_id?: number;
-    /** Por defecto el backend usa `all`; el selector que añade ejercicios pide `complete`. */
-    contract?: ExerciseContractFilter;
 }
 // ========================================
 
@@ -234,118 +207,14 @@ const exercisesListApi = baseApi.injectEndpoints({
                     EXERCISES_LIST_MAX_LIMIT
                 );
                 params.append("limit", String(safeLimit));
-                
-                if (filters.tipo) {
-                    params.append('tipo', filters.tipo);
-                }
-                if (filters.nivel) {
-                    params.append('nivel', filters.nivel);
-                }
-                if (filters.equipo) {
-                    params.append('equipo', filters.equipo);
-                }
-                if (filters.patron_movimiento) {
-                    params.append('patron_movimiento', filters.patron_movimiento);
-                }
-                if (filters.tipo_carga) {
-                    params.append('tipo_carga', filters.tipo_carga);
-                }
-                if (filters.search) {
-                    params.append('search', filters.search);
-                }
-                // Filtros por mapping tables (IDs)
-                if (filters.muscle_group_ids?.length) {
-                    for (const id of filters.muscle_group_ids) {
-                        params.append('muscle_group_ids', id.toString());
-                    }
-                }
-                if (filters.equipment_ids?.length) {
-                    for (const id of filters.equipment_ids) {
-                        params.append('equipment_ids', id.toString());
-                    }
-                }
-                if (filters.movement_pattern_ids?.length) {
-                    for (const id of filters.movement_pattern_ids) {
-                        params.append('movement_pattern_ids', id.toString());
-                    }
-                    params.append(
-                        'movement_pattern_role',
-                        filters.movement_pattern_role ?? 'primary',
-                    );
-                }
-                if (filters.client_id != null) {
-                    params.append('client_id', String(filters.client_id));
-                }
-                if (filters.contract) {
-                    params.append('contract', filters.contract);
-                }
+                appendExerciseListFilters(params, filters);
 
                 return {
                     url: `/exercises/?${params.toString()}`,
                     method: "GET",
                 };
             },
-            providesTags: (result) =>
-                result?.exercises
-                    ? [
-                        ...result.exercises.map(({ id }) => ({ type: "Exercise" as const, id })),
-                        { type: "Exercise", id: "LIST" },
-                    ]
-                    : [{ type: "Exercise", id: "LIST" }],
-        }),
-        /**
-         * Biblioteca completa: pagina con limit=EXERCISES_LIST_MAX_LIMIT hasta has_more=false.
-         * El backend rechaza limit>1000 (422); este endpoint evita una sola petición inválida.
-         */
-        getExerciseLibrary: builder.query<ExerciseListResponse, void>({
-            async queryFn(_arg, _api, _extraOptions, fetchWithBQ) {
-                const pageSize = EXERCISES_LIST_MAX_LIMIT;
-                const merged: Exercise[] = [];
-                let skip = 0;
-                let reportedTotal = 0;
-
-                for (;;) {
-                    const res = await fetchWithBQ({
-                        url: `/exercises/?skip=${skip}&limit=${pageSize}`,
-                        method: "GET",
-                    });
-                    if (res.error) {
-                        return { error: res.error as FetchBaseQueryError };
-                    }
-                    const page = res.data as ExerciseListResponse;
-                    if (skip === 0) {
-                        reportedTotal = page.total;
-                    }
-                    merged.push(...page.exercises);
-                    if (!page.has_more || page.exercises.length === 0) {
-                        break;
-                    }
-                    skip += pageSize;
-                    if (skip > reportedTotal + pageSize) {
-                        break;
-                    }
-                }
-
-                return {
-                    data: {
-                        exercises: merged,
-                        total: reportedTotal,
-                        skip: 0,
-                        limit: merged.length,
-                        has_more: false,
-                    },
-                };
-            },
-            providesTags: (result) =>
-                result?.exercises
-                    ? [
-                          ...result.exercises.map(({ id }) => ({
-                              type: "Exercise" as const,
-                              id,
-                          })),
-                          { type: "Exercise", id: "LIST" },
-                      ]
-                    : [{ type: "Exercise", id: "LIST" }],
+            providesTags: (result) => exerciseListTags(result?.exercises),
         }),
         getExerciseById: builder.query<Exercise, number>({
             query: (id) => ({
@@ -403,7 +272,6 @@ const exercisesListApi = baseApi.injectEndpoints({
 // Export hooks
 export const {
     useGetExercisesQuery,
-    useGetExerciseLibraryQuery,
     useGetExerciseByIdQuery,
     useDeleteExerciseMutation,
     useCheckExerciseSafetyMutation,

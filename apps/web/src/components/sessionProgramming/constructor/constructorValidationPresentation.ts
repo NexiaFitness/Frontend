@@ -21,3 +21,9 @@ export function emptySessionCreatedToast(isStandalone: boolean): string {
     }
     return "Sesión creada. Añade bloques al constructor cuando quieras programar ejercicios.";
 }
+
+export function sessionCreatedWithContentToast(blocks: number, exercises: number): string {
+    const blocksLabel = blocks === 1 ? "1 bloque" : `${blocks} bloques`;
+    const exercisesLabel = exercises === 1 ? "1 ejercicio" : `${exercises} ejercicios`;
+    return `Sesión creada con ${blocksLabel} y ${exercisesLabel}.`;
+}

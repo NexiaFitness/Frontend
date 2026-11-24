@@ -11,7 +11,13 @@ import type { SessionBlockCreate } from "@nexia/shared/types/sessionProgramming"
 import { mapConstructorRowsToCreateBlockGroups } from "./mapConstructorToSessionBlocks";
 
 export type PersistTrainingBlocksResult =
-    | { ok: true; blocksSaved: number; exercisesSaved: number }
+    | {
+          ok: true;
+          blocksSaved: number;
+          exercisesSaved: number;
+          /** Ejercicios distintos por fila del constructor: sus series no cuentan aparte. */
+          exercisesProgrammed: number;
+      }
     | {
           ok: false;
           blocksSaved: number;
@@ -38,6 +44,7 @@ export async function persistTrainingSessionConstructorContent(args: {
     const { sessionId, constructorRows, createSessionBlock, createSessionBlockExercise } = args;
     let blocksSaved = 0;
     let exercisesSaved = 0;
+    const programmedExercises = new Set<string>();
 
     const groups = mapConstructorRowsToCreateBlockGroups(constructorRows);
     const totalBlocks = groups.length;
@@ -74,6 +81,7 @@ export async function persistTrainingSessionConstructorContent(args: {
                     data: payload,
                 }).unwrap();
                 exercisesSaved++;
+                programmedExercises.add(`${payload.constructor_row_key}:${payload.exercise_id}`);
             } catch {
                 return {
                     ok: false,
@@ -85,7 +93,12 @@ export async function persistTrainingSessionConstructorContent(args: {
         }
     }
 
-    return { ok: true, blocksSaved, exercisesSaved };
+    return {
+        ok: true,
+        blocksSaved,
+        exercisesSaved,
+        exercisesProgrammed: programmedExercises.size,
+    };
 }
 
 export type StandaloneExerciseLine = {

@@ -1,7 +1,8 @@
 /**
  * exercisePickerPresentation.ts — Copy y clases de las filas del selector de ejercicios.
  *
- * Contexto: ExercisePickerRow (selector del constructor de sesión). H7: cuatro estados.
+ * Contexto: ExercisePickerRow y ExercisePickerAlternativesView (selector del constructor
+ * de sesión). H7: cuatro estados.
  * Tope y conflicto que bloquea = destructive en tinte glass; no verificable = warning
  * en tinte glass y con texto (nunca solo color); sin hallazgo = añadir.
  * Notas de mantenimiento: receta de tinte de DESIGN_PREMIUM §3.1 (borde /30-/40, fondo
@@ -11,6 +12,7 @@
  * @since @nexia/shared 2.0.0 (H4)
  */
 
+import type { AlternativesEmptyReason } from "@nexia/shared/types/engineSafety";
 import { cn } from "@/lib/utils";
 
 export const EXERCISE_PICKER_COPY = {
@@ -30,6 +32,7 @@ export const EXERCISE_PICKER_COPY = {
     batchFailed:
         "No se pudo comprobar la seguridad. Ningún ejercicio se marca como sin hallazgo.",
     retry: "Reintentar",
+    catalogFailed: "No se pudo cargar la lista de ejercicios.",
     uncheckedLabel: "Seguridad sin comprobar",
     injuryBanner: "Ejercicios con hallazgo marcados.",
 } as const;
@@ -39,6 +42,18 @@ export const EXERCISE_PICKER_INJURY_BANNER =
 
 export const EXERCISE_PICKER_ROW =
     "flex min-h-touch w-full items-center gap-2 rounded-md px-2 text-left transition-colors hover:bg-surface-2";
+
+/** Lista virtualizada (PERF-7 FE-2): solo se montan las filas visibles. */
+export const EXERCISE_PICKER_LIST_SCROLL = "flex-1 overflow-y-auto px-3 py-3 min-h-0 scrollbar-primary";
+export const EXERCISE_PICKER_LIST_CANVAS = "relative w-full";
+export const EXERCISE_PICKER_LIST_ITEM = "absolute left-0 top-0 w-full";
+export const EXERCISE_PICKER_LETTER = "block pb-1 text-[11px] font-bold text-primary/70";
+export const EXERCISE_PICKER_LETTER_GAP = "pt-3";
+export const EXERCISE_PICKER_ROW_SLOT = "pb-0.5";
+/** Estimaciones iniciales; la altura real se mide (las filas con aviso se expanden). */
+export const EXERCISE_PICKER_ESTIMATED_LETTER_PX = 32;
+export const EXERCISE_PICKER_ESTIMATED_ROW_PX = 46;
+export const EXERCISE_PICKER_OVERSCAN = 8;
 
 export const EXERCISE_PICKER_ROW_FLAGGED = "cursor-pointer opacity-90";
 
@@ -107,3 +122,51 @@ export const EXERCISE_PICKER_ACTION_CAUTION = cn(
 );
 
 export const EXERCISE_PICKER_BATCH_ALERT = "mx-3 mt-2 text-xs";
+
+/** Copy del estado vacío de «Alternativas sin hallazgo» según el motivo del backend. */
+export function getAlternativesEmptyCopy(reason: AlternativesEmptyReason): {
+    title: string;
+    subtitle?: string;
+} {
+    switch (reason) {
+        case "injury_filter":
+            return {
+                title:
+                    "Con la lesión activa de este cliente, no hay otro ejercicio seguro que trabaje los mismos músculos de forma compatible.",
+                subtitle:
+                    "Revisa su perfil de lesiones o elige otro ejercicio para esta serie.",
+            };
+        case "score_threshold":
+            return {
+                title:
+                    "No encontramos sustitutos automáticos con buen encaje para este ejercicio.",
+                subtitle:
+                    "Prueba otro ejercicio del mismo grupo muscular o el que sueles usar como alternativa.",
+            };
+        case "no_pool":
+            return {
+                title:
+                    "En la biblioteca no hay otro ejercicio con los mismos músculos principales.",
+                subtitle:
+                    "Elige otro ejercicio para la sesión o avisa si falta alguno en la biblioteca.",
+            };
+        case "joint_catalog":
+            return {
+                title:
+                    "No podemos proponer sustitutos automáticos porque faltan datos técnicos del movimiento en la biblioteca.",
+                subtitle:
+                    "Elige otro ejercicio manualmente o contacta con soporte si crees que debería haber alternativas.",
+            };
+        case "manual_empty":
+            return {
+                title:
+                    "Las alternativas que tenías guardadas para este ejercicio no son compatibles con la lesión actual del cliente.",
+                subtitle: "Elige otro ejercicio o actualiza sus alternativas habituales.",
+            };
+        default:
+            return {
+                title: "No hay alternativas seguras sugeridas para este ejercicio.",
+                subtitle: "Prueba otro ejercicio o revisa el perfil del cliente.",
+            };
+    }
+}

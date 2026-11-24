@@ -74,7 +74,7 @@ describe("useSessionStructureView — cambio de sessionId (DBG-G-02)", () => {
                 return HttpResponse.json([blockExercise(2001, 201, 9)]);
             }),
             http.get("*/session-programming/training-block-types", () => HttpResponse.json([])),
-            http.get("*/exercises/", () => HttpResponse.json({ exercises: [], total: 0, skip: 0, limit: 500 })),
+            http.get("*/exercises/lookup", () => HttpResponse.json({ exercises: [] })),
             http.get("*/training-sessions/:id/exercises", () => HttpResponse.json([]))
         );
 

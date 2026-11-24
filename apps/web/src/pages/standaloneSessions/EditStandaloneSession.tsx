@@ -20,7 +20,7 @@ import {
     useDeleteStandaloneSessionExerciseMutation,
 } from "@nexia/shared/api/standaloneSessionsApi";
 import { useGetTrainingBlockTypesQuery } from "@nexia/shared/api/sessionProgrammingApi";
-import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
+import { useExerciseNamesByIds } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
 import { navigateAfterSessionDelete, navigateDashboardBack, readSafeReturnTo } from "@/lib/sessionDetailNavigation";
 import { SESSION_TYPES } from "@/pages/sessionProgramming/sessionFormConstants";
@@ -35,7 +35,7 @@ import {
 import { useConstructorValidation } from "@/hooks/useConstructorValidation";
 import { useScrollToConstructorValidationIssue } from "@/hooks/useScrollToConstructorValidationIssue";
 import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
-import type { Exercise } from "@nexia/shared/hooks/exercises";
+import type { ExercisePickerOut } from "@nexia/shared/hooks/exercises";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import { syncStandaloneSessionExercises } from "@/pages/sessionProgramming/persistCreateSessionContent";
 import {
@@ -68,7 +68,12 @@ export const EditStandaloneSession: React.FC = () => {
             skip: !sessionId || Number.isNaN(sessionId),
         });
     const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });
-    const { data: exercisesData } = useGetExercisesQuery({ skip: 0, limit: 1000 });
+    const savedExerciseIds = useMemo(
+        () => sessionExercises.map((exercise) => exercise.exercise_id),
+        [sessionExercises],
+    );
+    const { namesById: exerciseNameById, isLoading: exerciseNamesLoading } =
+        useExerciseNamesByIds(savedExerciseIds);
 
     const [updateSession, { isLoading: isSaving }] = useUpdateStandaloneSessionMutation();
     const [deleteSession, { isLoading: isDeleting }] = useDeleteStandaloneSessionMutation();
@@ -93,14 +98,6 @@ export const EditStandaloneSession: React.FC = () => {
     const scrollToConstructorIssue = useScrollToConstructorValidationIssue();
 
     const defaultBlockTypeId = blockTypes[0]?.id ?? 0;
-    const exerciseNameById = useMemo(() => {
-        const map = new Map<number, string>();
-        for (const ex of exercisesData?.exercises ?? []) {
-            map.set(ex.id, exerciseDisplayName(ex));
-        }
-        return map;
-    }, [exercisesData?.exercises]);
-
     useEffect(() => {
         exercisesHydratedRef.current = false;
         setConstructorRows([]);
@@ -118,7 +115,14 @@ export const EditStandaloneSession: React.FC = () => {
     }, [session]);
 
     useEffect(() => {
-        if (exercisesHydratedRef.current || exercisesLoading || !defaultBlockTypeId) return;
+        if (
+            exercisesHydratedRef.current ||
+            exercisesLoading ||
+            exerciseNamesLoading ||
+            !defaultBlockTypeId
+        ) {
+            return;
+        }
         exercisesHydratedRef.current = true;
         setConstructorRows(
             hydrateConstructorRowsFromStandaloneExercises({
@@ -127,7 +131,13 @@ export const EditStandaloneSession: React.FC = () => {
                 exerciseNameById,
             }),
         );
-    }, [sessionExercises, exercisesLoading, defaultBlockTypeId, exerciseNameById]);
+    }, [
+        sessionExercises,
+        exercisesLoading,
+        exerciseNamesLoading,
+        defaultBlockTypeId,
+        exerciseNameById,
+    ]);
 
     const handleAddExerciseRequest = useCallback(
         (rowId: string, exerciseSlotId?: string) => {
@@ -139,7 +149,7 @@ export const EditStandaloneSession: React.FC = () => {
     );
 
     const handleSelectFromPicker = useCallback(
-        (exercise: Exercise) => {
+        (exercise: ExercisePickerOut) => {
             if (!targetRowIdForPicker) return;
             setConstructorRows((prev) =>
                 applyExercisePickerSelection(

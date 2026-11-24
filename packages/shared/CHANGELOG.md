@@ -1,5 +1,26 @@
 # Changelog — @nexia/shared
 
+## 6.2.0 — 2026-11-24
+
+### Added (PERF-7, catálogo sin tope)
+
+- `useGetExercisePickerLibraryQuery(filters)`: catálogo completo para el selector de sesión (`view=picker`), página a página de `EXERCISES_LIST_MAX_LIMIT` hasta `has_more=false`, sin duplicados. Si una página falla devuelve error, nunca una lista parcial.
+- `useExerciseNamesByIds(ids)` y `useGetExercisesByIdsQuery`: nombres de contenido ya guardado vía `GET /exercises/lookup`, en trozos de `EXERCISE_LOOKUP_MAX_IDS` (200). Incluye ejercicios desactivados (`is_active`). Solo para pintar lo guardado; las listas para elegir usan el listado.
+- Tipos `types/exerciseCatalogRead.ts` (copiados del OpenAPI): `ExerciseListQueryFilters`, `ExercisePickerOut`, `ExerciseLookupOut`, `ExerciseCatalogAll`, `EquipmentFilterApplied`...
+- `utils/exerciseCatalogQuery.ts`: parámetros del listado, recorrido de páginas, normalización y troceo de ids (puras, con tests).
+
+### Changed
+
+- `useGetExerciseLibraryQuery` acepta los filtros del listado y devuelve `ExerciseCatalogAll<Exercise>` (`exercises`, `equipment_filter_applied`); antes no tenía filtros y fabricaba `total/skip/limit/has_more`. Sin consumidores en el monorepo.
+- `ExerciseFilters` pasa a `Omit<ExerciseListQueryFilters, "contract">` (mismos campos). `getExercises` arma la query con `appendExerciseListFilters` (misma salida).
+- `useSessionStructureView` y `useSessionExercisesDisplay` piden solo los nombres de los ids guardados (`useExerciseNamesByIds`) en vez de descargar el catálogo. Un ejercicio desactivado conserva su nombre.
+- `sessionStructureLoading`: `isBlockStructureLoading` / `isLegacyStructureLoading` reciben `isLoadingExerciseNames`. Nuevos `blockExerciseIds` y `legacyExerciseIdsWithoutName`.
+- `athleteProgressUtils`: los mapas de nombres son `ReadonlyMap<number, string>`.
+
+### Removed
+
+- `needsExerciseCatalog` (sin consumidores): la carga de nombres depende de los ids, no del número de bloques.
+
 ## 6.1.13 — 2026-11-17
 
 ### Changed (volumen del constructor)

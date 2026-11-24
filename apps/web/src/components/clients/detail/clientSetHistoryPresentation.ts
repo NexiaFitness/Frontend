@@ -5,5 +5,7 @@
 export const SET_HISTORY_SUBTITLE =
     "Series de fuerza y bloques AMRAP/EMOM/For Time que el atleta registró en sesión.";
 
+export const SET_HISTORY_EMPTY_TITLE = "Sin registros por serie aún";
+
 export const SET_HISTORY_EMPTY_DESCRIPTION =
     "Cuando el atleta complete series en sesión, aparecerán aquí agrupadas por sesión.";

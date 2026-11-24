@@ -1,6 +1,6 @@
 /**
- * Resuelve exerciseName en filas del constructor desde el catálogo (id → nombre).
- * Una sola función para hidratación y actualización de caché RTK.
+ * Resuelve exerciseName en filas del constructor desde un mapa id → nombre
+ * (useExerciseNamesByIds). Una sola función para hidratación y nombres tardíos.
  * Incluye `emomWindows`: el EMOM no guarda líneas en `row.exercises`.
  */
 
@@ -25,7 +25,7 @@ function resolveExerciseNames(
     return { next, changed };
 }
 
-export function applyConstructorExerciseCatalogNames(
+export function applyConstructorExerciseNames(
     rows: ConstructorRow[],
     exerciseNameById: ReadonlyMap<number, string>,
 ): ConstructorRow[] {

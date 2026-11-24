@@ -2,18 +2,24 @@
  * ExercisePickerPanel.tsx — Panel lateral de seleccion de ejercicios
  *
  * Contexto:
- * - Panel fijo 300px a la derecha del Constructor (no overlay).
- * - Visible cuando exercisePickerOpen && viewport >= lg.
- * - En movil (< lg): oculto (hidden). Flujo alternativo: drawer/modal.
+ * - Inline (constructor): 300px a la derecha del bloque desde lg; por debajo, debajo del
+ *   bloque y a todo el ancho (a 375px la fila en edición quedaba con 0px).
+ * - Sidebar: overlay fijo a la derecha en móvil, en flujo desde lg.
  * - Lista agrupada por letra inicial, busqueda en tiempo real.
  * - Fase 4: safety-check batch via motor real, alternativas integradas en panel.
  * - H7: si blocking es verdadero no hay botón de añadir. Un aviso articular sin bloqueo
  *   sigue con «Añadir con precaución». Si el lote falla, se avisa y ninguna fila se pinta
  *   como sin hallazgo.
- * - Más de 400 líneas (deuda previa, 562 antes de H4): panel, lista y vista de alternativas
- *   comparten el estado de seguridad. H4 extrajo la fila (ExercisePickerRow); la vista de
- *   alternativas es la siguiente extracción pendiente.
- * - Reutilizable: CreateSession, EditSession.
+ * - Lista en ExercisePickerList, fila en ExercisePickerRow (H4) y vista de alternativas en
+ *   ExercisePickerAlternativesView (PERF-7). Este archivo guarda el catálogo, el lote de
+ *   seguridad y el filtrado, que la lista solo pinta.
+ * - PERF-7: el catálogo no tiene tope. La lista sale del listado `view=picker` (todas las
+ *   páginas, useGetExercisePickerLibraryQuery), que oculta los ejercicios inactivos.
+ *   Nunca usar aquí el lookup por ids (useExerciseNamesByIds): resuelve inactivos y solo
+ *   sirve para pintar contenido ya guardado.
+ * - Sin clientId (plantillas) no hay lote de seguridad: la fila no lleva estado y se añade
+ *   con un clic. Con cliente, nada se añade hasta que el lote trae veredicto.
+ * - Reutilizable: CreateSession, EditSession, plantillas y sesiones sueltas.
  *
  * @author Frontend Team
  * @since v6.4.0
@@ -21,32 +27,21 @@
  */
 
 import React, { useEffect, useMemo, useState } from "react";
-import { X, Search, Plus, TriangleAlert, ArrowLeft, CheckCircle2, RotateCcw } from "lucide-react";
+import { X, ArrowLeft } from "lucide-react";
 import {
-    useGetExercisesQuery,
+    useGetExercisePickerLibraryQuery,
     useCheckExerciseSafetyBatchMutation,
-    useGetSafeAlternativesQuery,
 } from "@nexia/shared/hooks/exercises";
-import type { Exercise } from "@nexia/shared/hooks/exercises";
+import type { Exercise, ExercisePickerOut } from "@nexia/shared/hooks/exercises";
 import type {
-    AlternativesEmptyReason,
     ExerciseSafetyResponse,
     ExerciseSafetyBatchResponse,
 } from "@nexia/shared/types/engineSafety";
 import { exerciseDisplayName } from "@nexia/shared";
-import { exerciseSafetyUiState } from "@nexia/shared/utils/exerciseSafetyState";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
-import { LoadingSpinner, Alert, NexiaSemanticIcon } from "@/components/ui/feedback";
-import { Input } from "@/components/ui/forms";
 import { cn } from "@/lib/utils";
-import { equipmentDisplayLine } from "@/utils/exercises";
-import { Button } from "@/components/ui/buttons";
-import { ExercisePickerRow } from "./ExercisePickerRow";
-import {
-    EXERCISE_PICKER_BATCH_ALERT,
-    EXERCISE_PICKER_COPY,
-    EXERCISE_PICKER_INJURY_BANNER,
-} from "./exercisePickerPresentation";
+import { ExercisePickerAlternativesView } from "./ExercisePickerAlternativesView";
+import { ExercisePickerList } from "./ExercisePickerList";
 
 /** Normaliza texto para búsqueda insensible a mayúsculas y tildes. */
 function foldForSearch(value: string): string {
@@ -56,8 +51,10 @@ function foldForSearch(value: string): string {
         .toLowerCase();
 }
 
-function groupExercisesByLetter(exercises: Exercise[]): [string, Exercise[]][] {
-    const map = new Map<string, Exercise[]>();
+function groupExercisesByLetter(
+    exercises: ExercisePickerOut[]
+): [string, ExercisePickerOut[]][] {
+    const map = new Map<string, ExercisePickerOut[]>();
     for (const ex of exercises) {
         const letter = (exerciseDisplayName(ex)[0] ?? "?").toUpperCase();
         const list = map.get(letter) ?? [];
@@ -70,7 +67,8 @@ function groupExercisesByLetter(exercises: Exercise[]): [string, Exercise[]][] {
 export interface ExercisePickerPanelProps {
     isOpen: boolean;
     onClose: () => void;
-    onSelect: (exercise: Exercise) => void;
+    /** Recibe la fila del selector (o la alternativa elegida): id y nombres. */
+    onSelect: (exercise: ExercisePickerOut) => void;
     clientId?: number | null;
     activeInjuries?: InjuryWithDetails[];
     mode?: 'sidebar' | 'inline';
@@ -93,9 +91,12 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
     const [safetyRetry, setSafetyRetry] = useState(0);
 
     // Solo ejercicios con contrato completo: los incompletos no se pueden añadir (H1 R3).
-    const { data, isLoading } = useGetExercisesQuery({
-        skip: 0,
-        limit: 500,
+    const {
+        data,
+        isLoading,
+        isError: catalogFailed,
+        refetch: refetchCatalog,
+    } = useGetExercisePickerLibraryQuery({
         contract: "complete",
         ...(clientId != null ? { client_id: clientId } : {}),
     });
@@ -161,6 +162,13 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
         (isLoadingBatch || safetyResults.size === 0) &&
         exercises.length > 0;
 
+    const selectedExerciseForAlternatives = exercises.find(
+        (e) => e.id === selectedExerciseIdForAlternatives
+    );
+    const selectedExerciseNameForAlternatives = selectedExerciseForAlternatives
+        ? exerciseDisplayName(selectedExerciseForAlternatives)
+        : undefined;
+
     const handleShowAlternatives = (exerciseId: number) => {
         setSelectedExerciseIdForAlternatives(exerciseId);
         setView("alternatives");
@@ -184,7 +192,8 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
         <div
             className={cn(
                 "rounded-lg border border-border border-l-2 border-l-primary bg-card text-card-foreground shadow-sm overflow-hidden",
-                "flex w-[300px] shrink-0 flex-col self-start",
+                "flex shrink-0 flex-col self-start",
+                mode === 'inline' ? "w-full lg:w-[300px]" : "w-[300px]",
                 "max-h-[600px] lg:max-h-[600px]",
                 mode === 'sidebar' && [
                     "fixed right-0 top-0 bottom-0 z-50 shadow-xl",
@@ -220,13 +229,16 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
             </div>
 
             {view === "list" ? (
-                <ListView
+                <ExercisePickerList
                     isLoading={isLoading}
+                    catalogFailed={catalogFailed}
+                    onRetryCatalog={() => void refetchCatalog()}
                     isLoadingBatch={isLoadingBatch}
                     hasActiveInjuries={hasActiveInjuries}
                     search={search}
                     setSearch={setSearch}
                     filteredAndGrouped={filteredAndGrouped}
+                    safetyApplies={clientId != null}
                     safetyResults={safetyResults}
                     safetyCheckFailed={safetyCheckFailed}
                     safetyPending={safetyPending}
@@ -237,311 +249,12 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
                     onShowAlternatives={handleShowAlternatives}
                 />
             ) : (
-                <AlternativesView
+                <ExercisePickerAlternativesView
                     exerciseId={selectedExerciseIdForAlternatives}
+                    exerciseName={selectedExerciseNameForAlternatives}
                     clientId={clientId}
                     onSelectAlternative={handleSelectAlternative}
                 />
-            )}
-        </div>
-    );
-};
-
-// ---------------------------------------------------------------------------
-// Sub-component: List view
-// ---------------------------------------------------------------------------
-
-interface ListViewProps {
-    isLoading: boolean;
-    isLoadingBatch: boolean;
-    hasActiveInjuries: boolean;
-    search: string;
-    setSearch: (s: string) => void;
-    filteredAndGrouped: [string, Exercise[]][];
-    safetyResults: Map<number, ExerciseSafetyResponse>;
-    safetyCheckFailed: boolean;
-    safetyPending: boolean;
-    onRetrySafety: () => void;
-    expandedExerciseId: number | null;
-    setExpandedExerciseId: (id: number | null) => void;
-    onSelect: (exercise: Exercise) => void;
-    onShowAlternatives: (exerciseId: number) => void;
-}
-
-const ListView: React.FC<ListViewProps> = ({
-    isLoading,
-    isLoadingBatch,
-    hasActiveInjuries,
-    search,
-    setSearch,
-    filteredAndGrouped,
-    safetyResults,
-    safetyCheckFailed,
-    safetyPending,
-    onRetrySafety,
-    expandedExerciseId,
-    setExpandedExerciseId,
-    onSelect,
-    onShowAlternatives,
-}) => {
-    return (
-        <>
-            {/* Aviso lesiones */}
-            {hasActiveInjuries && (
-                <div className={EXERCISE_PICKER_INJURY_BANNER}>
-                    <NexiaSemanticIcon tone="warning" size="sm" />
-                    <span>{EXERCISE_PICKER_COPY.injuryBanner}</span>
-                </div>
-            )}
-
-            {/* Batch loading indicator */}
-            {isLoadingBatch && (
-                <div className="mx-3 mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
-                    <LoadingSpinner size="sm" />
-                    <span>Verificando seguridad...</span>
-                </div>
-            )}
-
-            {safetyCheckFailed ? (
-                <Alert
-                    variant="error"
-                    className={EXERCISE_PICKER_BATCH_ALERT}
-                    description={EXERCISE_PICKER_COPY.batchFailed}
-                    action={
-                        <Button variant="ghost-primary" size="sm" onClick={onRetrySafety}>
-                            <RotateCcw aria-hidden />
-                            {EXERCISE_PICKER_COPY.retry}
-                        </Button>
-                    }
-                />
-            ) : null}
-
-            {/* Busqueda */}
-            <div className="relative mx-3 mt-3 min-w-0">
-                <Search className="absolute left-2 top-1.5 h-3 w-3 text-primary pointer-events-none z-10" />
-                <Input
-                    type="text"
-                    size="compact"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar ejercicio..."
-                    className="w-full pl-7"
-                    aria-label="Buscar ejercicio"
-                />
-            </div>
-
-            {/* Lista */}
-            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-0 scrollbar-primary">
-                {isLoading ? (
-                    <div className="flex justify-center py-12">
-                        <LoadingSpinner size="md" />
-                    </div>
-                ) : filteredAndGrouped.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                        No se encontraron ejercicios.
-                    </p>
-                ) : (
-                    filteredAndGrouped.map(([letter, groupExercises]) => (
-                        <div key={letter}>
-                            <span className="block text-[11px] font-bold text-primary/70 mb-1">
-                                {letter}
-                            </span>
-                            <div className="space-y-0.5">
-                                {groupExercises.map((ex) => {
-                                    const safety = safetyResults.get(ex.id);
-                                    const isExpanded = expandedExerciseId === ex.id;
-                                    return (
-                                        <ExercisePickerRow
-                                            key={ex.id}
-                                            exercise={ex}
-                                            safety={safety}
-                                            state={exerciseSafetyUiState(safety, {
-                                                checkFailed: safetyCheckFailed,
-                                                checkPending: safetyPending && safety == null,
-                                            })}
-                                            isExpanded={isExpanded}
-                                            onToggle={() => setExpandedExerciseId(isExpanded ? null : ex.id)}
-                                            onSelect={onSelect}
-                                            onShowAlternatives={onShowAlternatives}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
-        </>
-    );
-};
-
-// ---------------------------------------------------------------------------
-// Sub-component: Alternatives view
-// ---------------------------------------------------------------------------
-
-function getAlternativesEmptyCopy(reason: AlternativesEmptyReason): {
-    title: string;
-    subtitle?: string;
-} {
-    switch (reason) {
-        case "injury_filter":
-            return {
-                title:
-                    "Con la lesión activa de este cliente, no hay otro ejercicio seguro que trabaje los mismos músculos de forma compatible.",
-                subtitle:
-                    "Revisa su perfil de lesiones o elige otro ejercicio para esta serie.",
-            };
-        case "score_threshold":
-            return {
-                title:
-                    "No encontramos sustitutos automáticos con buen encaje para este ejercicio.",
-                subtitle:
-                    "Prueba otro ejercicio del mismo grupo muscular o el que sueles usar como alternativa.",
-            };
-        case "no_pool":
-            return {
-                title:
-                    "En la biblioteca no hay otro ejercicio con los mismos músculos principales.",
-                subtitle:
-                    "Elige otro ejercicio para la sesión o avisa si falta alguno en la biblioteca.",
-            };
-        case "joint_catalog":
-            return {
-                title:
-                    "No podemos proponer sustitutos automáticos porque faltan datos técnicos del movimiento en la biblioteca.",
-                subtitle:
-                    "Elige otro ejercicio manualmente o contacta con soporte si crees que debería haber alternativas.",
-            };
-        case "manual_empty":
-            return {
-                title:
-                    "Las alternativas que tenías guardadas para este ejercicio no son compatibles con la lesión actual del cliente.",
-                subtitle: "Elige otro ejercicio o actualiza sus alternativas habituales.",
-            };
-        default:
-            return {
-                title: "No hay alternativas seguras sugeridas para este ejercicio.",
-                subtitle: "Prueba otro ejercicio o revisa el perfil del cliente.",
-            };
-    }
-}
-
-interface AlternativesViewProps {
-    exerciseId: number | null;
-    clientId?: number | null;
-    onSelectAlternative: (exercise: Exercise) => void;
-}
-
-const AlternativesView: React.FC<AlternativesViewProps> = ({
-    exerciseId,
-    clientId,
-    onSelectAlternative,
-}) => {
-    const { data, isLoading, isError } = useGetSafeAlternativesQuery(
-        { exerciseId: exerciseId ?? 0, clientId: clientId ?? 0 },
-        { skip: !exerciseId || !clientId }
-    );
-
-    if (!exerciseId || !clientId) {
-        return (
-            <div className="flex-1 flex items-center justify-center p-6">
-                <p className="text-sm text-muted-foreground">Selecciona un ejercicio.</p>
-            </div>
-        );
-    }
-
-    if (isLoading) {
-        return (
-            <div className="flex-1 flex items-center justify-center p-6">
-                <LoadingSpinner size="md" />
-            </div>
-        );
-    }
-
-    if (isError || !data) {
-        return (
-            <div className="flex-1 p-4">
-                <Alert variant="error">No se pudieron cargar las alternativas.</Alert>
-            </div>
-        );
-    }
-
-    return (
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-0 scrollbar-primary">
-            {/* Original exercise */}
-            <div
-                className={cn(
-                    "rounded-md border p-3 space-y-1",
-                    data.is_original_safe
-                        ? "border-success/30 bg-success/10"
-                        : "border-destructive/30 bg-destructive/10"
-                )}
-            >
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Ejercicio original
-                </p>
-                <div className="flex items-center gap-2">
-                    {data.is_original_safe ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                    ) : (
-                        <TriangleAlert className="h-3.5 w-3.5 text-destructive" />
-                    )}
-                    <span
-                        className={cn(
-                            "text-xs font-medium",
-                            data.is_original_safe ? "text-success" : "text-destructive"
-                        )}
-                    >
-                        {data.is_original_safe ? "Sin hallazgo" : "Con hallazgo"}
-                    </span>
-                </div>
-            </div>
-
-            {/* Alternatives list */}
-            {data.alternatives.length === 0 ? (
-                <div className="rounded-md border border-border bg-card p-4 text-center space-y-1">
-                    {(() => {
-                        const copy = getAlternativesEmptyCopy(
-                            data.empty_reason ??
-                                (data.no_alternatives_found ? "score_threshold" : "none")
-                        );
-                        return (
-                            <>
-                                <p className="text-sm text-muted-foreground">{copy.title}</p>
-                                {copy.subtitle ? (
-                                    <p className="text-xs text-muted-foreground">{copy.subtitle}</p>
-                                ) : null}
-                            </>
-                        );
-                    })()}
-                </div>
-            ) : (
-                <div className="space-y-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        Alternativas sin hallazgo
-                    </p>
-                    {data.alternatives.map((alt: Exercise, _idx: number) => (
-                        <button
-                            key={alt.id}
-                            type="button"
-                            onClick={() => onSelectAlternative(alt)}
-                            className="flex w-full items-center gap-2 rounded-md border border-border bg-card px-2 py-2 text-left transition-colors hover:border-primary/30 hover:bg-surface-2"
-                        >
-                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
-                            <div className="min-w-0 flex-1">
-                                <p className="text-xs font-medium text-foreground truncate">
-                                    {exerciseDisplayName(alt)}
-                                </p>
-                                <p className="text-[10px] text-muted-foreground truncate">
-                                    {[alt.patron_movimiento, equipmentDisplayLine(alt)]
-                                        .filter(Boolean)
-                                        .join(" · ")}
-                                </p>
-                            </div>
-                            <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                        </button>
-                    ))}
-                </div>
             )}
         </div>
     );

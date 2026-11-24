@@ -54,5 +54,13 @@ export const APP_INFO = {
 /**
  * Máximo de registros por petición en GET /exercises/?limit=...
  * Debe coincidir con el backend (FastAPI Query le=1000 en app/api/exercises.py).
+ * Es tamaño de página, no tope del catálogo: quien necesita todo pide páginas hasta
+ * has_more=false (useGetExerciseLibraryQuery / useGetExercisePickerLibraryQuery).
  */
 export const EXERCISES_LIST_MAX_LIMIT = 1000;
+
+/**
+ * Máximo de ids por petición en GET /exercises/lookup (backend EXERCISE_LOOKUP_MAX_IDS).
+ * Los ids van en la URL; quien necesita más trocea (useExerciseNamesByIds).
+ */
+export const EXERCISE_LOOKUP_MAX_IDS = 200;

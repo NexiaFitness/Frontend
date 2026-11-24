@@ -22,15 +22,16 @@ import {
     sessionProgrammingApi,
 } from "../../api/sessionProgrammingApi";
 import { useGetSessionExercisesQuery } from "../../api/trainingSessionsApi";
-import { useGetExercisesQuery } from "../exercises";
+import { useExerciseNamesByIds } from "../exercises";
 import type { SessionBlock, SessionBlockExercise } from "../../types/sessionProgramming";
 import type { SessionExercise } from "../../types/trainingSessions";
 import type { AppDispatch } from "../../store";
 import { getTrainingBlockDisplayName } from "../../utils/trainingBlockDisplay";
 import {
+    blockExerciseIds,
     isBlockStructureLoading,
     isLegacyStructureLoading,
-    needsExerciseCatalog,
+    legacyExerciseIdsWithoutName,
 } from "./sessionStructureLoading";
 
 /** Ejercicio unificado para visualización (bloques o legacy) */
@@ -88,9 +89,14 @@ function blockExerciseToDisplay(
     };
 }
 
-function legacyExerciseToDisplay(ex: SessionExercise): SessionExerciseDisplay {
+function legacyExerciseToDisplay(
+    ex: SessionExercise,
+    nameMap: ReadonlyMap<number, string>
+): SessionExerciseDisplay {
     const name =
-        ex.exercise?.nombre ?? `Ejercicio ${ex.exercise_id}`;
+        ex.exercise?.nombre?.trim() ||
+        nameMap.get(ex.exercise_id) ||
+        `Ejercicio #${ex.exercise_id}`;
     return {
         id: ex.id,
         exerciseId: ex.exercise_id,
@@ -132,16 +138,11 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
         skip: !sessionId || sessionId <= 0 || blocks.length > 0,
     });
 
-    const needsCatalog = needsExerciseCatalog(blocks.length, legacyExercises);
-
     const { data: blockTypes = [], isLoading: isLoadingBlockTypes } =
         useGetTrainingBlockTypesQuery(
             { skip: 0, limit: 100 },
             { skip: blocks.length === 0 }
         );
-
-    const { data: exercisesData, isLoading: isLoadingExerciseCatalog } =
-        useGetExercisesQuery({ skip: 0, limit: 500 }, { skip: !needsCatalog });
 
     useEffect(() => {
         if (blocks.length === 0) return;
@@ -165,15 +166,15 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
         };
     }, [blocks, dispatch]);
 
-    const nameMap = useMemo(() => {
-        const map: Record<number, string> = {};
-        if (exercisesData?.exercises) {
-            for (const ex of exercisesData.exercises) {
-                map[ex.id] = ex.nombre;
-            }
-        }
-        return map;
-    }, [exercisesData]);
+    const idsToName =
+        blocks.length > 0
+            ? blockExerciseIds(
+                  blocks.map((b) => b.id),
+                  blockExercisesByBlock
+              )
+            : legacyExerciseIdsWithoutName(legacyExercises);
+    const { namesById: nameMap, isLoading: isLoadingExerciseNames } =
+        useExerciseNamesByIds(idsToName);
 
     return useMemo(() => {
         if (!sessionId || sessionId <= 0) {
@@ -191,7 +192,7 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
                 blockIds: blocks.map((b) => b.id),
                 blockExercisesByBlock,
                 isLoadingBlockTypes,
-                isLoadingExerciseCatalog,
+                isLoadingExerciseNames,
             });
             const flat: SessionExerciseDisplay[] = [];
             let order = 0;
@@ -206,7 +207,7 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
                     ? getTrainingBlockDisplayName(blockType)
                     : "Bloque";
                 for (const ex of exs) {
-                    const exerciseName = nameMap[ex.exercise_id] ?? `Ejercicio #${ex.exercise_id}`;
+                    const exerciseName = nameMap.get(ex.exercise_id) ?? `Ejercicio #${ex.exercise_id}`;
                     flat.push(
                         blockExerciseToDisplay(ex, block, blockName, exerciseName)
                     );
@@ -222,12 +223,12 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
         }
 
         return {
-            exercises: legacyExercises.map(legacyExerciseToDisplay),
+            exercises: legacyExercises.map((ex) => legacyExerciseToDisplay(ex, nameMap)),
             source: "legacy" as SessionExercisesSource,
             isLoading: isLegacyStructureLoading({
                 isLoadingLegacy,
                 legacyExercises,
-                isLoadingExerciseCatalog,
+                isLoadingExerciseNames,
             }),
             isError: isErrorLegacy,
         };
@@ -240,7 +241,7 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
         legacyExercises,
         isLoadingBlocks,
         isLoadingBlockTypes,
-        isLoadingExerciseCatalog,
+        isLoadingExerciseNames,
         isLoadingLegacy,
         isErrorLegacy,
     ]);

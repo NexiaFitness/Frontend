@@ -77,7 +77,7 @@ export function exerciseNamesFromTracking(
 function nameForExercise(
     exerciseId: number,
     records: ProgressTracking[],
-    exerciseNames: Map<number, string>,
+    exerciseNames: ReadonlyMap<number, string>,
 ): string | null {
     const mapped = exerciseNames.get(exerciseId)?.trim();
     if (mapped) return mapped;
@@ -194,7 +194,7 @@ function groupTrackingByExercise(
 /** Top ejercicios: delta neto primer vs último del periodo. Sin nombre → omitir. */
 export function buildTopExercises(
     tracking: ProgressTracking[],
-    exerciseNames: Map<number, string>,
+    exerciseNames: ReadonlyMap<number, string>,
     range: AthleteDateRange,
     limit = 5
 ): NamedProgressRows<TopExerciseRow> {
@@ -296,7 +296,7 @@ export function countPersonalRecords(
 /** PRs recientes para lista (tope visual). Omite ejercicios sin nombre. */
 export function buildRecentRecords(
     tracking: ProgressTracking[],
-    exerciseNames: Map<number, string>,
+    exerciseNames: ReadonlyMap<number, string>,
     range?: AthleteDateRange,
     limit = 5
 ): NamedProgressRows<RecentRecordRow> {
@@ -390,7 +390,7 @@ export interface SessionLoadRow {
 export function buildSessionLoadsForDate(
     tracking: ProgressTracking[],
     sessionDate: string,
-    exerciseNames: Map<number, string>
+    exerciseNames: ReadonlyMap<number, string>
 ): SessionLoadRow[] {
     const key = normalizeTrackingDateKey(sessionDate);
     return tracking
@@ -434,7 +434,7 @@ export function buildSessionLoadsWithComparison(
     tracking: ProgressTracking[],
     sessions: TrainingSession[],
     sessionDate: string,
-    exerciseNames: Map<number, string>
+    exerciseNames: ReadonlyMap<number, string>
 ): SessionLoadRow[] {
     const current = buildSessionLoadsForDate(tracking, sessionDate, exerciseNames);
     const previousSession = findPreviousCompletedSession(sessions, sessionDate);

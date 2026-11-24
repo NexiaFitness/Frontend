@@ -5,6 +5,7 @@
  * añade. Aviso articular: detalle, alternativas y «Añadir con precaución». Tope o cualquier
  * blocking: detalle y alternativas, sin botón de añadir. No verificable: «Añadir sin
  * verificar». Si el lote no ha vuelto, el icono es neutro y no se pinta como sin hallazgo.
+ * Sin cliente (estado null) no hay comprobación: un clic añade.
  * Notas de mantenimiento: estado con `exerciseSafetyUiState` (shared); copy y clases en
  * exercisePickerPresentation.ts.
  *
@@ -14,7 +15,7 @@
 
 import React from "react";
 import { CircleHelp, Plus, ShieldAlert, TriangleAlert } from "lucide-react";
-import type { Exercise } from "@nexia/shared/hooks/exercises";
+import type { ExercisePickerOut } from "@nexia/shared/hooks/exercises";
 import type { ExerciseSafetyResponse } from "@nexia/shared/types/engineSafety";
 import { exerciseDisplayName } from "@nexia/shared";
 import type { ExerciseSafetyUiState } from "@nexia/shared/utils/exerciseSafetyState";
@@ -44,12 +45,13 @@ import {
 } from "./exercisePickerPresentation";
 
 export interface ExercisePickerRowProps {
-    exercise: Exercise;
-    state: ExerciseSafetyUiState;
+    exercise: ExercisePickerOut;
+    /** null: sin cliente (plantilla) no hay seguridad que comprobar. */
+    state: ExerciseSafetyUiState | null;
     safety: ExerciseSafetyResponse | undefined;
     isExpanded: boolean;
     onToggle: () => void;
-    onSelect: (exercise: Exercise) => void;
+    onSelect: (exercise: ExercisePickerOut) => void;
     onShowAlternatives: (exerciseId: number) => void;
 }
 
