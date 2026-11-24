@@ -80,7 +80,7 @@ import {
     formatConstructorValidationToast,
 } from "@/components/sessionProgramming/constructor";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
-import type { Exercise } from "@nexia/shared/hooks/exercises";
+import type { ExercisePickerOut } from "@nexia/shared/hooks/exercises";
 import {
     SET_TYPE,
     type SessionBlockExercise,
@@ -494,7 +494,7 @@ export const EditSession: React.FC = () => {
     }, [exerciseNameById]);
 
     const handleSelectFromPicker = useCallback(
-        (exercise: Exercise) => {
+        (exercise: ExercisePickerOut) => {
             if (!targetRowIdForPicker) return;
             setConstructorRows((prev) =>
                 applyExercisePickerSelection(

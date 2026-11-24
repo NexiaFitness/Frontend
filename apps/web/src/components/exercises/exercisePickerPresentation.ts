@@ -32,6 +32,7 @@ export const EXERCISE_PICKER_COPY = {
     batchFailed:
         "No se pudo comprobar la seguridad. Ningún ejercicio se marca como sin hallazgo.",
     retry: "Reintentar",
+    catalogFailed: "No se pudo cargar la lista de ejercicios.",
     uncheckedLabel: "Seguridad sin comprobar",
     injuryBanner: "Ejercicios con hallazgo marcados.",
 } as const;

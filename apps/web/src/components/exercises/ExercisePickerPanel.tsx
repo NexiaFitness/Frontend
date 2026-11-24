@@ -13,7 +13,11 @@
  * - Fila en ExercisePickerRow (H4) y vista de alternativas en
  *   ExercisePickerAlternativesView (PERF-7); este archivo queda con el panel y la lista,
  *   que comparten el estado de seguridad.
- * - Reutilizable: CreateSession, EditSession.
+ * - PERF-7: el catálogo no tiene tope. La lista sale del listado `view=picker` (todas las
+ *   páginas, useGetExercisePickerLibraryQuery), que oculta los ejercicios inactivos.
+ *   Nunca usar aquí el lookup por ids (useExerciseNamesByIds): resuelve inactivos y solo
+ *   sirve para pintar contenido ya guardado.
+ * - Reutilizable: CreateSession, EditSession, plantillas y sesiones sueltas.
  *
  * @author Frontend Team
  * @since v6.4.0
@@ -23,10 +27,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { X, Search, ArrowLeft, RotateCcw } from "lucide-react";
 import {
-    useGetExercisesQuery,
+    useGetExercisePickerLibraryQuery,
     useCheckExerciseSafetyBatchMutation,
 } from "@nexia/shared/hooks/exercises";
-import type { Exercise } from "@nexia/shared/hooks/exercises";
+import type { Exercise, ExercisePickerOut } from "@nexia/shared/hooks/exercises";
 import type {
     ExerciseSafetyResponse,
     ExerciseSafetyBatchResponse,
@@ -54,8 +58,10 @@ function foldForSearch(value: string): string {
         .toLowerCase();
 }
 
-function groupExercisesByLetter(exercises: Exercise[]): [string, Exercise[]][] {
-    const map = new Map<string, Exercise[]>();
+function groupExercisesByLetter(
+    exercises: ExercisePickerOut[]
+): [string, ExercisePickerOut[]][] {
+    const map = new Map<string, ExercisePickerOut[]>();
     for (const ex of exercises) {
         const letter = (exerciseDisplayName(ex)[0] ?? "?").toUpperCase();
         const list = map.get(letter) ?? [];
@@ -68,7 +74,8 @@ function groupExercisesByLetter(exercises: Exercise[]): [string, Exercise[]][] {
 export interface ExercisePickerPanelProps {
     isOpen: boolean;
     onClose: () => void;
-    onSelect: (exercise: Exercise) => void;
+    /** Recibe la fila del selector (o la alternativa elegida): id y nombres. */
+    onSelect: (exercise: ExercisePickerOut) => void;
     clientId?: number | null;
     activeInjuries?: InjuryWithDetails[];
     mode?: 'sidebar' | 'inline';
@@ -91,9 +98,12 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
     const [safetyRetry, setSafetyRetry] = useState(0);
 
     // Solo ejercicios con contrato completo: los incompletos no se pueden añadir (H1 R3).
-    const { data, isLoading } = useGetExercisesQuery({
-        skip: 0,
-        limit: 500,
+    const {
+        data,
+        isLoading,
+        isError: catalogFailed,
+        refetch: refetchCatalog,
+    } = useGetExercisePickerLibraryQuery({
         contract: "complete",
         ...(clientId != null ? { client_id: clientId } : {}),
     });
@@ -220,6 +230,8 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
             {view === "list" ? (
                 <ListView
                     isLoading={isLoading}
+                    catalogFailed={catalogFailed}
+                    onRetryCatalog={() => void refetchCatalog()}
                     isLoadingBatch={isLoadingBatch}
                     hasActiveInjuries={hasActiveInjuries}
                     search={search}
@@ -251,23 +263,27 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
 
 interface ListViewProps {
     isLoading: boolean;
+    catalogFailed: boolean;
+    onRetryCatalog: () => void;
     isLoadingBatch: boolean;
     hasActiveInjuries: boolean;
     search: string;
     setSearch: (s: string) => void;
-    filteredAndGrouped: [string, Exercise[]][];
+    filteredAndGrouped: [string, ExercisePickerOut[]][];
     safetyResults: Map<number, ExerciseSafetyResponse>;
     safetyCheckFailed: boolean;
     safetyPending: boolean;
     onRetrySafety: () => void;
     expandedExerciseId: number | null;
     setExpandedExerciseId: (id: number | null) => void;
-    onSelect: (exercise: Exercise) => void;
+    onSelect: (exercise: ExercisePickerOut) => void;
     onShowAlternatives: (exerciseId: number) => void;
 }
 
 const ListView: React.FC<ListViewProps> = ({
     isLoading,
+    catalogFailed,
+    onRetryCatalog,
     isLoadingBatch,
     hasActiveInjuries,
     search,
@@ -334,6 +350,17 @@ const ListView: React.FC<ListViewProps> = ({
                     <div className="flex justify-center py-12">
                         <LoadingSpinner size="md" />
                     </div>
+                ) : catalogFailed ? (
+                    <Alert
+                        variant="error"
+                        description={EXERCISE_PICKER_COPY.catalogFailed}
+                        action={
+                            <Button variant="ghost-primary" size="sm" onClick={onRetryCatalog}>
+                                <RotateCcw aria-hidden />
+                                {EXERCISE_PICKER_COPY.retry}
+                            </Button>
+                        }
+                    />
                 ) : filteredAndGrouped.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-8">
                         No se encontraron ejercicios.

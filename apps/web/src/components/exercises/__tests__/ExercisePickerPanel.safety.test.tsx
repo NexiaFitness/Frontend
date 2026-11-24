@@ -1,6 +1,8 @@
 /**
  * ExercisePickerPanel.safety.test.tsx — Batch safety + flujo alternativas.
  * H4: fila «no verificable» (sin acciones articulares) y fallo del lote (nunca «seguro»).
+ * PERF-7: la lista sale del listado completo `view=picker` (sin tope), nunca del lookup
+ * por ids (que resuelve ejercicios desactivados); si falla la carga se avisa.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -8,19 +10,32 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "@/test-utils/render";
 import { ExercisePickerPanel } from "../ExercisePickerPanel";
-import type { Exercise } from "@nexia/shared/hooks/exercises";
+import type { Exercise, ExercisePickerOut } from "@nexia/shared/hooks/exercises";
 import type { ExerciseSafetyBatchResponse } from "@nexia/shared/types/engineSafety";
 
-const useGetExercisesQuery = vi.fn();
+const useGetExercisePickerLibraryQuery = vi.fn();
 const useCheckExerciseSafetyBatchMutation = vi.fn();
 const useGetSafeAlternativesQuery = vi.fn();
+const useGetExercisesQuery = vi.fn();
+const useGetExercisesByIdsQuery = vi.fn();
+const useExerciseNamesByIds = vi.fn();
 
 vi.mock("@nexia/shared/hooks/exercises", () => ({
-    useGetExercisesQuery: (...args: unknown[]) => useGetExercisesQuery(...args),
+    useGetExercisePickerLibraryQuery: (...args: unknown[]) =>
+        useGetExercisePickerLibraryQuery(...args),
     useCheckExerciseSafetyBatchMutation: (...args: unknown[]) =>
         useCheckExerciseSafetyBatchMutation(...args),
     useGetSafeAlternativesQuery: (...args: unknown[]) => useGetSafeAlternativesQuery(...args),
+    useGetExercisesQuery: (...args: unknown[]) => useGetExercisesQuery(...args),
+    useGetExercisesByIdsQuery: (...args: unknown[]) => useGetExercisesByIdsQuery(...args),
+    useExerciseNamesByIds: (...args: unknown[]) => useExerciseNamesByIds(...args),
 }));
+
+const pickerRow = (id: number, nombre: string): ExercisePickerOut => ({
+    id,
+    nombre,
+    nombre_ingles: nombre,
+});
 
 function minimalExercise(id: number, nombre: string): Exercise {
     const now = new Date().toISOString();
@@ -42,23 +57,19 @@ function minimalExercise(id: number, nombre: string): Exercise {
     };
 }
 
-const EX_UNSAFE = minimalExercise(101, "Press contraindicado");
-const EX_SAFE = minimalExercise(102, "Curl seguro");
+const EX_UNSAFE = pickerRow(101, "Press contraindicado");
+const EX_SAFE = pickerRow(102, "Curl seguro");
 const EX_ALT = minimalExercise(201, "Press alternativa segura");
 
 describe("ExercisePickerPanel — safety batch y alternativas", () => {
     beforeEach(() => {
         vi.clearAllMocks();
 
-        useGetExercisesQuery.mockReturnValue({
-            data: {
-                exercises: [EX_UNSAFE, EX_SAFE],
-                total: 2,
-                skip: 0,
-                limit: 500,
-                has_more: false,
-            },
+        useGetExercisePickerLibraryQuery.mockReturnValue({
+            data: { exercises: [EX_UNSAFE, EX_SAFE], equipment_filter_applied: "active" },
             isLoading: false,
+            isError: false,
+            refetch: vi.fn(),
         });
 
         const batchPayload: ExerciseSafetyBatchResponse = {
@@ -111,7 +122,13 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
         );
     });
 
-    it("solo lista ejercicios con contrato completo (H1)", () => {
+    /** Espera a que el lote de seguridad pinte sus veredictos (evita updates fuera de act). */
+    const waitForSafetyVerdicts = () =>
+        waitFor(() =>
+            expect(screen.queryAllByLabelText("Seguridad sin comprobar")).toHaveLength(0)
+        );
+
+    it("solo lista ejercicios con contrato completo (H1)", async () => {
         render(
             <ExercisePickerPanel
                 isOpen={true}
@@ -121,9 +138,43 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
                 activeInjuries={[]}
             />
         );
-        expect(useGetExercisesQuery).toHaveBeenCalledWith(
+        expect(useGetExercisePickerLibraryQuery).toHaveBeenCalledWith(
             expect.objectContaining({ contract: "complete", client_id: 1 })
         );
+        await waitForSafetyVerdicts();
+    });
+
+    it("PERF-7: catálogo completo del listado, sin tope, y nunca el lookup por ids", async () => {
+        render(
+            <ExercisePickerPanel isOpen onClose={vi.fn()} onSelect={vi.fn()} clientId={1} />
+        );
+        expect(useGetExercisePickerLibraryQuery).toHaveBeenCalledWith({
+            contract: "complete",
+            client_id: 1,
+        });
+        await waitForSafetyVerdicts();
+        expect(useGetExercisesByIdsQuery).not.toHaveBeenCalled();
+        expect(useExerciseNamesByIds).not.toHaveBeenCalled();
+        expect(useGetExercisesQuery).not.toHaveBeenCalled();
+    });
+
+    it("PERF-7: si falla la carga del catálogo se avisa y se puede reintentar", async () => {
+        const user = userEvent.setup();
+        const refetch = vi.fn();
+        useGetExercisePickerLibraryQuery.mockReturnValue({
+            data: undefined,
+            isLoading: false,
+            isError: true,
+            refetch,
+        });
+        render(
+            <ExercisePickerPanel isOpen onClose={vi.fn()} onSelect={vi.fn()} clientId={1} />
+        );
+
+        expect(screen.getByText(/no se pudo cargar la lista de ejercicios/i)).toBeInTheDocument();
+        expect(screen.queryByText(/no se encontraron ejercicios/i)).not.toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: /reintentar/i }));
+        expect(refetch).toHaveBeenCalledTimes(1);
     });
 
     it("ejercicio seguro: un clic llama onSelect", async () => {

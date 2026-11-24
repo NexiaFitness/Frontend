@@ -33,7 +33,7 @@ import {
     applyExercisePickerSelection,
     formatConstructorValidationToast,
 } from "@/components/sessionProgramming/constructor";
-import type { Exercise } from "@nexia/shared/hooks/exercises";
+import type { ExercisePickerOut } from "@nexia/shared/hooks/exercises";
 import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
 import { cn } from "@/lib/utils";
 import { SESSION_TYPES } from "@/pages/sessionProgramming/sessionFormConstants";
@@ -156,7 +156,7 @@ export const EditTemplateSessionPage: React.FC = () => {
     }, [navigate, templateId]);
 
     const handleSelectFromPicker = useCallback(
-        (exercise: Exercise) => {
+        (exercise: ExercisePickerOut) => {
             if (!targetRowIdForPicker) return;
             setConstructorRows((prev) =>
                 applyExercisePickerSelection(

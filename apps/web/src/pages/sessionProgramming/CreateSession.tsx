@@ -58,7 +58,7 @@ import {
     useCreateSessionBlockExerciseMutation,
     useCreateSessionTemplateMutation,
 } from "@nexia/shared/api/sessionProgrammingApi";
-import type { Exercise } from "@nexia/shared/hooks/exercises";
+import type { ExercisePickerOut } from "@nexia/shared/hooks/exercises";
 import {
     exerciseDisplayName,
     resolveSessionBlockQualitySlugs,
@@ -618,7 +618,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const [createSessionBlockExercise] = useCreateSessionBlockExerciseMutation();
     const [createSessionTemplate, { isLoading: isSavingTemplate }] = useCreateSessionTemplateMutation();
 
-    const handleSelectFromPicker = (exercise: Exercise) => {
+    const handleSelectFromPicker = (exercise: ExercisePickerOut) => {
         if (!targetRowIdForPicker) return;
         setConstructorRows((prev) =>
             applyExercisePickerSelection(

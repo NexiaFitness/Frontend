@@ -35,7 +35,7 @@ import {
 import { useConstructorValidation } from "@/hooks/useConstructorValidation";
 import { useScrollToConstructorValidationIssue } from "@/hooks/useScrollToConstructorValidationIssue";
 import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
-import type { Exercise } from "@nexia/shared/hooks/exercises";
+import type { ExercisePickerOut } from "@nexia/shared/hooks/exercises";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import { syncStandaloneSessionExercises } from "@/pages/sessionProgramming/persistCreateSessionContent";
 import {
@@ -139,7 +139,7 @@ export const EditStandaloneSession: React.FC = () => {
     );
 
     const handleSelectFromPicker = useCallback(
-        (exercise: Exercise) => {
+        (exercise: ExercisePickerOut) => {
             if (!targetRowIdForPicker) return;
             setConstructorRows((prev) =>
                 applyExercisePickerSelection(
