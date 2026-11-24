@@ -2,9 +2,9 @@
  * ExercisePickerPanel.tsx — Panel lateral de seleccion de ejercicios
  *
  * Contexto:
- * - Panel fijo 300px a la derecha del Constructor (no overlay).
- * - Visible cuando exercisePickerOpen && viewport >= lg.
- * - En movil (< lg): oculto (hidden). Flujo alternativo: drawer/modal.
+ * - Inline (constructor): 300px a la derecha del bloque desde lg; por debajo, debajo del
+ *   bloque y a todo el ancho (a 375px la fila en edición quedaba con 0px).
+ * - Sidebar: overlay fijo a la derecha en móvil, en flujo desde lg.
  * - Lista agrupada por letra inicial, busqueda en tiempo real.
  * - Fase 4: safety-check batch via motor real, alternativas integradas en panel.
  * - H7: si blocking es verdadero no hay botón de añadir. Un aviso articular sin bloqueo
@@ -192,7 +192,8 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
         <div
             className={cn(
                 "rounded-lg border border-border border-l-2 border-l-primary bg-card text-card-foreground shadow-sm overflow-hidden",
-                "flex w-[300px] shrink-0 flex-col self-start",
+                "flex shrink-0 flex-col self-start",
+                mode === 'inline' ? "w-full lg:w-[300px]" : "w-[300px]",
                 "max-h-[600px] lg:max-h-[600px]",
                 mode === 'sidebar' && [
                     "fixed right-0 top-0 bottom-0 z-50 shadow-xl",

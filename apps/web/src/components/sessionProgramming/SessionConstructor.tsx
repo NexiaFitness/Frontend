@@ -289,7 +289,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                             .map((row, index) =>
                                                 renderBlockRow(row, index, index)
                                             )}
-                                        <div className="flex items-start gap-4">
+                                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
                                             <div className="flex min-w-0 flex-1 flex-col gap-4">
                                                 <div className="space-y-4">
                                                     {blockRows
