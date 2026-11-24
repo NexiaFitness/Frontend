@@ -22,9 +22,10 @@ export {
 } from '../../api/exercisesApi';
 
 // Exercises module hooks (GET and DELETE /exercises/; POST/PUT retired in H8-B)
+export { useGetExerciseLibraryQuery } from './exerciseLibraryApi';
+
 export {
     useGetExercisesQuery,
-    useGetExerciseLibraryQuery,
     useGetExerciseByIdQuery,
     useDeleteExerciseMutation,
     useCheckExerciseSafetyMutation,
