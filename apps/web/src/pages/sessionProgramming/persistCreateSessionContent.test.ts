@@ -52,6 +52,7 @@ describe("persistCreateSessionContent (G8)", () => {
         if (result.ok) {
             expect(result.blocksSaved).toBe(1);
             expect(result.exercisesSaved).toBeGreaterThan(0);
+            expect(result.exercisesProgrammed).toBe(1);
         }
         expect(createSessionBlock).toHaveBeenCalledTimes(1);
         expect(createSessionBlockExercise.mock.calls.length).toBeGreaterThan(0);
@@ -99,6 +100,7 @@ describe("persistCreateSessionContent (G8)", () => {
         });
 
         expect(result.ok).toBe(true);
+        if (result.ok) expect(result.exercisesProgrammed).toBe(2);
         expect(createSessionBlock).toHaveBeenCalledTimes(1);
         expect(createSessionBlockExercise).toHaveBeenCalledTimes(2);
     });

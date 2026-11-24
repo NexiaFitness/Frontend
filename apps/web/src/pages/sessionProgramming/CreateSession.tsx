@@ -78,6 +78,7 @@ import {
     ConstructorValidationProvider,
     formatConstructorValidationToast,
     emptySessionCreatedToast,
+    sessionCreatedWithContentToast,
 } from "@/components/sessionProgramming/constructor";
 import { useConstructorValidation } from "@/hooks/useConstructorValidation";
 import { useScrollToConstructorValidationIssue } from "@/hooks/useScrollToConstructorValidationIssue";
@@ -785,7 +786,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     return;
                 }
                 showSuccess(
-                    `Sesión creada con ${persistResult.blocksSaved} bloques y ${persistResult.exercisesSaved} ejercicios.`,
+                    sessionCreatedWithContentToast(
+                        persistResult.blocksSaved,
+                        persistResult.exercisesProgrammed,
+                    ),
                     2000,
                 );
             } else {
