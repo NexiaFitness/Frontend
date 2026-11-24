@@ -1,7 +1,8 @@
 /**
  * exercisePickerPresentation.ts — Copy y clases de las filas del selector de ejercicios.
  *
- * Contexto: ExercisePickerRow (selector del constructor de sesión). H7: cuatro estados.
+ * Contexto: ExercisePickerRow y ExercisePickerAlternativesView (selector del constructor
+ * de sesión). H7: cuatro estados.
  * Tope y conflicto que bloquea = destructive en tinte glass; no verificable = warning
  * en tinte glass y con texto (nunca solo color); sin hallazgo = añadir.
  * Notas de mantenimiento: receta de tinte de DESIGN_PREMIUM §3.1 (borde /30-/40, fondo
@@ -11,6 +12,7 @@
  * @since @nexia/shared 2.0.0 (H4)
  */
 
+import type { AlternativesEmptyReason } from "@nexia/shared/types/engineSafety";
 import { cn } from "@/lib/utils";
 
 export const EXERCISE_PICKER_COPY = {
@@ -107,3 +109,51 @@ export const EXERCISE_PICKER_ACTION_CAUTION = cn(
 );
 
 export const EXERCISE_PICKER_BATCH_ALERT = "mx-3 mt-2 text-xs";
+
+/** Copy del estado vacío de «Alternativas sin hallazgo» según el motivo del backend. */
+export function getAlternativesEmptyCopy(reason: AlternativesEmptyReason): {
+    title: string;
+    subtitle?: string;
+} {
+    switch (reason) {
+        case "injury_filter":
+            return {
+                title:
+                    "Con la lesión activa de este cliente, no hay otro ejercicio seguro que trabaje los mismos músculos de forma compatible.",
+                subtitle:
+                    "Revisa su perfil de lesiones o elige otro ejercicio para esta serie.",
+            };
+        case "score_threshold":
+            return {
+                title:
+                    "No encontramos sustitutos automáticos con buen encaje para este ejercicio.",
+                subtitle:
+                    "Prueba otro ejercicio del mismo grupo muscular o el que sueles usar como alternativa.",
+            };
+        case "no_pool":
+            return {
+                title:
+                    "En la biblioteca no hay otro ejercicio con los mismos músculos principales.",
+                subtitle:
+                    "Elige otro ejercicio para la sesión o avisa si falta alguno en la biblioteca.",
+            };
+        case "joint_catalog":
+            return {
+                title:
+                    "No podemos proponer sustitutos automáticos porque faltan datos técnicos del movimiento en la biblioteca.",
+                subtitle:
+                    "Elige otro ejercicio manualmente o contacta con soporte si crees que debería haber alternativas.",
+            };
+        case "manual_empty":
+            return {
+                title:
+                    "Las alternativas que tenías guardadas para este ejercicio no son compatibles con la lesión actual del cliente.",
+                subtitle: "Elige otro ejercicio o actualiza sus alternativas habituales.",
+            };
+        default:
+            return {
+                title: "No hay alternativas seguras sugeridas para este ejercicio.",
+                subtitle: "Prueba otro ejercicio o revisa el perfil del cliente.",
+            };
+    }
+}
