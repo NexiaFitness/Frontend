@@ -38,15 +38,16 @@ function exceedsCap(alert: InjuryAlert): boolean {
     );
 }
 
-function capBlocksCheck(alert: InjuryAlert): boolean {
+/** H11: `blocking` llega siempre false; el tope no comprobable se reconoce por regla y estado. */
+function capNotVerifiable(alert: InjuryAlert): boolean {
     return (alert.findings ?? []).some(
-        (item) => item.rule === "axial_cap" && item.blocking && item.status === "not_verifiable"
+        (item) => item.rule === "axial_cap" && item.status === "not_verifiable"
     );
 }
 
 /** El motivo del motor cuando hay tope, un tope no comprobable, o más de un hallazgo. */
 function joinedReason(alert: InjuryAlert): string | null {
-    if (!exceedsCap(alert) && !capBlocksCheck(alert) && (alert.findings?.length ?? 0) <= 1) {
+    if (!exceedsCap(alert) && !capNotVerifiable(alert) && (alert.findings?.length ?? 0) <= 1) {
         return null;
     }
     const text = alert.message?.trim();
@@ -94,7 +95,7 @@ export function buildInjuryConflictMessageShort(alert: InjuryAlert): string {
     if (exceedsCap(alert)) {
         return "Supera el tope de carga axial";
     }
-    if (capBlocksCheck(alert)) {
+    if (capNotVerifiable(alert)) {
         return "No se puede comprobar el tope de carga axial";
     }
     if (injuryAlertIsUnverifiable(alert)) {
@@ -129,7 +130,7 @@ export function buildPreviewConflictSummary(
             ? "1 ejercicio supera el tope de carga axial"
             : `${count} ejercicios superan el tope de carga axial`;
     }
-    if (alerts.some(capBlocksCheck)) {
+    if (alerts.some(capNotVerifiable)) {
         return count === 1
             ? "1 ejercicio no se puede comprobar con el tope de carga axial"
             : `${count} ejercicios no se pueden comprobar con el tope de carga axial`;

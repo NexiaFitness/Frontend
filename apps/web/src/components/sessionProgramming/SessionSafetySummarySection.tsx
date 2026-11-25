@@ -2,7 +2,8 @@
  * SessionSafetySummarySection.tsx — Resumen de seguridad de una sesión (validación).
  *
  * Contexto: extraído de SessionValidationContent (límite de tamaño, H4). Muestra los recuentos
- * de `safety_summary` y la lista de ejercicios bloqueantes, con advertencia y no verificables.
+ * de `safety_summary` y la lista de ejercicios sobre el tope, con advertencia y no verificables.
+ * H11: ningún hallazgo bloquea; «Sobre el tope» cuenta `status === "exceeds_limit"`.
  * Un ejercicio sin acciones articulares sale como «No se pudo comprobar», nunca como seguro
  * (SPEC_H4 §3.6).
  * Notas de mantenimiento: copy y clases en sessionSafetySummaryPresentation.ts.
@@ -46,12 +47,12 @@ interface SafetyGroup {
 function groupsOf(details: ExerciseSafetyResponse[]): SafetyGroup[] {
     return [
         {
-            key: "blocking",
+            key: "exceeds",
             tone: "destructive" as const,
             icon: "error" as const,
-            title: SESSION_SAFETY_COPY.blockingTitle,
-            fallback: SESSION_SAFETY_COPY.blockingFallback,
-            items: details.filter((d) => d.blocking),
+            title: SESSION_SAFETY_COPY.exceedsTitle,
+            fallback: SESSION_SAFETY_COPY.exceedsFallback,
+            items: details.filter((d) => d.status === "exceeds_limit"),
         },
         {
             key: "warning",
@@ -59,7 +60,7 @@ function groupsOf(details: ExerciseSafetyResponse[]): SafetyGroup[] {
             icon: "warning" as const,
             title: SESSION_SAFETY_COPY.warningTitle,
             fallback: SESSION_SAFETY_COPY.warningFallback,
-            items: details.filter((d) => d.status === "unsafe" && !d.blocking),
+            items: details.filter((d) => d.status === "unsafe"),
         },
         {
             key: "unverifiable",
@@ -79,7 +80,11 @@ export const SessionSafetySummarySection: React.FC<{ data: SessionSafetySummaryO
     const kpis: Array<[SafetyKpiTone, number, string]> = [
         ["success", data.safe_count, SESSION_SAFETY_COPY.safe],
         ["warning", data.warning_count, SESSION_SAFETY_COPY.warning],
-        ["destructive", data.blocking_count, SESSION_SAFETY_COPY.blocking],
+        [
+            "destructive",
+            data.details.filter((d) => d.status === "exceeds_limit").length,
+            SESSION_SAFETY_COPY.exceeds,
+        ],
         ["muted", data.unverifiable_count, SESSION_SAFETY_COPY.unverifiable],
     ];
     return (

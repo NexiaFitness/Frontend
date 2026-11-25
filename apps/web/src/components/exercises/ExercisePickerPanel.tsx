@@ -7,9 +7,9 @@
  * - Sidebar: overlay fijo a la derecha en móvil, en flujo desde lg.
  * - Lista agrupada por letra inicial, busqueda en tiempo real.
  * - Fase 4: safety-check batch via motor real, alternativas integradas en panel.
- * - H7: si blocking es verdadero no hay botón de añadir. Un aviso articular sin bloqueo
- *   sigue con «Añadir con precaución». Si el lote falla, se avisa y ninguna fila se pinta
- *   como sin hallazgo.
+ * - H11: ningún hallazgo impide añadir. Aviso articular y tope: «Añadir con precaución».
+ *   Si el lote falla, se avisa con «Reintentar», las filas muestran «Sin comprobar» y se
+ *   añaden con un clic; ninguna se pinta como sin hallazgo.
  * - Lista en ExercisePickerList, fila en ExercisePickerRow (H4) y vista de alternativas en
  *   ExercisePickerAlternativesView (PERF-7). Este archivo guarda el catálogo, el lote de
  *   seguridad y el filtrado, que la lista solo pinta.

@@ -49,7 +49,7 @@ export function ValidationInsightCard({
 }
 
 function safetyBadgeLabel(summary: SessionSafetySummaryOut | undefined): string {
-    return summary ? `${summary.blocking_count} bloqueos` : "No disponible";
+    return summary ? `${summary.details.length} con hallazgo` : "No disponible";
 }
 
 export function SessionValidationSafetyBlock({

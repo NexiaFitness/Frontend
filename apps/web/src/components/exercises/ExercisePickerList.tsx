@@ -200,6 +200,7 @@ export const ExercisePickerList: React.FC<ExercisePickerListProps> = ({
                                 const ex = item.exercise;
                                 const safety = safetyResults.get(ex.id);
                                 const isExpanded = expandedExerciseId === ex.id;
+                                const checkPending = safetyPending && safety == null;
                                 content = (
                                     <div className={EXERCISE_PICKER_ROW_SLOT}>
                                         <ExercisePickerRow
@@ -209,10 +210,11 @@ export const ExercisePickerList: React.FC<ExercisePickerListProps> = ({
                                                 safetyApplies
                                                     ? exerciseSafetyUiState(safety, {
                                                           checkFailed: safetyCheckFailed,
-                                                          checkPending: safetyPending && safety == null,
+                                                          checkPending,
                                                       })
                                                     : null
                                             }
+                                            checkPending={safetyApplies && checkPending}
                                             isExpanded={isExpanded}
                                             onToggle={() => setExpandedExerciseId(isExpanded ? null : ex.id)}
                                             onSelect={onSelect}

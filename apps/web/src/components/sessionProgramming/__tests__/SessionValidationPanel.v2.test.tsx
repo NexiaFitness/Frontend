@@ -52,15 +52,16 @@ const basePayload: SessionValidationOut = {
     },
     safety_summary: {
         total_checks: 2,
-        blocking_count: 1,
+        blocking_count: 0,
         warning_count: 1,
         safe_count: 0, unverifiable_count: 0,
         details: [
             {
                 is_safe: false,
-                status: "unsafe",
-                blocking: true,
-                reason: "Contraindicación rodilla",
+                status: "exceeds_limit",
+                blocking: false,
+                severity: "warning",
+                reason: "Supera el tope de carga axial (Media).",
                 suggested_alternatives: [],
             },
             {
@@ -98,7 +99,7 @@ describe("SessionValidationPanel — axial y seguridad", () => {
         expect(screen.getByText("Press banca")).toBeInTheDocument();
     });
 
-    it("muestra Seguridad al expandir: contadores y detalle bloqueante + advertencia", async () => {
+    it("H11: muestra Seguridad al expandir: sobre el tope + advertencia, sin bloqueos", async () => {
         const user = userEvent.setup();
         render(
             <SessionValidationPanel trainingSessionId={42} isOpen={true} onClose={vi.fn()} />
@@ -106,11 +107,13 @@ describe("SessionValidationPanel — axial y seguridad", () => {
 
         await screen.findByText("Validación de sesión");
 
-        const safetyToggle = screen.getByRole("button", { name: "Seguridad1 bloqueos" });
+        const safetyToggle = screen.getByRole("button", { name: "Seguridad2 con hallazgo" });
         await user.click(safetyToggle);
 
-        expect(screen.getByText("Ejercicios bloqueantes")).toBeInTheDocument();
-        expect(screen.getByText("Contraindicación rodilla")).toBeInTheDocument();
+        expect(screen.queryByText(/bloque/i)).not.toBeInTheDocument();
+        expect(screen.getByText("Sobre el tope")).toBeInTheDocument();
+        expect(screen.getByText("Superan el tope de carga axial")).toBeInTheDocument();
+        expect(screen.getByText("Supera el tope de carga axial (Media).")).toBeInTheDocument();
         expect(screen.getAllByText("Advertencias").length).toBeGreaterThanOrEqual(1);
         expect(screen.getByText("Precaución hombro")).toBeInTheDocument();
     });

@@ -2,9 +2,9 @@
  * exercisePickerPresentation.ts — Copy y clases de las filas del selector de ejercicios.
  *
  * Contexto: ExercisePickerRow y ExercisePickerAlternativesView (selector del constructor
- * de sesión). H7: cuatro estados.
- * Tope y conflicto que bloquea = destructive en tinte glass; no verificable = warning
- * en tinte glass y con texto (nunca solo color); sin hallazgo = añadir.
+ * de sesión). H7: cuatro estados. H11: ninguno impide añadir.
+ * Tope y conflicto articular = destructive en tinte glass; no verificable y sin comprobar
+ * = warning en tinte glass y con texto (nunca solo color); sin hallazgo = añadir.
  * Notas de mantenimiento: receta de tinte de DESIGN_PREMIUM §3.1 (borde /30-/40, fondo
  * /10-/20); sin colores sueltos en el componente.
  *
@@ -30,9 +30,10 @@ export const EXERCISE_PICKER_COPY = {
     addWithCaution: "Añadir con precaución",
     addUnverified: "Añadir sin verificar",
     batchFailed:
-        "No se pudo comprobar la seguridad. Ningún ejercicio se marca como sin hallazgo.",
+        "No se pudo comprobar la seguridad. Los ejercicios quedan sin comprobar; puedes añadirlos igualmente.",
     retry: "Reintentar",
     catalogFailed: "No se pudo cargar la lista de ejercicios.",
+    uncheckedBadge: "SIN COMPROBAR",
     uncheckedLabel: "Seguridad sin comprobar",
     injuryBanner: "Ejercicios con hallazgo marcados.",
 } as const;
@@ -61,9 +62,6 @@ export const EXERCISE_PICKER_ROW_NAME = "flex-1 truncate text-xs";
 
 export const EXERCISE_PICKER_ROW_ADD_ICON = "h-3.5 w-3.5 shrink-0 text-muted-foreground";
 
-/** Sin comprobar (falló el lote): icono neutro, nunca el «+» de un ejercicio seguro. */
-export const EXERCISE_PICKER_ROW_UNCHECKED_ICON = "h-3.5 w-3.5 shrink-0 text-muted-foreground/70";
-
 export const EXERCISE_PICKER_ROW_ICON = "h-3 w-3 shrink-0";
 
 export const EXERCISE_PICKER_ROW_ICON_UNSAFE = cn(EXERCISE_PICKER_ROW_ICON, "text-destructive");
@@ -78,6 +76,9 @@ export const EXERCISE_PICKER_BADGE_UNSAFE = cn(
 );
 
 export const EXERCISE_PICKER_BADGE_UNVERIFIABLE = cn(BADGE, "bg-warning/15 text-warning ring-warning/40");
+
+/** Sin comprobar (falló el lote): texto explícito, nunca el «+» de un ejercicio seguro. */
+export const EXERCISE_PICKER_BADGE_UNCHECKED = cn(BADGE, "bg-warning/10 text-warning ring-warning/30");
 
 export const EXERCISE_PICKER_BADGE_EXCEEDS = cn(
     BADGE,

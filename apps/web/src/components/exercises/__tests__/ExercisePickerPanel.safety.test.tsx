@@ -333,7 +333,7 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
         expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 101 }));
     });
 
-    it("H7: un resultado bloqueante no ofrece añadirlo", async () => {
+    it("H11: sobre el tope avisa con detalle y se añade con «Añadir con precaución»", async () => {
         const user = userEvent.setup();
         const onSelect = vi.fn();
         const payload: ExerciseSafetyBatchResponse = {
@@ -341,7 +341,8 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
                 101: {
                     is_safe: false,
                     status: "exceeds_limit",
-                    blocking: true,
+                    blocking: false,
+                    severity: "warning",
                     reason: "Supera el tope de carga axial (Media).",
                     suggested_alternatives: [],
                 },
@@ -358,11 +359,46 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
 
         expect(await screen.findByText("TOPE")).toBeInTheDocument();
         await user.click(screen.getByRole("button", { name: /Press contraindicado/i }));
-        expect(screen.queryByRole("button", { name: /añadir/i })).not.toBeInTheDocument();
         expect(onSelect).not.toHaveBeenCalled();
+        expect(screen.getByText("Supera el tope de carga axial (Media).")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /ver alternativas/i })).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: /añadir con precaución/i }));
+        expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 101 }));
     });
 
-    it("H7: un tope no comprobable tampoco ofrece añadirlo", async () => {
+    it("H11: dolor alto muestra el nivel en el detalle y se añade con precaución", async () => {
+        const user = userEvent.setup();
+        const onSelect = vi.fn();
+        const reason =
+            "El movimiento en rodilla coincide con una acción articular de la lesión activa. Dolor 5/5.";
+        const payload: ExerciseSafetyBatchResponse = {
+            results: {
+                101: {
+                    is_safe: false,
+                    status: "unsafe",
+                    blocking: false,
+                    severity: "warning",
+                    reason,
+                    suggested_alternatives: [],
+                },
+                102: { is_safe: true, status: "safe", blocking: false, suggested_alternatives: [] },
+            },
+        };
+        useCheckExerciseSafetyBatchMutation.mockReturnValue([
+            vi.fn(() => ({ unwrap: () => Promise.resolve(payload) })),
+            { isLoading: false },
+        ]);
+        render(
+            <ExercisePickerPanel isOpen onClose={vi.fn()} onSelect={onSelect} clientId={1} activeInjuries={[]} />
+        );
+
+        await user.click(await screen.findByRole("button", { name: /Press contraindicado/i }));
+        expect(screen.getByText(reason)).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: /añadir con precaución/i }));
+        expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 101 }));
+    });
+
+    it("H11: un tope no comprobable se añade con «Añadir sin verificar»", async () => {
         const user = userEvent.setup();
         const onSelect = vi.fn();
         const payload: ExerciseSafetyBatchResponse = {
@@ -371,7 +407,7 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
                     is_safe: false,
                     status: "not_verifiable",
                     unverifiable_reason: "axial_review_unchecked",
-                    blocking: true,
+                    blocking: false,
                     reason: "No se puede comprobar el tope de carga axial.",
                     suggested_alternatives: [],
                 },
@@ -387,20 +423,25 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
         );
 
         await user.click(await screen.findByRole("button", { name: /Press contraindicado/i }));
-        expect(screen.queryByRole("button", { name: /añadir/i })).not.toBeInTheDocument();
         expect(onSelect).not.toHaveBeenCalled();
+        await user.click(screen.getByRole("button", { name: /añadir sin verificar/i }));
+        expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 101 }));
     });
 
-    it("H4: si falla el lote se avisa, se puede reintentar y nada aparece como seguro", async () => {
+    it("H11: si falla el lote se avisa, se reintenta, las filas dicen «Sin comprobar» y se añaden con un clic", async () => {
         const user = userEvent.setup();
+        const onSelect = vi.fn();
         const checkBatch = vi.fn(() => ({ unwrap: () => Promise.reject(new Error("network")) }));
         useCheckExerciseSafetyBatchMutation.mockReturnValue([checkBatch, { isLoading: false }]);
         render(
-            <ExercisePickerPanel isOpen onClose={vi.fn()} onSelect={vi.fn()} clientId={1} activeInjuries={[]} />
+            <ExercisePickerPanel isOpen onClose={vi.fn()} onSelect={onSelect} clientId={1} activeInjuries={[]} />
         );
 
         expect(await screen.findByText(/no se pudo comprobar la seguridad/i)).toBeInTheDocument();
         expect(screen.getAllByLabelText("Seguridad sin comprobar")).toHaveLength(2);
+        expect(screen.getAllByText("SIN COMPROBAR")).toHaveLength(2);
+        await user.click(screen.getByRole("button", { name: /Press contraindicado/i }));
+        expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 101 }));
         await user.click(screen.getByRole("button", { name: /reintentar/i }));
         await waitFor(() => expect(checkBatch).toHaveBeenCalledTimes(2));
     });
@@ -419,7 +460,7 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
         expect(checkBatch).not.toHaveBeenCalled();
     });
 
-    it("mientras el lote no ha vuelto, ninguna fila se pinta como segura", () => {
+    it("mientras el lote no ha vuelto, ninguna fila se pinta como segura ni se añade", () => {
         useCheckExerciseSafetyBatchMutation.mockReturnValue([
             vi.fn(() => ({ unwrap: () => new Promise(() => undefined) })),
             { isLoading: true },

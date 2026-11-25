@@ -48,11 +48,11 @@ const basePayload: SessionValidationOut = {
     },
     safety_summary: {
         total_checks: 2,
-        blocking_count: 1,
-        warning_count: 1,
+        blocking_count: 0,
+        warning_count: 2,
         safe_count: 0, unverifiable_count: 0,
         details: [
-            { is_safe: false, status: "unsafe", blocking: true, reason: "Contraindicación rodilla", suggested_alternatives: [] },
+            { is_safe: false, status: "unsafe", blocking: false, reason: "Contraindicación rodilla", suggested_alternatives: [] },
             { is_safe: false, status: "unsafe", blocking: false, reason: "Precaución hombro", suggested_alternatives: [] },
         ],
     },

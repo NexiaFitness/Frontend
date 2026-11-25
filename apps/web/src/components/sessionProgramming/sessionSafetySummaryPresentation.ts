@@ -2,7 +2,7 @@
  * sessionSafetySummaryPresentation.ts — Copy y clases del resumen de seguridad de la sesión.
  *
  * Contexto: SessionSafetySummarySection (validación de sesión). H4: cuatro recuentos
- * (seguros, advertencias, bloqueantes y no verificables); «no verificable» nunca se presenta
+ * (seguros, advertencias, sobre el tope —H11, antes «bloqueantes»— y no verificables); «no verificable» nunca se presenta
  * como seguro. Tonos semánticos de DESIGN_PREMIUM §3 con receta glass (borde /30, fondo /10).
  * Notas de mantenimiento: mobile-first, 2 columnas a 375 px y 4 desde `sm`.
  *
@@ -18,12 +18,12 @@ export const SESSION_SAFETY_COPY = {
     empty: "Sin datos de seguridad.",
     safe: "Sin hallazgo",
     warning: "Advertencias",
-    blocking: "Bloqueantes",
+    exceeds: "Sobre el tope",
     unverifiable: "No verificables",
-    blockingTitle: "Ejercicios bloqueantes",
+    exceedsTitle: "Superan el tope de carga axial",
     warningTitle: "Advertencias",
     unverifiableTitle: "No se pudieron comprobar",
-    blockingFallback: "Bloqueado por una regla comprobada",
+    exceedsFallback: "Supera el tope de carga axial fijado",
     warningFallback: "Precaución",
     unverifiableFallback: "Sin acciones articulares en el catálogo",
     disclaimer:
