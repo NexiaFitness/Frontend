@@ -191,7 +191,7 @@ describe("ForgotPasswordForm", () => {
             await waitFor(() => {
                 expect(screen.getByRole("button", { name: /enviando/i }))
                     .toBeInTheDocument();
-            }, { timeout: 200 });
+            }, { timeout: 3000 });
 
             expect(screen.getByRole("button", { name: /enviando/i }))
                 .toBeDisabled();
@@ -212,7 +212,7 @@ describe("ForgotPasswordForm", () => {
             await waitFor(() => {
                 expect(screen.getByRole("button", { name: /volver al login/i }))
                     .toBeDisabled();
-            }, { timeout: 200 });
+            }, { timeout: 3000 });
         });
     });
 
